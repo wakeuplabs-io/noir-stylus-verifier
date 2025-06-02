@@ -1,7 +1,0 @@
-[package]
-name = "blake2s"
-type = "bin"
-compiler_version = ">=1.0.0"
-authors = [""]
-
-[dependencies]

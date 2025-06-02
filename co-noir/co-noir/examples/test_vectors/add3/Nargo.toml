@@ -1,7 +1,0 @@
-[package]
-name = "add3"
-type = "bin"
-authors = [""]
-compiler_version = ">=0.38.0"
-
-[dependencies]
