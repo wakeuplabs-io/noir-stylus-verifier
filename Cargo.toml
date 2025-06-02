@@ -7,7 +7,6 @@ members = [
     "mpc-core",
     "mpc-net",
     "mpc-types",
-    "tests",
 ]
 resolver = "2"
 
