@@ -1,8 +1,8 @@
 use crate::{
-    gadgets::poseidon2::Poseidon2,
     sponge_hasher::{FieldHash, FieldSponge},
     types::HonkProof,
 };
+use common::gadgets::poseidon2::Poseidon2;
 use ark_ec::AffineRepr;
 use ark_ff::{One, PrimeField, Zero};
 use co_builder::{prelude::HonkCurve, HonkProofError, HonkProofResult};

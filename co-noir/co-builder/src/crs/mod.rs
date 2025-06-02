@@ -11,8 +11,8 @@ pub struct Crs<P: Pairing> {
 #[derive(Clone, Serialize, Deserialize, Default)]
 pub struct ProverCrs<P: Pairing> {
     #[serde(
-        serialize_with = "mpc_core::ark_se",
-        deserialize_with = "mpc_core::ark_de"
+        serialize_with = "common::ark_se",
+        deserialize_with = "common::ark_de"
     )]
     pub monomials: Vec<P::G1Affine>,
 }

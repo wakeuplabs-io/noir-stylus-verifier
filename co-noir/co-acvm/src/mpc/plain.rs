@@ -4,10 +4,10 @@ use ark_ff::{MontConfig, One, PrimeField};
 use blake2::{Blake2s256, Digest};
 use co_brillig::mpc::{PlainBrilligDriver, PlainBrilligType};
 use core::panic;
-use mpc_core::{
+use common::{
     gadgets::poseidon2::{Poseidon2, Poseidon2Precomputations},
     lut::{LookupTableProvider, PlainLookupTableProvider},
-    protocols::rep3::yao::circuits::SHA256Table,
+    circuits::SHA256Table,
 };
 use num_bigint::BigUint;
 use std::marker::PhantomData;
@@ -184,14 +184,14 @@ impl<F: PrimeField> NoirWitnessExtensionProtocol<F> for PlainAcvmSolver<F> {
     fn init_lut_by_acvm_type(
         &mut self,
         values: Vec<Self::AcvmType>,
-    ) -> <Self::Lookup as mpc_core::lut::LookupTableProvider<F>>::LutType {
+    ) -> <Self::Lookup as common::lut::LookupTableProvider<F>>::LutType {
         self.plain_lut.init_public(values)
     }
 
     fn read_lut_by_acvm_type(
         &mut self,
         index: Self::AcvmType,
-        lut: &<Self::Lookup as mpc_core::lut::LookupTableProvider<F>>::LutType,
+        lut: &<Self::Lookup as common::lut::LookupTableProvider<F>>::LutType,
     ) -> io::Result<F> {
         let mut a = ();
         let mut b = ();
@@ -217,7 +217,7 @@ impl<F: PrimeField> NoirWitnessExtensionProtocol<F> for PlainAcvmSolver<F> {
         &mut self,
         index: Self::AcvmType,
         value: Self::AcvmType,
-        lut: &mut <Self::Lookup as mpc_core::lut::LookupTableProvider<F>>::LutType,
+        lut: &mut <Self::Lookup as common::lut::LookupTableProvider<F>>::LutType,
     ) -> io::Result<()> {
         let mut a = ();
         let mut b = ();
@@ -226,13 +226,13 @@ impl<F: PrimeField> NoirWitnessExtensionProtocol<F> for PlainAcvmSolver<F> {
     }
 
     fn get_length_of_lut(lut: &<Self::Lookup as LookupTableProvider<F>>::LutType) -> usize {
-        <Self::Lookup as mpc_core::lut::LookupTableProvider<F>>::get_lut_len(lut)
+        <Self::Lookup as common::lut::LookupTableProvider<F>>::get_lut_len(lut)
     }
 
     fn get_public_lut(
         lut: &<Self::Lookup as LookupTableProvider<F>>::LutType,
     ) -> io::Result<&Vec<F>> {
-        <Self::Lookup as mpc_core::lut::LookupTableProvider<F>>::get_public_lut(lut)
+        <Self::Lookup as common::lut::LookupTableProvider<F>>::get_public_lut(lut)
     }
 
     fn one_hot_vector_from_shared_index(

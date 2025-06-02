@@ -1,5 +1,5 @@
 use ark_ff::{One, PrimeField};
-use crate::gadgets::poseidon2::Poseidon2;
+use common::gadgets::poseidon2::Poseidon2;
 use num_bigint::BigUint;
 
 pub trait FieldHash<F: PrimeField, const T: usize> {

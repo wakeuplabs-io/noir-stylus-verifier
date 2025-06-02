@@ -13,7 +13,7 @@ use crate::{
 };
 use ark_ec::pairing::Pairing;
 use ark_ff::One;
-use co_acvm::{mpc::NoirWitnessExtensionProtocol, PlainAcvmSolver};
+use co_acvm::{mpc::NoirWitnessExtensionProtocol, PlainAcvmSolver}; // TODO:
 use num_bigint::BigUint;
 use std::sync::Arc;
 

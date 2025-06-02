@@ -3,7 +3,7 @@ use crate::builder::GenericUltraCircuitBuilder;
 use ark_ec::pairing::Pairing;
 use ark_ff::PrimeField;
 use co_acvm::mpc::NoirWitnessExtensionProtocol;
-use mpc_core::lut::LookupTableProvider;
+use common::lut::LookupTableProvider;
 use num_bigint::BigUint;
 use std::cmp::Ordering;
 use std::ops::Index;

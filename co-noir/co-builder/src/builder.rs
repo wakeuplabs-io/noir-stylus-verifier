@@ -40,7 +40,7 @@ use ark_ec::pairing::Pairing;
 use ark_ff::{One, Zero};
 use co_acvm::{mpc::NoirWitnessExtensionProtocol, PlainAcvmSolver};
 use itertools::izip;
-use mpc_core::gadgets::poseidon2::POSEIDON2_BN254_T4_PARAMS;
+use common::gadgets::poseidon2::POSEIDON2_BN254_T4_PARAMS;
 use num_bigint::BigUint;
 use std::{
     array,

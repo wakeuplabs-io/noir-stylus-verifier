@@ -8,11 +8,11 @@ use ark_ec::{pairing::Pairing, AffineRepr, CurveGroup};
 use ark_ff::{PrimeField, Zero};
 use co_acvm::mpc::NoirWitnessExtensionProtocol;
 use itertools::izip;
-use mpc_core::protocols::rep3::yao::circuits::SHA256Table;
 use num_bigint::BigUint;
 use std::array::from_fn;
 use std::collections::HashMap;
 use std::ops::{Index, IndexMut};
+use common::circuits::SHA256Table;
 
 #[expect(dead_code)]
 #[repr(usize)]

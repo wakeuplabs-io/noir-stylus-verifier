@@ -1,16 +1,14 @@
 use ark_ec::CurveGroup;
 use ark_ff::PrimeField;
 use co_brillig::mpc::BrilligDriver;
-use mpc_core::{
+use common::{
     gadgets::poseidon2::{Poseidon2, Poseidon2Precomputations},
     lut::LookupTableProvider,
-    protocols::rep3::yao::circuits::SHA256Table,
+    circuits::SHA256Table,
 };
 use std::{any::Any, fmt, io};
 
 pub(super) mod plain;
-pub(super) mod rep3;
-pub(super) mod shamir; // Does not support everything, but basic circuits can be build using Shamir (co-builder)
 
 fn downcast<A: 'static, B: 'static>(a: &A) -> Option<&B> {
     (a as &dyn Any).downcast_ref::<B>()

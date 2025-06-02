@@ -7,12 +7,8 @@ use acir::{
 use ark_ff::PrimeField;
 use co_brillig::CoBrilligVM;
 use intmap::IntMap;
-use mpc_core::{
+use common::{
     lut::LookupTableProvider,
-    protocols::{
-        rep3::network::Rep3Network,
-        shamir::{network::ShamirNetwork, ShamirPreprocessing, ShamirProtocol},
-    },
 };
 use noirc_abi::{input_parser::Format, Abi, MAIN_RETURN_NAME};
 use noirc_artifacts::program::ProgramArtifact;
@@ -21,7 +17,7 @@ use std::{collections::BTreeMap, io, path::Path};
 
 use crate::{
     mpc::{
-        plain::PlainAcvmSolver, rep3::Rep3AcvmSolver, shamir::ShamirAcvmSolver,
+        plain::PlainAcvmSolver,
         NoirWitnessExtensionProtocol,
     },
     pss_store::PssStore,
@@ -37,8 +33,6 @@ mod memory_solver;
 pub mod partial_abi;
 
 pub type PlainCoSolver<F> = CoSolver<PlainAcvmSolver<F>, F>;
-pub type Rep3CoSolver<F, N> = CoSolver<Rep3AcvmSolver<F, N>, F>;
-pub type ShamirCoSolver<F, N> = CoSolver<ShamirAcvmSolver<F, N>, F>;
 
 type CoAcvmResult<T> = std::result::Result<T, CoAcvmError>;
 
@@ -215,60 +209,6 @@ where
             memory_access: IntMap::new(),
             pedantic_solving: true,
         })
-    }
-}
-
-impl<N: Rep3Network> Rep3CoSolver<ark_bn254::Fr, N> {
-    pub fn from_network(
-        network: N,
-        compiled_program: ProgramArtifact,
-        prover_path: impl AsRef<Path>,
-    ) -> eyre::Result<Self> {
-        Self::new_bn254(Rep3AcvmSolver::new(network), compiled_program, prover_path)
-    }
-
-    pub fn from_network_with_witness(
-        network: N,
-        compiled_program: ProgramArtifact,
-        witness: WitnessMap<
-            <Rep3AcvmSolver<ark_bn254::Fr, N> as NoirWitnessExtensionProtocol::<ark_bn254::Fr>>::AcvmType,
-        >,
-    ) -> eyre::Result<Self> {
-        Self::new_bn254_with_witness(Rep3AcvmSolver::new(network), compiled_program, witness)
-    }
-}
-
-impl<N: ShamirNetwork> ShamirCoSolver<ark_bn254::Fr, N> {
-    pub fn from_network<P>(
-        network: N,
-        threshold: usize,
-        compiled_program: ProgramArtifact,
-        prover_path: impl AsRef<Path>,
-    ) -> eyre::Result<Self> {
-        // TODO we are not creating any randomness here
-        let shamir_prepr = ShamirPreprocessing::new(threshold, network, 0)?;
-        let protocol = ShamirProtocol::from(shamir_prepr);
-
-        Self::new_bn254(
-            ShamirAcvmSolver::new(protocol),
-            compiled_program,
-            prover_path,
-        )
-    }
-
-    pub fn from_network_with_witness(
-        network: N,
-        threshold: usize,
-        compiled_program: ProgramArtifact,
-        witness: WitnessMap<
-            <ShamirAcvmSolver<ark_bn254::Fr, N> as NoirWitnessExtensionProtocol::<ark_bn254::Fr>>::AcvmType,
-        >,
-    ) -> eyre::Result<Self> {
-        // TODO we are not creating any randomness here
-        let shamir_prepr = ShamirPreprocessing::new(threshold, network, 0)?;
-        let protocol = ShamirProtocol::from(shamir_prepr);
-
-        Self::new_bn254_with_witness(ShamirAcvmSolver::new(protocol), compiled_program, witness)
     }
 }
 

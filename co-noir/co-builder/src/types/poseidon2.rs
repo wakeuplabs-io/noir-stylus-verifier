@@ -8,7 +8,7 @@ use crate::{
 use ark_ec::pairing::Pairing;
 use ark_ff::PrimeField;
 use co_acvm::mpc::NoirWitnessExtensionProtocol;
-use mpc_core::gadgets::poseidon2::{Poseidon2, Poseidon2Params};
+use common::gadgets::poseidon2::{Poseidon2, Poseidon2Params};
 use std::{any::TypeId, array};
 
 // This workaround is required due to mutability issues
@@ -401,7 +401,7 @@ impl<F: PrimeField, const T: usize, const D: u64> Poseidon2CT<F, T, D> {
 impl<F: PrimeField> Default for Poseidon2CT<F, 4, 5> {
     fn default() -> Self {
         if TypeId::of::<F>() == TypeId::of::<ark_bn254::Fr>() {
-            let params = &mpc_core::gadgets::poseidon2::POSEIDON2_BN254_T4_PARAMS;
+            let params = &common::gadgets::poseidon2::POSEIDON2_BN254_T4_PARAMS;
             let poseidon2 = Poseidon2CT::new(params);
             // Safety: We checked that the types match
             unsafe {

@@ -4,7 +4,7 @@ use crate::{crs::ProverCrs, HonkProofError, HonkProofResult};
 use ark_ec::{pairing::Pairing, VariableBaseMSM};
 use ark_ff::{One, PrimeField, Zero};
 use eyre::Error;
-use mpc_core::gadgets;
+use common::gadgets;
 use num_bigint::BigUint;
 use std::array;
 

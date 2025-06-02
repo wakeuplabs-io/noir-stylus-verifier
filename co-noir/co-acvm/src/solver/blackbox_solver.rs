@@ -9,7 +9,7 @@ use acir::{
 
 use ark_ff::PrimeField;
 
-use mpc_core::gadgets::poseidon2::Poseidon2;
+use common::gadgets::poseidon2::Poseidon2;
 
 impl<T, F> CoSolver<T, F>
 where

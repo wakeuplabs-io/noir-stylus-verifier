@@ -794,10 +794,10 @@ dependencies = [
  "blake2",
  "blake3",
  "co-brillig",
+ "common",
  "eyre",
  "intmap",
  "itertools 0.14.0",
- "mpc-core",
  "noirc_abi",
  "noirc_artifacts",
  "num-bigint 0.4.6",
@@ -841,9 +841,9 @@ dependencies = [
  "ark-serialize",
  "blake3",
  "co-acvm",
+ "common",
  "eyre",
  "itertools 0.14.0",
- "mpc-core",
  "num-bigint 0.4.6",
  "num-traits",
  "rand 0.8.5",
@@ -914,6 +914,19 @@ checksum = "ba5a308b75df32fe02788e748662718f03fde005016435c444eea572398219fd"
 dependencies = [
  "bytes",
  "memchr",
+]
+
+[[package]]
+name = "common"
+version = "0.5.0"
+dependencies = [
+ "ark-bn254",
+ "ark-ff",
+ "ark-serialize",
+ "num-bigint 0.4.6",
+ "num-traits",
+ "rand 0.8.5",
+ "serde",
 ]
 
 [[package]]
@@ -4009,6 +4022,7 @@ dependencies = [
  "ark-ff",
  "ark-poly",
  "co-builder",
+ "common",
  "eyre",
  "itertools 0.14.0",
  "noirc_artifacts",
