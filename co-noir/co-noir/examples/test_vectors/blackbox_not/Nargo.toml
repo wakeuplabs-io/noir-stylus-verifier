@@ -1,6 +1,0 @@
-[package]
-name = "blackbox_not"
-type = "bin"
-authors = [""]
-
-[dependencies]
