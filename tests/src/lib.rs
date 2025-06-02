@@ -40,9 +40,7 @@ pub mod test_utils {
         solver::{partial_abi::PublicMarker, Rep3CoSolver},
         Rep3AcvmType,
     };
-    use co_circom_types::SharedWitness;
     use co_noir::Pairing;
-    use itertools::izip;
     use mpc_core::protocols::rep3;
     use noirc_abi::Abi;
     use num_bigint::BigUint;
@@ -81,23 +79,6 @@ pub mod test_utils {
     ) -> WitnessMap<Rep3AcvmType<ark_bn254::Fr>> {
         Rep3CoSolver::<ark_bn254::Fr, PartyTestNetwork>::witness_map_from_string_map(witness, abi)
             .unwrap()
-    }
-
-    pub fn combine_field_elements_for_vm(
-        a: SharedWitness<ark_bn254::Fr, rep3::arithmetic::FieldShare<ark_bn254::Fr>>,
-        b: SharedWitness<ark_bn254::Fr, rep3::arithmetic::FieldShare<ark_bn254::Fr>>,
-        c: SharedWitness<ark_bn254::Fr, rep3::arithmetic::FieldShare<ark_bn254::Fr>>,
-    ) -> Vec<ark_bn254::Fr> {
-        let mut res = Vec::with_capacity(a.public_inputs.len() + a.witness.len());
-        for (a, b, c) in izip!(a.public_inputs, b.public_inputs, c.public_inputs) {
-            assert_eq!(a, b);
-            assert_eq!(b, c);
-            res.push(a);
-        }
-        res.extend(rep3::combine_field_elements(
-            &a.witness, &b.witness, &c.witness,
-        ));
-        res
     }
 
     pub fn combine_field_elements_for_acvm<F: PrimeField>(
