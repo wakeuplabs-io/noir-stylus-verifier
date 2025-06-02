@@ -1,0 +1,4 @@
+**/*.shared
+
+**/*proof.?.json
+public_input.json
