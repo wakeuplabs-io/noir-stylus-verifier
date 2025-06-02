@@ -5,9 +5,6 @@ members = [
     "co-noir/co-brillig",
     "co-noir/co-builder",
     "co-noir/ultrahonk",
-    "mpc-core",
-    "mpc-net",
-    "mpc-types",
 ]
 resolver = "2"
 
