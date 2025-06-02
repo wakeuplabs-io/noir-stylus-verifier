@@ -1,5 +1,6 @@
 #![warn(clippy::iter_over_hash_type)]
 
+pub(crate) mod gadgets;
 pub(crate) mod decider;
 pub(crate) mod keccak_hash;
 pub(crate) mod oink;
