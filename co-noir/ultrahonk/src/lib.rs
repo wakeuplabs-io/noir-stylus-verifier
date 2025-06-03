@@ -1,5 +1,6 @@
 #![warn(clippy::iter_over_hash_type)]
 
+pub mod builder;
 pub(crate) mod decider;
 pub(crate) mod keccak_hash;
 pub(crate) mod oink;
@@ -10,13 +11,12 @@ mod transcript;
 pub(crate) mod types;
 pub(crate) mod verifier;
 
+use builder::{AcirFormat, ProverCrs, HonkProofResult};
+
 use acir::{native_types::WitnessStack, FieldElement};
 use ark_ec::pairing::Pairing;
 use ark_ff::PrimeField;
-use co_builder::{
-    prelude::{AcirFormat, ProverCrs},
-    HonkProofResult,
-};
+
 use noirc_artifacts::program::ProgramArtifact;
 use std::{io, path::Path};
 
@@ -82,29 +82,29 @@ impl Utils {
     }
 
     pub fn get_msb32(inp: u32) -> u32 {
-        co_builder::prelude::Utils::get_msb32(inp)
+        builder::Utils::get_msb32(inp)
     }
 
     pub fn round_up_power_2(inp: usize) -> usize {
-        co_builder::prelude::Utils::round_up_power_2(inp)
+        builder::Utils::round_up_power_2(inp)
     }
 
     pub fn get_msb64(inp: u64) -> u32 {
-        co_builder::prelude::Utils::get_msb64(inp)
+        builder::Utils::get_msb64(inp)
     }
 
     fn batch_invert<F: PrimeField>(coeffs: &mut [F]) {
-        co_builder::prelude::Utils::batch_invert(coeffs);
+        builder::Utils::batch_invert(coeffs);
     }
 
     pub fn commit<P: Pairing>(
         poly: &[P::ScalarField],
         crs: &ProverCrs<P>,
     ) -> HonkProofResult<P::G1> {
-        co_builder::prelude::Utils::commit(poly, crs)
+        builder::Utils::commit(poly, crs)
     }
 
     pub fn msm<P: Pairing>(poly: &[P::ScalarField], crs: &[P::G1Affine]) -> HonkProofResult<P::G1> {
-        co_builder::prelude::Utils::msm::<P>(poly, crs)
+        builder::Utils::msm::<P>(poly, crs)
     }
 }

@@ -1,7 +1,7 @@
 use super::types::VerifierMemory;
 use crate::{
     oink::prover::Oink,
-    prelude::TranscriptFieldType,
+    builder::TranscriptFieldType,
     transcript::{Transcript, TranscriptHasher},
     verifier::HonkVerifyResult,
 };

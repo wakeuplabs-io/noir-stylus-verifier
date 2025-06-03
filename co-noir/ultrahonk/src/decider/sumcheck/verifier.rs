@@ -4,7 +4,7 @@ use crate::{
         sumcheck::{round_prover::SumcheckRoundOutput, round_verifier::SumcheckVerifierRound},
         verifier::DeciderVerifier,
     },
-    prelude::{GateSeparatorPolynomial, TranscriptFieldType},
+    prelude::{GateSeparatorPolynomial},
     transcript::{Transcript, TranscriptHasher},
     types::NUM_ALL_ENTITIES,
     verifier::HonkVerifyResult,
@@ -13,6 +13,7 @@ use crate::{
 use ark_ff::{One, Zero};
 use co_builder::prelude::RowDisablingPolynomial;
 use co_builder::prelude::{HonkCurve, ZeroKnowledge};
+use crate::builder::TranscriptFieldType;
 
 // Keep in mind, the UltraHonk protocol (UltraFlavor) does not per default have ZK
 impl<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>>

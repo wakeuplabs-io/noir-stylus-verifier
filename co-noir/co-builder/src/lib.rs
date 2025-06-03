@@ -6,10 +6,11 @@ pub(crate) mod crs;
 pub(crate) mod honk_curve;
 pub(crate) mod keys;
 pub(crate) mod polynomials;
-pub mod prelude;
 pub(crate) mod serialize;
 pub(crate) mod types;
 pub(crate) mod utils;
+pub mod prelude;
+
 
 pub type TranscriptFieldType = ark_bn254::Fr;
 pub type HonkProofResult<T> = std::result::Result<T, HonkProofError>;
