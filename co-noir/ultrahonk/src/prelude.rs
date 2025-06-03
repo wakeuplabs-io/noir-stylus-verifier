@@ -12,5 +12,3 @@ pub use crate::polynomials::polynomial_types::{
 };
 pub use crate::polynomials::polynomial::{Polynomial, RowDisablingPolynomial, NUM_MASKED_ROWS};
 pub use crate::polynomials::polynomial_types::Polynomials;
-
-pub use crate::builder;

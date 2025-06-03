@@ -4,7 +4,7 @@ use crate::{
 };
 use ark_ec::AffineRepr;
 use ark_ff::{One, PrimeField, Zero};
-use crate::builder::{HonkProofError, HonkProofResult};
+use crate::{HonkProofError, HonkProofResult};
 use crate::honk_curve::HonkCurve;
 use num_bigint::BigUint;
 use std::{collections::BTreeMap, ops::Index};

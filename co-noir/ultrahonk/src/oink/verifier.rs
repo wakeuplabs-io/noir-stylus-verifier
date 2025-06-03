@@ -6,7 +6,7 @@ use crate::{
 };
 use ark_ff::One;
 use crate::honk_curve::HonkCurve;
-use crate::builder::{VerifyingKey};
+use crate::keys::verification_key::VerifyingKey;
 use std::{array, marker::PhantomData};
 
 pub(crate) struct Oink<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>>

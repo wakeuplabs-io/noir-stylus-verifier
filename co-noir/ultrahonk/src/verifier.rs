@@ -1,8 +1,7 @@
 use ark_ec::pairing::Pairing;
 use std::marker::PhantomData;
-
-use crate::builder::VerifyingKey;
 use crate::{
+    keys::verification_key::VerifyingKey,
     decider::{types::VerifierMemory, verifier::DeciderVerifier},
     honk_curve::HonkCurve,
     oink::verifier::OinkVerifier,

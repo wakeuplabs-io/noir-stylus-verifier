@@ -1,1 +1,1 @@
-pub(crate) mod verification_key;
+pub mod verification_key;

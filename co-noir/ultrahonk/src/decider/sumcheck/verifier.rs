@@ -13,7 +13,7 @@ use crate::{
 
 };
 use ark_ff::{One, Zero};
-use crate::builder::{RowDisablingPolynomial};
+pub use crate::polynomials::polynomial::RowDisablingPolynomial;
 
 // Keep in mind, the UltraHonk protocol (UltraFlavor) does not per default have ZK
 impl<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>>

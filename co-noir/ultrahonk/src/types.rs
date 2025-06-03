@@ -1,4 +1,6 @@
-use crate::builder::{HonkProofResult, PrecomputedEntities, Serialize, PRECOMPUTED_ENTITIES_SIZE};
+use crate::serialize::Serialize;
+pub use crate::polynomials::polynomial_types::{PrecomputedEntities, PRECOMPUTED_ENTITIES_SIZE};
+use crate::HonkProofResult;
 use ark_ff::PrimeField;
 
 #[derive(Clone, Debug, PartialEq, Eq)]

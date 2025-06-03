@@ -30,6 +30,7 @@ rand_chacha.workspace = true
 num-traits.workspace = true
 ark-serialize.workspace = true 
 ark-grumpkin.workspace = true
+thiserror.workspace = true
 
 [dev-dependencies]
 rand.workspace = true
