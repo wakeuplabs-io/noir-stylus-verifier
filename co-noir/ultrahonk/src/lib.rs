@@ -10,6 +10,9 @@ pub mod builder;
 pub mod prelude;
 pub mod transcript;
 pub mod types;
+pub mod polynomials;
+pub mod keys;
+pub mod serialize;
 
 use builder::{HonkProofResult};
 use ark_ec::{ VariableBaseMSM};
@@ -37,6 +40,10 @@ pub struct Utils {}
 
 impl Utils {
     pub fn get_msb32(inp: u32) -> u32 {
+        inp.ilog2()
+    }
+
+    pub fn get_msb64(inp: u64) -> u32 {
         inp.ilog2()
     }
 
