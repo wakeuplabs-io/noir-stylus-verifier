@@ -1,14 +1,15 @@
 #![warn(clippy::iter_over_hash_type)]
 
-pub mod builder;
+pub(crate) mod honk_curve;
 pub(crate) mod decider;
 pub(crate) mod keccak_hash;
 pub(crate) mod oink;
-pub mod prelude;
 pub(crate) mod sponge_hasher;
-mod transcript;
-pub(crate) mod types;
 pub(crate) mod verifier;
+pub mod builder;
+pub mod prelude;
+pub mod transcript;
+pub mod types;
 
 use builder::{HonkProofResult};
 use ark_ec::{ VariableBaseMSM};

@@ -1,8 +1,5 @@
+use crate::builder::{HonkProofResult, PrecomputedEntities, Serialize, PRECOMPUTED_ENTITIES_SIZE};
 use ark_ff::PrimeField;
-use crate::builder::{
-    PrecomputedEntities, Serialize, PRECOMPUTED_ENTITIES_SIZE,
-    HonkProofResult,
-};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct HonkProof<F: PrimeField> {
@@ -309,5 +306,21 @@ impl<T: Default> ShiftedWitnessEntities<T> {
 
     pub fn z_perm_mut(&mut self) -> &mut T {
         &mut self.elements[Self::Z_PERM]
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum ZeroKnowledge {
+    No,
+    Yes,
+}
+
+impl From<bool> for ZeroKnowledge {
+    fn from(value: bool) -> Self {
+        if value {
+            ZeroKnowledge::Yes
+        } else {
+            ZeroKnowledge::No
+        }
     }
 }

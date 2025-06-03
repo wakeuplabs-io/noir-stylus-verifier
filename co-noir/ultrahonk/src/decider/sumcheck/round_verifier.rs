@@ -14,10 +14,10 @@ use crate::{
         types::{ClaimedEvaluations, RelationParameters},
     },
     prelude::{GateSeparatorPolynomial},
+    transcript::TranscriptFieldType,
+    honk_curve::HonkCurve
 };
 use ark_ff::{One, Zero};
-use crate::builder::HonkCurve;
-use crate::builder::TranscriptFieldType;
 use super::super::univariate::Univariate;
 
 pub(crate) type SumcheckRoundOutput<F, const U: usize> = Univariate<F, U>;

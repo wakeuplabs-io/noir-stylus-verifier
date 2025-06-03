@@ -7,16 +7,15 @@ use crate::{
         types::{ClaimedEvaluations, VerifierCommitments},
         verifier::DeciderVerifier,
     },
-    transcript::{Transcript, TranscriptHasher},
+    transcript::{Transcript, TranscriptHasher, TranscriptFieldType},
     verifier::HonkVerifyResult,
     CONST_PROOF_SIZE_LOG_N, NUM_INTERLEAVING_CLAIMS, NUM_LIBRA_COMMITMENTS,
     NUM_SMALL_IPA_EVALUATIONS,
+    types::ZeroKnowledge,
+    honk_curve::HonkCurve
 };
-use crate::builder::TranscriptFieldType;
 use ark_ec::AffineRepr;
 use ark_ff::{Field, One, Zero};
-use crate::builder::HonkCurve;
-use crate::builder::ZeroKnowledge;
 
 impl<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>>
     DeciderVerifier<P, H>

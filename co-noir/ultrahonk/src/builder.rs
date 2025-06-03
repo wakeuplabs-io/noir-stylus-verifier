@@ -1,9 +1,9 @@
 pub use co_builder::{
     prelude::{
-        CrsParser, VerifyingKeyBarretenberg,  // Only for tests
+         VerifyingKeyBarretenberg,  // Only for tests
         PrecomputedEntities,
         RowDisablingPolynomial, 
-        PRECOMPUTED_ENTITIES_SIZE, HonkCurve, VerifyingKey, ZeroKnowledge, Serialize
+        PRECOMPUTED_ENTITIES_SIZE, VerifyingKey, Serialize
     },
-    HonkProofError, HonkProofResult, TranscriptFieldType
+    HonkProofError, HonkProofResult,
 };

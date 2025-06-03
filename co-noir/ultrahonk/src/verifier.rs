@@ -1,14 +1,15 @@
-use std::marker::PhantomData;
 use ark_ec::pairing::Pairing;
+use std::marker::PhantomData;
 
+use crate::builder::VerifyingKey;
 use crate::{
     decider::{types::VerifierMemory, verifier::DeciderVerifier},
+    honk_curve::HonkCurve,
     oink::verifier::OinkVerifier,
-    // prover::UltraHonk,
-    transcript::{Transcript, TranscriptHasher},
-    types::HonkProof, CONST_PROOF_SIZE_LOG_N,
+    transcript::{Transcript, TranscriptFieldType, TranscriptHasher},
+    types::{HonkProof, ZeroKnowledge},
+    CONST_PROOF_SIZE_LOG_N,
 };
-use crate::builder::{TranscriptFieldType, HonkCurve, VerifyingKey, ZeroKnowledge};
 
 pub struct UltraHonk<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>> {
     phantom_data: PhantomData<P>,

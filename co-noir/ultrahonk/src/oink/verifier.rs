@@ -5,7 +5,8 @@ use crate::{
     NUM_ALPHAS,
 };
 use ark_ff::One;
-use crate::builder::{HonkCurve, VerifyingKey};
+use crate::honk_curve::HonkCurve;
+use crate::builder::{VerifyingKey};
 use std::{array, marker::PhantomData};
 
 pub(crate) struct Oink<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>>
