@@ -596,76 +596,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f46ad14479a25103f283c0f10005961cf086d8dc42205bb44c46ac563475dca6"
 
 [[package]]
-name = "co-acvm"
-version = "0.6.0"
-dependencies = [
- "acir",
- "acvm",
- "ark-bn254",
- "ark-ec",
- "ark-ff",
- "ark-grumpkin",
- "blake2",
- "blake3",
- "co-brillig",
- "common",
- "eyre",
- "intmap",
- "itertools 0.14.0",
- "noirc_abi",
- "noirc_artifacts",
- "num-bigint",
- "paste",
- "rayon",
- "serde",
- "sha2",
- "thiserror 2.0.12",
- "toml 0.8.20",
- "tracing",
-]
-
-[[package]]
-name = "co-brillig"
-version = "0.3.0"
-dependencies = [
- "acir",
- "acvm",
- "ark-ff",
- "brillig",
- "eyre",
- "itertools 0.14.0",
- "num-bigint",
- "num-traits",
- "paste",
- "rand",
- "tracing",
-]
-
-[[package]]
-name = "co-builder"
-version = "0.4.0"
-dependencies = [
- "acir",
- "ark-bn254",
- "ark-ec",
- "ark-ff",
- "ark-grumpkin",
- "ark-poly",
- "ark-serialize",
- "blake3",
- "co-acvm",
- "common",
- "eyre",
- "itertools 0.14.0",
- "num-bigint",
- "num-traits",
- "rand",
- "serde",
- "thiserror 2.0.12",
- "tracing",
-]
-
-[[package]]
 name = "codespan"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1379,12 +1309,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "intmap"
-version = "3.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6958acfd72ba79d943b048ab4064c671018b6a348a715b5b8931baf975439553"
-
-[[package]]
 name = "is_terminal_polyfill"
 version = "1.70.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1540,7 +1464,7 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 1.0.69",
- "toml 0.7.8",
+ "toml",
 ]
 
 [[package]]
@@ -2606,19 +2530,7 @@ dependencies = [
  "serde",
  "serde_spanned",
  "toml_datetime",
- "toml_edit 0.19.15",
-]
-
-[[package]]
-name = "toml"
-version = "0.8.20"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd87a5cdd6ffab733b2f74bc4fd7ee5fff6634124999ac278c35fc78c6120148"
-dependencies = [
- "serde",
- "serde_spanned",
- "toml_datetime",
- "toml_edit 0.22.24",
+ "toml_edit",
 ]
 
 [[package]]
@@ -2640,20 +2552,7 @@ dependencies = [
  "serde",
  "serde_spanned",
  "toml_datetime",
- "winnow 0.5.40",
-]
-
-[[package]]
-name = "toml_edit"
-version = "0.22.24"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "17b4795ff5edd201c7cd6dca065ae59972ce77d1b80fa0a84d94950ece7d1474"
-dependencies = [
- "indexmap 2.9.0",
- "serde",
- "serde_spanned",
- "toml_datetime",
- "winnow 0.7.6",
+ "winnow",
 ]
 
 [[package]]
@@ -2726,7 +2625,6 @@ dependencies = [
  "ark-grumpkin",
  "ark-poly",
  "ark-serialize",
- "co-builder",
  "common",
  "eyre",
  "itertools 0.14.0",
@@ -3084,15 +2982,6 @@ name = "winnow"
 version = "0.5.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f593a95398737aeed53e489c785df13f3618e41dbcd6718c6addbf1395aa6876"
-dependencies = [
- "memchr",
-]
-
-[[package]]
-name = "winnow"
-version = "0.7.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "63d3fcd9bba44b03821e7d699eeee959f3126dcc4aa8e4ae18ec617c2a5cea10"
 dependencies = [
  "memchr",
 ]

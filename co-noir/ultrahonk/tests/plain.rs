@@ -55,7 +55,7 @@ fn plain_test<H: TranscriptHasher<TranscriptFieldType>>(
     vk_file: &str,
     public_inputs_file: &str,
 ) {
-    const CRS_PATH_G2: &str = "../co-builder/src/crs/bn254_g2.dat";
+    const CRS_PATH_G2: &str = "./src/crs/bn254_g2.dat";
 
     // parse proof file
     let proof_u8 = std::fs::read(&proof_file).unwrap();

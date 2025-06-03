@@ -1,9 +1,6 @@
 [workspace]
 members = [
     "co-noir/common",
-    "co-noir/co-acvm",
-    "co-noir/co-brillig",
-    "co-noir/co-builder",
     "co-noir/ultrahonk",
 ]
 resolver = "2"
