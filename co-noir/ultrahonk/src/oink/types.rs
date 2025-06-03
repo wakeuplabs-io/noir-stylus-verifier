@@ -3,17 +3,6 @@ use ark_ec::pairing::Pairing;
 use ark_ff::PrimeField;
 use co_builder::prelude::Polynomial;
 
-pub(crate) struct ProverMemory<P: Pairing> {
-    /// column 3
-    pub(crate) w_4: Polynomial<P::ScalarField>,
-    /// column 4
-    pub(crate) z_perm: Polynomial<P::ScalarField>,
-    /// column 5
-    pub(crate) lookup_inverses: Polynomial<P::ScalarField>,
-    pub(crate) public_input_delta: P::ScalarField,
-    pub(crate) challenges: Challenges<P::ScalarField>,
-}
-
 pub(crate) struct VerifierMemory<P: Pairing> {
     pub(crate) public_input_delta: P::ScalarField,
     pub(crate) witness_commitments: WitnessEntities<P::G1Affine>,
@@ -38,18 +27,6 @@ impl<F: PrimeField> Default for Challenges<F> {
             beta: Default::default(),
             gamma: Default::default(),
             alphas: [Default::default(); NUM_ALPHAS],
-        }
-    }
-}
-
-impl<P: Pairing> Default for ProverMemory<P> {
-    fn default() -> Self {
-        Self {
-            w_4: Default::default(),
-            z_perm: Default::default(),
-            lookup_inverses: Default::default(),
-            public_input_delta: Default::default(),
-            challenges: Default::default(),
         }
     }
 }
