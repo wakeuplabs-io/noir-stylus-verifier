@@ -1,7 +1,0 @@
-[package]
-name = "random_access"
-type = "bin"
-authors = [""]
-compiler_version = ">=0.38.0"
-
-[dependencies]
