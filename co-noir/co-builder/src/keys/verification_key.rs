@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize as SerdeSerialize};
 use std::sync::Arc;
-
 use crate::{
     builder::UltraCircuitBuilder,
     crs::ProverCrs,

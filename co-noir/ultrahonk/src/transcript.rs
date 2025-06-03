@@ -2,7 +2,6 @@ use crate::{
     sponge_hasher::{FieldHash, FieldSponge},
     types::HonkProof,
 };
-use common::gadgets::poseidon2::Poseidon2;
 use ark_ec::AffineRepr;
 use ark_ff::{One, PrimeField, Zero};
 use crate::builder::{HonkCurve, HonkProofError, HonkProofResult};
@@ -10,8 +9,6 @@ use num_bigint::BigUint;
 use std::{collections::BTreeMap, ops::Index};
 
 pub type TranscriptFieldType = ark_bn254::Fr;
-pub type Poseidon2Sponge =
-    FieldSponge<TranscriptFieldType, 4, 3, Poseidon2<TranscriptFieldType, 4, 5>>;
 
 pub trait TranscriptHasher<F: PrimeField> {
     fn hash(buffer: Vec<F>) -> F;

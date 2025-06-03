@@ -32,9 +32,6 @@ pub const NUM_GEMINI_CLAIMS: usize = 2 * CONST_PROOF_SIZE_LOG_N + 2;
 // TODO(https://github.com/AztecProtocol/barretenberg/issues/1293): Decouple Gemini from Interleaving
 pub const NUM_INTERLEAVING_CLAIMS: u32 = 2;
 
-
-
-
 pub struct Utils {}
 
 impl Utils {
