@@ -5,7 +5,7 @@ use crate::{
 use common::gadgets::poseidon2::Poseidon2;
 use ark_ec::AffineRepr;
 use ark_ff::{One, PrimeField, Zero};
-use co_builder::{prelude::HonkCurve, HonkProofError, HonkProofResult};
+use crate::builder::{HonkCurve, HonkProofError, HonkProofResult};
 use num_bigint::BigUint;
 use std::{collections::BTreeMap, ops::Index};
 

@@ -15,8 +15,8 @@ use crate::{
 use crate::builder::TranscriptFieldType;
 use ark_ec::AffineRepr;
 use ark_ff::{Field, One, Zero};
-use co_builder::prelude::HonkCurve;
-use co_builder::prelude::ZeroKnowledge;
+use crate::builder::HonkCurve;
+use crate::builder::ZeroKnowledge;
 
 impl<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>>
     DeciderVerifier<P, H>
@@ -97,7 +97,7 @@ impl<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>
             denominators.push(*shplonk_eval_challenge + *gemini_eval_challenge_power);
         }
 
-        co_builder::prelude::Utils::batch_invert(&mut denominators);
+        crate::builder::Utils::batch_invert(&mut denominators);
 
         denominators
     }
@@ -709,7 +709,7 @@ impl<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>
         }
 
         // Invert/Batch invert denominators
-        co_builder::prelude::Utils::batch_invert(&mut denominators);
+        crate::builder::Utils::batch_invert(&mut denominators);
 
         let mut result = [P::ScalarField::zero(); 3];
 

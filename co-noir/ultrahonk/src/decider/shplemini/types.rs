@@ -1,4 +1,4 @@
-use co_builder::prelude::PrecomputedEntities;
+use crate::builder::PrecomputedEntities;
 
 use crate::types::{ShiftedWitnessEntities, WitnessEntities};
 

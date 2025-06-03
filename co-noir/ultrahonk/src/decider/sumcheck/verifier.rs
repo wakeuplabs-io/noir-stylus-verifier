@@ -11,8 +11,8 @@ use crate::{
     CONST_PROOF_SIZE_LOG_N,
 };
 use ark_ff::{One, Zero};
-use co_builder::prelude::RowDisablingPolynomial;
-use co_builder::prelude::{HonkCurve, ZeroKnowledge};
+use crate::builder::RowDisablingPolynomial;
+use crate::builder::{HonkCurve, ZeroKnowledge};
 use crate::builder::TranscriptFieldType;
 
 

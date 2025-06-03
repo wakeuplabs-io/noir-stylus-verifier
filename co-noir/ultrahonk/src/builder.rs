@@ -1,11 +1,8 @@
-pub use co_builder::prelude::Serialize;
-pub use co_builder::prelude::Utils;
-pub use co_builder::prelude::{HonkCurve, VerifyingKey, ZeroKnowledge};
-pub use co_builder::TranscriptFieldType;
 pub use co_builder::{
-    prelude::{AcirFormat, ProverCrs},
-    HonkProofResult,
+    prelude::{
+        AcirFormat, CrsParser, PlainAcvmSolver, PrecomputedEntities, ProverCrs,
+        RowDisablingPolynomial, UltraCircuitBuilder, VerifyingKeyBarretenberg,
+        PRECOMPUTED_ENTITIES_SIZE, HonkCurve, VerifyingKey, ZeroKnowledge, Utils, Serialize
+    },
+    HonkProofError, HonkProofResult, TranscriptFieldType
 };
-
-pub use co_builder::prelude::PlainAcvmSolver;
-pub use co_builder::prelude::UltraCircuitBuilder;

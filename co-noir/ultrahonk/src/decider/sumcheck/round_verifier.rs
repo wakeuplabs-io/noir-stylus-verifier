@@ -16,7 +16,7 @@ use crate::{
     prelude::{GateSeparatorPolynomial},
 };
 use ark_ff::{One, Zero};
-use co_builder::prelude::HonkCurve;
+use crate::builder::HonkCurve;
 use crate::builder::TranscriptFieldType;
 use super::super::univariate::Univariate;
 

@@ -1,7 +1,6 @@
 use crate::{types::WitnessEntities, NUM_ALPHAS};
 use ark_ec::pairing::Pairing;
 use ark_ff::PrimeField;
-use co_builder::prelude::Polynomial;
 
 pub(crate) struct VerifierMemory<P: Pairing> {
     pub(crate) public_input_delta: P::ScalarField,

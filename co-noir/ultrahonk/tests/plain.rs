@@ -1,8 +1,8 @@
 use ark_bn254::Bn254;
-use co_builder::prelude::CrsParser;
-use co_builder::prelude::Serialize as FieldSerialize;
-use co_builder::prelude::VerifyingKeyBarretenberg;
-use co_builder::prelude::ZeroKnowledge;
+use ultrahonk::builder::CrsParser;
+use ultrahonk::builder::Serialize as FieldSerialize;
+use ultrahonk::builder::VerifyingKeyBarretenberg;
+use ultrahonk::builder::ZeroKnowledge;
 use sha3::Keccak256;
 use ultrahonk::builder::VerifyingKey;
 use ultrahonk::{

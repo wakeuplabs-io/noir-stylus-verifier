@@ -1,6 +1,6 @@
 use ark_ff::PrimeField;
-use co_builder::{
-    prelude::{PrecomputedEntities, Serialize, PRECOMPUTED_ENTITIES_SIZE},
+use crate::builder::{
+    PrecomputedEntities, Serialize, PRECOMPUTED_ENTITIES_SIZE,
     HonkProofResult,
 };
 

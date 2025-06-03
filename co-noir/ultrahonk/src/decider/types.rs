@@ -2,7 +2,7 @@ use super::univariate::Univariate;
 use crate::{types::AllEntities, NUM_ALPHAS};
 use ark_ec::pairing::Pairing;
 use ark_ff::PrimeField;
-use co_builder::prelude::{VerifyingKey};
+use crate::builder::{VerifyingKey};
 use std::{vec};
 
 pub(crate) struct VerifierMemory<P: Pairing> {

@@ -8,7 +8,7 @@ use crate::{
 };
 use ark_ec::AffineRepr;
 use ark_ff::{One, Zero};
-use co_builder::prelude::{HonkCurve, ZeroKnowledge};
+use crate::builder::{HonkCurve, ZeroKnowledge};
 use std::marker::PhantomData;
 
 pub(crate) struct DeciderVerifier<
