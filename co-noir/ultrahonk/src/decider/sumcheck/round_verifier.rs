@@ -1,4 +1,3 @@
-use super::round_prover::SumcheckRoundOutput;
 use crate::{
     decider::{
         relations::{
@@ -19,6 +18,9 @@ use crate::{
 use ark_ff::{One, Zero};
 use co_builder::prelude::HonkCurve;
 use crate::builder::TranscriptFieldType;
+use super::super::univariate::Univariate;
+
+pub(crate) type SumcheckRoundOutput<F, const U: usize> = Univariate<F, U>;
 
 pub(crate) struct SumcheckVerifierRound<P: HonkCurve<TranscriptFieldType>> {
     pub(crate) target_total_sum: P::ScalarField,

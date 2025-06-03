@@ -1,4 +1,3 @@
-pub(crate) mod round_prover;
 pub(crate) mod round_verifier;
 pub(crate) mod verifier;
 pub(crate) mod zk_data;
