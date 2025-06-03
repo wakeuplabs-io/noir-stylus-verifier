@@ -1,8 +1,9 @@
 pub use co_builder::{
     prelude::{
-        AcirFormat, CrsParser, PlainAcvmSolver, PrecomputedEntities, ProverCrs,
-        RowDisablingPolynomial, UltraCircuitBuilder, VerifyingKeyBarretenberg,
-        PRECOMPUTED_ENTITIES_SIZE, HonkCurve, VerifyingKey, ZeroKnowledge, Utils, Serialize
+        CrsParser, VerifyingKeyBarretenberg,  // Only for tests
+        PrecomputedEntities,
+        RowDisablingPolynomial, 
+        PRECOMPUTED_ENTITIES_SIZE, HonkCurve, VerifyingKey, ZeroKnowledge, Serialize
     },
     HonkProofError, HonkProofResult, TranscriptFieldType
 };
