@@ -1,15 +1,38 @@
+use std::marker::PhantomData;
+use ark_ec::pairing::Pairing;
+
 use crate::{
     decider::{types::VerifierMemory, verifier::DeciderVerifier},
     oink::verifier::OinkVerifier,
-    prover::UltraHonk,
+    // prover::UltraHonk,
     transcript::{Transcript, TranscriptHasher},
-    types::HonkProof,
+    types::HonkProof, CONST_PROOF_SIZE_LOG_N,
 };
 use crate::builder::{TranscriptFieldType, HonkCurve, VerifyingKey, ZeroKnowledge};
+
+pub struct UltraHonk<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>> {
+    phantom_data: PhantomData<P>,
+    phantom_hasher: PhantomData<H>,
+}
 
 pub(crate) type HonkVerifyResult<T> = std::result::Result<T, eyre::Report>;
 
 impl<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>> UltraHonk<P, H> {
+    pub(crate) fn generate_gate_challenges(
+        transcript: &mut Transcript<TranscriptFieldType, H>,
+    ) -> Vec<P::ScalarField> {
+        tracing::trace!("generate gate challenges");
+
+        let mut gate_challenges: Vec<<P as Pairing>::ScalarField> =
+            Vec::with_capacity(CONST_PROOF_SIZE_LOG_N);
+
+        for idx in 0..CONST_PROOF_SIZE_LOG_N {
+            let chall = transcript.get_challenge::<P>(format!("Sumcheck:gate_challenge_{}", idx));
+            gate_challenges.push(chall);
+        }
+        gate_challenges
+    }
+
     pub fn verify(
         honk_proof: HonkProof<TranscriptFieldType>,
         public_inputs: &[TranscriptFieldType],
