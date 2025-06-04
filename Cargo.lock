@@ -541,7 +541,6 @@ dependencies = [
  "num-bigint",
  "num-traits",
  "rand",
- "rand_chacha",
  "serde",
  "sha3",
  "thiserror",
