@@ -2,14 +2,8 @@ use super::univariate::Univariate;
 use crate::{types::AllEntities, NUM_ALPHAS};
 use ark_ec::pairing::Pairing;
 use ark_ff::PrimeField;
-use co_builder::prelude::{Polynomials, VerifyingKey};
-use itertools::izip;
-use std::{iter, vec};
-
-pub(crate) struct ProverMemory<P: Pairing> {
-    pub(crate) polys: AllEntities<Vec<P::ScalarField>>,
-    pub(crate) relation_parameters: RelationParameters<P::ScalarField>,
-}
+use crate::keys::verification_key::VerifyingKey;
+use std::{vec};
 
 pub(crate) struct VerifierMemory<P: Pairing> {
     pub(crate) verifier_commitments: VerifierCommitments<P::G1Affine>,
@@ -105,64 +99,6 @@ impl<F: PrimeField> GateSeparatorPolynomial<F> {
             + indicator * self.partial_evaluation_result * current_univariate_eval;
         self.current_element_idx += 1;
         self.periodicity *= 2;
-    }
-}
-
-impl<P: Pairing> ProverMemory<P> {
-    pub(crate) fn from_memory_and_polynomials(
-        prover_memory: crate::oink::types::ProverMemory<P>,
-        polynomials: Polynomials<P::ScalarField>,
-    ) -> Self {
-        let relation_parameters = RelationParameters {
-            eta_1: prover_memory.challenges.eta_1,
-            eta_2: prover_memory.challenges.eta_2,
-            eta_3: prover_memory.challenges.eta_3,
-            beta: prover_memory.challenges.beta,
-            gamma: prover_memory.challenges.gamma,
-            public_input_delta: prover_memory.public_input_delta,
-            alphas: prover_memory.challenges.alphas,
-            gate_challenges: Default::default(),
-        };
-
-        let mut memory = AllEntities::default();
-
-        // TACEO TODO Barretenberg uses the same memory for the shifted polynomials as for the non-shifted ones
-
-        // Missing lookups
-        *memory.witness.lookup_inverses_mut() = prover_memory.lookup_inverses.into_vec();
-        *memory.witness.lookup_read_counts_mut() =
-            polynomials.witness.lookup_read_counts().as_ref().to_vec();
-        *memory.witness.lookup_read_tags_mut() =
-            polynomials.witness.lookup_read_tags().as_ref().to_vec();
-
-        // Shift the witnesses
-        for (des_shifted, des, src) in izip!(
-            memory.shifted_witness.iter_mut(),
-            memory.witness.to_be_shifted_mut(),
-            polynomials
-                .witness
-                .into_wires()
-                .take(3)
-                .chain(iter::once(prover_memory.w_4))
-                .chain(iter::once(prover_memory.z_perm)),
-        ) {
-            // TACEO TODO use same memory to prevent copying?
-            *des_shifted = src.shifted().to_vec();
-            *des = src.into_vec();
-        }
-
-        // Copy precomputed polynomials
-        for (des, src) in izip!(
-            memory.precomputed.iter_mut(),
-            polynomials.precomputed.into_iter()
-        ) {
-            *des = src.into_vec();
-        }
-
-        Self {
-            polys: memory,
-            relation_parameters,
-        }
     }
 }
 

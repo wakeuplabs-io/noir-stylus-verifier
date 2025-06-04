@@ -1,14 +1,14 @@
 use super::{shplemini::ShpleminiVerifierOpeningClaim, types::VerifierMemory};
 use crate::{
     decider::types::{BATCHED_RELATION_PARTIAL_LENGTH, BATCHED_RELATION_PARTIAL_LENGTH_ZK},
-    prelude::TranscriptFieldType,
-    transcript::{Transcript, TranscriptHasher},
+    transcript::{Transcript, TranscriptHasher, TranscriptFieldType},
     verifier::HonkVerifyResult,
     Utils, CONST_PROOF_SIZE_LOG_N, NUM_LIBRA_COMMITMENTS,
+    types::ZeroKnowledge,
+    honk_curve::HonkCurve   
 };
 use ark_ec::AffineRepr;
 use ark_ff::{One, Zero};
-use co_builder::prelude::{HonkCurve, ZeroKnowledge};
 use std::marker::PhantomData;
 
 pub(crate) struct DeciderVerifier<

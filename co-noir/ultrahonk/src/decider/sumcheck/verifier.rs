@@ -1,18 +1,19 @@
 use super::SumcheckVerifierOutput;
 use crate::{
     decider::{
-        sumcheck::{round_prover::SumcheckRoundOutput, round_verifier::SumcheckVerifierRound},
+        sumcheck::{round_verifier::{SumcheckVerifierRound, SumcheckRoundOutput}},
         verifier::DeciderVerifier,
     },
-    prelude::{GateSeparatorPolynomial, TranscriptFieldType},
-    transcript::{Transcript, TranscriptHasher},
-    types::NUM_ALL_ENTITIES,
+    prelude::{GateSeparatorPolynomial},
+    transcript::{Transcript, TranscriptHasher, TranscriptFieldType},
+    types::{NUM_ALL_ENTITIES,ZeroKnowledge},
     verifier::HonkVerifyResult,
     CONST_PROOF_SIZE_LOG_N,
+    honk_curve::HonkCurve,
+
 };
 use ark_ff::{One, Zero};
-use co_builder::prelude::RowDisablingPolynomial;
-use co_builder::prelude::{HonkCurve, ZeroKnowledge};
+pub use crate::polynomials::polynomial::RowDisablingPolynomial;
 
 // Keep in mind, the UltraHonk protocol (UltraFlavor) does not per default have ZK
 impl<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>>

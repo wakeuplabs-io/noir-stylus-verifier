@@ -1,5 +1,4 @@
 use ark_ff::{One, PrimeField};
-use crate::gadgets::poseidon2::Poseidon2;
 use num_bigint::BigUint;
 
 pub trait FieldHash<F: PrimeField, const T: usize> {
@@ -9,12 +8,6 @@ pub trait FieldHash<F: PrimeField, const T: usize> {
         state
     }
     fn permutation_in_place(&self, input: &mut [F; T]);
-}
-
-impl<F: PrimeField, const T: usize, const D: u64> FieldHash<F, T> for Poseidon2<F, T, D> {
-    fn permutation_in_place(&self, state: &mut [F; T]) {
-        self.permutation_in_place(state);
-    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
