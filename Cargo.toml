@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "co-noir/ultrahonk",
+    "packages/ultrahonk",
 ]
 resolver = "2"
 
