@@ -23,10 +23,15 @@ for folder in "$script_dir"/*; do
         echo "Executing commands in $folder"
 
         nargo execute
+        bb prove -b ./target/$folder.json -w ./target/$folder.gz -o ./target/proof --scheme ultra_honk --oracle_hash keccak
+        bb write_vk --oracle_hash keccak -o target -b target/$folder.json
 
-        if [ -d "target" ] && [ -d "kat" ]; then
+        if [ -d "target" ]; then
+            mkdir -p kat
             echo "Moving files from target to kat in $folder"
-            mv -f target/* kat/ 2>/dev/null || echo "No files to move or failed to move files"
+            mv ./target/proof ./kat/proof
+            mv ./target/public_inputs ./kat/public_inputs
+            mv ./target/vk ./kat/vk
         else
             echo "Either 'target' or 'kat' subfolder is missing in $folder"
         fi
