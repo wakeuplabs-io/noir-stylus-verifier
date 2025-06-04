@@ -78,20 +78,25 @@ fn plain_test<H: TranscriptHasher<TranscriptFieldType>>(
     assert!(is_valid);
 }
 
-#[test]
-fn poseidon_test_keccak256() {
-    const PROOF_FILE: &str = "../../test_vectors/poseidon/kat/proof";
-    const VK_FILE: &str = "../../test_vectors/poseidon/kat/vk";
-    const PUBLIC_INPUTS_FILE: &str = "../../test_vectors/poseidon/kat/public_inputs";
-
-    plain_test::<Keccak256>(PROOF_FILE, VK_FILE, PUBLIC_INPUTS_FILE);
-}
 
 #[test]
-fn add3_test_keccak256() {
-    const PROOF_FILE: &str = "../../test_vectors/add3u64/kat/proof";
-    const VK_FILE: &str = "../../test_vectors/add3u64/kat/vk";
-    const PUBLIC_INPUTS_FILE: &str = "../../test_vectors/add3u64/kat/public_inputs";
+fn test_iterating_test_vectors() {
+    let test_vectors_dir = "../../test_vectors";
+    let test_vectors = std::fs::read_dir(test_vectors_dir).unwrap();
 
-    plain_test::<Keccak256>(PROOF_FILE, VK_FILE, PUBLIC_INPUTS_FILE);
+    println!("test_vectors_dir: {}", test_vectors_dir);
+
+    for entry in test_vectors {
+        let entry = entry.unwrap();
+        let path = entry.path();
+        if !path.is_dir() {
+            // Skip if not a directory
+            continue;
+        }
+        let proof_file = format!("{}/kat/proof", path.display());
+        let vk_file = format!("{}/kat/vk", path.display());
+        let public_inputs_file = format!("{}/kat/public_inputs", path.display());
+
+        plain_test::<Keccak256>(&proof_file, &vk_file, &public_inputs_file);
+    }
 }
