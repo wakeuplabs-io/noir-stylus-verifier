@@ -3,7 +3,7 @@ name: Rust Lints
 on:
   push:
     branches:
-      - main
+      - develop
     tags-ignore:
       - v*
   pull_request:

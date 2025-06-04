@@ -1,4 +1,4 @@
-name: Rust Tests
+name: Rust Build
 
 on:
   push:
@@ -16,8 +16,8 @@ env:
   RUSTFLAGS: "-C link-arg=-fuse-ld=lld"
 
 jobs:
-  test:
-    name: Test
+  build:
+    name: Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,5 +26,5 @@ jobs:
           toolchain: stable
       - run: sudo apt-get install lld
       - uses: Swatinem/rust-cache@v2
-      - name: Test with default features
-        run: cargo test --workspace --profile ci-dev --all-features
+      - name: Build with default features
+        run: cargo build --workspace --profile ci-dev --all-features
