@@ -15,11 +15,9 @@ pub mod transcript;
 pub mod types;
 pub(crate) mod verifier;
 
-// use builder::{HonkProofResult};
 use ark_ec::pairing::Pairing;
 use ark_ec::VariableBaseMSM;
 use ark_ff::PrimeField;
-// use co_builder::HonkProofError;
 
 pub const NUM_ALPHAS: usize = decider::relations::NUM_SUBRELATIONS - 1;
 /// The log of the max circuit size assumed in order to achieve constant sized Honk proofs
