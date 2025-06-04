@@ -2,7 +2,8 @@
 
 script_dir="$(dirname "$(realpath "$0")")"
 
-NARGO_VERSION=1.0.0-beta.6 
+NARGO_VERSION=1.0.0-beta.6
+BB_VERSION=0.86.0
 
 # install noirup: curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash
 r=$(bash -c "nargo --version")
@@ -10,6 +11,10 @@ if  [[ $r != "nargo version = $NARGO_VERSION"* ]];
 then
     bash -c "noirup -v ${NARGO_VERSION}"
 fi
+
+# use bbup every time as bb --version is broken
+# install bbup: curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/heads/master/barretenberg/bbup/install | bash
+bash -c "bbup -v ${BB_VERSION}"
 
 for folder in "$script_dir"/*; do
     # To get just the directory name (e.g., "add3u64" from "/path/to/add3u64")
