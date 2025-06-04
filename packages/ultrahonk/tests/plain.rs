@@ -78,7 +78,6 @@ fn plain_test<H: TranscriptHasher<TranscriptFieldType>>(
     assert!(is_valid);
 }
 
-
 #[test]
 fn test_iterating_test_vectors() {
     let test_vectors_dir = "../../test_vectors";
