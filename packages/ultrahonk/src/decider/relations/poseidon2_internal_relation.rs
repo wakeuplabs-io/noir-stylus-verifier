@@ -15,51 +15,6 @@ pub(crate) struct Poseidon2InternalRelationAcc<F: PrimeField> {
     pub(crate) r3: Univariate<F, 7>,
 }
 
-impl<F: PrimeField> Poseidon2InternalRelationAcc<F> {
-    pub(crate) fn scale(&mut self, elements: &[F]) {
-        assert!(elements.len() == Poseidon2InternalRelation::NUM_RELATIONS);
-        self.r0 *= elements[0];
-        self.r1 *= elements[1];
-        self.r2 *= elements[2];
-        self.r3 *= elements[3];
-    }
-
-    pub(crate) fn extend_and_batch_univariates<const SIZE: usize>(
-        &self,
-        result: &mut Univariate<F, SIZE>,
-        extended_random_poly: &Univariate<F, SIZE>,
-        partial_evaluation_result: &F,
-    ) {
-        self.r0.extend_and_batch_univariates(
-            result,
-            extended_random_poly,
-            partial_evaluation_result,
-            true,
-        );
-
-        self.r1.extend_and_batch_univariates(
-            result,
-            extended_random_poly,
-            partial_evaluation_result,
-            true,
-        );
-
-        self.r2.extend_and_batch_univariates(
-            result,
-            extended_random_poly,
-            partial_evaluation_result,
-            true,
-        );
-
-        self.r3.extend_and_batch_univariates(
-            result,
-            extended_random_poly,
-            partial_evaluation_result,
-            true,
-        );
-    }
-}
-
 #[derive(Clone, Debug, Default)]
 pub(crate) struct Poseidon2InternalRelationEvals<F: PrimeField> {
     pub(crate) r0: F,

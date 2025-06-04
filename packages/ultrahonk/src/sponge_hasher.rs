@@ -2,11 +2,6 @@ use ark_ff::{One, PrimeField};
 use num_bigint::BigUint;
 
 pub trait FieldHash<F: PrimeField, const T: usize> {
-    fn permutation(&self, input: &[F; T]) -> [F; T] {
-        let mut state = *input;
-        self.permutation_in_place(&mut state);
-        state
-    }
     fn permutation_in_place(&self, input: &mut [F; T]);
 }
 

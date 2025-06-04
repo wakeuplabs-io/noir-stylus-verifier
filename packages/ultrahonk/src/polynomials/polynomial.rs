@@ -14,12 +14,6 @@ use std::ops::{AddAssign, Index, IndexMut, MulAssign, SubAssign};
 // 3*) multilinear evaluations of shifts of witness polynomials in Sumcheck OR univariate evaluations required in ECCVM
 pub const NUM_MASKED_ROWS: u32 = 3;
 
-// To account for the masked entries of witness polynomials in ZK-Sumcheck, we are disabling all relations in the last
-// `NUM_MASKED_ROWS + 1` rows, where `+1` is needed for the shifts. Namely, any relation involving a shift of a masked
-// polynomial w_shift, can't be satisfied on the row `N - (NUM_MASKED_ROWS + 1)`, as `w_shift.at(N - (NUM_MASKED_ROWS +
-// 1))` is equal to the random value `w.at(N - NUM_MASKED_ROWS)`.
-pub const NUM_DISABLED_ROWS_IN_SUMCHECK: u32 = NUM_MASKED_ROWS + 1;
-
 #[derive(Clone, Debug, Default)]
 pub struct Polynomial<F> {
     pub coefficients: Vec<F>,

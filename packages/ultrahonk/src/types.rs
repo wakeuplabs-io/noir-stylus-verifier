@@ -48,30 +48,11 @@ pub(crate) struct AllEntities<T: Default> {
 }
 
 impl<T: Default> AllEntities<T> {
-    pub(crate) fn iter(&self) -> impl Iterator<Item = &T> {
-        self.precomputed
-            .iter()
-            .chain(self.witness.iter())
-            .chain(self.shifted_witness.iter())
-    }
-
     pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.precomputed
             .iter_mut()
             .chain(self.witness.iter_mut())
             .chain(self.shifted_witness.iter_mut())
-    }
-}
-
-impl<T: Default + Clone> AllEntities<Vec<T>> {
-    pub(crate) fn new(circuit_size: usize) -> Self {
-        let mut polynomials = Self::default();
-        // Shifting is done at a later point
-        polynomials
-            .iter_mut()
-            .for_each(|el| el.resize(circuit_size, Default::default()));
-
-        polynomials
     }
 }
 
