@@ -3,8 +3,8 @@ use crate::decider::{
     types::{ClaimedEvaluations, ProverUnivariates, RelationParameters},
     univariate::Univariate,
 };
-use ark_ff::{PrimeField, Zero};
 use crate::gadgets::poseidon2::POSEIDON2_BN254_T4_PARAMS;
+use ark_ff::{PrimeField, Zero};
 use num_bigint::BigUint;
 
 #[derive(Clone, Debug, Default)]

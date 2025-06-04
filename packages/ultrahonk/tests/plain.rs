@@ -7,9 +7,9 @@ use std::fs::File;
 use std::io::Read;
 use std::marker::PhantomData;
 use std::path::Path;
-use ultrahonk::serialize::Serialize as FieldSerialize;
 use ultrahonk::keys::verification_key::VerifyingKey;
 use ultrahonk::keys::verification_key::VerifyingKeyBarretenberg;
+use ultrahonk::serialize::Serialize as FieldSerialize;
 use ultrahonk::types::ZeroKnowledge;
 use ultrahonk::{
     prelude::{HonkProof, TranscriptHasher, UltraHonk},

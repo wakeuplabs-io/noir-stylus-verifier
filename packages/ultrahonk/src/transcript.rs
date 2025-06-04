@@ -1,11 +1,11 @@
+use crate::honk_curve::HonkCurve;
 use crate::{
     sponge_hasher::{FieldHash, FieldSponge},
     types::HonkProof,
 };
+use crate::{HonkProofError, HonkProofResult};
 use ark_ec::AffineRepr;
 use ark_ff::{One, PrimeField, Zero};
-use crate::{HonkProofError, HonkProofResult};
-use crate::honk_curve::HonkCurve;
 use num_bigint::BigUint;
 use std::{collections::BTreeMap, ops::Index};
 

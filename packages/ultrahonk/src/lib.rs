@@ -1,23 +1,23 @@
 #![warn(clippy::iter_over_hash_type)]
 
-pub(crate) mod honk_curve;
 pub(crate) mod decider;
+pub mod gadgets;
+pub(crate) mod honk_curve;
 pub(crate) mod keccak_hash;
+pub mod keys;
 pub(crate) mod oink;
-pub(crate) mod sponge_hasher;
-pub(crate) mod verifier;
+pub mod polynomials;
 pub mod prelude;
+pub mod serde_compat;
+pub mod serialize;
+pub(crate) mod sponge_hasher;
 pub mod transcript;
 pub mod types;
-pub mod polynomials;
-pub mod keys;
-pub mod serialize;
-pub mod gadgets;
-pub mod serde_compat;
+pub(crate) mod verifier;
 
 // use builder::{HonkProofResult};
-use ark_ec::{ VariableBaseMSM};
 use ark_ec::pairing::Pairing;
+use ark_ec::VariableBaseMSM;
 use ark_ff::PrimeField;
 // use co_builder::HonkProofError;
 
@@ -36,8 +36,6 @@ pub const NUM_GEMINI_CLAIMS: usize = 2 * CONST_PROOF_SIZE_LOG_N + 2;
 // The interleaving trick needed for Translator adds 2 extra claims to Gemini fold claims
 // TODO(https://github.com/AztecProtocol/barretenberg/issues/1293): Decouple Gemini from Interleaving
 pub const NUM_INTERLEAVING_CLAIMS: u32 = 2;
-
-
 
 pub type HonkProofResult<T> = std::result::Result<T, HonkProofError>;
 
@@ -74,7 +72,6 @@ pub enum HonkProofError {
     #[error("Too large Subgroup")]
     LargeSubgroup,
 }
-
 
 pub struct Utils {}
 

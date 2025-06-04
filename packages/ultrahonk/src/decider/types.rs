@@ -1,9 +1,9 @@
 use super::univariate::Univariate;
+use crate::keys::verification_key::VerifyingKey;
 use crate::{types::AllEntities, NUM_ALPHAS};
 use ark_ec::pairing::Pairing;
 use ark_ff::PrimeField;
-use crate::keys::verification_key::VerifyingKey;
-use std::{vec};
+use std::vec;
 
 pub(crate) struct VerifierMemory<P: Pairing> {
     pub(crate) verifier_commitments: VerifierCommitments<P::G1Affine>,

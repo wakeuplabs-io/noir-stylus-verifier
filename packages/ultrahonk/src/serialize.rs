@@ -1,4 +1,6 @@
-use crate::{honk_curve::HonkCurve, HonkProofError, HonkProofResult, transcript::TranscriptFieldType};
+use crate::{
+    honk_curve::HonkCurve, transcript::TranscriptFieldType, HonkProofError, HonkProofResult,
+};
 use ark_ec::{pairing::Pairing, AffineRepr, CurveConfig, CurveGroup};
 use ark_ff::{Field, PrimeField};
 use num_bigint::BigUint;

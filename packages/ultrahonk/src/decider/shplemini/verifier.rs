@@ -7,12 +7,12 @@ use crate::{
         types::{ClaimedEvaluations, VerifierCommitments},
         verifier::DeciderVerifier,
     },
-    transcript::{Transcript, TranscriptHasher, TranscriptFieldType},
+    honk_curve::HonkCurve,
+    transcript::{Transcript, TranscriptFieldType, TranscriptHasher},
+    types::ZeroKnowledge,
     verifier::HonkVerifyResult,
     CONST_PROOF_SIZE_LOG_N, NUM_INTERLEAVING_CLAIMS, NUM_LIBRA_COMMITMENTS,
     NUM_SMALL_IPA_EVALUATIONS,
-    types::ZeroKnowledge,
-    honk_curve::HonkCurve
 };
 use ark_ec::AffineRepr;
 use ark_ff::{Field, One, Zero};

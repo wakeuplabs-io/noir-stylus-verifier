@@ -1,3 +1,4 @@
+use super::super::univariate::Univariate;
 use crate::{
     decider::{
         relations::{
@@ -13,12 +14,11 @@ use crate::{
         },
         types::{ClaimedEvaluations, RelationParameters},
     },
-    prelude::{GateSeparatorPolynomial},
+    honk_curve::HonkCurve,
+    prelude::GateSeparatorPolynomial,
     transcript::TranscriptFieldType,
-    honk_curve::HonkCurve
 };
 use ark_ff::{One, Zero};
-use super::super::univariate::Univariate;
 
 pub(crate) type SumcheckRoundOutput<F, const U: usize> = Univariate<F, U>;
 

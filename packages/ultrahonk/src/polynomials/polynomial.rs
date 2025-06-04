@@ -1,3 +1,4 @@
+use crate::serde_compat;
 use crate::Utils;
 use ark_ff::PrimeField;
 use ark_poly::{univariate::DensePolynomial, DenseUVPolynomial, Polynomial as _};
@@ -6,7 +7,6 @@ use num_traits::Zero;
 use rand::{CryptoRng, Rng};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::ops::{AddAssign, Index, IndexMut, MulAssign, SubAssign};
-use crate::serde_compat;
 
 // The number of last rows in ProverPolynomials that are randomized to mask
 // 1) witness commitments,

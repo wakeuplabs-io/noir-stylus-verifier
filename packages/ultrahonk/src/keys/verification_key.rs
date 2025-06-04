@@ -1,9 +1,10 @@
 use crate::polynomials::polynomial_types::PrecomputedEntities;
 use crate::{
     honk_curve::HonkCurve,
-    polynomials::polynomial_types::{PRECOMPUTED_ENTITIES_SIZE},
+    polynomials::polynomial_types::PRECOMPUTED_ENTITIES_SIZE,
     serialize::{Serialize, SerializeP},
-    HonkProofError, HonkProofResult, transcript::TranscriptFieldType,
+    transcript::TranscriptFieldType,
+    HonkProofError, HonkProofResult,
 };
 use ark_ec::pairing::Pairing;
 use serde::{Deserialize, Serialize as SerdeSerialize};

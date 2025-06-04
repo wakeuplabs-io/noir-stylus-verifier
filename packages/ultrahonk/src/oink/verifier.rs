@@ -1,12 +1,12 @@
 use super::types::VerifierMemory;
+use crate::honk_curve::HonkCurve;
+use crate::keys::verification_key::VerifyingKey;
 use crate::verifier::HonkVerifyResult;
 use crate::{
     transcript::{Transcript, TranscriptFieldType, TranscriptHasher},
     NUM_ALPHAS,
 };
 use ark_ff::One;
-use crate::honk_curve::HonkCurve;
-use crate::keys::verification_key::VerifyingKey;
 use std::{array, marker::PhantomData};
 
 pub(crate) struct Oink<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>>
