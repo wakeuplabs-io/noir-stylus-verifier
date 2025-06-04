@@ -10,26 +10,13 @@ pub(crate) mod ultra_arithmetic_relation;
 use super::types::{ClaimedEvaluations, ProverUnivariates, RelationParameters};
 use ark_ff::PrimeField;
 use auxiliary_relation::{AuxiliaryRelation, AuxiliaryRelationEvals};
-use delta_range_constraint_relation::{
-    DeltaRangeConstraintRelation, DeltaRangeConstraintRelationAcc,
-    DeltaRangeConstraintRelationEvals,
-};
-use elliptic_relation::{EllipticRelation, EllipticRelationAcc, EllipticRelationEvals};
-use logderiv_lookup_relation::{
-    LogDerivLookupRelation, LogDerivLookupRelationAcc, LogDerivLookupRelationEvals,
-};
-use permutation_relation::{
-    UltraPermutationRelation, UltraPermutationRelationAcc, UltraPermutationRelationEvals,
-};
-use poseidon2_external_relation::{
-    Poseidon2ExternalRelation, Poseidon2ExternalRelationAcc, Poseidon2ExternalRelationEvals,
-};
-use poseidon2_internal_relation::{
-    Poseidon2InternalRelation, Poseidon2InternalRelationAcc, Poseidon2InternalRelationEvals,
-};
-use ultra_arithmetic_relation::{
-    UltraArithmeticRelation, UltraArithmeticRelationAcc, UltraArithmeticRelationEvals,
-};
+use delta_range_constraint_relation::{DeltaRangeConstraintRelation, DeltaRangeConstraintRelationEvals};
+use elliptic_relation::{EllipticRelation, EllipticRelationEvals};
+use logderiv_lookup_relation::{LogDerivLookupRelation, LogDerivLookupRelationEvals};
+use permutation_relation::{UltraPermutationRelation, UltraPermutationRelationEvals};
+use poseidon2_external_relation::{Poseidon2ExternalRelation, Poseidon2ExternalRelationEvals};
+use poseidon2_internal_relation::{Poseidon2InternalRelation, Poseidon2InternalRelationEvals};
+use ultra_arithmetic_relation::{UltraArithmeticRelation, UltraArithmeticRelationEvals};
 
 pub(crate) trait Relation<F: PrimeField> {
     type Acc: Default;
