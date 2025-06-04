@@ -10,5 +10,3 @@ target/
 *.pdb
 
 .vscode
-co-noir/co-acvm/src/bin/
-groth16_tester.rs
