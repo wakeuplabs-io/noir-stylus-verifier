@@ -10,7 +10,9 @@ pub(crate) mod ultra_arithmetic_relation;
 use super::types::{ClaimedEvaluations, ProverUnivariates, RelationParameters};
 use ark_ff::PrimeField;
 use auxiliary_relation::{AuxiliaryRelation, AuxiliaryRelationEvals};
-use delta_range_constraint_relation::{DeltaRangeConstraintRelation, DeltaRangeConstraintRelationEvals};
+use delta_range_constraint_relation::{
+    DeltaRangeConstraintRelation, DeltaRangeConstraintRelationEvals,
+};
 use elliptic_relation::{EllipticRelation, EllipticRelationEvals};
 use logderiv_lookup_relation::{LogDerivLookupRelation, LogDerivLookupRelationEvals};
 use permutation_relation::{UltraPermutationRelation, UltraPermutationRelationEvals};
