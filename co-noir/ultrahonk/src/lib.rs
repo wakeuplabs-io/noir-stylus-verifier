@@ -12,6 +12,8 @@ pub mod types;
 pub mod polynomials;
 pub mod keys;
 pub mod serialize;
+pub mod gadgets;
+pub mod serde_compat;
 
 // use builder::{HonkProofResult};
 use ark_ec::{ VariableBaseMSM};

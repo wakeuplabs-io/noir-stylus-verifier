@@ -1,6 +1,5 @@
 [workspace]
 members = [
-    "co-noir/common",
     "co-noir/ultrahonk",
 ]
 resolver = "2"
@@ -8,9 +7,9 @@ resolver = "2"
 [workspace.package]
 edition = "2021"
 rust-version = "1.85"
-authors = ["TACEO GmbH <hello@taceo.io>"]
-homepage = "https://www.taceo.io"
-repository = "https:://github.com/TaceoLabs/collaborative-circom"
+authors = ["Wakeuplabs <hello@wakeuplabs.io>"]
+homepage = "https://www.wakeuplabs.io"
+repository = "https:://github.com/Wakeuplabs/noir-stylus-verifier"
 license = "MIT OR Apache-2.0"
 publish = false
 readme = "./README.md"

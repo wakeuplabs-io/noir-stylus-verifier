@@ -6,6 +6,7 @@ use num_traits::Zero;
 use rand::{CryptoRng, Rng};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::ops::{AddAssign, Index, IndexMut, MulAssign, SubAssign};
+use crate::serde_compat;
 
 // The number of last rows in ProverPolynomials that are randomized to mask
 // 1) witness commitments,
@@ -18,6 +19,7 @@ pub const NUM_MASKED_ROWS: u32 = 3;
 // polynomial w_shift, can't be satisfied on the row `N - (NUM_MASKED_ROWS + 1)`, as `w_shift.at(N - (NUM_MASKED_ROWS +
 // 1))` is equal to the random value `w.at(N - NUM_MASKED_ROWS)`.
 pub const NUM_DISABLED_ROWS_IN_SUMCHECK: u32 = NUM_MASKED_ROWS + 1;
+
 #[derive(Clone, Debug, Default)]
 pub struct Polynomial<F> {
     pub coefficients: Vec<F>,
@@ -25,13 +27,13 @@ pub struct Polynomial<F> {
 
 impl<F: CanonicalSerialize> Serialize for Polynomial<F> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        common::ark_se(&self.coefficients, serializer)
+        serde_compat::ark_se(&self.coefficients, serializer)
     }
 }
 
 impl<'a, F: CanonicalDeserialize> Deserialize<'a> for Polynomial<F> {
     fn deserialize<D: Deserializer<'a>>(deserializer: D) -> Result<Self, D::Error> {
-        let coefficients: Vec<F> = common::ark_de(deserializer)?;
+        let coefficients: Vec<F> = serde_compat::ark_de(deserializer)?;
         Ok(Self { coefficients })
     }
 }

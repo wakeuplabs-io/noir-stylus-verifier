@@ -4,7 +4,7 @@ use crate::decider::{
     univariate::Univariate,
 };
 use ark_ff::{PrimeField, Zero};
-use common::gadgets::poseidon2::POSEIDON2_BN254_T4_PARAMS;
+use crate::gadgets::poseidon2::POSEIDON2_BN254_T4_PARAMS;
 use num_bigint::BigUint;
 
 #[derive(Clone, Debug, Default)]
