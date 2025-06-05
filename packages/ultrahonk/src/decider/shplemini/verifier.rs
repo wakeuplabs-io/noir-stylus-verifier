@@ -6,12 +6,12 @@ use crate::{
     backends::HashBackend, decider::{
         types::{ClaimedEvaluations, VerifierCommitments},
         verifier::DeciderVerifier,
-    }, honk_curve::HonkCurve, transcript::{Transcript, TranscriptFieldType}, types::ZeroKnowledge, verifier::HonkVerifyResult, CONST_PROOF_SIZE_LOG_N, NUM_INTERLEAVING_CLAIMS, NUM_LIBRA_COMMITMENTS, NUM_SMALL_IPA_EVALUATIONS
+    }, honk_curve::HonkCurve, transcript::Transcript, types::{ZeroKnowledge, ScalarField}, verifier::HonkVerifyResult, CONST_PROOF_SIZE_LOG_N, NUM_INTERLEAVING_CLAIMS, NUM_LIBRA_COMMITMENTS, NUM_SMALL_IPA_EVALUATIONS
 };
 use ark_ec::AffineRepr;
 use ark_ff::{Field, One, Zero};
 
-impl<P: HonkCurve<TranscriptFieldType>, H: HashBackend<TranscriptFieldType>> DeciderVerifier<P, H> {
+impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, H> {
     pub fn get_g_shift_evaluations(
         evaluations: &ClaimedEvaluations<P::ScalarField>,
     ) -> PolyGShift<P::ScalarField> {
@@ -43,7 +43,7 @@ impl<P: HonkCurve<TranscriptFieldType>, H: HashBackend<TranscriptFieldType>> Dec
 
     pub fn get_fold_commitments(
         virtual_log_n: u32,
-        transcript: &mut Transcript<TranscriptFieldType, H>,
+        transcript: &mut Transcript<ScalarField, H>,
     ) -> HonkVerifyResult<Vec<P::G1Affine>> {
         let fold_commitments: Vec<_> = (0..virtual_log_n - 1)
             .map(|i| transcript.receive_point_from_prover::<P>(format!("Gemini:FOLD_{}", i + 1)))
@@ -53,7 +53,7 @@ impl<P: HonkCurve<TranscriptFieldType>, H: HashBackend<TranscriptFieldType>> Dec
 
     pub fn get_gemini_evaluations(
         virtual_log_n: u32,
-        transcript: &mut Transcript<TranscriptFieldType, H>,
+        transcript: &mut Transcript<ScalarField, H>,
     ) -> HonkVerifyResult<Vec<P::ScalarField>> {
         let gemini_evaluations: Vec<_> = (1..=virtual_log_n)
             .map(|i| transcript.receive_fr_from_prover::<P>(format!("Gemini:a_{}", i + 1)))
@@ -96,7 +96,7 @@ impl<P: HonkCurve<TranscriptFieldType>, H: HashBackend<TranscriptFieldType>> Dec
     pub fn compute_batch_opening_claim(
         &self,
         multivariate_challenge: Vec<P::ScalarField>,
-        transcript: &mut Transcript<TranscriptFieldType, H>,
+        transcript: &mut Transcript<ScalarField, H>,
         libra_commitments: Option<Vec<P::G1Affine>>,
         libra_univariate_evaluation: Option<P::ScalarField>,
         consistency_checked: &mut bool,

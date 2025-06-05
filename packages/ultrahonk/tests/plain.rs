@@ -16,7 +16,7 @@ use ultrahonk::serialize::Serialize;
 use ultrahonk::types::ZeroKnowledge;
 use ultrahonk::{
     prelude::{HonkProof, UltraHonk},
-    transcript::TranscriptFieldType,
+    types::ScalarField,
 };
 
 pub struct ArkKeccak256<F>(PhantomData<F>);
@@ -68,7 +68,7 @@ impl<P: Pairing> CrsParser<P> {
     }
 }
 
-fn plain_test<H: HashBackend<TranscriptFieldType>>(
+fn plain_test<H: HashBackend<ScalarField>>(
     proof_file: &str,
     vk_file: &str,
     public_inputs_file: &str,
@@ -114,6 +114,6 @@ fn test_iterating_test_vectors() {
         let vk_file = format!("{}/kat/vk", path.display());
         let public_inputs_file = format!("{}/kat/public_inputs", path.display());
 
-        plain_test::<ArkKeccak256<TranscriptFieldType>>(&proof_file, &vk_file, &public_inputs_file);
+        plain_test::<ArkKeccak256<ScalarField>>(&proof_file, &vk_file, &public_inputs_file);
     }
 }

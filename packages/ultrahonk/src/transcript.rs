@@ -1,24 +1,11 @@
 use crate::backends::HashBackend;
 use crate::honk_curve::HonkCurve;
-use crate::{
-    sponge_hasher::{FieldHash, FieldSponge},
-    types::HonkProof,
-};
+use crate::{types::HonkProof};
 use crate::{HonkProofError, HonkProofResult};
 use ark_ec::AffineRepr;
 use ark_ff::{One, PrimeField, Zero};
 use num_bigint::BigUint;
 use std::{collections::BTreeMap, ops::Index};
-
-pub type TranscriptFieldType = ark_bn254::Fr;
-
-impl<F: PrimeField, const T: usize, const R: usize, H: FieldHash<F, T> + Default> HashBackend<F>
-    for FieldSponge<F, T, R, H>
-{
-    fn hash(buffer: Vec<F>) -> F {
-        Self::hash_fixed_length::<1>(&buffer)[0]
-    }
-}
 
 pub struct Transcript<F, H>
 where

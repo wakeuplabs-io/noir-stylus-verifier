@@ -8,18 +8,18 @@ use crate::{
     },
     honk_curve::HonkCurve,
     prelude::GateSeparatorPolynomial,
-    transcript::{Transcript, TranscriptFieldType},
-    types::{ZeroKnowledge, NUM_ALL_ENTITIES},
+    transcript::Transcript,
+    types::{ZeroKnowledge, ScalarField, NUM_ALL_ENTITIES},
     verifier::HonkVerifyResult,
     CONST_PROOF_SIZE_LOG_N,
 };
 use ark_ff::{One, Zero};
 
 // Keep in mind, the UltraHonk protocol (UltraFlavor) does not per default have ZK
-impl<P: HonkCurve<TranscriptFieldType>, H: HashBackend<TranscriptFieldType>> DeciderVerifier<P, H> {
+impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, H> {
     pub(crate) fn sumcheck_verify<const SIZE: usize>(
         &mut self,
-        transcript: &mut Transcript<TranscriptFieldType, H>,
+        transcript: &mut Transcript<ScalarField, H>,
         has_zk: ZeroKnowledge,
         padding_indicator_array: &[P::ScalarField; CONST_PROOF_SIZE_LOG_N],
     ) -> HonkVerifyResult<SumcheckVerifierOutput<P::ScalarField>> {

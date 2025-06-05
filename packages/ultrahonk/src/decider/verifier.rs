@@ -1,18 +1,24 @@
 use super::{shplemini::ShpleminiVerifierOpeningClaim, types::VerifierMemory};
 use crate::{
-    backends::HashBackend, decider::types::{BATCHED_RELATION_PARTIAL_LENGTH, BATCHED_RELATION_PARTIAL_LENGTH_ZK}, honk_curve::HonkCurve, transcript::{Transcript, TranscriptFieldType}, types::ZeroKnowledge, verifier::HonkVerifyResult, Utils, CONST_PROOF_SIZE_LOG_N, NUM_LIBRA_COMMITMENTS
+    backends::HashBackend,
+    decider::types::{BATCHED_RELATION_PARTIAL_LENGTH, BATCHED_RELATION_PARTIAL_LENGTH_ZK},
+    honk_curve::HonkCurve,
+    transcript::Transcript,
+    types::{ScalarField, ZeroKnowledge},
+    verifier::HonkVerifyResult,
+    Utils, CONST_PROOF_SIZE_LOG_N, NUM_LIBRA_COMMITMENTS,
 };
 use ark_ec::AffineRepr;
 use ark_ff::{One, Zero};
 use std::marker::PhantomData;
 
-pub(crate) struct DeciderVerifier<P: HonkCurve<TranscriptFieldType>, H: HashBackend<TranscriptFieldType>> {
+pub(crate) struct DeciderVerifier<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> {
     pub(super) memory: VerifierMemory<P>,
     phantom_data: PhantomData<P>,
     phantom_hasher: PhantomData<H>,
 }
 
-impl<P: HonkCurve<TranscriptFieldType>, H: HashBackend<TranscriptFieldType>> DeciderVerifier<P, H> {
+impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, H> {
     pub(crate) fn new(memory: VerifierMemory<P>) -> Self {
         Self {
             memory,
@@ -23,7 +29,7 @@ impl<P: HonkCurve<TranscriptFieldType>, H: HashBackend<TranscriptFieldType>> Dec
 
     pub(crate) fn reduce_verify_shplemini(
         opening_pair: &mut ShpleminiVerifierOpeningClaim<P>,
-        mut transcript: Transcript<TranscriptFieldType, H>,
+        mut transcript: Transcript<ScalarField, H>,
     ) -> HonkVerifyResult<(P::G1Affine, P::G1Affine)> {
         tracing::trace!("Reduce and verify opening pair");
 
@@ -52,7 +58,7 @@ impl<P: HonkCurve<TranscriptFieldType>, H: HashBackend<TranscriptFieldType>> Dec
         mut self,
         circuit_size: u32,
         crs: &P::G2Affine,
-        mut transcript: Transcript<TranscriptFieldType, H>,
+        mut transcript: Transcript<ScalarField, H>,
         has_zk: ZeroKnowledge,
     ) -> HonkVerifyResult<bool> {
         tracing::trace!("Decider verification");

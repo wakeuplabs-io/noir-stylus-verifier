@@ -1,5 +1,5 @@
 use crate::{
-    honk_curve::HonkCurve, transcript::TranscriptFieldType, HonkProofError, HonkProofResult,
+    honk_curve::HonkCurve, types::ScalarField, HonkProofError, HonkProofResult,
 };
 use ark_ec::{pairing::Pairing, AffineRepr, CurveConfig, CurveGroup};
 use ark_ff::{Field, PrimeField};
@@ -165,7 +165,7 @@ impl<C: CurveGroup> SerializeC<C> {
     }
 }
 
-impl<P: HonkCurve<TranscriptFieldType>> SerializeP<P> {
+impl<P: HonkCurve<ScalarField>> SerializeP<P> {
     const NUM_64_LIMBS: u32 = P::BaseField::MODULUS_BIT_SIZE.div_ceil(64);
     pub const FIELDSIZE_BYTES: u32 = Self::NUM_64_LIMBS * 8;
 

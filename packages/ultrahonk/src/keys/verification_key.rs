@@ -3,7 +3,7 @@ use crate::{
     honk_curve::HonkCurve,
     polynomials::polynomial_types::PRECOMPUTED_ENTITIES_SIZE,
     serialize::{Serialize, SerializeP},
-    transcript::TranscriptFieldType,
+    types::ScalarField,
     HonkProofError, HonkProofResult,
 };
 use ark_ec::pairing::Pairing;
@@ -68,7 +68,7 @@ impl PublicComponentKey {
     }
 }
 
-impl<P: HonkCurve<TranscriptFieldType>> VerifyingKeyBarretenberg<P> {
+impl<P: HonkCurve<ScalarField>> VerifyingKeyBarretenberg<P> {
     const FIELDSIZE_BYTES: u32 = SerializeP::<P>::FIELDSIZE_BYTES;
     const SER_FULL_SIZE: usize =
         4 * 8 + 4 + PRECOMPUTED_ENTITIES_SIZE * 2 * Self::FIELDSIZE_BYTES as usize;
