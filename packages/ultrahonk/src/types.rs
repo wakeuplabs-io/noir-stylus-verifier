@@ -1,9 +1,9 @@
 pub use crate::polynomials::polynomial_types::{PrecomputedEntities, PRECOMPUTED_ENTITIES_SIZE};
 use crate::serialize::Serialize;
 use crate::HonkProofResult;
-use ark_ff::PrimeField;
 use ark_bn254::{g1::Config as G1Config, g2::Config as G2Config, Fq, Fq2, Fr};
 use ark_ec::short_weierstrass::Affine;
+use ark_ff::PrimeField;
 
 /// Type alias for an element of the scalar field of the Bn254 curve
 pub type ScalarField = Fr;

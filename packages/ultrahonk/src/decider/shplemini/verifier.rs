@@ -3,10 +3,17 @@ use super::{
     ShpleminiVerifierOpeningClaim,
 };
 use crate::{
-    backends::HashBackend, decider::{
+    backends::HashBackend,
+    decider::{
         types::{ClaimedEvaluations, VerifierCommitments},
         verifier::DeciderVerifier,
-    }, honk_curve::HonkCurve, transcript::Transcript, types::{ZeroKnowledge, ScalarField}, verifier::HonkVerifyResult, CONST_PROOF_SIZE_LOG_N, NUM_INTERLEAVING_CLAIMS, NUM_LIBRA_COMMITMENTS, NUM_SMALL_IPA_EVALUATIONS
+    },
+    honk_curve::HonkCurve,
+    transcript::Transcript,
+    types::{ScalarField, ZeroKnowledge},
+    verifier::HonkVerifyResult,
+    CONST_PROOF_SIZE_LOG_N, NUM_INTERLEAVING_CLAIMS, NUM_LIBRA_COMMITMENTS,
+    NUM_SMALL_IPA_EVALUATIONS,
 };
 use ark_ec::AffineRepr;
 use ark_ff::{Field, One, Zero};

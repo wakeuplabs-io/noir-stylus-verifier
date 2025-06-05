@@ -9,7 +9,7 @@ use crate::{
     honk_curve::HonkCurve,
     prelude::GateSeparatorPolynomial,
     transcript::Transcript,
-    types::{ZeroKnowledge, ScalarField, NUM_ALL_ENTITIES},
+    types::{ScalarField, ZeroKnowledge, NUM_ALL_ENTITIES},
     verifier::HonkVerifyResult,
     CONST_PROOF_SIZE_LOG_N,
 };

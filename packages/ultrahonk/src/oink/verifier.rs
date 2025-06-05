@@ -1,18 +1,12 @@
 use super::types::VerifierMemory;
 use crate::{
-    transcript::Transcript,
-    types::ScalarField,
-    verifier::HonkVerifyResult,
-    backends::HashBackend,
-    honk_curve::HonkCurve,
-    keys::verification_key::VerifyingKey,
-    NUM_ALPHAS,
+    backends::HashBackend, honk_curve::HonkCurve, keys::verification_key::VerifyingKey,
+    transcript::Transcript, types::ScalarField, verifier::HonkVerifyResult, NUM_ALPHAS,
 };
 use ark_ff::One;
 use std::{array, marker::PhantomData};
 
-pub(crate) struct Oink<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>>
-{
+pub(crate) struct Oink<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> {
     phantom_data: PhantomData<P>,
     phantom_hasher: PhantomData<H>,
 }
@@ -90,10 +84,7 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> Oink<P, H> {
     }
 }
 
-pub(crate) struct OinkVerifier<
-    P: HonkCurve<ScalarField>,
-    H: HashBackend<ScalarField>,
-> {
+pub(crate) struct OinkVerifier<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> {
     memory: VerifierMemory<P>,
     pub public_inputs: Vec<P::ScalarField>,
     phantom_hasher: std::marker::PhantomData<H>,

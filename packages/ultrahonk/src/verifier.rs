@@ -4,8 +4,8 @@ use crate::{
     honk_curve::HonkCurve,
     keys::verification_key::VerifyingKey,
     oink::verifier::OinkVerifier,
-    transcript::{Transcript},
-    types::{HonkProof, ZeroKnowledge, ScalarField},
+    transcript::Transcript,
+    types::{HonkProof, ScalarField, ZeroKnowledge},
     CONST_PROOF_SIZE_LOG_N,
 };
 use ark_ec::pairing::Pairing;

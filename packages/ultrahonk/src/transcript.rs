@@ -1,6 +1,6 @@
 use crate::backends::HashBackend;
 use crate::honk_curve::HonkCurve;
-use crate::{types::HonkProof};
+use crate::types::HonkProof;
 use crate::{HonkProofError, HonkProofResult};
 use ark_ec::AffineRepr;
 use ark_ff::{One, PrimeField, Zero};

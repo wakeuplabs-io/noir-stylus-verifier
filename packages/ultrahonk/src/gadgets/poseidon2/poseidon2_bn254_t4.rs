@@ -1,9 +1,8 @@
-
 /// Parameters are compatible with the original Poseidon2 parameter generation script found at:
 /// [https://github.com/HorizenLabs/poseidon2/blob/main/poseidon2_rust_params.sage](https://github.com/HorizenLabs/poseidon2/blob/main/poseidon2_rust_params.sage)
 use super::Poseidon2Params;
-use std::sync::LazyLock;
 use crate::types::ScalarField;
+use std::sync::LazyLock;
 
 const T: usize = 4;
 const D: u64 = 5;

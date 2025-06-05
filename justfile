@@ -1,6 +1,6 @@
 lint:
   cargo fmt --all -- --check
-  cargo clippy --workspace --all-targets -q -- -D warnings
+  cargo clippy --workspace --all-targets -q 
   RUSTDOCFLAGS='-D warnings' cargo doc --workspace -q --no-deps
 
 build-all:

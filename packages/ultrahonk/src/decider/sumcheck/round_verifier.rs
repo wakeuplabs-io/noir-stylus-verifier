@@ -16,7 +16,7 @@ use crate::{
     },
     honk_curve::HonkCurve,
     prelude::GateSeparatorPolynomial,
-    types::ScalarField
+    types::ScalarField,
 };
 use ark_ff::{One, Zero};
 
