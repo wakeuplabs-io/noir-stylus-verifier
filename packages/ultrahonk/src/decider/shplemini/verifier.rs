@@ -137,8 +137,8 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
         let p_pos = P::ScalarField::zero();
         let p_neg = P::ScalarField::zero();
         // if (claim_batcher.interleaved) {
-        //     p_pos = transcript->template receive_from_prover<Fr>("Gemini:P_pos");
-        //     p_neg = transcript->template receive_from_prover<Fr>("Gemini:P_neg");
+        //     p_pos = transcript->template receive_from_prover<ScalarField>("Gemini:P_pos");
+        //     p_neg = transcript->template receive_from_prover<ScalarField>("Gemini:P_neg");
         // }
 
         // - Compute vector (r, r², ... , r^{2^{d-1}}), where d = log_n
