@@ -1,23 +1,23 @@
 #![warn(clippy::iter_over_hash_type)]
 
+pub(crate) mod backends;
 pub(crate) mod decider;
-pub mod gadgets;
 pub(crate) mod honk_curve;
-pub(crate) mod keccak_hash;
-pub mod keys;
 pub(crate) mod oink;
+pub(crate) mod sponge_hasher;
+pub(crate) mod verifier;
+pub mod gadgets;
+pub mod keys;
 pub mod polynomials;
 pub mod prelude;
 pub mod serde_compat;
 pub mod serialize;
-pub(crate) mod sponge_hasher;
 pub mod transcript;
 pub mod types;
-pub(crate) mod verifier;
 
+use ark_ff::PrimeField;
 use ark_ec::pairing::Pairing;
 use ark_ec::VariableBaseMSM;
-use ark_ff::PrimeField;
 
 pub const NUM_ALPHAS: usize = decider::relations::NUM_SUBRELATIONS - 1;
 /// The log of the max circuit size assumed in order to achieve constant sized Honk proofs

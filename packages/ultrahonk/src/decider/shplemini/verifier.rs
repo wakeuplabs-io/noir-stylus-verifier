@@ -3,23 +3,15 @@ use super::{
     ShpleminiVerifierOpeningClaim,
 };
 use crate::{
-    decider::{
+    backends::HashBackend, decider::{
         types::{ClaimedEvaluations, VerifierCommitments},
         verifier::DeciderVerifier,
-    },
-    honk_curve::HonkCurve,
-    transcript::{Transcript, TranscriptFieldType, TranscriptHasher},
-    types::ZeroKnowledge,
-    verifier::HonkVerifyResult,
-    CONST_PROOF_SIZE_LOG_N, NUM_INTERLEAVING_CLAIMS, NUM_LIBRA_COMMITMENTS,
-    NUM_SMALL_IPA_EVALUATIONS,
+    }, honk_curve::HonkCurve, transcript::{Transcript, TranscriptFieldType}, types::ZeroKnowledge, verifier::HonkVerifyResult, CONST_PROOF_SIZE_LOG_N, NUM_INTERLEAVING_CLAIMS, NUM_LIBRA_COMMITMENTS, NUM_SMALL_IPA_EVALUATIONS
 };
 use ark_ec::AffineRepr;
 use ark_ff::{Field, One, Zero};
 
-impl<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>>
-    DeciderVerifier<P, H>
-{
+impl<P: HonkCurve<TranscriptFieldType>, H: HashBackend<TranscriptFieldType>> DeciderVerifier<P, H> {
     pub fn get_g_shift_evaluations(
         evaluations: &ClaimedEvaluations<P::ScalarField>,
     ) -> PolyGShift<P::ScalarField> {

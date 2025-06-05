@@ -1,29 +1,28 @@
 use super::types::VerifierMemory;
+use crate::backends::HashBackend;
 use crate::honk_curve::HonkCurve;
 use crate::keys::verification_key::VerifyingKey;
 use crate::verifier::HonkVerifyResult;
 use crate::{
-    transcript::{Transcript, TranscriptFieldType, TranscriptHasher},
+    transcript::{Transcript, TranscriptFieldType},
     NUM_ALPHAS,
 };
 use ark_ff::One;
 use std::{array, marker::PhantomData};
 
-pub(crate) struct Oink<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>>
+pub(crate) struct Oink<P: HonkCurve<TranscriptFieldType>, H: HashBackend<TranscriptFieldType>>
 {
     phantom_data: PhantomData<P>,
     phantom_hasher: PhantomData<H>,
 }
 
-impl<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>> Default
-    for Oink<P, H>
-{
+impl<P: HonkCurve<TranscriptFieldType>, H: HashBackend<TranscriptFieldType>> Default for Oink<P, H> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>> Oink<P, H> {
+impl<P: HonkCurve<TranscriptFieldType>, H: HashBackend<TranscriptFieldType>> Oink<P, H> {
     pub(crate) fn new() -> Self {
         Self {
             phantom_data: PhantomData,
@@ -92,24 +91,20 @@ impl<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>
 
 pub(crate) struct OinkVerifier<
     P: HonkCurve<TranscriptFieldType>,
-    H: TranscriptHasher<TranscriptFieldType>,
+    H: HashBackend<TranscriptFieldType>,
 > {
     memory: VerifierMemory<P>,
     pub public_inputs: Vec<P::ScalarField>,
     phantom_hasher: std::marker::PhantomData<H>,
 }
 
-impl<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>> Default
-    for OinkVerifier<P, H>
-{
+impl<P: HonkCurve<TranscriptFieldType>, H: HashBackend<TranscriptFieldType>> Default for OinkVerifier<P, H> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>>
-    OinkVerifier<P, H>
-{
+impl<P: HonkCurve<TranscriptFieldType>, H: HashBackend<TranscriptFieldType>> OinkVerifier<P, H> {
     pub(crate) fn new() -> Self {
         Self {
             memory: VerifierMemory::default(),

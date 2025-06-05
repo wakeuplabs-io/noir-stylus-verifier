@@ -2,6 +2,23 @@ pub use crate::polynomials::polynomial_types::{PrecomputedEntities, PRECOMPUTED_
 use crate::serialize::Serialize;
 use crate::HonkProofResult;
 use ark_ff::PrimeField;
+use ark_bn254::{g1::Config as G1Config, g2::Config as G2Config, Fq, Fq2, Fr};
+use ark_ec::short_weierstrass::Affine;
+
+/// Type alias for an element of the scalar field of the Bn254 curve
+pub type ScalarField = Fr;
+
+/// Type alias for an element of the Bn254 curve's G1 pairing group
+pub type G1Affine = Affine<G1Config>;
+
+/// Type alias for an element of the Bn254 curve's G2 pairing group
+pub type G2Affine = Affine<G2Config>;
+
+/// Type alias for an element of the Bn254 curve's G1 pairing group's base field
+pub type G1BaseField = Fq;
+
+/// Type alias for an element of the Bn254 curve's G2 pairing group's base field
+pub type G2BaseField = Fq2;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct HonkProof<F: PrimeField> {

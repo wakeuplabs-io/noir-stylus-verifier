@@ -1,28 +1,18 @@
 use super::{shplemini::ShpleminiVerifierOpeningClaim, types::VerifierMemory};
 use crate::{
-    decider::types::{BATCHED_RELATION_PARTIAL_LENGTH, BATCHED_RELATION_PARTIAL_LENGTH_ZK},
-    honk_curve::HonkCurve,
-    transcript::{Transcript, TranscriptFieldType, TranscriptHasher},
-    types::ZeroKnowledge,
-    verifier::HonkVerifyResult,
-    Utils, CONST_PROOF_SIZE_LOG_N, NUM_LIBRA_COMMITMENTS,
+    backends::HashBackend, decider::types::{BATCHED_RELATION_PARTIAL_LENGTH, BATCHED_RELATION_PARTIAL_LENGTH_ZK}, honk_curve::HonkCurve, transcript::{Transcript, TranscriptFieldType}, types::ZeroKnowledge, verifier::HonkVerifyResult, Utils, CONST_PROOF_SIZE_LOG_N, NUM_LIBRA_COMMITMENTS
 };
 use ark_ec::AffineRepr;
 use ark_ff::{One, Zero};
 use std::marker::PhantomData;
 
-pub(crate) struct DeciderVerifier<
-    P: HonkCurve<TranscriptFieldType>,
-    H: TranscriptHasher<TranscriptFieldType>,
-> {
+pub(crate) struct DeciderVerifier<P: HonkCurve<TranscriptFieldType>, H: HashBackend<TranscriptFieldType>> {
     pub(super) memory: VerifierMemory<P>,
     phantom_data: PhantomData<P>,
     phantom_hasher: PhantomData<H>,
 }
 
-impl<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>>
-    DeciderVerifier<P, H>
-{
+impl<P: HonkCurve<TranscriptFieldType>, H: HashBackend<TranscriptFieldType>> DeciderVerifier<P, H> {
     pub(crate) fn new(memory: VerifierMemory<P>) -> Self {
         Self {
             memory,

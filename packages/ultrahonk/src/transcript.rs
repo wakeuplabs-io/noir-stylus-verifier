@@ -1,3 +1,4 @@
+use crate::backends::HashBackend;
 use crate::honk_curve::HonkCurve;
 use crate::{
     sponge_hasher::{FieldHash, FieldSponge},
@@ -11,12 +12,8 @@ use std::{collections::BTreeMap, ops::Index};
 
 pub type TranscriptFieldType = ark_bn254::Fr;
 
-pub trait TranscriptHasher<F: PrimeField> {
-    fn hash(buffer: Vec<F>) -> F;
-}
-
-impl<F: PrimeField, const T: usize, const R: usize, H: FieldHash<F, T> + Default>
-    TranscriptHasher<F> for FieldSponge<F, T, R, H>
+impl<F: PrimeField, const T: usize, const R: usize, H: FieldHash<F, T> + Default> HashBackend<F>
+    for FieldSponge<F, T, R, H>
 {
     fn hash(buffer: Vec<F>) -> F {
         Self::hash_fixed_length::<1>(&buffer)[0]
@@ -26,7 +23,7 @@ impl<F: PrimeField, const T: usize, const R: usize, H: FieldHash<F, T> + Default
 pub struct Transcript<F, H>
 where
     F: PrimeField,
-    H: TranscriptHasher<F>,
+    H: HashBackend<F>,
 {
     proof_data: Vec<F>,
     manifest: TranscriptManifest,
@@ -42,7 +39,7 @@ where
 impl<F, H> Default for Transcript<F, H>
 where
     F: PrimeField,
-    H: TranscriptHasher<F>,
+    H: HashBackend<F>,
 {
     fn default() -> Self {
         Self::new()
@@ -52,7 +49,7 @@ where
 impl<F, H> Transcript<F, H>
 where
     F: PrimeField,
-    H: TranscriptHasher<F>,
+    H: HashBackend<F>,
 {
     pub fn new() -> Self {
         Self {

@@ -1,23 +1,24 @@
 use crate::{
+    backends::HashBackend,
     decider::{types::VerifierMemory, verifier::DeciderVerifier},
     honk_curve::HonkCurve,
     keys::verification_key::VerifyingKey,
     oink::verifier::OinkVerifier,
-    transcript::{Transcript, TranscriptFieldType, TranscriptHasher},
+    transcript::{Transcript, TranscriptFieldType},
     types::{HonkProof, ZeroKnowledge},
     CONST_PROOF_SIZE_LOG_N,
 };
 use ark_ec::pairing::Pairing;
 use std::marker::PhantomData;
 
-pub struct UltraHonk<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>> {
+pub struct UltraHonk<P: HonkCurve<TranscriptFieldType>, H: HashBackend<TranscriptFieldType>> {
     phantom_data: PhantomData<P>,
     phantom_hasher: PhantomData<H>,
 }
 
 pub(crate) type HonkVerifyResult<T> = std::result::Result<T, eyre::Report>;
 
-impl<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>> UltraHonk<P, H> {
+impl<P: HonkCurve<TranscriptFieldType>, H: HashBackend<TranscriptFieldType>> UltraHonk<P, H> {
     pub(crate) fn generate_gate_challenges(
         transcript: &mut Transcript<TranscriptFieldType, H>,
     ) -> Vec<P::ScalarField> {
