@@ -2,8 +2,7 @@ pub use crate::polynomials::polynomial_types::{PrecomputedEntities, PRECOMPUTED_
 use crate::serialize::Serialize;
 use crate::HonkProofResult;
 use ark_bn254::{g1::Config as G1Config, g2::Config as G2Config, Fq, Fq2, Fr};
-use ark_ec::short_weierstrass::Affine;
-use ark_ff::PrimeField;
+use ark_ec::{short_weierstrass::Affine};
 
 /// Type alias for an element of the scalar field of the Bn254 curve
 pub type ScalarField = Fr;
@@ -20,17 +19,20 @@ pub type G1BaseField = Fq;
 /// Type alias for an element of the Bn254 curve's G2 pairing group's base field
 pub type G2BaseField = Fq2;
 
+/// Type alias for the G1 group of the curve
+pub type G1Projective = ark_bn254::G1Projective;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct HonkProof<F: PrimeField> {
-    proof: Vec<F>,
+pub struct HonkProof {
+    proof: Vec<ScalarField>,
 }
 
-impl<F: PrimeField> HonkProof<F> {
-    pub(crate) fn new(proof: Vec<F>) -> Self {
+impl HonkProof {
+    pub(crate) fn new(proof: Vec<ScalarField>) -> Self {
         Self { proof }
     }
 
-    pub fn inner(self) -> Vec<F> {
+    pub fn inner(self) -> Vec<ScalarField> {
         self.proof
     }
 
@@ -43,12 +45,12 @@ impl<F: PrimeField> HonkProof<F> {
         Ok(Self::new(res))
     }
 
-    pub fn separate_proof_and_public_inputs(self, num_public_inputs: usize) -> (Self, Vec<F>) {
+    pub fn separate_proof_and_public_inputs(self, num_public_inputs: usize) -> (Self, Vec<ScalarField>) {
         let (public_inputs, proof) = self.proof.split_at(num_public_inputs);
         (Self::new(proof.to_vec()), public_inputs.to_vec())
     }
 
-    pub fn insert_public_inputs(self, public_inputs: Vec<F>) -> Self {
+    pub fn insert_public_inputs(self, public_inputs: Vec<ScalarField>) -> Self {
         let mut proof = public_inputs;
         proof.extend(self.proof.to_owned());
         Self::new(proof)

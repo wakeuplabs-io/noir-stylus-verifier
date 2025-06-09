@@ -1,4 +1,5 @@
 use crate::polynomials::polynomial_types::PrecomputedEntities;
+use crate::types::{G1Affine, G2Affine};
 use crate::{
     honk_curve::HonkCurve,
     polynomials::polynomial_types::PRECOMPUTED_ENTITIES_SIZE,
@@ -6,23 +7,22 @@ use crate::{
     types::ScalarField,
     HonkProofError, HonkProofResult,
 };
-use ark_ec::pairing::Pairing;
 use serde::{Deserialize, Serialize as SerdeSerialize};
 
 #[derive(Clone)]
-pub struct VerifyingKey<P: Pairing> {
-    pub crs: P::G2Affine,
+pub struct VerifyingKey {
+    pub crs: G2Affine,
     pub circuit_size: u32,
     pub num_public_inputs: u32,
     pub pub_inputs_offset: u32,
     pub pairing_inputs_public_input_key: PublicComponentKey,
-    pub commitments: PrecomputedEntities<P::G1Affine>,
+    pub commitments: PrecomputedEntities<G1Affine>,
 }
 
-impl<P: Pairing> VerifyingKey<P> {
+impl VerifyingKey {
     pub fn from_barrettenberg_and_crs(
-        barretenberg_vk: VerifyingKeyBarretenberg<P>,
-        crs: P::G2Affine,
+        barretenberg_vk: VerifyingKeyBarretenberg,
+        crs: G2Affine,
     ) -> Self {
         Self {
             crs,
@@ -35,13 +35,13 @@ impl<P: Pairing> VerifyingKey<P> {
     }
 }
 
-pub struct VerifyingKeyBarretenberg<P: Pairing> {
+pub struct VerifyingKeyBarretenberg {
     pub circuit_size: u64,
     pub log_circuit_size: u64,
     pub num_public_inputs: u64,
     pub pub_inputs_offset: u64,
     pub pairing_inputs_public_input_key: PublicComponentKey,
-    pub commitments: PrecomputedEntities<P::G1Affine>,
+    pub commitments: PrecomputedEntities<G1Affine>,
 }
 
 #[derive(Clone, Copy, Debug, SerdeSerialize, Deserialize)]
@@ -68,8 +68,8 @@ impl PublicComponentKey {
     }
 }
 
-impl<P: HonkCurve<ScalarField>> VerifyingKeyBarretenberg<P> {
-    const FIELDSIZE_BYTES: u32 = SerializeP::<P>::FIELDSIZE_BYTES;
+impl VerifyingKeyBarretenberg {
+    const FIELDSIZE_BYTES: u32 = SerializeP::FIELDSIZE_BYTES;
     const SER_FULL_SIZE: usize =
         4 * 8 + 4 + PRECOMPUTED_ENTITIES_SIZE * 2 * Self::FIELDSIZE_BYTES as usize;
     const SER_COMPRESSED_SIZE: usize = Self::SER_FULL_SIZE - 4;
@@ -82,13 +82,13 @@ impl<P: HonkCurve<ScalarField>> VerifyingKeyBarretenberg<P> {
         }
 
         // Read data
-        let circuit_size = Serialize::<P::ScalarField>::read_u64(buf, &mut offset);
-        let log_circuit_size = Serialize::<P::ScalarField>::read_u64(buf, &mut offset);
-        let num_public_inputs = Serialize::<P::ScalarField>::read_u64(buf, &mut offset);
-        let pub_inputs_offset = Serialize::<P::ScalarField>::read_u64(buf, &mut offset);
+        let circuit_size = Serialize::<ScalarField>::read_u64(buf, &mut offset);
+        let log_circuit_size = Serialize::<ScalarField>::read_u64(buf, &mut offset);
+        let num_public_inputs = Serialize::<ScalarField>::read_u64(buf, &mut offset);
+        let pub_inputs_offset = Serialize::<ScalarField>::read_u64(buf, &mut offset);
         let pairing_inputs_public_input_key = if size == Self::SER_FULL_SIZE {
             PublicComponentKey {
-                start_idx: Serialize::<P::ScalarField>::read_u32(buf, &mut offset),
+                start_idx: Serialize::<ScalarField>::read_u32(buf, &mut offset),
             }
         } else {
             Default::default()
@@ -97,7 +97,7 @@ impl<P: HonkCurve<ScalarField>> VerifyingKeyBarretenberg<P> {
         let mut commitments = PrecomputedEntities::default();
 
         for el in commitments.iter_mut() {
-            *el = SerializeP::<P>::read_g1_element(buf, &mut offset, true);
+            *el = SerializeP::read_g1_element(buf, &mut offset, true);
         }
 
         debug_assert!(offset == Self::SER_FULL_SIZE || offset == Self::SER_COMPRESSED_SIZE);

@@ -16,13 +16,13 @@ use crate::{
 use ark_ff::{One, Zero};
 
 // Keep in mind, the UltraHonk protocol (UltraFlavor) does not per default have ZK
-impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, H> {
+impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
     pub(crate) fn sumcheck_verify<const SIZE: usize>(
         &mut self,
-        transcript: &mut Transcript<ScalarField, H>,
+        transcript: &mut Transcript<H>,
         has_zk: ZeroKnowledge,
-        padding_indicator_array: &[P::ScalarField; CONST_PROOF_SIZE_LOG_N],
-    ) -> HonkVerifyResult<SumcheckVerifierOutput<P::ScalarField>> {
+        padding_indicator_array: &[ScalarField; CONST_PROOF_SIZE_LOG_N],
+    ) -> HonkVerifyResult<SumcheckVerifierOutput<ScalarField>> {
         tracing::trace!("Sumcheck verify");
 
         let mut verified: bool = true;
@@ -35,7 +35,7 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
         );
 
         let mut sum_check_round = SumcheckVerifierRound::<P>::default();
-        let mut libra_challenge = P::ScalarField::one();
+        let mut libra_challenge = ScalarField::one();
         if has_zk == ZeroKnowledge::Yes {
             // If running zero-knowledge sumcheck the target total sum is corrected by the claimed sum of libra masking
             // multivariate over the hypercube
@@ -128,7 +128,7 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
 
     fn pad_gate_challenges(&mut self) {
         if self.memory.relation_parameters.gate_challenges.len() < CONST_PROOF_SIZE_LOG_N {
-            let zero = P::ScalarField::zero();
+            let zero = ScalarField::zero();
             for _ in self.memory.relation_parameters.gate_challenges.len()..CONST_PROOF_SIZE_LOG_N {
                 self.memory.relation_parameters.gate_challenges.push(zero);
             }

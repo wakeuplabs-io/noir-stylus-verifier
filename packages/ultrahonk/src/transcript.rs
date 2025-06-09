@@ -1,42 +1,39 @@
 use crate::backends::HashBackend;
 use crate::honk_curve::HonkCurve;
-use crate::types::HonkProof;
+use crate::types::{G1Affine, G1BaseField, HonkProof, ScalarField};
 use crate::{HonkProofError, HonkProofResult};
 use ark_ec::AffineRepr;
-use ark_ff::{One, PrimeField, Zero};
+use ark_ff::{One, Zero};
 use num_bigint::BigUint;
 use std::{collections::BTreeMap, ops::Index};
 
-pub struct Transcript<F, H>
+pub struct Transcript<H>
 where
-    F: PrimeField,
-    H: HashBackend<F>,
+    H: HashBackend,
 {
-    proof_data: Vec<F>,
+    proof_data: Vec<ScalarField>,
     manifest: TranscriptManifest,
     num_frs_written: usize, // the number of bb::frs written to proof_data by the prover or the verifier
     num_frs_read: usize,    // the number of bb::frs read from proof_data by the verifier
     round_number: usize,
     is_first_challenge: bool,
-    current_round_data: Vec<F>,
-    previous_challenge: F,
+    current_round_data: Vec<ScalarField>,
+    previous_challenge: ScalarField,
     phantom_data: std::marker::PhantomData<H>,
 }
 
-impl<F, H> Default for Transcript<F, H>
+impl<H> Default for Transcript<H>
 where
-    F: PrimeField,
-    H: HashBackend<F>,
+    H: HashBackend,
 {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<F, H> Transcript<F, H>
+impl<H> Transcript<H>
 where
-    F: PrimeField,
-    H: HashBackend<F>,
+    H: HashBackend,
 {
     pub fn new() -> Self {
         Self {
@@ -52,7 +49,7 @@ where
         }
     }
 
-    pub fn new_verifier(proof: HonkProof<F>) -> Self {
+    pub fn new_verifier(proof: HonkProof) -> Self {
         Self {
             proof_data: proof.inner(),
             manifest: Default::default(),
@@ -66,7 +63,7 @@ where
         }
     }
 
-    pub fn get_proof(self) -> HonkProof<F> {
+    pub fn get_proof(self) -> HonkProof {
         HonkProof::new(self.proof_data)
     }
 
@@ -80,7 +77,7 @@ where
         &self.manifest
     }
 
-    fn add_element_frs_to_hash_buffer(&mut self, label: String, elements: &[F]) {
+    fn add_element_frs_to_hash_buffer(&mut self, label: String, elements: &[ScalarField]) {
         // Add an entry to the current round of the manifest
         let len = elements.len();
         self.manifest.add_entry(self.round_number, label, len);
@@ -88,12 +85,12 @@ where
         self.num_frs_written += len;
     }
 
-    fn convert_point<P: HonkCurve<F>>(element: P::G1Affine) -> Vec<F> {
+    fn convert_point<P: HonkCurve>(element: G1Affine) -> Vec<ScalarField> {
         let (x, y) = if element.is_zero() {
             // we are at infinity
-            (P::BaseField::zero(), P::BaseField::zero())
+            (G1BaseField::zero(), G1BaseField::zero())
         } else {
-            P::g1_affine_to_xy(&element)
+            (element.x, element.y)
         };
 
         let mut res = P::convert_basefield_into(&x);
@@ -104,40 +101,31 @@ where
 
     // Adds an element to the transcript.
     // Serializes the element to frs and adds it to the current_round_data buffer. Does NOT add the element to the proof. This is used for elements which should be part of the transcript but are not in the final proof (e.g. circuit size)
-    fn add_to_hash_buffer(&mut self, label: String, elements: &[F]) {
+    fn add_to_hash_buffer(&mut self, label: String, elements: &[ScalarField]) {
         self.add_element_frs_to_hash_buffer(label, elements);
     }
 
-    fn send_to_verifier(&mut self, label: String, elements: &[F]) {
+    fn send_to_verifier(&mut self, label: String, elements: &[ScalarField]) {
         self.proof_data.extend(elements);
         self.add_element_frs_to_hash_buffer(label, elements);
     }
 
-    pub fn send_fr_to_verifier<P: HonkCurve<F>>(&mut self, label: String, element: P::ScalarField) {
-        let elements = P::convert_scalarfield_into(&element);
+    pub fn send_fr_to_verifier(&mut self, label: String, element: ScalarField) {
+        let elements: Vec<ScalarField> = vec![element.to_owned()];
         self.send_to_verifier(label, &elements);
     }
 
     pub fn send_u64_to_verifier(&mut self, label: String, element: u64) {
-        let el = F::from(element);
+        let el = ScalarField::from(element);
         self.send_to_verifier(label, &[el]);
     }
 
     pub fn add_u64_to_hash_buffer(&mut self, label: String, element: u64) {
-        let el = F::from(element);
+        let el = ScalarField::from(element);
         self.add_to_hash_buffer(label, &[el]);
     }
 
-    pub fn send_point_to_verifier<P: HonkCurve<F>>(&mut self, label: String, element: P::G1Affine) {
-        let elements = Self::convert_point::<P>(element);
-        self.send_to_verifier(label, &elements);
-    }
-
-    pub fn send_fr_iter_to_verifier<
-        'a,
-        P: HonkCurve<F>,
-        I: IntoIterator<Item = &'a P::ScalarField>,
-    >(
+    pub fn send_fr_iter_to_verifier<'a, P: HonkCurve, I: IntoIterator<Item = &'a ScalarField>>(
         &mut self,
         label: String,
         element: I,
@@ -149,7 +137,11 @@ where
         self.send_to_verifier(label, &elements);
     }
 
-    fn receive_n_from_prover(&mut self, label: String, n: usize) -> HonkProofResult<Vec<F>> {
+    fn receive_n_from_prover(
+        &mut self,
+        label: String,
+        n: usize,
+    ) -> HonkProofResult<Vec<ScalarField>> {
         if self.num_frs_read + n > self.proof_data.len() {
             return Err(HonkProofError::ProofTooSmall);
         }
@@ -160,19 +152,19 @@ where
         Ok(elements)
     }
 
-    pub(super) fn receive_fr_from_prover<P: HonkCurve<F>>(
+    pub(super) fn receive_fr_from_prover<P: HonkCurve>(
         &mut self,
         label: String,
-    ) -> HonkProofResult<P::ScalarField> {
+    ) -> HonkProofResult<ScalarField> {
         let elements = self.receive_n_from_prover(label, P::NUM_SCALARFIELD_ELEMENTS)?;
 
         Ok(P::convert_scalarfield_back(&elements))
     }
 
-    pub(super) fn receive_point_from_prover<P: HonkCurve<F>>(
+    pub(super) fn receive_point_from_prover<P: HonkCurve>(
         &mut self,
         label: String,
-    ) -> HonkProofResult<P::G1Affine> {
+    ) -> HonkProofResult<G1Affine> {
         let elements = self.receive_n_from_prover(label, P::NUM_BASEFIELD_ELEMENTS * 2)?;
 
         let coords = elements
@@ -184,19 +176,19 @@ where
         let y = coords[1];
 
         let res = if x.is_zero() && y.is_zero() {
-            P::G1Affine::zero()
+            G1Affine::zero()
         } else {
-            P::g1_affine_from_xy(x, y)
+            G1Affine::new(x, y)
         };
 
         Ok(res)
     }
 
-    pub(super) fn receive_fr_vec_from_verifier<P: HonkCurve<F>>(
+    pub(super) fn receive_fr_vec_from_verifier<P: HonkCurve>(
         &mut self,
         label: String,
         n: usize,
-    ) -> HonkProofResult<Vec<P::ScalarField>> {
+    ) -> HonkProofResult<Vec<ScalarField>> {
         let elements = self.receive_n_from_prover(label, P::NUM_SCALARFIELD_ELEMENTS * n)?;
 
         let elements = elements
@@ -207,14 +199,14 @@ where
         Ok(elements)
     }
 
-    pub(super) fn receive_fr_array_from_verifier<P: HonkCurve<F>, const SIZE: usize>(
+    pub(super) fn receive_fr_array_from_verifier<P: HonkCurve, const SIZE: usize>(
         &mut self,
         label: String,
-    ) -> HonkProofResult<[P::ScalarField; SIZE]> {
-        let mut res: [P::ScalarField; SIZE] = [P::ScalarField::zero(); SIZE];
+    ) -> HonkProofResult<[ScalarField; SIZE]> {
+        let mut res: [ScalarField; SIZE] = [ScalarField::zero(); SIZE];
         let elements = self.receive_n_from_prover(label, P::NUM_SCALARFIELD_ELEMENTS * SIZE)?;
 
-        for (src, des) in elements
+        for (src, mut des) in elements
             .chunks_exact(P::NUM_SCALARFIELD_ELEMENTS)
             .zip(res.iter_mut())
         {
@@ -224,7 +216,7 @@ where
         Ok(res)
     }
 
-    fn split_challenge(challenge: F) -> [F; 2] {
+    fn split_challenge(challenge: ScalarField) -> [ScalarField; 2] {
         // match the parameter used in stdlib, which is derived from cycle_scalar (is 128)
         const LO_BITS: usize = 128;
         let biguint: BigUint = challenge.into();
@@ -233,13 +225,13 @@ where
         let lo = &biguint & lower_mask;
         let hi = biguint >> LO_BITS;
 
-        let lo = F::from(lo);
-        let hi = F::from(hi);
+        let lo = ScalarField::from(lo);
+        let hi = ScalarField::from(hi);
 
         [lo, hi]
     }
 
-    fn get_next_duplex_challenge_buffer(&mut self, num_challenges: usize) -> [F; 2] {
+    fn get_next_duplex_challenge_buffer(&mut self, num_challenges: usize) -> [ScalarField; 2] {
         // challenges need at least 110 bits in them to match the presumed security parameter of the BN254 curve.
         assert!(num_challenges <= 2);
         // Prevent challenge generation if this is the first challenge we're generating,
@@ -274,15 +266,15 @@ where
         new_challenges
     }
 
-    pub fn get_challenge<P: HonkCurve<F>>(&mut self, label: String) -> P::ScalarField {
+    pub fn get_challenge<P: HonkCurve>(&mut self, label: String) -> ScalarField {
         self.manifest.add_challenge(self.round_number, &[label]);
         let challenge = self.get_next_duplex_challenge_buffer(1)[0];
-        let res = P::convert_destinationfield_to_scalarfield(&challenge);
+        let res = challenge.to_owned();
         self.round_number += 1;
         res
     }
 
-    pub fn get_challenges<P: HonkCurve<F>>(&mut self, labels: &[String]) -> Vec<P::ScalarField> {
+    pub fn get_challenges<P: HonkCurve>(&mut self, labels: &[String]) -> Vec<ScalarField> {
         let num_challenges = labels.len();
         self.manifest.add_challenge(self.round_number, labels);
 

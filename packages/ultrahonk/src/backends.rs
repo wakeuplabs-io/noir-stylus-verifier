@@ -1,10 +1,9 @@
 use crate::types::{G1Affine, G2Affine, ScalarField};
-use ark_ff::PrimeField;
 
 /// A hashing backend for muxing between VM-accelerated hashing
 /// and native Rust hashing
-pub trait HashBackend<F: PrimeField> {
-    fn hash(buffer: Vec<F>) -> F;
+pub trait HashBackend {
+    fn hash(buffer: Vec<ScalarField>) -> ScalarField;
 }
 
 /// An error that occurs when performing elliptic curve arithmetic

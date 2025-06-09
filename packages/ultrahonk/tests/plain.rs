@@ -1,6 +1,5 @@
 use ark_bn254::Bn254;
 use ark_ec::{pairing::Pairing, CurveGroup};
-use ark_ff::PrimeField;
 use ark_serialize::CanonicalDeserialize;
 use eyre::{anyhow, Result};
 use sha3::{Digest, Keccak256};
@@ -19,10 +18,10 @@ use ultrahonk::{
     types::ScalarField,
 };
 
-pub struct ArkKeccak256<F>(PhantomData<F>);
+pub struct ArkKeccak256;
 
-impl<F: PrimeField> HashBackend<F> for ArkKeccak256<F> {
-    fn hash(buffer: Vec<F>) -> F {
+impl HashBackend for ArkKeccak256 {
+    fn hash(buffer: Vec<ScalarField>) -> ScalarField {
         // Losing 2 bits of this is not an issue -> we can just reduce mod p
         let vec = Serialize::to_buffer(&buffer, false);
         let mut hasher = Keccak256::default();
@@ -68,11 +67,7 @@ impl<P: Pairing> CrsParser<P> {
     }
 }
 
-fn plain_test<H: HashBackend<ScalarField>>(
-    proof_file: &str,
-    vk_file: &str,
-    public_inputs_file: &str,
-) {
+fn plain_test<H: HashBackend>(proof_file: &str, vk_file: &str, public_inputs_file: &str) {
     const CRS_PATH_G2: &str = "./src/crs/bn254_g2.dat";
 
     // parse proof file
@@ -88,11 +83,11 @@ fn plain_test<H: HashBackend<ScalarField>>(
 
     // parse verification key file
     let vk_u8 = std::fs::read(&vk_file).unwrap();
-    let vk = VerifyingKeyBarretenberg::<Bn254>::from_buffer(&vk_u8).unwrap();
+    let vk = VerifyingKeyBarretenberg::from_buffer(&vk_u8).unwrap();
     let vk = VerifyingKey::from_barrettenberg_and_crs(vk, verifier_crs);
 
     let is_valid =
-        UltraHonk::<_, H>::verify(proof, &public_inputs, &vk, ZeroKnowledge::No).unwrap();
+        UltraHonk::<Bn254, H>::verify(proof, &public_inputs, &vk, ZeroKnowledge::No).unwrap();
     assert!(is_valid);
 }
 
@@ -114,6 +109,6 @@ fn test_iterating_test_vectors() {
         let vk_file = format!("{}/kat/vk", path.display());
         let public_inputs_file = format!("{}/kat/public_inputs", path.display());
 
-        plain_test::<ArkKeccak256<ScalarField>>(&proof_file, &vk_file, &public_inputs_file);
+        plain_test::<ArkKeccak256>(&proof_file, &vk_file, &public_inputs_file);
     }
 }

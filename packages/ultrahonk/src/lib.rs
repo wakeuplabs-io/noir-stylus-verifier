@@ -10,7 +10,6 @@ pub mod polynomials;
 pub mod prelude;
 pub mod serde_compat;
 pub mod serialize;
-pub(crate) mod sponge_hasher;
 pub mod transcript;
 pub mod types;
 pub(crate) mod verifier;
@@ -18,6 +17,8 @@ pub(crate) mod verifier;
 use ark_ec::pairing::Pairing;
 use ark_ec::VariableBaseMSM;
 use ark_ff::PrimeField;
+
+use crate::types::{G1Affine, G1Projective, ScalarField};
 
 pub const NUM_ALPHAS: usize = decider::relations::NUM_SUBRELATIONS - 1;
 /// The log of the max circuit size assumed in order to achieve constant sized Honk proofs
@@ -86,10 +87,10 @@ impl Utils {
         ark_ff::batch_inversion(coeffs);
     }
 
-    pub fn msm<P: Pairing>(poly: &[P::ScalarField], crs: &[P::G1Affine]) -> HonkProofResult<P::G1> {
+    pub fn msm(poly: &[ScalarField], crs: &[G1Affine]) -> HonkProofResult<G1Projective> {
         if poly.len() > crs.len() {
             return Err(HonkProofError::CrsTooSmall);
         }
-        Ok(P::G1::msm_unchecked(crs, poly))
+        Ok(G1Projective::msm_unchecked(crs, poly))
     }
 }

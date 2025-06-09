@@ -15,49 +15,51 @@ use crate::{
         types::{ClaimedEvaluations, RelationParameters},
     },
     honk_curve::HonkCurve,
-    prelude::GateSeparatorPolynomial,
-    types::ScalarField,
+    prelude::GateSeparatorPolynomial, types::ScalarField,
 };
 use ark_ff::{One, Zero};
+use std::marker::PhantomData;
 
 pub(crate) type SumcheckRoundOutput<F, const U: usize> = Univariate<F, U>;
 
-pub(crate) struct SumcheckVerifierRound<P: HonkCurve<ScalarField>> {
-    pub(crate) target_total_sum: P::ScalarField,
+pub(crate) struct SumcheckVerifierRound<P: HonkCurve> {
+    pub(crate) target_total_sum: ScalarField,
     pub(crate) round_failed: bool,
+    phantom: PhantomData<P>,
 }
 
-impl<P: HonkCurve<ScalarField>> Default for SumcheckVerifierRound<P> {
+impl<P: HonkCurve> Default for SumcheckVerifierRound<P> {
     fn default() -> Self {
         Self::new()
     }
 }
-impl<P: HonkCurve<ScalarField>> SumcheckVerifierRound<P> {
+impl<P: HonkCurve> SumcheckVerifierRound<P> {
     pub(crate) fn new() -> Self {
         Self {
-            target_total_sum: P::ScalarField::zero(),
+            target_total_sum: ScalarField::zero(),
             round_failed: false,
+            phantom: PhantomData,
         }
     }
 
     pub(crate) fn compute_next_target_sum<const SIZE: usize>(
         &mut self,
-        univariate: &SumcheckRoundOutput<P::ScalarField, SIZE>,
-        round_challenge: P::ScalarField,
-        indicator: P::ScalarField,
+        univariate: &SumcheckRoundOutput<ScalarField, SIZE>,
+        round_challenge: ScalarField,
+        indicator: ScalarField,
     ) {
         tracing::trace!("Compute target sum");
-        self.target_total_sum = (P::ScalarField::one() - indicator) * self.target_total_sum
+        self.target_total_sum = (ScalarField::one() - indicator) * self.target_total_sum
             + indicator * univariate.evaluate(round_challenge);
     }
 
     pub(crate) fn check_sum<const SIZE: usize>(
         &mut self,
-        univariate: &SumcheckRoundOutput<P::ScalarField, SIZE>,
-        indicator: P::ScalarField,
+        univariate: &SumcheckRoundOutput<ScalarField, SIZE>,
+        indicator: ScalarField,
     ) -> bool {
         tracing::trace!("Check sum");
-        let total_sum = (P::ScalarField::one() - indicator) * self.target_total_sum
+        let total_sum = (ScalarField::one() - indicator) * self.target_total_sum
             + indicator * univariate.evaluations[0]
             + univariate.evaluations[1];
         let sumcheck_round_failed = self.target_total_sum != total_sum;
@@ -66,11 +68,11 @@ impl<P: HonkCurve<ScalarField>> SumcheckVerifierRound<P> {
         !sumcheck_round_failed
     }
 
-    fn accumulate_one_relation_evaluations<R: Relation<P::ScalarField>>(
+    fn accumulate_one_relation_evaluations<R: Relation<ScalarField>>(
         univariate_accumulator: &mut R::VerifyAcc,
-        extended_edges: &ClaimedEvaluations<P::ScalarField>,
-        relation_parameters: &RelationParameters<P::ScalarField>,
-        scaling_factor: &P::ScalarField,
+        extended_edges: &ClaimedEvaluations<ScalarField>,
+        relation_parameters: &RelationParameters<ScalarField>,
+        scaling_factor: &ScalarField,
     ) {
         R::verify_accumulate(
             univariate_accumulator,
@@ -81,10 +83,10 @@ impl<P: HonkCurve<ScalarField>> SumcheckVerifierRound<P> {
     }
 
     fn accumulate_elliptic_curve_relation_evaluations(
-        univariate_accumulator: &mut EllipticRelationEvals<P::ScalarField>,
-        extended_edges: &ClaimedEvaluations<P::ScalarField>,
-        relation_parameters: &RelationParameters<P::ScalarField>,
-        scaling_factor: &P::ScalarField,
+        univariate_accumulator: &mut EllipticRelationEvals<ScalarField>,
+        extended_edges: &ClaimedEvaluations<ScalarField>,
+        relation_parameters: &RelationParameters<ScalarField>,
+        scaling_factor: &ScalarField,
     ) {
         EllipticRelation::verify_accumulate::<P>(
             univariate_accumulator,
@@ -95,10 +97,10 @@ impl<P: HonkCurve<ScalarField>> SumcheckVerifierRound<P> {
     }
 
     fn accumulate_relation_evaluations(
-        univariate_accumulators: &mut AllRelationEvaluations<P::ScalarField>,
-        extended_edges: &ClaimedEvaluations<P::ScalarField>,
-        relation_parameters: &RelationParameters<P::ScalarField>,
-        scaling_factor: &P::ScalarField,
+        univariate_accumulators: &mut AllRelationEvaluations<ScalarField>,
+        extended_edges: &ClaimedEvaluations<ScalarField>,
+        relation_parameters: &RelationParameters<ScalarField>,
+        scaling_factor: &ScalarField,
     ) {
         tracing::trace!("Accumulate relations");
 
@@ -153,13 +155,13 @@ impl<P: HonkCurve<ScalarField>> SumcheckVerifierRound<P> {
     }
 
     pub(crate) fn compute_full_relation_purported_value(
-        purported_evaluations: &ClaimedEvaluations<P::ScalarField>,
-        relation_parameters: &RelationParameters<P::ScalarField>,
-        gate_sparators: GateSeparatorPolynomial<P::ScalarField>,
-    ) -> P::ScalarField {
+        purported_evaluations: &ClaimedEvaluations<ScalarField>,
+        relation_parameters: &RelationParameters<ScalarField>,
+        gate_sparators: GateSeparatorPolynomial<ScalarField>,
+    ) -> ScalarField {
         tracing::trace!("Compute full relation purported value");
 
-        let mut relation_evaluations = AllRelationEvaluations::<P::ScalarField>::default();
+        let mut relation_evaluations = AllRelationEvaluations::<ScalarField>::default();
 
         Self::accumulate_relation_evaluations(
             &mut relation_evaluations,
@@ -168,7 +170,7 @@ impl<P: HonkCurve<ScalarField>> SumcheckVerifierRound<P> {
             &gate_sparators.partial_evaluation_result,
         );
 
-        let running_challenge = P::ScalarField::one();
+        let running_challenge = ScalarField::one();
 
         relation_evaluations
             .scale_and_batch_elements(running_challenge, &relation_parameters.alphas)
