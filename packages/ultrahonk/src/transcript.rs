@@ -183,7 +183,7 @@ where
         let mut res: [ScalarField; SIZE] = [ScalarField::zero(); SIZE];
         let elements = self.receive_n_from_prover(label, NUM_SCALARFIELD_ELEMENTS * SIZE)?;
 
-        for (src, mut des) in elements
+        for (src, des) in elements
             .chunks_exact(NUM_SCALARFIELD_ELEMENTS)
             .zip(res.iter_mut())
         {

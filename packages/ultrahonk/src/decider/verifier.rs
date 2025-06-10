@@ -56,7 +56,7 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
 
         let mut padding_indicator_array = [ScalarField::zero(); CONST_PROOF_SIZE_LOG_N];
 
-        for (idx, mut value) in padding_indicator_array.iter_mut().enumerate() {
+        for (idx, value) in padding_indicator_array.iter_mut().enumerate() {
             *value = if idx < log_circuit_size as usize {
                 ScalarField::one()
             } else {

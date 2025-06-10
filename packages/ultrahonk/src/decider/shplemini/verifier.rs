@@ -693,9 +693,9 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
 
         denominators[0] = r - one;
         let mut work_root = *inverse_root_of_unity; // g^{-1}
-                                                    //
-                                                    // Compute the denominators of the Lagrange polynomials evaluated at r
-        for mut denominator in denominators.iter_mut().skip(1) {
+
+        // Compute the denominators of the Lagrange polynomials evaluated at r
+        for denominator in denominators.iter_mut().skip(1) {
             *denominator = work_root * r;
             *denominator -= one; // r * g^{-i} - 1
             work_root *= *inverse_root_of_unity;
