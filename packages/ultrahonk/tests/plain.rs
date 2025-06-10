@@ -1,25 +1,31 @@
 use ark_bn254::Bn254;
+use ark_ec::AffineRepr;
 use ark_ec::{pairing::Pairing, CurveGroup};
+use ark_ff::{BigInt, Field};
 use ark_serialize::CanonicalDeserialize;
 use eyre::{anyhow, Result};
 use sha3::{Digest, Keccak256};
-use ultrahonk::honk_curve::HonkCurve;
 use std::fs::File;
 use std::io::Read;
 use std::marker::PhantomData;
 use std::path::Path;
+use std::str::FromStr;
+use ultrahonk::backends::G1ArithmeticBackend;
+use ultrahonk::backends::G1ArithmeticError;
+use ultrahonk::honk_curve::HonkCurve;
 use ultrahonk::keys::verification_key::VerifyingKey;
 use ultrahonk::keys::verification_key::VerifyingKeyBarretenberg;
 use ultrahonk::prelude::HashBackend;
 use ultrahonk::serialize::Serialize as FieldSerialize;
 use ultrahonk::serialize::Serialize;
+use ultrahonk::types::G1Affine;
+use ultrahonk::types::G2Affine;
 use ultrahonk::types::ZeroKnowledge;
 use ultrahonk::{
     prelude::{HonkProof, UltraHonk},
     types::ScalarField,
 };
-use ark_ff::{BigInt, Field};
-use std::str::FromStr;
+use ark_ff::One;
 
 pub struct ArkKeccak256;
 
@@ -70,8 +76,48 @@ impl<P: Pairing> CrsParser<P> {
     }
 }
 
-
 pub struct ArkHonkCurve;
+
+impl G1ArithmeticBackend for ArkHonkCurve {
+    /// Add two points in G1
+    fn ec_add(a: G1Affine, b: G1Affine) -> Result<G1Affine, G1ArithmeticError> {
+        Ok((a + b).into_affine())
+    }
+
+    /// Multiply a G1 point by a scalar in its scalar field
+    fn ec_scalar_mul(a: ScalarField, b: G1Affine) -> Result<G1Affine, G1ArithmeticError> {
+        let mut b_group = b.into_group();
+        b_group *= a;
+        Ok(b_group.into_affine())
+    }
+
+    /// Check the pairing identity e(a_1, b_1) == e(a_2, b_2)
+    fn ec_pairing_check(
+        a_1: G1Affine,
+        b_1: G2Affine,
+        a_2: G1Affine,
+        b_2: G2Affine,
+    ) -> Result<bool, G1ArithmeticError> {
+        Ok(<Bn254 as Pairing>::multi_pairing([a_1, a_2], [b_1, b_2]).0
+            == <Bn254 as Pairing>::TargetField::one())
+    }
+
+    /// A helper for computing multi-scalar multiplications over G1
+    fn msm(scalars: &[ScalarField], points: &[G1Affine]) -> Result<G1Affine, G1ArithmeticError> {
+        if scalars.len() != points.len() {
+            return Err(G1ArithmeticError);
+        }
+
+        scalars
+            .iter()
+            .zip(points.iter())
+            .try_fold(G1Affine::identity(), |acc, (scalar, point)| {
+                let scaled_point = Self::ec_scalar_mul(*scalar, *point)?;
+                Self::ec_add(acc, scaled_point)
+            })
+    }
+}
+
 impl HonkCurve for ArkHonkCurve {
     fn get_curve_b() -> ScalarField {
         // We are getting grumpkin::b, which is -17
@@ -108,9 +154,6 @@ impl HonkCurve for ArkHonkCurve {
     }
 }
 
-
-
-
 fn plain_test<H: HashBackend>(proof_file: &str, vk_file: &str, public_inputs_file: &str) {
     const CRS_PATH_G2: &str = "./src/crs/bn254_g2.dat";
 
@@ -131,7 +174,8 @@ fn plain_test<H: HashBackend>(proof_file: &str, vk_file: &str, public_inputs_fil
     let vk = VerifyingKey::from_barrettenberg_and_crs(vk, verifier_crs);
 
     let is_valid =
-        UltraHonk::<ArkHonkCurve, H>::verify(proof, &public_inputs, &vk, ZeroKnowledge::No).unwrap();
+        UltraHonk::<ArkHonkCurve, H>::verify(proof, &public_inputs, &vk, ZeroKnowledge::No)
+            .unwrap();
     assert!(is_valid);
 }
 

@@ -39,8 +39,8 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         opening_pair.scalars.push(opening_pair.challenge);
         let p_1 = -quotient_commitment.into_group();
 
-        // TODO: HEREE
-        let p_0 = Utils::msm(&opening_pair.scalars, &opening_pair.commitments)?;
+        let p_0 = P::msm(&opening_pair.scalars, &opening_pair.commitments)
+            .map_err(|e| eyre::eyre!("MSM error: {:?}", e))?;
 
         Ok((p_0.into(), p_1.into()))
     }

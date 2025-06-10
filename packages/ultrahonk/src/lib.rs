@@ -20,7 +20,7 @@ use ark_ff::{One, PrimeField};
 use num_bigint::BigUint;
 
 use crate::{
-    honk_curve::{NUM_BASEFIELD_ELEMENTS, NUM_LIMB_BITS, NUM_SCALARFIELD_ELEMENTS, TOTAL_BITS},
+    honk_curve::{NUM_BASEFIELD_ELEMENTS, NUM_SCALARFIELD_ELEMENTS},
     types::{G1Affine, G1Projective, ScalarField},
 };
 
@@ -108,6 +108,9 @@ impl Utils {
         bn254_fq_to_fr_rev(&src[0], &src[1])
     }
 }
+
+const NUM_LIMB_BITS: u32 = 68;
+const TOTAL_BITS: u32 = 254;
 
 fn bn254_fq_to_fr_rev(res0: &Fr, res1: &Fr) -> Fq {
     // Combines the two elements into one uint256_t, and then convert that to a grumpkin::fr
