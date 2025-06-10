@@ -8,8 +8,7 @@ use crate::{
     verifier::HonkVerifyResult,
     Utils, CONST_PROOF_SIZE_LOG_N, NUM_LIBRA_COMMITMENTS,
 };
-use ark_bn254::Bn254;
-use ark_ec::{bn::G1Prepared, pairing::Pairing, AffineRepr};
+use ark_ec::AffineRepr;
 use ark_ff::{One, Zero};
 use std::marker::PhantomData;
 
@@ -43,17 +42,6 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
             .map_err(|e| eyre::eyre!("MSM error: {:?}", e))?;
 
         Ok((p_0.into(), p_1.into()))
-    }
-
-    pub fn pairing_check(p0: G1Affine, p1: G1Affine, g2_x: G2Affine, g2_gen: G2Affine) -> bool {
-        tracing::trace!("Pairing check");
-        let p = [g2_gen, g2_x];
-        let g1_prepared = [
-            <Bn254 as Pairing>::G1Prepared::from(p0),
-            <Bn254 as Pairing>::G1Prepared::from(p1),
-        ];
-        <Bn254 as Pairing>::multi_pairing(g1_prepared, p).0
-            == <Bn254 as Pairing>::TargetField::one()
     }
 
     pub(crate) fn verify(
@@ -126,13 +114,12 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         )?;
 
         let pairing_points = Self::reduce_verify_shplemini(&mut opening_claim, transcript)?;
-        let pcs_verified = Self::pairing_check(
-            // TODO: here
+        let pcs_verified = P::ec_pairing_check(
             pairing_points.0,
             pairing_points.1,
             *crs,
             G2Affine::generator(),
-        );
+        ).unwrap();
         Ok(sumcheck_output.verified && pcs_verified && consistency_checked)
     }
 }
