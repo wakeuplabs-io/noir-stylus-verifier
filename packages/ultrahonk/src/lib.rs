@@ -15,13 +15,12 @@ pub mod types;
 pub mod verifier;
 
 use ark_bn254::{Fq, Fr};
-use ark_ec::VariableBaseMSM;
 use ark_ff::{One, PrimeField};
 use num_bigint::BigUint;
 
 use crate::{
     honk_curve::{NUM_BASEFIELD_ELEMENTS, NUM_SCALARFIELD_ELEMENTS},
-    types::{G1Affine, G1Projective, ScalarField},
+    types::ScalarField,
 };
 
 pub const NUM_ALPHAS: usize = decider::relations::NUM_SUBRELATIONS - 1;
@@ -89,13 +88,6 @@ impl Utils {
 
     fn batch_invert<F: PrimeField>(coeffs: &mut [F]) {
         ark_ff::batch_inversion(coeffs);
-    }
-
-    pub fn msm(poly: &[ScalarField], crs: &[G1Affine]) -> HonkProofResult<G1Projective> {
-        if poly.len() > crs.len() {
-            return Err(HonkProofError::CrsTooSmall);
-        }
-        Ok(G1Projective::msm_unchecked(crs, poly))
     }
 
     fn convert_scalarfield_back(src: &[ScalarField]) -> ScalarField {

@@ -41,7 +41,7 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         let p_0 = P::msm(&opening_pair.scalars, &opening_pair.commitments)
             .map_err(|e| eyre::eyre!("MSM error: {:?}", e))?;
 
-        Ok((p_0.into(), p_1.into()))
+        Ok((p_0, p_1.into()))
     }
 
     pub(crate) fn verify(
@@ -119,7 +119,8 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
             pairing_points.1,
             *crs,
             G2Affine::generator(),
-        ).unwrap();
+        )
+        .unwrap();
         Ok(sumcheck_output.verified && pcs_verified && consistency_checked)
     }
 }

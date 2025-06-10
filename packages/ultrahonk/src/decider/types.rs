@@ -52,8 +52,6 @@ impl<F: PrimeField> GateSeparatorPolynomial<F> {
             let index = 1 << i;
             beta_products[index] = *beta;
             for j in 1..index {
-
-                // TODO: HERE operation?
                 beta_products[index + j] = beta_products[j] * beta;
             }
         }

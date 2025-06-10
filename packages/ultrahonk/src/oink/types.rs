@@ -1,4 +1,7 @@
-use crate::{types::{G1Affine, ScalarField, WitnessEntities}, NUM_ALPHAS};
+use crate::{
+    types::{G1Affine, ScalarField, WitnessEntities},
+    NUM_ALPHAS,
+};
 use ark_ff::PrimeField;
 
 pub(crate) struct VerifierMemory {

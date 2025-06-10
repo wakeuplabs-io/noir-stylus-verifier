@@ -278,7 +278,7 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
             * shplonk_batching_challenge
             * inverse_vanishing_evals[1];
 
-        //TACEO TODO:
+        // TACEO TODO:
         // // - Add A₀(r)/(z−r) to the constant term accumulator
         // constant_term_accumulator += a_0_pos * inverse_vanishing_evals[0];
         // // Add A₀(−r)/(z+r) to the constant term accumulator

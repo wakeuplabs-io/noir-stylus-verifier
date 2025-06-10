@@ -2,7 +2,7 @@ pub use crate::polynomials::polynomial_types::{PrecomputedEntities, PRECOMPUTED_
 use crate::serialize::Serialize;
 use crate::HonkProofResult;
 use ark_bn254::{g1::Config as G1Config, g2::Config as G2Config, Fq, Fq2, Fr};
-use ark_ec::{short_weierstrass::Affine};
+use ark_ec::short_weierstrass::Affine;
 
 /// Type alias for an element of the scalar field of the Bn254 curve
 pub type ScalarField = Fr;
@@ -45,7 +45,10 @@ impl HonkProof {
         Ok(Self::new(res))
     }
 
-    pub fn separate_proof_and_public_inputs(self, num_public_inputs: usize) -> (Self, Vec<ScalarField>) {
+    pub fn separate_proof_and_public_inputs(
+        self,
+        num_public_inputs: usize,
+    ) -> (Self, Vec<ScalarField>) {
         let (public_inputs, proof) = self.proof.split_at(num_public_inputs);
         (Self::new(proof.to_vec()), public_inputs.to_vec())
     }

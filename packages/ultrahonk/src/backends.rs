@@ -20,7 +20,7 @@ pub struct G1ArithmeticError;
 pub trait G1ArithmeticBackend {
     /// Add two points in G1
     fn ec_add(a: G1Affine, b: G1Affine) -> Result<G1Affine, G1ArithmeticError>;
-    
+
     /// Multiply a G1 point by a scalar in its scalar field
     fn ec_scalar_mul(a: ScalarField, b: G1Affine) -> Result<G1Affine, G1ArithmeticError>;
 

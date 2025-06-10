@@ -64,7 +64,6 @@ impl<F: PrimeField, const SIZE: usize> Univariate<F, SIZE> {
         if length == 2 {
             let delta = poly[1] - poly[0];
             for i in length..extended_length {
-                // TODO: HERE operation?
                 self.evaluations[i] = self.evaluations[i - 1] + delta;
             }
         } else if length == 3 {

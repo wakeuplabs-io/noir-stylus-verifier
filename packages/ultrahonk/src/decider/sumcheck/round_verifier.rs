@@ -15,7 +15,8 @@ use crate::{
         types::{ClaimedEvaluations, RelationParameters},
     },
     honk_curve::HonkCurve,
-    prelude::GateSeparatorPolynomial, types::ScalarField,
+    prelude::GateSeparatorPolynomial,
+    types::ScalarField,
 };
 use ark_ff::{One, Zero};
 use std::marker::PhantomData;

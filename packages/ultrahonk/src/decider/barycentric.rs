@@ -52,7 +52,6 @@ impl Barycentric {
 
         for k in domain_size..num_evals {
             for j in 0..domain_size {
-                // TODO: HERE operation?
                 let inv = lagrange_denominators[j] * (big_domain[k] - big_domain[j]);
                 res[k * domain_size + j] = inv;
             }
