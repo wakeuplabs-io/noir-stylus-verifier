@@ -34,7 +34,7 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
     ) -> HonkVerifyResult<(G1Affine, G1Affine)> {
         tracing::trace!("Reduce and verify opening pair");
 
-        let quotient_commitment = transcript.receive_point_from_prover::<P>("KZG:W".to_string())?;
+        let quotient_commitment = transcript.receive_point_from_prover("KZG:W".to_string())?;
         opening_pair.commitments.push(quotient_commitment);
         opening_pair.scalars.push(opening_pair.challenge);
         let p_1 = -quotient_commitment.into_group();
@@ -44,20 +44,18 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
 
         Ok((p_0.into(), p_1.into()))
     }
-    
-    pub fn pairing_check(
-        p0: G1Affine,
-        p1: G1Affine,
-        g2_x: G2Affine,
-        g2_gen: G2Affine,
-    ) -> bool {
+
+    pub fn pairing_check(p0: G1Affine, p1: G1Affine, g2_x: G2Affine, g2_gen: G2Affine) -> bool {
         tracing::trace!("Pairing check");
         let p = [g2_gen, g2_x];
-        let g1_prepared = [<Bn254 as Pairing>::G1Prepared::from(p0), <Bn254 as Pairing>::G1Prepared::from(p1)];
-        <Bn254 as Pairing>::multi_pairing(g1_prepared, p).0 == <Bn254 as Pairing>::TargetField::one()
-
+        let g1_prepared = [
+            <Bn254 as Pairing>::G1Prepared::from(p0),
+            <Bn254 as Pairing>::G1Prepared::from(p1),
+        ];
+        <Bn254 as Pairing>::multi_pairing(g1_prepared, p).0
+            == <Bn254 as Pairing>::TargetField::one()
     }
-    
+
     pub(crate) fn verify(
         mut self,
         circuit_size: u32,
@@ -80,10 +78,10 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         let (sumcheck_output, libra_commitments) = if has_zk == ZeroKnowledge::Yes {
             let mut libra_commitments = Vec::with_capacity(NUM_LIBRA_COMMITMENTS);
 
-            libra_commitments
-                .push(transcript.receive_point_from_prover::<P>(
-                    "Libra:concatenation_commitment".to_string(),
-                )?);
+            libra_commitments.push(
+                transcript
+                    .receive_point_from_prover("Libra:concatenation_commitment".to_string())?,
+            );
 
             let sumcheck_output = self.sumcheck_verify::<BATCHED_RELATION_PARTIAL_LENGTH_ZK>(
                 &mut transcript,
@@ -96,12 +94,10 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
             }
 
             libra_commitments.push(
-                transcript
-                    .receive_point_from_prover::<P>("Libra:grand_sum_commitment".to_string())?,
+                transcript.receive_point_from_prover("Libra:grand_sum_commitment".to_string())?,
             );
             libra_commitments.push(
-                transcript
-                    .receive_point_from_prover::<P>("Libra:quotient_commitment".to_string())?,
+                transcript.receive_point_from_prover("Libra:quotient_commitment".to_string())?,
             );
 
             (sumcheck_output, Some(libra_commitments))
@@ -130,7 +126,8 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         )?;
 
         let pairing_points = Self::reduce_verify_shplemini(&mut opening_claim, transcript)?;
-        let pcs_verified = Self::pairing_check( // TODO: here
+        let pcs_verified = Self::pairing_check(
+            // TODO: here
             pairing_points.0,
             pairing_points.1,
             *crs,

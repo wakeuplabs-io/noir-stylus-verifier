@@ -80,7 +80,7 @@ impl<P: HonkCurve, H: HashBackend> Oink<P, H> {
         tracing::trace!("generate alpha round");
 
         let args: [String; NUM_ALPHAS] = array::from_fn(|i| format!("alpha_{}", i));
-        alphas.copy_from_slice(&transcript.get_challenges::<P>(&args));
+        alphas.copy_from_slice(&transcript.get_challenges(&args));
     }
 }
 
@@ -125,8 +125,7 @@ impl<P: HonkCurve, H: HashBackend> OinkVerifier<P, H> {
         self.public_inputs = Vec::with_capacity(public_input_size as usize);
 
         for i in 0..public_input_size {
-            let public_input =
-                transcript.receive_fr_from_prover::<P>(format!("public_input_{}", i))?;
+            let public_input = transcript.receive_fr_from_prover(format!("public_input_{}", i))?;
             self.public_inputs.push(public_input);
         }
 
@@ -140,11 +139,11 @@ impl<P: HonkCurve, H: HashBackend> OinkVerifier<P, H> {
         tracing::trace!("executing (verifying) wire commitments round");
 
         *self.memory.witness_commitments.w_l_mut() =
-            transcript.receive_point_from_prover::<P>("W_L".to_string())?;
+            transcript.receive_point_from_prover("W_L".to_string())?;
         *self.memory.witness_commitments.w_r_mut() =
-            transcript.receive_point_from_prover::<P>("W_R".to_string())?;
+            transcript.receive_point_from_prover("W_R".to_string())?;
         *self.memory.witness_commitments.w_o_mut() =
-            transcript.receive_point_from_prover::<P>("W_O".to_string())?;
+            transcript.receive_point_from_prover("W_O".to_string())?;
 
         // Round is done since ultra_honk is no goblin flavor
         Ok(())
@@ -156,7 +155,7 @@ impl<P: HonkCurve, H: HashBackend> OinkVerifier<P, H> {
     ) -> HonkVerifyResult<()> {
         tracing::trace!("executing (verifying) sorted list accumulator round");
 
-        let challs = transcript.get_challenges::<P>(&[
+        let challs = transcript.get_challenges(&[
             "eta".to_string(),
             "eta_two".to_string(),
             "eta_three".to_string(),
@@ -166,13 +165,13 @@ impl<P: HonkCurve, H: HashBackend> OinkVerifier<P, H> {
         self.memory.challenges.eta_3 = challs[2];
 
         *self.memory.witness_commitments.lookup_read_counts_mut() =
-            transcript.receive_point_from_prover::<P>("lookup_read_counts".to_string())?;
+            transcript.receive_point_from_prover("lookup_read_counts".to_string())?;
 
         *self.memory.witness_commitments.lookup_read_tags_mut() =
-            transcript.receive_point_from_prover::<P>("lookup_read_tags".to_string())?;
+            transcript.receive_point_from_prover("lookup_read_tags".to_string())?;
 
         *self.memory.witness_commitments.w_4_mut() =
-            transcript.receive_point_from_prover::<P>("w_4".to_string())?;
+            transcript.receive_point_from_prover("w_4".to_string())?;
 
         Ok(())
     }
@@ -183,12 +182,12 @@ impl<P: HonkCurve, H: HashBackend> OinkVerifier<P, H> {
     ) -> HonkVerifyResult<()> {
         tracing::trace!("executing (verifying) log derivative inverse round");
 
-        let challs = transcript.get_challenges::<P>(&["beta".to_string(), "gamma".to_string()]);
+        let challs = transcript.get_challenges(&["beta".to_string(), "gamma".to_string()]);
         self.memory.challenges.beta = challs[0];
         self.memory.challenges.gamma = challs[1];
 
         *self.memory.witness_commitments.lookup_inverses_mut() =
-            transcript.receive_point_from_prover::<P>("lookup_inverses".to_string())?;
+            transcript.receive_point_from_prover("lookup_inverses".to_string())?;
 
         // Round is done since ultra_honk is no goblin flavor
         Ok(())
@@ -208,7 +207,7 @@ impl<P: HonkCurve, H: HashBackend> OinkVerifier<P, H> {
             verifying_key.pub_inputs_offset,
         );
         *self.memory.witness_commitments.z_perm_mut() =
-            transcript.receive_point_from_prover::<P>("z_perm".to_string())?;
+            transcript.receive_point_from_prover("z_perm".to_string())?;
         Ok(())
     }
 

@@ -1,7 +1,6 @@
 use crate::polynomials::polynomial_types::PrecomputedEntities;
 use crate::types::{G1Affine, G2Affine};
 use crate::{
-    honk_curve::HonkCurve,
     polynomials::polynomial_types::PRECOMPUTED_ENTITIES_SIZE,
     serialize::{Serialize, SerializeP},
     types::ScalarField,

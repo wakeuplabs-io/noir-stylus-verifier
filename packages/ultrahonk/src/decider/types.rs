@@ -2,7 +2,6 @@ use super::univariate::Univariate;
 use crate::keys::verification_key::VerifyingKey;
 use crate::types::{G1Affine, ScalarField};
 use crate::{types::AllEntities, NUM_ALPHAS};
-use ark_ec::pairing::Pairing;
 use ark_ff::PrimeField;
 use std::vec;
 
@@ -53,6 +52,8 @@ impl<F: PrimeField> GateSeparatorPolynomial<F> {
             let index = 1 << i;
             beta_products[index] = *beta;
             for j in 1..index {
+
+                // TODO: HERE operation?
                 beta_products[index + j] = beta_products[j] * beta;
             }
         }

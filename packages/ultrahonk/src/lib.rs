@@ -14,11 +14,16 @@ pub mod transcript;
 pub mod types;
 pub(crate) mod verifier;
 
+use ark_bn254::{Fq, Fr};
 use ark_ec::pairing::Pairing;
 use ark_ec::VariableBaseMSM;
-use ark_ff::PrimeField;
+use ark_ff::{One, PrimeField};
+use num_bigint::BigUint;
 
-use crate::types::{G1Affine, G1Projective, ScalarField};
+use crate::{
+    honk_curve::{NUM_BASEFIELD_ELEMENTS, NUM_LIMB_BITS, NUM_SCALARFIELD_ELEMENTS, TOTAL_BITS},
+    types::{G1Affine, G1Projective, ScalarField},
+};
 
 pub const NUM_ALPHAS: usize = decider::relations::NUM_SUBRELATIONS - 1;
 /// The log of the max circuit size assumed in order to achieve constant sized Honk proofs
@@ -93,4 +98,27 @@ impl Utils {
         }
         Ok(G1Projective::msm_unchecked(crs, poly))
     }
+
+    fn convert_scalarfield_back(src: &[ScalarField]) -> ScalarField {
+        debug_assert_eq!(src.len(), NUM_SCALARFIELD_ELEMENTS);
+        src[0].to_owned()
+    }
+
+    fn convert_basefield_back(src: &[Fr]) -> Fq {
+        debug_assert_eq!(src.len(), NUM_BASEFIELD_ELEMENTS);
+        bn254_fq_to_fr_rev(&src[0], &src[1])
+    }
+}
+
+fn bn254_fq_to_fr_rev(res0: &Fr, res1: &Fr) -> Fq {
+    // Combines the two elements into one uint256_t, and then convert that to a grumpkin::fr
+
+    let res0 = BigUint::from(*res0);
+    let res1 = BigUint::from(*res1);
+
+    debug_assert!(res0 < (BigUint::one() << (NUM_LIMB_BITS * 2))); // lower 136 bits
+    debug_assert!(res1 < (BigUint::one() << (TOTAL_BITS - NUM_LIMB_BITS * 2))); // upper 254-136=118 bits
+
+    let value = res0 + (res1 << (NUM_LIMB_BITS * 2));
+    ark_bn254::Fq::from(value)
 }

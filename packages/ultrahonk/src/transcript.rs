@@ -1,7 +1,7 @@
 use crate::backends::HashBackend;
-use crate::honk_curve::HonkCurve;
-use crate::types::{G1Affine, G1BaseField, HonkProof, ScalarField};
-use crate::{HonkProofError, HonkProofResult};
+use crate::honk_curve::{NUM_BASEFIELD_ELEMENTS, NUM_SCALARFIELD_ELEMENTS};
+use crate::types::{G1Affine, HonkProof, ScalarField};
+use crate::{HonkProofError, HonkProofResult, Utils};
 use ark_ec::AffineRepr;
 use ark_ff::{One, Zero};
 use num_bigint::BigUint;
@@ -85,20 +85,6 @@ where
         self.num_frs_written += len;
     }
 
-    fn convert_point<P: HonkCurve>(element: G1Affine) -> Vec<ScalarField> {
-        let (x, y) = if element.is_zero() {
-            // we are at infinity
-            (G1BaseField::zero(), G1BaseField::zero())
-        } else {
-            (element.x, element.y)
-        };
-
-        let mut res = P::convert_basefield_into(&x);
-        res.extend(P::convert_basefield_into(&y));
-
-        res
-    }
-
     // Adds an element to the transcript.
     // Serializes the element to frs and adds it to the current_round_data buffer. Does NOT add the element to the proof. This is used for elements which should be part of the transcript but are not in the final proof (e.g. circuit size)
     fn add_to_hash_buffer(&mut self, label: String, elements: &[ScalarField]) {
@@ -125,15 +111,12 @@ where
         self.add_to_hash_buffer(label, &[el]);
     }
 
-    pub fn send_fr_iter_to_verifier<'a, P: HonkCurve, I: IntoIterator<Item = &'a ScalarField>>(
+    pub fn send_fr_iter_to_verifier<'a, I: IntoIterator<Item = &'a ScalarField>>(
         &mut self,
         label: String,
         element: I,
     ) {
-        let elements = element
-            .into_iter()
-            .flat_map(P::convert_scalarfield_into)
-            .collect::<Vec<_>>();
+        let elements: Vec<ScalarField> = element.into_iter().map(|src| src.to_owned()).collect();
         self.send_to_verifier(label, &elements);
     }
 
@@ -152,24 +135,18 @@ where
         Ok(elements)
     }
 
-    pub(super) fn receive_fr_from_prover<P: HonkCurve>(
-        &mut self,
-        label: String,
-    ) -> HonkProofResult<ScalarField> {
-        let elements = self.receive_n_from_prover(label, P::NUM_SCALARFIELD_ELEMENTS)?;
+    pub(super) fn receive_fr_from_prover(&mut self, label: String) -> HonkProofResult<ScalarField> {
+        let elements = self.receive_n_from_prover(label, NUM_SCALARFIELD_ELEMENTS)?;
 
-        Ok(P::convert_scalarfield_back(&elements))
+        Ok(Utils::convert_scalarfield_back(&elements))
     }
 
-    pub(super) fn receive_point_from_prover<P: HonkCurve>(
-        &mut self,
-        label: String,
-    ) -> HonkProofResult<G1Affine> {
-        let elements = self.receive_n_from_prover(label, P::NUM_BASEFIELD_ELEMENTS * 2)?;
+    pub(super) fn receive_point_from_prover(&mut self, label: String) -> HonkProofResult<G1Affine> {
+        let elements = self.receive_n_from_prover(label, NUM_BASEFIELD_ELEMENTS * 2)?;
 
         let coords = elements
-            .chunks_exact(P::NUM_BASEFIELD_ELEMENTS)
-            .map(P::convert_basefield_back)
+            .chunks_exact(NUM_BASEFIELD_ELEMENTS)
+            .map(Utils::convert_basefield_back)
             .collect::<Vec<_>>();
 
         let x = coords[0];
@@ -184,33 +161,33 @@ where
         Ok(res)
     }
 
-    pub(super) fn receive_fr_vec_from_verifier<P: HonkCurve>(
+    pub(super) fn receive_fr_vec_from_verifier(
         &mut self,
         label: String,
         n: usize,
     ) -> HonkProofResult<Vec<ScalarField>> {
-        let elements = self.receive_n_from_prover(label, P::NUM_SCALARFIELD_ELEMENTS * n)?;
+        let elements = self.receive_n_from_prover(label, NUM_SCALARFIELD_ELEMENTS * n)?;
 
         let elements = elements
-            .chunks_exact(P::NUM_SCALARFIELD_ELEMENTS)
-            .map(P::convert_scalarfield_back)
+            .chunks_exact(NUM_SCALARFIELD_ELEMENTS)
+            .map(Utils::convert_scalarfield_back)
             .collect();
 
         Ok(elements)
     }
 
-    pub(super) fn receive_fr_array_from_verifier<P: HonkCurve, const SIZE: usize>(
+    pub(super) fn receive_fr_array_from_verifier<const SIZE: usize>(
         &mut self,
         label: String,
     ) -> HonkProofResult<[ScalarField; SIZE]> {
         let mut res: [ScalarField; SIZE] = [ScalarField::zero(); SIZE];
-        let elements = self.receive_n_from_prover(label, P::NUM_SCALARFIELD_ELEMENTS * SIZE)?;
+        let elements = self.receive_n_from_prover(label, NUM_SCALARFIELD_ELEMENTS * SIZE)?;
 
         for (src, mut des) in elements
-            .chunks_exact(P::NUM_SCALARFIELD_ELEMENTS)
+            .chunks_exact(NUM_SCALARFIELD_ELEMENTS)
             .zip(res.iter_mut())
         {
-            let el = P::convert_scalarfield_back(src);
+            let el = Utils::convert_scalarfield_back(src);
             *des = el;
         }
         Ok(res)
@@ -266,7 +243,7 @@ where
         new_challenges
     }
 
-    pub fn get_challenge<P: HonkCurve>(&mut self, label: String) -> ScalarField {
+    pub fn get_challenge(&mut self, label: String) -> ScalarField {
         self.manifest.add_challenge(self.round_number, &[label]);
         let challenge = self.get_next_duplex_challenge_buffer(1)[0];
         let res = challenge.to_owned();
@@ -274,25 +251,19 @@ where
         res
     }
 
-    pub fn get_challenges<P: HonkCurve>(&mut self, labels: &[String]) -> Vec<ScalarField> {
+    pub fn get_challenges(&mut self, labels: &[String]) -> Vec<ScalarField> {
         let num_challenges = labels.len();
         self.manifest.add_challenge(self.round_number, labels);
 
         let mut res = Vec::with_capacity(num_challenges);
         for _ in 0..num_challenges >> 1 {
             let challenge_buffer = self.get_next_duplex_challenge_buffer(2);
-            res.push(P::convert_destinationfield_to_scalarfield(
-                &challenge_buffer[0],
-            ));
-            res.push(P::convert_destinationfield_to_scalarfield(
-                &challenge_buffer[1],
-            ));
+            res.push(challenge_buffer[0].to_owned());
+            res.push(challenge_buffer[1].to_owned());
         }
         if num_challenges & 1 == 1 {
             let challenge_buffer = self.get_next_duplex_challenge_buffer(1);
-            res.push(P::convert_destinationfield_to_scalarfield(
-                &challenge_buffer[0],
-            ));
+            res.push(challenge_buffer[0].to_owned());
         }
 
         self.round_number += 1;

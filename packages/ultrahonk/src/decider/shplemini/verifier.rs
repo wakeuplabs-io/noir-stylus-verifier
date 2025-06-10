@@ -8,7 +8,7 @@ use crate::{
         types::{ClaimedEvaluations, VerifierCommitments},
         verifier::DeciderVerifier,
     },
-    honk_curve::HonkCurve,
+    honk_curve::{HonkCurve, LIBRA_UNIVARIATES_LENGTH, SUBGROUP_SIZE},
     transcript::Transcript,
     types::{G1Affine, ScalarField, ZeroKnowledge},
     verifier::HonkVerifyResult,
@@ -51,7 +51,7 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         transcript: &mut Transcript<H>,
     ) -> HonkVerifyResult<Vec<G1Affine>> {
         let fold_commitments: Vec<_> = (0..virtual_log_n - 1)
-            .map(|i| transcript.receive_point_from_prover::<P>(format!("Gemini:FOLD_{}", i + 1)))
+            .map(|i| transcript.receive_point_from_prover(format!("Gemini:FOLD_{}", i + 1)))
             .collect::<Result<_, _>>()?;
         Ok(fold_commitments)
     }
@@ -61,7 +61,7 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         transcript: &mut Transcript<H>,
     ) -> HonkVerifyResult<Vec<ScalarField>> {
         let gemini_evaluations: Vec<_> = (1..=virtual_log_n)
-            .map(|i| transcript.receive_fr_from_prover::<P>(format!("Gemini:a_{}", i + 1)))
+            .map(|i| transcript.receive_fr_from_prover(format!("Gemini:a_{}", i + 1)))
             .collect::<Result<_, _>>()?;
         Ok(gemini_evaluations)
     }
@@ -118,21 +118,21 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         let mut hiding_polynomial_commitment = G1Affine::default();
         let mut batched_evaluation = ScalarField::zero();
         if has_zk == ZeroKnowledge::Yes {
-            hiding_polynomial_commitment = transcript
-                .receive_point_from_prover::<P>("Gemini:masking_poly_comm".to_string())?;
+            hiding_polynomial_commitment =
+                transcript.receive_point_from_prover("Gemini:masking_poly_comm".to_string())?;
             batched_evaluation =
-                transcript.receive_fr_from_prover::<P>("Gemini:masking_poly_eval".to_string())?;
+                transcript.receive_fr_from_prover("Gemini:masking_poly_eval".to_string())?;
         }
 
         // Get the challenge ρ to batch commitments to multilinear polynomials and their shifts
-        let gemini_batching_challenge = transcript.get_challenge::<P>("rho".to_string());
+        let gemini_batching_challenge = transcript.get_challenge("rho".to_string());
 
         // Process Gemini transcript data:
         // - Get Gemini commitments (com(A₁), com(A₂), … , com(Aₙ₋₁))
         let fold_commitments = Self::get_fold_commitments(virtual_log_n as u32, transcript)?;
 
         // - Get Gemini evaluation challenge for Aᵢ, i = 0, … , d−1
-        let gemini_evaluation_challenge = transcript.get_challenge::<P>("Gemini:r".to_string());
+        let gemini_evaluation_challenge = transcript.get_challenge("Gemini:r".to_string());
 
         // - Get evaluations (A₀(−r), A₁(−r²), ... , Aₙ₋₁(−r²⁽ⁿ⁻¹⁾))
         let gemini_fold_neg_evaluations =
@@ -153,18 +153,18 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         let mut libra_evaluations = [ScalarField::zero(); NUM_SMALL_IPA_EVALUATIONS];
         if has_zk == ZeroKnowledge::Yes {
             libra_evaluations[0] =
-                transcript.receive_fr_from_prover::<P>("Libra:concatenation_eval".to_string())?;
-            libra_evaluations[1] = transcript
-                .receive_fr_from_prover::<P>("Libra:shifted_grand_sum_eval".to_string())?;
+                transcript.receive_fr_from_prover("Libra:concatenation_eval".to_string())?;
+            libra_evaluations[1] =
+                transcript.receive_fr_from_prover("Libra:shifted_grand_sum_eval".to_string())?;
             libra_evaluations[2] =
-                transcript.receive_fr_from_prover::<P>("Libra:grand_sum_eval".to_string())?;
+                transcript.receive_fr_from_prover("Libra:grand_sum_eval".to_string())?;
             libra_evaluations[3] =
-                transcript.receive_fr_from_prover::<P>("Libra:quotient_eval".to_string())?;
+                transcript.receive_fr_from_prover("Libra:quotient_eval".to_string())?;
         }
 
         // Process Shplonk transcript data:
         // - Get Shplonk batching challenge
-        let shplonk_batching_challenge = transcript.get_challenge::<P>("Shplonk:nu".to_string());
+        let shplonk_batching_challenge = transcript.get_challenge("Shplonk:nu".to_string());
 
         // Compute the powers of ν that are required for batching Gemini, SmallSubgroupIPA, and committed sumcheck
         // univariate opening claims.
@@ -175,13 +175,13 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         );
 
         // - Get the quotient commitment for the Shplonk batching of Gemini opening claims
-        let q_commitment = transcript.receive_point_from_prover::<P>("Shplonk:Q".to_string())?;
+        let q_commitment = transcript.receive_point_from_prover("Shplonk:Q".to_string())?;
 
         // Start populating the vector (Q, f₀, ... , fₖ₋₁, g₀, ... , gₘ₋₁, com(A₁), ... , com(Aₙ₋₁), [1]₁) where fᵢ are
         // the k commitments to unshifted polynomials and gⱼ are the m commitments to shifted polynomials
 
         // Get Shplonk opening point z
-        let shplonk_evaluation_challenge = transcript.get_challenge::<P>("Shplonk:z".to_string());
+        let shplonk_evaluation_challenge = transcript.get_challenge("Shplonk:z".to_string());
 
         // Start computing the scalar to be multiplied by [1]₁
         let mut constant_term_accumulator = ScalarField::zero();
@@ -613,7 +613,7 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
 
         // Compute the evaluation of the vanishing polynomia Z_H(X) at X = gemini_evaluation_challenge
         let vanishing_poly_eval =
-            gemini_evaluation_challenge.pow([P::SUBGROUP_SIZE as u64]) - ScalarField::one();
+            gemini_evaluation_challenge.pow([SUBGROUP_SIZE as u64]) - ScalarField::one();
 
         // AZTEC TODO(https://github.com/AztecProtocol/barretenberg/issues/1194). Handle edge cases in PCS
         // AZTEC TODO(https://github.com/AztecProtocol/barretenberg/issues/1186). Insecure pattern.
@@ -655,7 +655,7 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
     }
 
     fn compute_challenge_polynomial(multivariate_challenge: &[ScalarField]) -> Vec<ScalarField> {
-        let mut challenge_polynomial_lagrange = vec![ScalarField::zero(); P::SUBGROUP_SIZE];
+        let mut challenge_polynomial_lagrange = vec![ScalarField::zero(); SUBGROUP_SIZE];
 
         challenge_polynomial_lagrange[0] = ScalarField::one();
 
@@ -665,9 +665,9 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
             .enumerate()
             .take(CONST_PROOF_SIZE_LOG_N)
         {
-            let current_idx = 1 + P::LIBRA_UNIVARIATES_LENGTH * idx_poly;
+            let current_idx = 1 + LIBRA_UNIVARIATES_LENGTH * idx_poly;
             challenge_polynomial_lagrange[current_idx] = ScalarField::one();
-            for idx in 1..P::LIBRA_UNIVARIATES_LENGTH {
+            for idx in 1..LIBRA_UNIVARIATES_LENGTH {
                 // Recursively compute the powers of the challenge
                 challenge_polynomial_lagrange[current_idx + idx] =
                     challenge_polynomial_lagrange[current_idx + idx - 1] * challenge;
@@ -683,11 +683,11 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         inverse_root_of_unity: &ScalarField,
         vanishing_poly_eval: &ScalarField,
     ) -> [ScalarField; 3] {
-        let mut denominators = vec![ScalarField::zero(); P::SUBGROUP_SIZE];
+        let mut denominators = vec![ScalarField::zero(); SUBGROUP_SIZE];
         let one = ScalarField::one();
         let mut numerator = *vanishing_poly_eval;
 
-        numerator *= ScalarField::from(P::SUBGROUP_SIZE as u64)
+        numerator *= ScalarField::from(SUBGROUP_SIZE as u64)
             .inverse()
             .expect("non-zero"); // (r^n - 1) / n
 
@@ -713,7 +713,7 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
 
         result[0] *= numerator; // The evaluation of the polynomials given by its evaluations over H
         result[1] = denominators[0] * numerator; // Lagrange first evaluated at r
-        result[2] = denominators[P::SUBGROUP_SIZE - 1] * numerator; // Lagrange last evaluated at r
+        result[2] = denominators[SUBGROUP_SIZE - 1] * numerator; // Lagrange last evaluated at r
 
         result
     }

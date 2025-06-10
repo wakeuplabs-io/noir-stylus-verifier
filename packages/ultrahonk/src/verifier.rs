@@ -24,7 +24,7 @@ impl<P: HonkCurve, H: HashBackend> UltraHonk<P, H> {
         let mut gate_challenges: Vec<ScalarField> = Vec::with_capacity(CONST_PROOF_SIZE_LOG_N);
 
         for idx in 0..CONST_PROOF_SIZE_LOG_N {
-            let chall = transcript.get_challenge::<P>(format!("Sumcheck:gate_challenge_{}", idx));
+            let chall = transcript.get_challenge(format!("Sumcheck:gate_challenge_{}", idx));
             gate_challenges.push(chall);
         }
         gate_challenges

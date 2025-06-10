@@ -40,9 +40,8 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
             // If running zero-knowledge sumcheck the target total sum is corrected by the claimed sum of libra masking
             // multivariate over the hypercube
 
-            let libra_total_sum =
-                transcript.receive_fr_from_prover::<P>("Libra:Sum".to_string())?;
-            libra_challenge = transcript.get_challenge::<P>("Libra:Challenge".to_string());
+            let libra_total_sum = transcript.receive_fr_from_prover("Libra:Sum".to_string())?;
+            libra_challenge = transcript.get_challenge("Libra:Challenge".to_string());
             sum_check_round.target_total_sum += libra_total_sum * libra_challenge;
         }
 
@@ -53,11 +52,10 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
             let round_univariate_label = format!("Sumcheck:univariate_{}", round_idx);
 
             let evaluations =
-                transcript.receive_fr_array_from_verifier::<P, SIZE>(round_univariate_label)?;
+                transcript.receive_fr_array_from_verifier::<SIZE>(round_univariate_label)?;
             let round_univariate = SumcheckRoundOutput { evaluations };
 
-            let round_challenge =
-                transcript.get_challenge::<P>(format!("Sumcheck:u_{}", round_idx));
+            let round_challenge = transcript.get_challenge(format!("Sumcheck:u_{}", round_idx));
 
             let checked = sum_check_round.check_sum(&round_univariate, padding_value);
             verified = verified && checked;
@@ -76,10 +74,8 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         }
 
         // Final round
-        let transcript_evaluations = transcript.receive_fr_vec_from_verifier::<P>(
-            "Sumcheck:evaluations".to_string(),
-            NUM_ALL_ENTITIES,
-        )?;
+        let transcript_evaluations = transcript
+            .receive_fr_vec_from_verifier("Sumcheck:evaluations".to_string(), NUM_ALL_ENTITIES)?;
 
         for (eval, &transcript_eval) in self
             .memory
@@ -102,7 +98,7 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         // For ZK Flavors: the evaluation of the Row Disabling Polynomial at the sumcheck challenge
         let claimed_libra_evaluation = if has_zk == ZeroKnowledge::Yes {
             let libra_evaluation =
-                transcript.receive_fr_from_prover::<P>("Libra:claimed_evaluation".to_string())?;
+                transcript.receive_fr_from_prover("Libra:claimed_evaluation".to_string())?;
             // No recursive flavor, otherwise we need to make some modifications to the following
 
             let correcting_factor = RowDisablingPolynomial::evaluate_at_challenge_with_padding(
