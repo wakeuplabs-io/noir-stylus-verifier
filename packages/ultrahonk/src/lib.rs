@@ -1,9 +1,9 @@
 #![warn(clippy::iter_over_hash_type)]
 
+pub(crate) mod backends;
 pub(crate) mod decider;
 pub mod gadgets;
 pub(crate) mod honk_curve;
-pub(crate) mod keccak_hash;
 pub mod keys;
 pub(crate) mod oink;
 pub mod polynomials;

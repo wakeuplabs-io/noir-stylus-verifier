@@ -16,23 +16,23 @@ use crate::{
     },
     honk_curve::HonkCurve,
     prelude::GateSeparatorPolynomial,
-    transcript::TranscriptFieldType,
+    types::ScalarField,
 };
 use ark_ff::{One, Zero};
 
 pub(crate) type SumcheckRoundOutput<F, const U: usize> = Univariate<F, U>;
 
-pub(crate) struct SumcheckVerifierRound<P: HonkCurve<TranscriptFieldType>> {
+pub(crate) struct SumcheckVerifierRound<P: HonkCurve<ScalarField>> {
     pub(crate) target_total_sum: P::ScalarField,
     pub(crate) round_failed: bool,
 }
 
-impl<P: HonkCurve<TranscriptFieldType>> Default for SumcheckVerifierRound<P> {
+impl<P: HonkCurve<ScalarField>> Default for SumcheckVerifierRound<P> {
     fn default() -> Self {
         Self::new()
     }
 }
-impl<P: HonkCurve<TranscriptFieldType>> SumcheckVerifierRound<P> {
+impl<P: HonkCurve<ScalarField>> SumcheckVerifierRound<P> {
     pub(crate) fn new() -> Self {
         Self {
             target_total_sum: P::ScalarField::zero(),

@@ -1,25 +1,26 @@
 use crate::{
+    backends::HashBackend,
     decider::{types::VerifierMemory, verifier::DeciderVerifier},
     honk_curve::HonkCurve,
     keys::verification_key::VerifyingKey,
     oink::verifier::OinkVerifier,
-    transcript::{Transcript, TranscriptFieldType, TranscriptHasher},
-    types::{HonkProof, ZeroKnowledge},
+    transcript::Transcript,
+    types::{HonkProof, ScalarField, ZeroKnowledge},
     CONST_PROOF_SIZE_LOG_N,
 };
 use ark_ec::pairing::Pairing;
 use std::marker::PhantomData;
 
-pub struct UltraHonk<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>> {
+pub struct UltraHonk<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> {
     phantom_data: PhantomData<P>,
     phantom_hasher: PhantomData<H>,
 }
 
 pub(crate) type HonkVerifyResult<T> = std::result::Result<T, eyre::Report>;
 
-impl<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>> UltraHonk<P, H> {
+impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> UltraHonk<P, H> {
     pub(crate) fn generate_gate_challenges(
-        transcript: &mut Transcript<TranscriptFieldType, H>,
+        transcript: &mut Transcript<ScalarField, H>,
     ) -> Vec<P::ScalarField> {
         tracing::trace!("generate gate challenges");
 
@@ -34,15 +35,15 @@ impl<P: HonkCurve<TranscriptFieldType>, H: TranscriptHasher<TranscriptFieldType>
     }
 
     pub fn verify(
-        honk_proof: HonkProof<TranscriptFieldType>,
-        public_inputs: &[TranscriptFieldType],
+        honk_proof: HonkProof<ScalarField>,
+        public_inputs: &[ScalarField],
         verifying_key: &VerifyingKey<P>,
         has_zk: ZeroKnowledge,
     ) -> HonkVerifyResult<bool> {
         tracing::trace!("UltraHonk verification");
         let honk_proof = honk_proof.insert_public_inputs(public_inputs.to_vec());
 
-        let mut transcript = Transcript::<TranscriptFieldType, H>::new_verifier(honk_proof);
+        let mut transcript = Transcript::<ScalarField, H>::new_verifier(honk_proof);
 
         let oink_verifier = OinkVerifier::default();
         let oink_result = oink_verifier.verify(verifying_key, &mut transcript)?;

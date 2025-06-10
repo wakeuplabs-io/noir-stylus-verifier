@@ -3,6 +3,8 @@ use ark_ff::{BigInt, Field, One, PrimeField};
 use num_bigint::BigUint;
 use std::str::FromStr;
 
+use crate::types::{G1BaseField, ScalarField};
+
 // Des describes the PrimeField used for the Transcript
 pub trait HonkCurve<Des: PrimeField>: Pairing {
     type CycleGroup: CurveGroup<BaseField = Self::ScalarField>;
@@ -34,7 +36,8 @@ pub trait HonkCurve<Des: PrimeField>: Pairing {
     }
 }
 
-impl HonkCurve<ark_bn254::Fr> for ark_bn254::Bn254 {
+// TODO: may need to remove this
+impl HonkCurve<ScalarField> for ark_bn254::Bn254 {
     type CycleGroup = ark_grumpkin::Projective;
 
     const NUM_BASEFIELD_ELEMENTS: usize = 2;
@@ -42,7 +45,7 @@ impl HonkCurve<ark_bn254::Fr> for ark_bn254::Bn254 {
     const SUBGROUP_SIZE: usize = 256;
     const LIBRA_UNIVARIATES_LENGTH: usize = 9;
 
-    fn g1_affine_from_xy(x: ark_bn254::Fq, y: ark_bn254::Fq) -> ark_bn254::G1Affine {
+    fn g1_affine_from_xy(x: G1BaseField, y: G1BaseField) -> ark_bn254::G1Affine {
         ark_bn254::G1Affine::new(x, y)
     }
 
@@ -50,26 +53,26 @@ impl HonkCurve<ark_bn254::Fr> for ark_bn254::Bn254 {
         (p.x, p.y)
     }
 
-    fn convert_scalarfield_into(src: &ark_bn254::Fr) -> Vec<ark_bn254::Fr> {
+    fn convert_scalarfield_into(src: &ScalarField) -> Vec<ScalarField> {
         vec![src.to_owned()]
     }
 
-    fn convert_scalarfield_back(src: &[ark_bn254::Fr]) -> ark_bn254::Fr {
+    fn convert_scalarfield_back(src: &[ScalarField]) -> ScalarField {
         debug_assert_eq!(src.len(), Self::NUM_SCALARFIELD_ELEMENTS);
         src[0].to_owned()
     }
 
-    fn convert_basefield_into(src: &ark_bn254::Fq) -> Vec<ark_bn254::Fr> {
+    fn convert_basefield_into(src: &G1BaseField) -> Vec<ScalarField> {
         let (a, b) = bn254_fq_to_fr(src);
         vec![a, b]
     }
 
-    fn convert_basefield_back(src: &[ark_bn254::Fr]) -> Self::BaseField {
+    fn convert_basefield_back(src: &[ScalarField]) -> Self::BaseField {
         debug_assert_eq!(src.len(), Self::NUM_BASEFIELD_ELEMENTS);
         bn254_fq_to_fr_rev(&src[0], &src[1])
     }
 
-    fn convert_destinationfield_to_scalarfield(des: &ark_bn254::Fr) -> ark_bn254::Fr {
+    fn convert_destinationfield_to_scalarfield(des: &ScalarField) -> ScalarField {
         des.to_owned()
     }
 
@@ -79,6 +82,7 @@ impl HonkCurve<ark_bn254::Fr> for ark_bn254::Bn254 {
     }
 
     fn get_subgroup_generator() -> Self::ScalarField {
+        // TODO:
         let val = ark_bn254::Fr::from(BigInt::new([
             14453002906517207670,
             7023718024139043376,
@@ -124,7 +128,7 @@ const TOTAL_BITS: u32 = 254;
 * @param input
 * @return std::array<bb::fr, 2>
 */
-fn bn254_fq_to_fr(fq: &ark_bn254::Fq) -> (ark_bn254::Fr, ark_bn254::Fr) {
+fn bn254_fq_to_fr(fq: &G1BaseField) -> (ScalarField, ScalarField) {
     // Goal is to slice up the 64 bit limbs of grumpkin::fr/uint256_t to mirror the 68 bit limbs of bigfield
     // We accomplish this by dividing the grumpkin::fr's value into two 68*2=136 bit pieces.
     const LOWER_BITS: u32 = 2 * NUM_LIMB_BITS;
@@ -144,7 +148,7 @@ fn bn254_fq_to_fr(fq: &ark_bn254::Fq) -> (ark_bn254::Fr, ark_bn254::Fr) {
     (res0, res1)
 }
 
-fn bn254_fq_to_fr_rev(res0: &ark_bn254::Fr, res1: &ark_bn254::Fr) -> ark_bn254::Fq {
+fn bn254_fq_to_fr_rev(res0: &ScalarField, res1: &ScalarField) -> G1BaseField {
     // Combines the two elements into one uint256_t, and then convert that to a grumpkin::fr
 
     let res0 = BigUint::from(*res0);
@@ -154,5 +158,5 @@ fn bn254_fq_to_fr_rev(res0: &ark_bn254::Fr, res1: &ark_bn254::Fr) -> ark_bn254::
     debug_assert!(res1 < (BigUint::one() << (TOTAL_BITS - NUM_LIMB_BITS * 2))); // upper 254-136=118 bits
 
     let value = res0 + (res1 << (NUM_LIMB_BITS * 2));
-    ark_bn254::Fq::from(value)
+    ark_bn254::Fq::from(value) // TODO:
 }

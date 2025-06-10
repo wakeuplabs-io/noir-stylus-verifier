@@ -1,20 +1,38 @@
 use ark_bn254::Bn254;
 use ark_ec::{pairing::Pairing, CurveGroup};
+use ark_ff::PrimeField;
 use ark_serialize::CanonicalDeserialize;
 use eyre::{anyhow, Result};
-use sha3::Keccak256;
+use sha3::{Digest, Keccak256};
 use std::fs::File;
 use std::io::Read;
 use std::marker::PhantomData;
 use std::path::Path;
 use ultrahonk::keys::verification_key::VerifyingKey;
 use ultrahonk::keys::verification_key::VerifyingKeyBarretenberg;
+use ultrahonk::prelude::HashBackend;
 use ultrahonk::serialize::Serialize as FieldSerialize;
+use ultrahonk::serialize::Serialize;
 use ultrahonk::types::ZeroKnowledge;
 use ultrahonk::{
-    prelude::{HonkProof, TranscriptHasher, UltraHonk},
-    transcript::TranscriptFieldType,
+    prelude::{HonkProof, UltraHonk},
+    types::ScalarField,
 };
+
+pub struct ArkKeccak256<F>(PhantomData<F>);
+
+impl<F: PrimeField> HashBackend<F> for ArkKeccak256<F> {
+    fn hash(buffer: Vec<F>) -> F {
+        // Losing 2 bits of this is not an issue -> we can just reduce mod p
+        let vec = Serialize::to_buffer(&buffer, false);
+        let mut hasher = Keccak256::default();
+        hasher.update(vec);
+        let hash_result = hasher.finalize();
+
+        let mut offset = 0;
+        Serialize::read_field_element(&hash_result, &mut offset)
+    }
+}
 
 struct CrsParser<P: Pairing> {
     _marker: PhantomData<P>,
@@ -50,7 +68,7 @@ impl<P: Pairing> CrsParser<P> {
     }
 }
 
-fn plain_test<H: TranscriptHasher<TranscriptFieldType>>(
+fn plain_test<H: HashBackend<ScalarField>>(
     proof_file: &str,
     vk_file: &str,
     public_inputs_file: &str,
@@ -96,6 +114,6 @@ fn test_iterating_test_vectors() {
         let vk_file = format!("{}/kat/vk", path.display());
         let public_inputs_file = format!("{}/kat/public_inputs", path.display());
 
-        plain_test::<Keccak256>(&proof_file, &vk_file, &public_inputs_file);
+        plain_test::<ArkKeccak256<ScalarField>>(&proof_file, &vk_file, &public_inputs_file);
     }
 }

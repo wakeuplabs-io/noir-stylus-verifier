@@ -1,7 +1,7 @@
 use crate::decider::types::{ClaimedEvaluations, RelationParameters};
 use crate::decider::{types::ProverUnivariates, univariate::Univariate};
 use crate::honk_curve::HonkCurve;
-use crate::transcript::TranscriptFieldType;
+use crate::types::ScalarField;
 use ark_ff::AdditiveGroup;
 use ark_ff::{Field, PrimeField, Zero};
 
@@ -79,7 +79,7 @@ impl EllipticRelation {
      * @param parameters contains beta, gamma, and public_input_delta, ....
      * @param scaling_factor optional term to scale the evaluation before adding to evals.
      */
-    pub(crate) fn accumulate<P: HonkCurve<TranscriptFieldType>>(
+    pub(crate) fn accumulate<P: HonkCurve<ScalarField>>(
         univariate_accumulator: &mut EllipticRelationAcc<P::ScalarField>,
         input: &ProverUnivariates<P::ScalarField>,
         _relation_parameters: &RelationParameters<P::ScalarField>,
@@ -161,7 +161,7 @@ impl EllipticRelation {
         }
     }
 
-    pub(crate) fn verify_accumulate<P: HonkCurve<TranscriptFieldType>>(
+    pub(crate) fn verify_accumulate<P: HonkCurve<ScalarField>>(
         univariate_accumulator: &mut EllipticRelationEvals<P::ScalarField>,
         input: &ClaimedEvaluations<P::ScalarField>,
         _relation_parameters: &RelationParameters<P::ScalarField>,

@@ -1,3 +1,4 @@
+use crate::backends::HashBackend;
 use ark_ff::{One, PrimeField};
 use num_bigint::BigUint;
 
@@ -137,5 +138,13 @@ where
     #[expect(dead_code)]
     pub(crate) fn hash_variable_length<const OUT_LEN: usize>(input: &[F]) -> [F; OUT_LEN] {
         Self::hash_internal::<OUT_LEN, true>(input)
+    }
+}
+
+impl<F: PrimeField, const T: usize, const R: usize, H: FieldHash<F, T> + Default> HashBackend<F>
+    for FieldSponge<F, T, R, H>
+{
+    fn hash(buffer: Vec<F>) -> F {
+        Self::hash_fixed_length::<1>(&buffer)[0]
     }
 }
