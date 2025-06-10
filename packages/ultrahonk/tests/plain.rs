@@ -3,6 +3,7 @@ use ark_ec::{pairing::Pairing, CurveGroup};
 use ark_serialize::CanonicalDeserialize;
 use eyre::{anyhow, Result};
 use sha3::{Digest, Keccak256};
+use ultrahonk::honk_curve::HonkCurve;
 use std::fs::File;
 use std::io::Read;
 use std::marker::PhantomData;
@@ -17,6 +18,8 @@ use ultrahonk::{
     prelude::{HonkProof, UltraHonk},
     types::ScalarField,
 };
+use ark_ff::{BigInt, Field};
+use std::str::FromStr;
 
 pub struct ArkKeccak256;
 
@@ -67,6 +70,47 @@ impl<P: Pairing> CrsParser<P> {
     }
 }
 
+
+pub struct ArkHonkCurve;
+impl HonkCurve for ArkHonkCurve {
+    fn get_curve_b() -> ScalarField {
+        // We are getting grumpkin::b, which is -17
+        -ScalarField::from(17)
+    }
+
+    fn get_subgroup_generator() -> ScalarField {
+        let val = ark_bn254::Fr::from(BigInt::new([
+            14453002906517207670,
+            7023718024139043376,
+            17331575720852783024,
+            554159777355432964,
+        ]));
+        debug_assert_eq!(
+            val,
+            ark_bn254::Fr::from_str(
+                "3478517300119284901893091970156912948790432420133812234316178878452092729974",
+            )
+            .unwrap()
+        );
+
+        val
+    }
+
+    fn get_subgroup_generator_inverse() -> ScalarField {
+        let val = ark_bn254::Fr::from(BigInt::new([
+            7578525993492149718,
+            11911168646041470090,
+            7238721496332547558,
+            2327185798872627923,
+        ]));
+        debug_assert_eq!(val, Self::get_subgroup_generator().inverse().unwrap());
+        val
+    }
+}
+
+
+
+
 fn plain_test<H: HashBackend>(proof_file: &str, vk_file: &str, public_inputs_file: &str) {
     const CRS_PATH_G2: &str = "./src/crs/bn254_g2.dat";
 
@@ -87,7 +131,7 @@ fn plain_test<H: HashBackend>(proof_file: &str, vk_file: &str, public_inputs_fil
     let vk = VerifyingKey::from_barrettenberg_and_crs(vk, verifier_crs);
 
     let is_valid =
-        UltraHonk::<Bn254, H>::verify(proof, &public_inputs, &vk, ZeroKnowledge::No).unwrap();
+        UltraHonk::<ArkHonkCurve, H>::verify(proof, &public_inputs, &vk, ZeroKnowledge::No).unwrap();
     assert!(is_valid);
 }
 

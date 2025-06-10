@@ -1,21 +1,20 @@
 #![warn(clippy::iter_over_hash_type)]
 
-pub(crate) mod backends;
-pub(crate) mod decider;
+pub mod backends;
+pub mod decider;
 pub mod gadgets;
-pub(crate) mod honk_curve;
+pub mod honk_curve;
 pub mod keys;
-pub(crate) mod oink;
+pub mod oink;
 pub mod polynomials;
 pub mod prelude;
 pub mod serde_compat;
 pub mod serialize;
 pub mod transcript;
 pub mod types;
-pub(crate) mod verifier;
+pub mod verifier;
 
 use ark_bn254::{Fq, Fr};
-use ark_ec::pairing::Pairing;
 use ark_ec::VariableBaseMSM;
 use ark_ff::{One, PrimeField};
 use num_bigint::BigUint;
