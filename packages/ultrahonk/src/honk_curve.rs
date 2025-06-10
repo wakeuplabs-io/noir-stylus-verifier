@@ -1,5 +1,5 @@
-use ark_ff::Field;
 use crate::{backends::G1ArithmeticBackend, types::ScalarField};
+use ark_ff::Field;
 
 /// The number of base field elements in the ultrahonk::HonkCurve representation.
 ///
