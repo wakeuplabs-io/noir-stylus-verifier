@@ -229,7 +229,7 @@ impl<P: TECurveConfig> CurveGroup for Projective<P> {
                     let x = g.x * &z;
                     let y = g.y * &z;
                     Affine::new_unchecked(x, y)
-                },
+                }
             })
             .collect()
     }

@@ -203,12 +203,12 @@ impl<P: BW6Config> BW6<P> {
                 c2 *= &p.y;
                 c1 *= &p.x;
                 f.mul_by_014(&c0, &c1, &c2);
-            },
+            }
             TwistType::D => {
                 c0 *= &p.y;
                 c1 *= &p.x;
                 f.mul_by_034(&c0, &c1, &c2);
-            },
+            }
         }
     }
 

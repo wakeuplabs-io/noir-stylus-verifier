@@ -2,7 +2,7 @@ use crate::decider::types::{ClaimedEvaluations, RelationParameters};
 use crate::decider::{types::ProverUnivariates, univariate::Univariate};
 use crate::honk_curve::HonkCurve;
 use crate::types::ScalarField;
-use ark_ff::{Field, PrimeField, Zero, AdditiveGroup};
+use ark_ff::{AdditiveGroup, Field, PrimeField, Zero};
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct EllipticRelationAcc<F: PrimeField> {
@@ -218,7 +218,7 @@ impl EllipticRelation {
         let curve_b = P::get_curve_b(); // here we need the extra constraint on the Curve
         let x1_mul_3 = x_1.to_owned() + x_1 + x_1;
         let x_pow_4_mul_3 = (y1_sqr.to_owned() - curve_b) * x1_mul_3;
-        let mut y1_sqr_mul_4 =  y1_sqr.double();
+        let mut y1_sqr_mul_4 = y1_sqr.double();
         y1_sqr_mul_4.double_in_place();
         let x1_pow_4_mul_9 = x_pow_4_mul_3.to_owned().double() + x_pow_4_mul_3;
         let x_double_identity = (x_3.to_owned() + x_1 + x_1) * y1_sqr_mul_4 - x1_pow_4_mul_9;

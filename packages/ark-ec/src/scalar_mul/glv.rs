@@ -118,7 +118,7 @@ pub trait GLVConfig: Send + Sync + 'static + SWCurveConfig {
                 (true, false) => res += b1,
                 (false, true) => res += b2,
                 (true, true) => res += b1b2,
-                (false, false) => {},
+                (false, false) => {}
             }
         }
         res
@@ -154,7 +154,7 @@ pub trait GLVConfig: Send + Sync + 'static + SWCurveConfig {
                 (true, false) => res += b1,
                 (false, true) => res += b2,
                 (true, true) => res += b1b2,
-                (false, false) => {},
+                (false, false) => {}
             }
         }
         res.into_affine()

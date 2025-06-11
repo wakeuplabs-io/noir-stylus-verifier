@@ -110,7 +110,7 @@ pub trait TECurveConfig: super::CurveConfig {
             Compress::No => {
                 item.x.serialize_uncompressed(&mut writer)?;
                 item.y.serialize_uncompressed(&mut writer)
-            },
+            }
         }
     }
 
@@ -133,14 +133,14 @@ pub trait TECurveConfig: super::CurveConfig {
                 } else {
                     (x, y)
                 }
-            },
+            }
             Compress::No => {
                 let x: Self::BaseField =
                     CanonicalDeserialize::deserialize_uncompressed(&mut reader)?;
                 let y: Self::BaseField =
                     CanonicalDeserialize::deserialize_uncompressed(&mut reader)?;
                 (x, y)
-            },
+            }
         };
         let point = Affine::new_unchecked(x, y);
         if validate == Validate::Yes {

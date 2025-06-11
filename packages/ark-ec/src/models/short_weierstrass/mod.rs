@@ -135,7 +135,7 @@ pub trait SWCurveConfig: super::CurveConfig {
             Compress::No => {
                 x.serialize_with_mode(&mut writer, compress)?;
                 y.serialize_with_flags(&mut writer, flags)
-            },
+            }
         }
     }
 
@@ -164,16 +164,16 @@ pub trait SWCurveConfig: super::CurveConfig {
                         } else {
                             (x, neg_y, flags)
                         }
-                    },
+                    }
                 }
-            },
+            }
             Compress::No => {
                 let x: Self::BaseField =
                     CanonicalDeserialize::deserialize_with_mode(&mut reader, compress, validate)?;
                 let (y, flags): (_, SWFlags) =
                     CanonicalDeserializeWithFlags::deserialize_with_flags(&mut reader)?;
                 (x, y, flags)
-            },
+            }
         };
         if flags.is_infinity() {
             Ok(Affine::identity())

@@ -59,7 +59,7 @@ where
                 let img_x = x_num.evaluate(&x) * v[0];
                 let img_y = (y_num.evaluate(&x) * y) * v[1];
                 Ok(Affine::new_unchecked(img_x, img_y))
-            },
+            }
             None => Ok(Affine::identity()),
         }
     }
@@ -95,7 +95,7 @@ impl<P: WBConfig> MapToCurve<Projective<P>> for WBMap<P> {
             Ok(point_on_curve) => {
                 debug_assert!(point_on_curve.is_on_curve(),
 			      "the isogeny maps the generator of its domain: {} into {} which does not belong to its codomain.",P::IsogenousCurve::GENERATOR, point_on_curve);
-            },
+            }
             Err(e) => return Err(e),
         }
 

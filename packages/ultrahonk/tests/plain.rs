@@ -1,5 +1,5 @@
-use ark_ec::VariableBaseMSM;
 use ark_bn254::Bn254;
+use ark_ec::VariableBaseMSM;
 use ark_ec::{pairing::Pairing, AffineRepr, CurveGroup};
 use ark_ff::{BigInt, Field, One};
 use ark_serialize::CanonicalDeserialize;
@@ -91,7 +91,8 @@ impl G1ArithmeticBackend for ArkHonkCurve {
             <Bn254 as Pairing>::G1Prepared::from(p0),
             <Bn254 as Pairing>::G1Prepared::from(p1),
         ];
-        Ok(<Bn254 as Pairing>::multi_pairing(g1_prepared, p).0 == <Bn254 as Pairing>::TargetField::one())
+        Ok(<Bn254 as Pairing>::multi_pairing(g1_prepared, p).0
+            == <Bn254 as Pairing>::TargetField::one())
     }
 
     /// A helper for computing multi-scalar multiplications over G1
