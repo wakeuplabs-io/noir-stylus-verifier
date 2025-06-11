@@ -722,18 +722,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ark-grumpkin"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef677b59f5aff4123207c4dceb1c0ec8fdde2d4af7886f48be42ad864bfa0352"
-dependencies = [
- "ark-bn254",
- "ark-ec",
- "ark-ff 0.5.0",
- "ark-std 0.5.0",
-]
-
-[[package]]
 name = "ark-poly"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5212,7 +5200,6 @@ dependencies = [
  "ark-bn254",
  "ark-ec",
  "ark-ff 0.5.0",
- "ark-grumpkin",
  "ark-poly",
  "ark-serialize 0.5.0",
  "eyre",

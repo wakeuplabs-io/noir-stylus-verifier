@@ -1,0 +1,49 @@
+[package]
+name = "ark-ec"
+description = "A library for elliptic curves and pairings"
+documentation = "https://docs.rs/ark-ec/"
+version = "0.5.0"
+
+[workspace]
+
+# [lints]
+# workspace = true
+
+[dependencies]
+
+educe = "0.6.0"
+hashbrown = { version = "0.15", default-features = false, features = [
+    "inline-more",
+    "allocator-api2",
+] }
+itertools = { version = "0.14", default-features = false }
+num-integer = { version = "0.1", default-features = false }
+rayon = { version = "1", optional = true }
+zeroize = { version = "1", features = ["zeroize_derive"]}
+ark-std = { version = "^0.5.0", default-features = false }
+ark-serialize = { version = "0.5.0", default-features = false }
+ark-ff = { version = "0.5.0", default-features = false }
+ark-poly = { version = "0.5.0", default-features = false }
+num-traits = { version = "0.2", default-features = false }
+num-bigint = { version = "0.4", default-features = false }
+
+
+[target.'cfg(all(target_has_atomic = "8", target_has_atomic = "16", target_has_atomic = "32", target_has_atomic = "64", target_has_atomic = "ptr"))'.dependencies]
+ahash = { version = "0.8", default-features = false }
+
+[target.'cfg(not(all(target_has_atomic = "8", target_has_atomic = "16", target_has_atomic = "32", target_has_atomic = "64", target_has_atomic = "ptr")))'.dependencies]
+fnv = { version = "1.0", default-features = false }
+
+[dev-dependencies]
+serde = "1.0"
+libtest-mimic = "0.8.1"
+sha2 = { version = "0.10", default-features = false }
+serde_json = "1.0"
+serde_derive = "1.0"
+ark-test-curves = { version = "0.5.0", features = ["bls12_381_curve"] }
+hex = "0.4"
+
+[features]
+default = []
+std = ["ark-std/std", "ark-ff/std", "ark-serialize/std"]
+parallel = ["std", "rayon", "ark-std/parallel", "ark-serialize/parallel"]
