@@ -7,6 +7,7 @@ pub mod mnt4;
 pub mod mnt6;
 
 pub mod short_weierstrass;
+pub mod twisted_edwards;
 
 /// Elliptic curves can be represented via different "models" with varying
 /// efficiency properties.
