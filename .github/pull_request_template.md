@@ -2,12 +2,12 @@
 
 Jira tickets: [NSV-](https://wakeuplabs.atlassian.net/browse/NSV-)
 
-<!-- Brief description on what the PR is about -->
+Brief description on what the PR is about...
 
 ## Changelog
 
-- First change
+- First change...
 
-## Demo
+## Showcase
 
-Doesn't apply.
+Nothing to showcase other than github actions.
