@@ -8,44 +8,40 @@ use crate::{
     types::{HonkProof, ScalarField, ZeroKnowledge},
     CONST_PROOF_SIZE_LOG_N,
 };
-use ark_ec::pairing::Pairing;
 use std::marker::PhantomData;
 
-pub struct UltraHonk<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> {
+pub struct UltraHonk<P: HonkCurve, H: HashBackend> {
     phantom_data: PhantomData<P>,
     phantom_hasher: PhantomData<H>,
 }
 
 pub(crate) type HonkVerifyResult<T> = std::result::Result<T, eyre::Report>;
 
-impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> UltraHonk<P, H> {
-    pub(crate) fn generate_gate_challenges(
-        transcript: &mut Transcript<ScalarField, H>,
-    ) -> Vec<P::ScalarField> {
+impl<P: HonkCurve, H: HashBackend> UltraHonk<P, H> {
+    pub(crate) fn generate_gate_challenges(transcript: &mut Transcript<H>) -> Vec<ScalarField> {
         tracing::trace!("generate gate challenges");
 
-        let mut gate_challenges: Vec<<P as Pairing>::ScalarField> =
-            Vec::with_capacity(CONST_PROOF_SIZE_LOG_N);
+        let mut gate_challenges: Vec<ScalarField> = Vec::with_capacity(CONST_PROOF_SIZE_LOG_N);
 
         for idx in 0..CONST_PROOF_SIZE_LOG_N {
-            let chall = transcript.get_challenge::<P>(format!("Sumcheck:gate_challenge_{}", idx));
+            let chall = transcript.get_challenge(format!("Sumcheck:gate_challenge_{}", idx));
             gate_challenges.push(chall);
         }
         gate_challenges
     }
 
     pub fn verify(
-        honk_proof: HonkProof<ScalarField>,
+        honk_proof: HonkProof,
         public_inputs: &[ScalarField],
-        verifying_key: &VerifyingKey<P>,
+        verifying_key: &VerifyingKey,
         has_zk: ZeroKnowledge,
     ) -> HonkVerifyResult<bool> {
         tracing::trace!("UltraHonk verification");
         let honk_proof = honk_proof.insert_public_inputs(public_inputs.to_vec());
 
-        let mut transcript = Transcript::<ScalarField, H>::new_verifier(honk_proof);
+        let mut transcript = Transcript::<H>::new_verifier(honk_proof);
 
-        let oink_verifier = OinkVerifier::default();
+        let oink_verifier = OinkVerifier::<P, H>::default();
         let oink_result = oink_verifier.verify(verifying_key, &mut transcript)?;
 
         let circuit_size = verifying_key.circuit_size;
@@ -54,7 +50,7 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> UltraHonk<P, H> {
         let mut memory = VerifierMemory::from_memory_and_key(oink_result, verifying_key);
         memory.relation_parameters.gate_challenges =
             Self::generate_gate_challenges(&mut transcript);
-        let decider_verifier = DeciderVerifier::new(memory);
+        let decider_verifier = DeciderVerifier::<P, H>::new(memory);
         decider_verifier.verify(circuit_size, &crs, transcript, has_zk)
     }
 }

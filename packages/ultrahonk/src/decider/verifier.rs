@@ -4,7 +4,7 @@ use crate::{
     decider::types::{BATCHED_RELATION_PARTIAL_LENGTH, BATCHED_RELATION_PARTIAL_LENGTH_ZK},
     honk_curve::HonkCurve,
     transcript::Transcript,
-    types::{ScalarField, ZeroKnowledge},
+    types::{G1Affine, G2Affine, ScalarField, ZeroKnowledge},
     verifier::HonkVerifyResult,
     Utils, CONST_PROOF_SIZE_LOG_N, NUM_LIBRA_COMMITMENTS,
 };
@@ -12,14 +12,14 @@ use ark_ec::AffineRepr;
 use ark_ff::{One, Zero};
 use std::marker::PhantomData;
 
-pub(crate) struct DeciderVerifier<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> {
-    pub(super) memory: VerifierMemory<P>,
+pub(crate) struct DeciderVerifier<P: HonkCurve, H: HashBackend> {
+    pub(super) memory: VerifierMemory,
     phantom_data: PhantomData<P>,
     phantom_hasher: PhantomData<H>,
 }
 
-impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, H> {
-    pub(crate) fn new(memory: VerifierMemory<P>) -> Self {
+impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
+    pub(crate) fn new(memory: VerifierMemory) -> Self {
         Self {
             memory,
             phantom_data: PhantomData,
@@ -28,58 +28,48 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
     }
 
     pub(crate) fn reduce_verify_shplemini(
-        opening_pair: &mut ShpleminiVerifierOpeningClaim<P>,
-        mut transcript: Transcript<ScalarField, H>,
-    ) -> HonkVerifyResult<(P::G1Affine, P::G1Affine)> {
+        opening_pair: &mut ShpleminiVerifierOpeningClaim,
+        mut transcript: Transcript<H>,
+    ) -> HonkVerifyResult<(G1Affine, G1Affine)> {
         tracing::trace!("Reduce and verify opening pair");
 
-        let quotient_commitment = transcript.receive_point_from_prover::<P>("KZG:W".to_string())?;
+        let quotient_commitment = transcript.receive_point_from_prover("KZG:W".to_string())?;
         opening_pair.commitments.push(quotient_commitment);
         opening_pair.scalars.push(opening_pair.challenge);
         let p_1 = -quotient_commitment.into_group();
-        let p_0 = Utils::msm::<P>(&opening_pair.scalars, &opening_pair.commitments)?;
 
-        Ok((p_0.into(), p_1.into()))
-    }
+        let p_0 = P::msm(&opening_pair.scalars, &opening_pair.commitments)
+            .map_err(|e| eyre::eyre!("MSM error: {:?}", e))?;
 
-    pub fn pairing_check(
-        p0: P::G1Affine,
-        p1: P::G1Affine,
-        g2_x: P::G2Affine,
-        g2_gen: P::G2Affine,
-    ) -> bool {
-        tracing::trace!("Pairing check");
-        let p = [g2_gen, g2_x];
-        let g1_prepared = [P::G1Prepared::from(p0), P::G1Prepared::from(p1)];
-        P::multi_pairing(g1_prepared, p).0 == P::TargetField::one()
+        Ok((p_0, p_1.into()))
     }
 
     pub(crate) fn verify(
         mut self,
         circuit_size: u32,
-        crs: &P::G2Affine,
-        mut transcript: Transcript<ScalarField, H>,
+        crs: &G2Affine,
+        mut transcript: Transcript<H>,
         has_zk: ZeroKnowledge,
     ) -> HonkVerifyResult<bool> {
         tracing::trace!("Decider verification");
         let log_circuit_size = Utils::get_msb32(circuit_size);
 
-        let mut padding_indicator_array = [P::ScalarField::zero(); CONST_PROOF_SIZE_LOG_N];
+        let mut padding_indicator_array = [ScalarField::zero(); CONST_PROOF_SIZE_LOG_N];
 
         for (idx, value) in padding_indicator_array.iter_mut().enumerate() {
             *value = if idx < log_circuit_size as usize {
-                P::ScalarField::one()
+                ScalarField::one()
             } else {
-                P::ScalarField::zero()
+                ScalarField::zero()
             };
         }
         let (sumcheck_output, libra_commitments) = if has_zk == ZeroKnowledge::Yes {
             let mut libra_commitments = Vec::with_capacity(NUM_LIBRA_COMMITMENTS);
 
-            libra_commitments
-                .push(transcript.receive_point_from_prover::<P>(
-                    "Libra:concatenation_commitment".to_string(),
-                )?);
+            libra_commitments.push(
+                transcript
+                    .receive_point_from_prover("Libra:concatenation_commitment".to_string())?,
+            );
 
             let sumcheck_output = self.sumcheck_verify::<BATCHED_RELATION_PARTIAL_LENGTH_ZK>(
                 &mut transcript,
@@ -92,12 +82,10 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
             }
 
             libra_commitments.push(
-                transcript
-                    .receive_point_from_prover::<P>("Libra:grand_sum_commitment".to_string())?,
+                transcript.receive_point_from_prover("Libra:grand_sum_commitment".to_string())?,
             );
             libra_commitments.push(
-                transcript
-                    .receive_point_from_prover::<P>("Libra:quotient_commitment".to_string())?,
+                transcript.receive_point_from_prover("Libra:quotient_commitment".to_string())?,
             );
 
             (sumcheck_output, Some(libra_commitments))
@@ -126,12 +114,13 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
         )?;
 
         let pairing_points = Self::reduce_verify_shplemini(&mut opening_claim, transcript)?;
-        let pcs_verified = Self::pairing_check(
+        let pcs_verified = P::ec_pairing_check(
             pairing_points.0,
             pairing_points.1,
             *crs,
-            P::G2Affine::generator(),
-        );
+            G2Affine::generator(),
+        )
+        .unwrap();
         Ok(sumcheck_output.verified && pcs_verified && consistency_checked)
     }
 }

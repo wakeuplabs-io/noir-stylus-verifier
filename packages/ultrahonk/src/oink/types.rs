@@ -1,11 +1,13 @@
-use crate::{types::WitnessEntities, NUM_ALPHAS};
-use ark_ec::pairing::Pairing;
+use crate::{
+    types::{G1Affine, ScalarField, WitnessEntities},
+    NUM_ALPHAS,
+};
 use ark_ff::PrimeField;
 
-pub(crate) struct VerifierMemory<P: Pairing> {
-    pub(crate) public_input_delta: P::ScalarField,
-    pub(crate) witness_commitments: WitnessEntities<P::G1Affine>,
-    pub(crate) challenges: Challenges<P::ScalarField>,
+pub(crate) struct VerifierMemory {
+    pub(crate) public_input_delta: ScalarField,
+    pub(crate) witness_commitments: WitnessEntities<G1Affine>,
+    pub(crate) challenges: Challenges<ScalarField>,
 }
 
 pub(crate) struct Challenges<F: PrimeField> {
@@ -30,7 +32,7 @@ impl<F: PrimeField> Default for Challenges<F> {
     }
 }
 
-impl<P: Pairing> Default for VerifierMemory<P> {
+impl Default for VerifierMemory {
     fn default() -> Self {
         Self {
             public_input_delta: Default::default(),

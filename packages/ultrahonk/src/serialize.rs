@@ -1,5 +1,8 @@
-use crate::{honk_curve::HonkCurve, types::ScalarField, HonkProofError, HonkProofResult};
-use ark_ec::{pairing::Pairing, AffineRepr, CurveConfig, CurveGroup};
+use crate::{
+    types::{G1Affine, G1BaseField, G1Projective},
+    HonkProofError, HonkProofResult,
+};
+use ark_ec::{AffineRepr, CurveConfig, CurveGroup};
 use ark_ff::{Field, PrimeField};
 use num_bigint::BigUint;
 
@@ -11,9 +14,7 @@ pub struct SerializeC<C: CurveGroup> {
     phantom: std::marker::PhantomData<C>,
 }
 
-pub struct SerializeP<P: Pairing> {
-    phantom: std::marker::PhantomData<P>,
-}
+pub struct SerializeP {}
 
 impl<F: Field> Serialize<F> {
     const NUM_64_LIMBS: u32 = <F::BasePrimeField as PrimeField>::MODULUS_BIT_SIZE.div_ceil(64);
@@ -163,27 +164,27 @@ impl<C: CurveGroup> SerializeC<C> {
     }
 }
 
-impl<P: HonkCurve<ScalarField>> SerializeP<P> {
-    const NUM_64_LIMBS: u32 = P::BaseField::MODULUS_BIT_SIZE.div_ceil(64);
+impl SerializeP {
+    const NUM_64_LIMBS: u32 = G1BaseField::MODULUS_BIT_SIZE.div_ceil(64);
     pub const FIELDSIZE_BYTES: u32 = Self::NUM_64_LIMBS * 8;
 
-    pub fn write_g1_element(buf: &mut Vec<u8>, el: &P::G1Affine, write_x_first: bool) {
-        SerializeC::<P::G1>::write_group_element(buf, el, write_x_first);
+    pub fn write_g1_element(buf: &mut Vec<u8>, el: &G1Affine, write_x_first: bool) {
+        SerializeC::<G1Projective>::write_group_element(buf, el, write_x_first);
     }
 
-    pub fn read_g1_element(buf: &[u8], offset: &mut usize, read_x_first: bool) -> P::G1Affine {
+    pub fn read_g1_element(buf: &[u8], offset: &mut usize, read_x_first: bool) -> G1Affine {
         if buf.iter().all(|&x| x == 255) {
             *offset += Self::FIELDSIZE_BYTES as usize * 2;
-            return P::G1Affine::zero();
+            return G1Affine::zero();
         }
 
-        let first = Serialize::<P::BaseField>::read_field_element(buf, offset);
-        let second = Serialize::<P::BaseField>::read_field_element(buf, offset);
+        let first = Serialize::<G1BaseField>::read_field_element(buf, offset);
+        let second = Serialize::<G1BaseField>::read_field_element(buf, offset);
 
         if read_x_first {
-            P::g1_affine_from_xy(first, second)
+            G1Affine::new(first, second)
         } else {
-            P::g1_affine_from_xy(second, first)
+            G1Affine::new(second, first)
         }
     }
 }

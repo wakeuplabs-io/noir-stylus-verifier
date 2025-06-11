@@ -1,14 +1,14 @@
 use super::univariate::Univariate;
 use crate::keys::verification_key::VerifyingKey;
+use crate::types::{G1Affine, ScalarField};
 use crate::{types::AllEntities, NUM_ALPHAS};
-use ark_ec::pairing::Pairing;
 use ark_ff::PrimeField;
 use std::vec;
 
-pub(crate) struct VerifierMemory<P: Pairing> {
-    pub(crate) verifier_commitments: VerifierCommitments<P::G1Affine>,
-    pub(crate) relation_parameters: RelationParameters<P::ScalarField>,
-    pub(crate) claimed_evaluations: ClaimedEvaluations<P::ScalarField>,
+pub(crate) struct VerifierMemory {
+    pub(crate) verifier_commitments: VerifierCommitments<G1Affine>,
+    pub(crate) relation_parameters: RelationParameters<ScalarField>,
+    pub(crate) claimed_evaluations: ClaimedEvaluations<ScalarField>,
 }
 
 pub(crate) const MAX_PARTIAL_RELATION_LENGTH: usize = 7;
@@ -102,11 +102,11 @@ impl<F: PrimeField> GateSeparatorPolynomial<F> {
     }
 }
 
-impl<P: Pairing> VerifierMemory<P> {
+impl VerifierMemory {
     #[expect(clippy::field_reassign_with_default)]
     pub(crate) fn from_memory_and_key(
-        verifier_memory: crate::oink::types::VerifierMemory<P>,
-        vk: &VerifyingKey<P>,
+        verifier_memory: crate::oink::types::VerifierMemory,
+        vk: &VerifyingKey,
     ) -> Self {
         let relation_parameters = RelationParameters {
             eta_1: verifier_memory.challenges.eta_1,

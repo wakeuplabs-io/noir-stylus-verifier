@@ -1,10 +1,9 @@
 use crate::types::{G1Affine, G2Affine, ScalarField};
-use ark_ff::PrimeField;
 
 /// A hashing backend for muxing between VM-accelerated hashing
 /// and native Rust hashing
-pub trait HashBackend<F: PrimeField> {
-    fn hash(buffer: Vec<F>) -> F;
+pub trait HashBackend {
+    fn hash(buffer: Vec<ScalarField>) -> ScalarField;
 }
 
 /// An error that occurs when performing elliptic curve arithmetic
@@ -21,13 +20,15 @@ pub struct G1ArithmeticError;
 pub trait G1ArithmeticBackend {
     /// Add two points in G1
     fn ec_add(a: G1Affine, b: G1Affine) -> Result<G1Affine, G1ArithmeticError>;
+
     /// Multiply a G1 point by a scalar in its scalar field
     fn ec_scalar_mul(a: ScalarField, b: G1Affine) -> Result<G1Affine, G1ArithmeticError>;
+
     /// Check the pairing identity e(a_1, b_1) == e(a_2, b_2)
     fn ec_pairing_check(
         a_1: G1Affine,
-        b_1: G2Affine,
         a_2: G1Affine,
+        b_1: G2Affine,
         b_2: G2Affine,
     ) -> Result<bool, G1ArithmeticError>;
 

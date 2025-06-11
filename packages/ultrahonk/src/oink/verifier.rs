@@ -6,18 +6,18 @@ use crate::{
 use ark_ff::One;
 use std::{array, marker::PhantomData};
 
-pub(crate) struct Oink<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> {
+pub(crate) struct Oink<P: HonkCurve, H: HashBackend> {
     phantom_data: PhantomData<P>,
     phantom_hasher: PhantomData<H>,
 }
 
-impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> Default for Oink<P, H> {
+impl<P: HonkCurve, H: HashBackend> Default for Oink<P, H> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> Oink<P, H> {
+impl<P: HonkCurve, H: HashBackend> Oink<P, H> {
     pub(crate) fn new() -> Self {
         Self {
             phantom_data: PhantomData,
@@ -26,12 +26,12 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> Oink<P, H> {
     }
 
     pub(crate) fn compute_public_input_delta(
-        beta: &P::ScalarField,
-        gamma: &P::ScalarField,
-        public_inputs: &[P::ScalarField],
+        beta: &ScalarField,
+        gamma: &ScalarField,
+        public_inputs: &[ScalarField],
         circuit_size: u32,
         pub_inputs_offset: u32,
-    ) -> P::ScalarField {
+    ) -> ScalarField {
         tracing::trace!("compute public input delta");
 
         // Let m be the number of public inputs x₀,…, xₘ₋₁.
@@ -57,11 +57,11 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> Oink<P, H> {
         // initial zero row or Goblin-stlye ECC op gates. Accordingly, the indices i in the above formulas are given by i =
         // [0, m-1] + offset, i.e. i = offset, 1 + offset, …, m - 1 + offset.
 
-        let mut num = P::ScalarField::one();
-        let mut denom = P::ScalarField::one();
+        let mut num = ScalarField::one();
+        let mut denom = ScalarField::one();
         let mut num_acc =
-            *gamma + P::ScalarField::from((circuit_size + pub_inputs_offset) as u64) * beta;
-        let mut denom_acc = *gamma - P::ScalarField::from((1 + pub_inputs_offset) as u64) * beta;
+            *gamma + ScalarField::from((circuit_size + pub_inputs_offset) as u64) * beta;
+        let mut denom_acc = *gamma - ScalarField::from((1 + pub_inputs_offset) as u64) * beta;
 
         for x_i in public_inputs.iter() {
             num *= num_acc + x_i;
@@ -74,41 +74,43 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> Oink<P, H> {
 
     /// Generate relation separators alphas for sumcheck/combiner computation
     pub(crate) fn generate_alphas_round(
-        alphas: &mut [P::ScalarField; NUM_ALPHAS],
-        transcript: &mut Transcript<ScalarField, H>,
+        alphas: &mut [ScalarField; NUM_ALPHAS],
+        transcript: &mut Transcript<H>,
     ) {
         tracing::trace!("generate alpha round");
 
         let args: [String; NUM_ALPHAS] = array::from_fn(|i| format!("alpha_{}", i));
-        alphas.copy_from_slice(&transcript.get_challenges::<P>(&args));
+        alphas.copy_from_slice(&transcript.get_challenges(&args));
     }
 }
 
-pub(crate) struct OinkVerifier<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> {
-    memory: VerifierMemory<P>,
-    pub public_inputs: Vec<P::ScalarField>,
+pub(crate) struct OinkVerifier<P: HonkCurve, H: HashBackend> {
+    memory: VerifierMemory,
+    pub public_inputs: Vec<ScalarField>,
     phantom_hasher: std::marker::PhantomData<H>,
+    phantom_curve: std::marker::PhantomData<P>,
 }
 
-impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> Default for OinkVerifier<P, H> {
+impl<P: HonkCurve, H: HashBackend> Default for OinkVerifier<P, H> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> OinkVerifier<P, H> {
+impl<P: HonkCurve, H: HashBackend> OinkVerifier<P, H> {
     pub(crate) fn new() -> Self {
         Self {
             memory: VerifierMemory::default(),
             public_inputs: Default::default(),
             phantom_hasher: Default::default(),
+            phantom_curve: Default::default(),
         }
     }
 
     fn execute_preamble_round(
         &mut self,
-        verifying_key: &VerifyingKey<P>,
-        transcript: &mut Transcript<ScalarField, H>,
+        verifying_key: &VerifyingKey,
+        transcript: &mut Transcript<H>,
     ) -> HonkVerifyResult<()> {
         tracing::trace!("executing (verifying) preamble round");
 
@@ -123,8 +125,7 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> OinkVerifier<P, H> 
         self.public_inputs = Vec::with_capacity(public_input_size as usize);
 
         for i in 0..public_input_size {
-            let public_input =
-                transcript.receive_fr_from_prover::<P>(format!("public_input_{}", i))?;
+            let public_input = transcript.receive_fr_from_prover(format!("public_input_{}", i))?;
             self.public_inputs.push(public_input);
         }
 
@@ -133,16 +134,16 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> OinkVerifier<P, H> 
 
     fn execute_wire_commitments_round(
         &mut self,
-        transcript: &mut Transcript<ScalarField, H>,
+        transcript: &mut Transcript<H>,
     ) -> HonkVerifyResult<()> {
         tracing::trace!("executing (verifying) wire commitments round");
 
         *self.memory.witness_commitments.w_l_mut() =
-            transcript.receive_point_from_prover::<P>("W_L".to_string())?;
+            transcript.receive_point_from_prover("W_L".to_string())?;
         *self.memory.witness_commitments.w_r_mut() =
-            transcript.receive_point_from_prover::<P>("W_R".to_string())?;
+            transcript.receive_point_from_prover("W_R".to_string())?;
         *self.memory.witness_commitments.w_o_mut() =
-            transcript.receive_point_from_prover::<P>("W_O".to_string())?;
+            transcript.receive_point_from_prover("W_O".to_string())?;
 
         // Round is done since ultra_honk is no goblin flavor
         Ok(())
@@ -150,11 +151,11 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> OinkVerifier<P, H> 
 
     fn execute_sorted_list_accumulator_round(
         &mut self,
-        transcript: &mut Transcript<ScalarField, H>,
+        transcript: &mut Transcript<H>,
     ) -> HonkVerifyResult<()> {
         tracing::trace!("executing (verifying) sorted list accumulator round");
 
-        let challs = transcript.get_challenges::<P>(&[
+        let challs = transcript.get_challenges(&[
             "eta".to_string(),
             "eta_two".to_string(),
             "eta_three".to_string(),
@@ -164,29 +165,29 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> OinkVerifier<P, H> 
         self.memory.challenges.eta_3 = challs[2];
 
         *self.memory.witness_commitments.lookup_read_counts_mut() =
-            transcript.receive_point_from_prover::<P>("lookup_read_counts".to_string())?;
+            transcript.receive_point_from_prover("lookup_read_counts".to_string())?;
 
         *self.memory.witness_commitments.lookup_read_tags_mut() =
-            transcript.receive_point_from_prover::<P>("lookup_read_tags".to_string())?;
+            transcript.receive_point_from_prover("lookup_read_tags".to_string())?;
 
         *self.memory.witness_commitments.w_4_mut() =
-            transcript.receive_point_from_prover::<P>("w_4".to_string())?;
+            transcript.receive_point_from_prover("w_4".to_string())?;
 
         Ok(())
     }
 
     fn execute_log_derivative_inverse_round(
         &mut self,
-        transcript: &mut Transcript<ScalarField, H>,
+        transcript: &mut Transcript<H>,
     ) -> HonkVerifyResult<()> {
         tracing::trace!("executing (verifying) log derivative inverse round");
 
-        let challs = transcript.get_challenges::<P>(&["beta".to_string(), "gamma".to_string()]);
+        let challs = transcript.get_challenges(&["beta".to_string(), "gamma".to_string()]);
         self.memory.challenges.beta = challs[0];
         self.memory.challenges.gamma = challs[1];
 
         *self.memory.witness_commitments.lookup_inverses_mut() =
-            transcript.receive_point_from_prover::<P>("lookup_inverses".to_string())?;
+            transcript.receive_point_from_prover("lookup_inverses".to_string())?;
 
         // Round is done since ultra_honk is no goblin flavor
         Ok(())
@@ -194,8 +195,8 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> OinkVerifier<P, H> 
 
     fn execute_grand_product_computation_round(
         &mut self,
-        verifying_key: &VerifyingKey<P>,
-        transcript: &mut Transcript<ScalarField, H>,
+        verifying_key: &VerifyingKey,
+        transcript: &mut Transcript<H>,
     ) -> HonkVerifyResult<()> {
         tracing::trace!("executing (verifying) grand product computation round");
         self.memory.public_input_delta = Oink::<P, H>::compute_public_input_delta(
@@ -206,15 +207,15 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> OinkVerifier<P, H> 
             verifying_key.pub_inputs_offset,
         );
         *self.memory.witness_commitments.z_perm_mut() =
-            transcript.receive_point_from_prover::<P>("z_perm".to_string())?;
+            transcript.receive_point_from_prover("z_perm".to_string())?;
         Ok(())
     }
 
     pub(crate) fn verify(
         mut self,
-        verifying_key: &VerifyingKey<P>,
-        transcript: &mut Transcript<ScalarField, H>,
-    ) -> HonkVerifyResult<VerifierMemory<P>> {
+        verifying_key: &VerifyingKey,
+        transcript: &mut Transcript<H>,
+    ) -> HonkVerifyResult<VerifierMemory> {
         tracing::trace!("Oink verify");
         self.execute_preamble_round(verifying_key, transcript)?;
         self.execute_wire_commitments_round(transcript)?;

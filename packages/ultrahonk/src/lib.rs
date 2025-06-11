@@ -1,23 +1,27 @@
 #![warn(clippy::iter_over_hash_type)]
 
-pub(crate) mod backends;
-pub(crate) mod decider;
+pub mod backends;
+pub mod decider;
 pub mod gadgets;
-pub(crate) mod honk_curve;
+pub mod honk_curve;
 pub mod keys;
-pub(crate) mod oink;
+pub mod oink;
 pub mod polynomials;
 pub mod prelude;
 pub mod serde_compat;
 pub mod serialize;
-pub(crate) mod sponge_hasher;
 pub mod transcript;
 pub mod types;
-pub(crate) mod verifier;
+pub mod verifier;
 
-use ark_ec::pairing::Pairing;
-use ark_ec::VariableBaseMSM;
-use ark_ff::PrimeField;
+use ark_bn254::{Fq, Fr};
+use ark_ff::{One, PrimeField};
+use num_bigint::BigUint;
+
+use crate::{
+    honk_curve::{NUM_BASEFIELD_ELEMENTS, NUM_SCALARFIELD_ELEMENTS},
+    types::ScalarField,
+};
 
 pub const NUM_ALPHAS: usize = decider::relations::NUM_SUBRELATIONS - 1;
 /// The log of the max circuit size assumed in order to achieve constant sized Honk proofs
@@ -86,10 +90,29 @@ impl Utils {
         ark_ff::batch_inversion(coeffs);
     }
 
-    pub fn msm<P: Pairing>(poly: &[P::ScalarField], crs: &[P::G1Affine]) -> HonkProofResult<P::G1> {
-        if poly.len() > crs.len() {
-            return Err(HonkProofError::CrsTooSmall);
-        }
-        Ok(P::G1::msm_unchecked(crs, poly))
+    fn convert_scalarfield_back(src: &[ScalarField]) -> ScalarField {
+        debug_assert_eq!(src.len(), NUM_SCALARFIELD_ELEMENTS);
+        src[0].to_owned()
     }
+
+    fn convert_basefield_back(src: &[Fr]) -> Fq {
+        debug_assert_eq!(src.len(), NUM_BASEFIELD_ELEMENTS);
+        bn254_fq_to_fr_rev(&src[0], &src[1])
+    }
+}
+
+const NUM_LIMB_BITS: u32 = 68;
+const TOTAL_BITS: u32 = 254;
+
+fn bn254_fq_to_fr_rev(res0: &Fr, res1: &Fr) -> Fq {
+    // Combines the two elements into one uint256_t, and then convert that to a grumpkin::fr
+
+    let res0 = BigUint::from(*res0);
+    let res1 = BigUint::from(*res1);
+
+    debug_assert!(res0 < (BigUint::one() << (NUM_LIMB_BITS * 2))); // lower 136 bits
+    debug_assert!(res1 < (BigUint::one() << (TOTAL_BITS - NUM_LIMB_BITS * 2))); // upper 254-136=118 bits
+
+    let value = res0 + (res1 << (NUM_LIMB_BITS * 2));
+    ark_bn254::Fq::from(value)
 }

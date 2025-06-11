@@ -1,10 +1,9 @@
 pub(crate) mod types;
 pub(crate) mod verifier;
+use crate::types::{G1Affine, ScalarField};
 
-use ark_ec::pairing::Pairing;
-
-pub(crate) struct ShpleminiVerifierOpeningClaim<P: Pairing> {
-    pub(crate) challenge: P::ScalarField,
-    pub(crate) scalars: Vec<P::ScalarField>,
-    pub(crate) commitments: Vec<P::G1Affine>,
+pub(crate) struct ShpleminiVerifierOpeningClaim {
+    pub(crate) challenge: ScalarField,
+    pub(crate) scalars: Vec<ScalarField>,
+    pub(crate) commitments: Vec<G1Affine>,
 }

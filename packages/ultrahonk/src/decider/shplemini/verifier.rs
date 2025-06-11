@@ -8,9 +8,9 @@ use crate::{
         types::{ClaimedEvaluations, VerifierCommitments},
         verifier::DeciderVerifier,
     },
-    honk_curve::HonkCurve,
+    honk_curve::{HonkCurve, LIBRA_UNIVARIATES_LENGTH, SUBGROUP_SIZE},
     transcript::Transcript,
-    types::{ScalarField, ZeroKnowledge},
+    types::{G1Affine, ScalarField, ZeroKnowledge},
     verifier::HonkVerifyResult,
     CONST_PROOF_SIZE_LOG_N, NUM_INTERLEAVING_CLAIMS, NUM_LIBRA_COMMITMENTS,
     NUM_SMALL_IPA_EVALUATIONS,
@@ -18,30 +18,28 @@ use crate::{
 use ark_ec::AffineRepr;
 use ark_ff::{Field, One, Zero};
 
-impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, H> {
+impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
     pub fn get_g_shift_evaluations(
-        evaluations: &ClaimedEvaluations<P::ScalarField>,
-    ) -> PolyGShift<P::ScalarField> {
+        evaluations: &ClaimedEvaluations<ScalarField>,
+    ) -> PolyGShift<ScalarField> {
         PolyGShift {
             wires: &evaluations.shifted_witness,
         }
     }
 
-    pub fn get_g_shift_comms(evaluations: &VerifierCommitments<P::G1Affine>) -> PolyG<P::G1Affine> {
+    pub fn get_g_shift_comms(evaluations: &VerifierCommitments<G1Affine>) -> PolyG<G1Affine> {
         PolyG {
             wires: evaluations.witness.to_be_shifted().try_into().unwrap(),
         }
     }
 
-    pub fn get_f_evaluations(
-        evaluations: &ClaimedEvaluations<P::ScalarField>,
-    ) -> PolyF<P::ScalarField> {
+    pub fn get_f_evaluations(evaluations: &ClaimedEvaluations<ScalarField>) -> PolyF<ScalarField> {
         PolyF {
             precomputed: &evaluations.precomputed,
             witness: &evaluations.witness,
         }
     }
-    pub fn get_f_comms(evaluations: &ClaimedEvaluations<P::G1Affine>) -> PolyF<P::G1Affine> {
+    pub fn get_f_comms(evaluations: &ClaimedEvaluations<G1Affine>) -> PolyF<G1Affine> {
         PolyF {
             precomputed: &evaluations.precomputed,
             witness: &evaluations.witness,
@@ -50,28 +48,28 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
 
     pub fn get_fold_commitments(
         virtual_log_n: u32,
-        transcript: &mut Transcript<ScalarField, H>,
-    ) -> HonkVerifyResult<Vec<P::G1Affine>> {
+        transcript: &mut Transcript<H>,
+    ) -> HonkVerifyResult<Vec<G1Affine>> {
         let fold_commitments: Vec<_> = (0..virtual_log_n - 1)
-            .map(|i| transcript.receive_point_from_prover::<P>(format!("Gemini:FOLD_{}", i + 1)))
+            .map(|i| transcript.receive_point_from_prover(format!("Gemini:FOLD_{}", i + 1)))
             .collect::<Result<_, _>>()?;
         Ok(fold_commitments)
     }
 
     pub fn get_gemini_evaluations(
         virtual_log_n: u32,
-        transcript: &mut Transcript<ScalarField, H>,
-    ) -> HonkVerifyResult<Vec<P::ScalarField>> {
+        transcript: &mut Transcript<H>,
+    ) -> HonkVerifyResult<Vec<ScalarField>> {
         let gemini_evaluations: Vec<_> = (1..=virtual_log_n)
-            .map(|i| transcript.receive_fr_from_prover::<P>(format!("Gemini:a_{}", i + 1)))
+            .map(|i| transcript.receive_fr_from_prover(format!("Gemini:a_{}", i + 1)))
             .collect::<Result<_, _>>()?;
         Ok(gemini_evaluations)
     }
 
     pub fn powers_of_evaluation_challenge(
-        gemini_evaluation_challenge: P::ScalarField,
+        gemini_evaluation_challenge: ScalarField,
         num_squares: usize,
-    ) -> Vec<P::ScalarField> {
+    ) -> Vec<ScalarField> {
         let mut squares = Vec::with_capacity(num_squares);
         squares.push(gemini_evaluation_challenge);
         for j in 1..num_squares {
@@ -81,9 +79,9 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
     }
 
     fn compute_inverted_gemini_denominators(
-        shplonk_eval_challenge: &P::ScalarField,
-        gemini_eval_challenge_powers: &[P::ScalarField],
-    ) -> Vec<P::ScalarField> {
+        shplonk_eval_challenge: &ScalarField,
+        gemini_eval_challenge_powers: &[ScalarField],
+    ) -> Vec<ScalarField> {
         tracing::trace!("Compute inverted gemini denominators");
         let virtual_log_n = gemini_eval_challenge_powers.len();
         let num_gemini_claims = 2 * virtual_log_n;
@@ -102,47 +100,47 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
 
     pub fn compute_batch_opening_claim(
         &self,
-        multivariate_challenge: Vec<P::ScalarField>,
-        transcript: &mut Transcript<ScalarField, H>,
-        libra_commitments: Option<Vec<P::G1Affine>>,
-        libra_univariate_evaluation: Option<P::ScalarField>,
+        multivariate_challenge: Vec<ScalarField>,
+        transcript: &mut Transcript<H>,
+        libra_commitments: Option<Vec<G1Affine>>,
+        libra_univariate_evaluation: Option<ScalarField>,
         consistency_checked: &mut bool,
-        padding_indicator_array: &[P::ScalarField; CONST_PROOF_SIZE_LOG_N],
+        padding_indicator_array: &[ScalarField; CONST_PROOF_SIZE_LOG_N],
         // const std::vector<RefVector<Commitment>>& concatenation_group_commitments = {},
-        // RefSpan<P::ScalarField> concatenated_evaluations = {}
-    ) -> HonkVerifyResult<ShpleminiVerifierOpeningClaim<P>> {
+        // RefSpan<ScalarField> concatenated_evaluations = {}
+    ) -> HonkVerifyResult<ShpleminiVerifierOpeningClaim> {
         tracing::trace!("Compute batch opening claim");
 
         let virtual_log_n = multivariate_challenge.len();
 
         let has_zk = ZeroKnowledge::from(libra_commitments.is_some());
 
-        let mut hiding_polynomial_commitment = P::G1Affine::default();
-        let mut batched_evaluation = P::ScalarField::zero();
+        let mut hiding_polynomial_commitment = G1Affine::default();
+        let mut batched_evaluation = ScalarField::zero();
         if has_zk == ZeroKnowledge::Yes {
-            hiding_polynomial_commitment = transcript
-                .receive_point_from_prover::<P>("Gemini:masking_poly_comm".to_string())?;
+            hiding_polynomial_commitment =
+                transcript.receive_point_from_prover("Gemini:masking_poly_comm".to_string())?;
             batched_evaluation =
-                transcript.receive_fr_from_prover::<P>("Gemini:masking_poly_eval".to_string())?;
+                transcript.receive_fr_from_prover("Gemini:masking_poly_eval".to_string())?;
         }
 
         // Get the challenge ρ to batch commitments to multilinear polynomials and their shifts
-        let gemini_batching_challenge = transcript.get_challenge::<P>("rho".to_string());
+        let gemini_batching_challenge = transcript.get_challenge("rho".to_string());
 
         // Process Gemini transcript data:
         // - Get Gemini commitments (com(A₁), com(A₂), … , com(Aₙ₋₁))
         let fold_commitments = Self::get_fold_commitments(virtual_log_n as u32, transcript)?;
 
         // - Get Gemini evaluation challenge for Aᵢ, i = 0, … , d−1
-        let gemini_evaluation_challenge = transcript.get_challenge::<P>("Gemini:r".to_string());
+        let gemini_evaluation_challenge = transcript.get_challenge("Gemini:r".to_string());
 
         // - Get evaluations (A₀(−r), A₁(−r²), ... , Aₙ₋₁(−r²⁽ⁿ⁻¹⁾))
         let gemini_fold_neg_evaluations =
             Self::get_gemini_evaluations(virtual_log_n as u32, transcript)?;
 
         // Get evaluations of partially evaluated batched interleaved polynomials P₊(rˢ) and P₋((-r)ˢ)
-        let p_pos = P::ScalarField::zero();
-        let p_neg = P::ScalarField::zero();
+        let p_pos = ScalarField::zero();
+        let p_neg = ScalarField::zero();
         // if (claim_batcher.interleaved) {
         //     p_pos = transcript->template receive_from_prover<ScalarField>("Gemini:P_pos");
         //     p_neg = transcript->template receive_from_prover<ScalarField>("Gemini:P_neg");
@@ -152,21 +150,21 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
         let gemini_eval_challenge_powers =
             Self::powers_of_evaluation_challenge(gemini_evaluation_challenge, virtual_log_n);
 
-        let mut libra_evaluations = [P::ScalarField::zero(); NUM_SMALL_IPA_EVALUATIONS];
+        let mut libra_evaluations = [ScalarField::zero(); NUM_SMALL_IPA_EVALUATIONS];
         if has_zk == ZeroKnowledge::Yes {
             libra_evaluations[0] =
-                transcript.receive_fr_from_prover::<P>("Libra:concatenation_eval".to_string())?;
-            libra_evaluations[1] = transcript
-                .receive_fr_from_prover::<P>("Libra:shifted_grand_sum_eval".to_string())?;
+                transcript.receive_fr_from_prover("Libra:concatenation_eval".to_string())?;
+            libra_evaluations[1] =
+                transcript.receive_fr_from_prover("Libra:shifted_grand_sum_eval".to_string())?;
             libra_evaluations[2] =
-                transcript.receive_fr_from_prover::<P>("Libra:grand_sum_eval".to_string())?;
+                transcript.receive_fr_from_prover("Libra:grand_sum_eval".to_string())?;
             libra_evaluations[3] =
-                transcript.receive_fr_from_prover::<P>("Libra:quotient_eval".to_string())?;
+                transcript.receive_fr_from_prover("Libra:quotient_eval".to_string())?;
         }
 
         // Process Shplonk transcript data:
         // - Get Shplonk batching challenge
-        let shplonk_batching_challenge = transcript.get_challenge::<P>("Shplonk:nu".to_string());
+        let shplonk_batching_challenge = transcript.get_challenge("Shplonk:nu".to_string());
 
         // Compute the powers of ν that are required for batching Gemini, SmallSubgroupIPA, and committed sumcheck
         // univariate opening claims.
@@ -177,31 +175,30 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
         );
 
         // - Get the quotient commitment for the Shplonk batching of Gemini opening claims
-        let q_commitment = transcript.receive_point_from_prover::<P>("Shplonk:Q".to_string())?;
+        let q_commitment = transcript.receive_point_from_prover("Shplonk:Q".to_string())?;
 
         // Start populating the vector (Q, f₀, ... , fₖ₋₁, g₀, ... , gₘ₋₁, com(A₁), ... , com(Aₙ₋₁), [1]₁) where fᵢ are
         // the k commitments to unshifted polynomials and gⱼ are the m commitments to shifted polynomials
 
         // Get Shplonk opening point z
-        let shplonk_evaluation_challenge = transcript.get_challenge::<P>("Shplonk:z".to_string());
+        let shplonk_evaluation_challenge = transcript.get_challenge("Shplonk:z".to_string());
 
         // Start computing the scalar to be multiplied by [1]₁
-        let mut constant_term_accumulator = P::ScalarField::zero();
+        let mut constant_term_accumulator = ScalarField::zero();
 
-        let mut opening_claim: ShpleminiVerifierOpeningClaim<P> = ShpleminiVerifierOpeningClaim {
+        let mut opening_claim: ShpleminiVerifierOpeningClaim = ShpleminiVerifierOpeningClaim {
             challenge: shplonk_evaluation_challenge,
             scalars: Vec::new(),
             commitments: vec![q_commitment],
         };
-        opening_claim.scalars.push(P::ScalarField::one());
+        opening_claim.scalars.push(ScalarField::one());
 
         // Compute 1/(z − r), 1/(z + r), 1/(z - r²),  1/(z + r²), … , 1/(z - r^{2^{d-1}}), 1/(z + r^{2^{d-1}})
         // These represent the denominators of the summand terms in Shplonk partially evaluated polynomial Q_z
-        let inverse_vanishing_evals: Vec<P::ScalarField> =
-            Self::compute_inverted_gemini_denominators(
-                &opening_claim.challenge,
-                &gemini_eval_challenge_powers,
-            );
+        let inverse_vanishing_evals: Vec<ScalarField> = Self::compute_inverted_gemini_denominators(
+            &opening_claim.challenge,
+            &gemini_eval_challenge_powers,
+        );
 
         // TACEO NOTE: so far we have no interleaved polynomials so some parts here are skipped
 
@@ -224,7 +221,7 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
         // Place the commitments to prover polynomials in the commitments vector. Compute the evaluation of the
         // batched multilinear polynomial. Populate the vector of scalars for the final batch mul
 
-        let mut gemini_batching_challenge_power = P::ScalarField::one();
+        let mut gemini_batching_challenge_power = ScalarField::one();
         if has_zk == ZeroKnowledge::Yes {
             // ρ⁰ is used to batch the hiding polynomial which has already been added to the commitments vector
             gemini_batching_challenge_power *= gemini_batching_challenge;
@@ -281,7 +278,7 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
             * shplonk_batching_challenge
             * inverse_vanishing_evals[1];
 
-        //TACEO TODO:
+        // TACEO TODO:
         // // - Add A₀(r)/(z−r) to the constant term accumulator
         // constant_term_accumulator += a_0_pos * inverse_vanishing_evals[0];
         // // Add A₀(−r)/(z+r) to the constant term accumulator
@@ -320,7 +317,7 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
         }
 
         // Finalize the batch opening claim
-        opening_claim.commitments.push(P::G1Affine::generator());
+        opening_claim.commitments.push(G1Affine::generator());
         opening_claim.scalars.push(constant_term_accumulator);
         Ok(opening_claim)
     }
@@ -340,12 +337,12 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
      */
     fn update_batch_mul_inputs_and_batched_evaluation(
         &self,
-        multivariate_batching_challenge: &P::ScalarField,
-        unshifted_scalar: &P::ScalarField,
-        shifted_scalar: &P::ScalarField,
-        opening_claim: &mut ShpleminiVerifierOpeningClaim<P>,
-        batched_evaluation: &mut P::ScalarField,
-        gemini_batching_challenge_power: &P::ScalarField,
+        multivariate_batching_challenge: &ScalarField,
+        unshifted_scalar: &ScalarField,
+        shifted_scalar: &ScalarField,
+        opening_claim: &mut ShpleminiVerifierOpeningClaim,
+        batched_evaluation: &mut ScalarField,
+        gemini_batching_challenge_power: &ScalarField,
     ) {
         tracing::trace!("Batch multivariate opening claims");
 
@@ -422,14 +419,14 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
      */
     #[expect(clippy::too_many_arguments)]
     fn batch_gemini_claims_received_from_prover(
-        padding_indicator_array: &[P::ScalarField; CONST_PROOF_SIZE_LOG_N],
-        fold_commitments: &[P::G1Affine],
-        gemini_neg_evaluations: &[P::ScalarField],
-        gemini_pos_evaluations: &[P::ScalarField],
-        inverse_vanishing_evals: &[P::ScalarField],
-        shplonk_batching_challenge_powers: &[P::ScalarField],
-        opening_claim: &mut ShpleminiVerifierOpeningClaim<P>,
-        constant_term_accumulator: &mut P::ScalarField,
+        padding_indicator_array: &[ScalarField; CONST_PROOF_SIZE_LOG_N],
+        fold_commitments: &[G1Affine],
+        gemini_neg_evaluations: &[ScalarField],
+        gemini_pos_evaluations: &[ScalarField],
+        inverse_vanishing_evals: &[ScalarField],
+        shplonk_batching_challenge_powers: &[ScalarField],
+        opening_claim: &mut ShpleminiVerifierOpeningClaim,
+        constant_term_accumulator: &mut ScalarField,
     ) {
         tracing::trace!("Receive batch gemini claims");
         let virtual_log_n = gemini_neg_evaluations.len();
@@ -486,13 +483,13 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
      * @return Evaluation \f$ A_0(r) \f$.
      */
     pub fn compute_fold_pos_evaluations(
-        padding_indicator_array: &[P::ScalarField; CONST_PROOF_SIZE_LOG_N],
-        batched_evaluation: &P::ScalarField,
-        evaluation_point: &[P::ScalarField], // CONST_PROOF_SIZE
-        challenge_powers: &[P::ScalarField], // r_squares CONST_PROOF_SIZE_LOG_N
-        fold_neg_evals: &[P::ScalarField],
-        p_neg: P::ScalarField,
-    ) -> Vec<P::ScalarField> {
+        padding_indicator_array: &[ScalarField; CONST_PROOF_SIZE_LOG_N],
+        batched_evaluation: &ScalarField,
+        evaluation_point: &[ScalarField], // CONST_PROOF_SIZE
+        challenge_powers: &[ScalarField], // r_squares CONST_PROOF_SIZE_LOG_N
+        fold_neg_evals: &[ScalarField],
+        p_neg: ScalarField,
+    ) -> Vec<ScalarField> {
         let virtual_log_n = evaluation_point.len();
 
         let mut evals = fold_neg_evals.to_vec();
@@ -515,17 +512,17 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
             let eval_neg = evals[l - 1];
             // Get A₍ₗ₋₁₎(−r²⁽ˡ⁻¹⁾)
             // Compute the numerator
-            let mut eval_pos = (challenge_power * eval_pos_prev * P::ScalarField::from(2u64))
-                - eval_neg * (challenge_power * (P::ScalarField::one() - u) - u);
+            let mut eval_pos = (challenge_power * eval_pos_prev * ScalarField::from(2u64))
+                - eval_neg * (challenge_power * (ScalarField::one() - u) - u);
             // Divide by the denominator
-            eval_pos *= (challenge_power * (P::ScalarField::one() - u) + u)
+            eval_pos *= (challenge_power * (ScalarField::one() - u) + u)
                 .inverse()
                 .expect("Non-zero denominator");
 
             // If current index is bigger than log_n, we propagate `batched_evaluation` to the next
             // round. Otherwise, current `eval_pos` A₍ₗ₋₁₎(−r²⁽ˡ⁻¹⁾) becomes `eval_pos_prev` in the round l-2.
             eval_pos_prev = padding_indicator_array[l - 1] * eval_pos
-                + (P::ScalarField::one() - padding_indicator_array[l - 1]) * eval_pos_prev;
+                + (ScalarField::one() - padding_indicator_array[l - 1]) * eval_pos_prev;
             // If current index is bigger than log_n, we emplace 0, which is later multiplied against
             // Commitment::one().
             value_to_emplace = padding_indicator_array[l - 1] * eval_pos_prev;
@@ -557,14 +554,14 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
     #[expect(clippy::too_many_arguments)]
     fn add_zk_data(
         virtual_log_n: usize,
-        commitments: &mut Vec<P::G1Affine>,
-        scalars: &mut Vec<P::ScalarField>,
-        constant_term_accumulator: &mut P::ScalarField,
-        libra_commitments: &[P::G1Affine; NUM_LIBRA_COMMITMENTS],
-        libra_evaluations: &[P::ScalarField; NUM_SMALL_IPA_EVALUATIONS],
-        gemini_evaluation_challenge: &P::ScalarField,
-        shplonk_batching_challenge_powers: &[P::ScalarField],
-        shplonk_evaluation_challenge: &P::ScalarField,
+        commitments: &mut Vec<G1Affine>,
+        scalars: &mut Vec<ScalarField>,
+        constant_term_accumulator: &mut ScalarField,
+        libra_commitments: &[G1Affine; NUM_LIBRA_COMMITMENTS],
+        libra_evaluations: &[ScalarField; NUM_SMALL_IPA_EVALUATIONS],
+        gemini_evaluation_challenge: &ScalarField,
+        shplonk_batching_challenge_powers: &[ScalarField],
+        shplonk_evaluation_challenge: &ScalarField,
     ) -> HonkVerifyResult<()> {
         commitments.reserve(NUM_LIBRA_COMMITMENTS);
         // Add Libra commitments to the vector of commitments
@@ -573,8 +570,8 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
         }
 
         // Compute corresponding scalars and the correction to the constant term
-        let mut denominators = [P::ScalarField::zero(); NUM_SMALL_IPA_EVALUATIONS];
-        let mut batching_scalars = [P::ScalarField::zero(); NUM_SMALL_IPA_EVALUATIONS];
+        let mut denominators = [ScalarField::zero(); NUM_SMALL_IPA_EVALUATIONS];
+        let mut batching_scalars = [ScalarField::zero(); NUM_SMALL_IPA_EVALUATIONS];
         let subgroup_generator = P::get_subgroup_generator();
 
         // Compute Shplonk denominators and invert them
@@ -607,20 +604,20 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
     }
 
     fn check_evaluations_consistency(
-        libra_evaluations: &[P::ScalarField],
-        gemini_evaluation_challenge: P::ScalarField,
-        multilinear_challenge: &[P::ScalarField],
-        inner_product_eval_claim: P::ScalarField,
+        libra_evaluations: &[ScalarField],
+        gemini_evaluation_challenge: ScalarField,
+        multilinear_challenge: &[ScalarField],
+        inner_product_eval_claim: ScalarField,
     ) -> HonkVerifyResult<bool> {
         let subgroup_generator_inverse = P::get_subgroup_generator_inverse();
 
         // Compute the evaluation of the vanishing polynomia Z_H(X) at X = gemini_evaluation_challenge
         let vanishing_poly_eval =
-            gemini_evaluation_challenge.pow([P::SUBGROUP_SIZE as u64]) - P::ScalarField::one();
+            gemini_evaluation_challenge.pow([SUBGROUP_SIZE as u64]) - ScalarField::one();
 
         // AZTEC TODO(https://github.com/AztecProtocol/barretenberg/issues/1194). Handle edge cases in PCS
         // AZTEC TODO(https://github.com/AztecProtocol/barretenberg/issues/1186). Insecure pattern.
-        let gemini_challenge_in_small_subgroup = vanishing_poly_eval == P::ScalarField::zero();
+        let gemini_challenge_in_small_subgroup = vanishing_poly_eval == ScalarField::zero();
 
         // The probability of this event is negligible but it has to be processed correctly
         if gemini_challenge_in_small_subgroup {
@@ -654,15 +651,13 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
         diff += lagrange_last * (grand_sum_eval - inner_product_eval_claim)
             - vanishing_poly_eval * quotient_eval;
 
-        Ok(diff == P::ScalarField::zero())
+        Ok(diff == ScalarField::zero())
     }
 
-    fn compute_challenge_polynomial(
-        multivariate_challenge: &[P::ScalarField],
-    ) -> Vec<P::ScalarField> {
-        let mut challenge_polynomial_lagrange = vec![P::ScalarField::zero(); P::SUBGROUP_SIZE];
+    fn compute_challenge_polynomial(multivariate_challenge: &[ScalarField]) -> Vec<ScalarField> {
+        let mut challenge_polynomial_lagrange = vec![ScalarField::zero(); SUBGROUP_SIZE];
 
-        challenge_polynomial_lagrange[0] = P::ScalarField::one();
+        challenge_polynomial_lagrange[0] = ScalarField::one();
 
         // Populate the vector with the powers of the challenges
         for (idx_poly, challenge) in multivariate_challenge
@@ -670,9 +665,9 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
             .enumerate()
             .take(CONST_PROOF_SIZE_LOG_N)
         {
-            let current_idx = 1 + P::LIBRA_UNIVARIATES_LENGTH * idx_poly;
-            challenge_polynomial_lagrange[current_idx] = P::ScalarField::one();
-            for idx in 1..P::LIBRA_UNIVARIATES_LENGTH {
+            let current_idx = 1 + LIBRA_UNIVARIATES_LENGTH * idx_poly;
+            challenge_polynomial_lagrange[current_idx] = ScalarField::one();
+            for idx in 1..LIBRA_UNIVARIATES_LENGTH {
                 // Recursively compute the powers of the challenge
                 challenge_polynomial_lagrange[current_idx + idx] =
                     challenge_polynomial_lagrange[current_idx + idx - 1] * challenge;
@@ -683,23 +678,23 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
     }
 
     fn compute_batched_barycentric_evaluations(
-        coeffs: &[P::ScalarField],
-        r: P::ScalarField,
-        inverse_root_of_unity: &P::ScalarField,
-        vanishing_poly_eval: &P::ScalarField,
-    ) -> [P::ScalarField; 3] {
-        let mut denominators = vec![P::ScalarField::zero(); P::SUBGROUP_SIZE];
-        let one = P::ScalarField::one();
+        coeffs: &[ScalarField],
+        r: ScalarField,
+        inverse_root_of_unity: &ScalarField,
+        vanishing_poly_eval: &ScalarField,
+    ) -> [ScalarField; 3] {
+        let mut denominators = vec![ScalarField::zero(); SUBGROUP_SIZE];
+        let one = ScalarField::one();
         let mut numerator = *vanishing_poly_eval;
 
-        numerator *= P::ScalarField::from(P::SUBGROUP_SIZE as u64)
+        numerator *= ScalarField::from(SUBGROUP_SIZE as u64)
             .inverse()
             .expect("non-zero"); // (r^n - 1) / n
 
         denominators[0] = r - one;
         let mut work_root = *inverse_root_of_unity; // g^{-1}
-                                                    //
-                                                    // Compute the denominators of the Lagrange polynomials evaluated at r
+
+        // Compute the denominators of the Lagrange polynomials evaluated at r
         for denominator in denominators.iter_mut().skip(1) {
             *denominator = work_root * r;
             *denominator -= one; // r * g^{-i} - 1
@@ -709,7 +704,7 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
         // Invert/Batch invert denominators
         crate::Utils::batch_invert(&mut denominators);
 
-        let mut result = [P::ScalarField::zero(); 3];
+        let mut result = [ScalarField::zero(); 3];
 
         // Accumulate the evaluation of the polynomials given by `coeffs` vector
         for (coeff, denominator) in coeffs.iter().zip(denominators.iter()) {
@@ -718,7 +713,7 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
 
         result[0] *= numerator; // The evaluation of the polynomials given by its evaluations over H
         result[1] = denominators[0] * numerator; // Lagrange first evaluated at r
-        result[2] = denominators[P::SUBGROUP_SIZE - 1] * numerator; // Lagrange last evaluated at r
+        result[2] = denominators[SUBGROUP_SIZE - 1] * numerator; // Lagrange last evaluated at r
 
         result
     }
@@ -729,11 +724,11 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
      *
      */
     fn compute_shplonk_batching_challenge_powers(
-        shplonk_batching_challenge: P::ScalarField,
+        shplonk_batching_challenge: ScalarField,
         virtual_log_n: usize,
         has_zk: ZeroKnowledge,
         // committed_sumcheck: bool, we don't have this (yet)
-    ) -> Vec<P::ScalarField> {
+    ) -> Vec<ScalarField> {
         let mut num_powers = 2 * virtual_log_n + NUM_INTERLEAVING_CLAIMS as usize;
         // // Each round univariate is opened at 0, 1, and a round challenge.
         // const NUM_COMMITTED_SUMCHECK_CLAIMS_PER_ROUND: usize = 3;
@@ -748,7 +743,7 @@ impl<P: HonkCurve<ScalarField>, H: HashBackend<ScalarField>> DeciderVerifier<P, 
         // }
 
         let mut result = Vec::with_capacity(num_powers);
-        result.push(P::ScalarField::one());
+        result.push(ScalarField::one());
         for idx in 1..num_powers {
             result.push(result[idx - 1] * shplonk_batching_challenge);
         }

@@ -79,11 +79,11 @@ impl EllipticRelation {
      * @param parameters contains beta, gamma, and public_input_delta, ....
      * @param scaling_factor optional term to scale the evaluation before adding to evals.
      */
-    pub(crate) fn accumulate<P: HonkCurve<ScalarField>>(
-        univariate_accumulator: &mut EllipticRelationAcc<P::ScalarField>,
-        input: &ProverUnivariates<P::ScalarField>,
-        _relation_parameters: &RelationParameters<P::ScalarField>,
-        scaling_factor: &P::ScalarField,
+    pub(crate) fn accumulate<P: HonkCurve>(
+        univariate_accumulator: &mut EllipticRelationAcc<ScalarField>,
+        input: &ProverUnivariates<ScalarField>,
+        _relation_parameters: &RelationParameters<ScalarField>,
+        scaling_factor: &ScalarField,
     ) {
         tracing::trace!("Accumulate EllipticRelation");
 
@@ -161,13 +161,13 @@ impl EllipticRelation {
         }
     }
 
-    pub(crate) fn verify_accumulate<P: HonkCurve<ScalarField>>(
-        univariate_accumulator: &mut EllipticRelationEvals<P::ScalarField>,
-        input: &ClaimedEvaluations<P::ScalarField>,
-        _relation_parameters: &RelationParameters<P::ScalarField>,
-        scaling_factor: &P::ScalarField,
+    pub(crate) fn verify_accumulate<P: HonkCurve>(
+        univariate_accumulator: &mut EllipticRelationEvals<ScalarField>,
+        input: &ClaimedEvaluations<ScalarField>,
+        _relation_parameters: &RelationParameters<ScalarField>,
+        scaling_factor: &ScalarField,
     ) where
-        P::ScalarField: PrimeField,
+        ScalarField: PrimeField,
     {
         tracing::trace!("Accumulate EllipticRelation");
 
