@@ -296,14 +296,16 @@ impl<P: SWCurveConfig> Neg for Affine<P> {
     }
 }
 
-
 impl<P: SWCurveConfig, T: Borrow<Self>> Add<T> for Affine<P> {
     type Output = Projective<P>;
     fn add(self, other: T) -> Projective<P> {
         let backtrace = ark_std::backtrace::Backtrace::force_capture();
         let backtrace_str = format!("{:?}", backtrace);
-        if !backtrace_str.contains("ultrahonk::backends::G1ArithmeticBackend>::ec_add") {
-            panic!("Addition between affine points done outside of the G1ArithmeticBackend: {}", backtrace_str);
+        if !backtrace_str.contains("ultrahonk::backends::G1ArithmeticBackend>") {
+            panic!(
+                "Addition between affine points done outside of the G1ArithmeticBackend: {}",
+                backtrace_str
+            );
         }
 
         // TODO implement more efficient formulae when z1 = z2 = 1.
@@ -316,6 +318,15 @@ impl<P: SWCurveConfig, T: Borrow<Self>> Add<T> for Affine<P> {
 impl<P: SWCurveConfig> Add<Projective<P>> for Affine<P> {
     type Output = Projective<P>;
     fn add(self, other: Projective<P>) -> Projective<P> {
+        let backtrace = ark_std::backtrace::Backtrace::force_capture();
+        let backtrace_str = format!("{:?}", backtrace);
+        if !backtrace_str.contains("ultrahonk::backends::G1ArithmeticBackend>") {
+            panic!(
+                "Addition between affine points done outside of the G1ArithmeticBackend: {}",
+                backtrace_str
+            );
+        }
+
         other + self
     }
 }
@@ -323,6 +334,15 @@ impl<P: SWCurveConfig> Add<Projective<P>> for Affine<P> {
 impl<'a, P: SWCurveConfig> Add<&'a Projective<P>> for Affine<P> {
     type Output = Projective<P>;
     fn add(self, other: &'a Projective<P>) -> Projective<P> {
+        let backtrace = ark_std::backtrace::Backtrace::force_capture();
+        let backtrace_str = format!("{:?}", backtrace);
+        if !backtrace_str.contains("ultrahonk::backends::G1ArithmeticBackend>") {
+            panic!(
+                "Addition between affine points done outside of the G1ArithmeticBackend: {}",
+                backtrace_str
+            );
+        }
+
         *other + self
     }
 }
@@ -330,6 +350,15 @@ impl<'a, P: SWCurveConfig> Add<&'a Projective<P>> for Affine<P> {
 impl<P: SWCurveConfig, T: Borrow<Self>> Sub<T> for Affine<P> {
     type Output = Projective<P>;
     fn sub(self, other: T) -> Projective<P> {
+        let backtrace = ark_std::backtrace::Backtrace::force_capture();
+        let backtrace_str = format!("{:?}", backtrace);
+        if !backtrace_str.contains("ultrahonk::backends::G1ArithmeticBackend>") {
+            panic!(
+                "Subtraction between affine points done outside of the G1ArithmeticBackend: {}",
+                backtrace_str
+            );
+        }
+
         let mut copy = self.into_group();
         copy -= other.borrow();
         copy
@@ -339,6 +368,15 @@ impl<P: SWCurveConfig, T: Borrow<Self>> Sub<T> for Affine<P> {
 impl<P: SWCurveConfig> Sub<Projective<P>> for Affine<P> {
     type Output = Projective<P>;
     fn sub(self, other: Projective<P>) -> Projective<P> {
+        let backtrace = ark_std::backtrace::Backtrace::force_capture();
+        let backtrace_str = format!("{:?}", backtrace);
+        if !backtrace_str.contains("ultrahonk::backends::G1ArithmeticBackend>") {
+            panic!(
+                "Subtraction between affine points done outside of the G1ArithmeticBackend: {}",
+                backtrace_str
+            );
+        }
+
         self + (-other)
     }
 }
@@ -346,6 +384,15 @@ impl<P: SWCurveConfig> Sub<Projective<P>> for Affine<P> {
 impl<'a, P: SWCurveConfig> Sub<&'a Projective<P>> for Affine<P> {
     type Output = Projective<P>;
     fn sub(self, other: &'a Projective<P>) -> Projective<P> {
+        let backtrace = ark_std::backtrace::Backtrace::force_capture();
+        let backtrace_str = format!("{:?}", backtrace);
+        if !backtrace_str.contains("ultrahonk::backends::G1ArithmeticBackend>") {
+            panic!(
+                "Subtraction between affine points done outside of the G1ArithmeticBackend: {}",
+                backtrace_str
+            );
+        }
+
         self + (-*other)
     }
 }

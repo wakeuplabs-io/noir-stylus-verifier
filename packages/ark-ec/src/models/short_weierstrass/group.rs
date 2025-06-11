@@ -278,7 +278,7 @@ impl<P: SWCurveConfig> PrimeGroup for Projective<P> {
     fn mul_bigint(&self, other: impl AsRef<[u64]>) -> Self {
         let backtrace = ark_std::backtrace::Backtrace::force_capture();
         let backtrace_str = format!("{:?}", backtrace);
-        if !backtrace_str.contains("ultrahonk::backends::G1ArithmeticBackend>::ec_scalar_mul") {
+        if !backtrace_str.contains("ultrahonk::backends::G1ArithmeticBackend>") {
             panic!("Scalar multiplication done outside of the G1ArithmeticBackend: {}", backtrace_str);
         }
 

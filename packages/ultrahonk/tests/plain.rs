@@ -1,3 +1,4 @@
+use ark_ec::VariableBaseMSM;
 use ark_bn254::Bn254;
 use ark_ec::{pairing::Pairing, AffineRepr, CurveGroup};
 use ark_ff::{BigInt, Field, One};
@@ -90,23 +91,16 @@ impl G1ArithmeticBackend for ArkHonkCurve {
             <Bn254 as Pairing>::G1Prepared::from(p0),
             <Bn254 as Pairing>::G1Prepared::from(p1),
         ];
-        Ok(<Bn254 as Pairing>::multi_pairing(g1_prepared, p).0
-            == <Bn254 as Pairing>::TargetField::one())
+        Ok(<Bn254 as Pairing>::multi_pairing(g1_prepared, p).0 == <Bn254 as Pairing>::TargetField::one())
     }
 
     /// A helper for computing multi-scalar multiplications over G1
     fn msm(scalars: &[ScalarField], points: &[G1Affine]) -> Result<G1Affine, G1ArithmeticError> {
-        if scalars.len() != points.len() {
+        if scalars.len() > points.len() {
             return Err(G1ArithmeticError);
         }
 
-        scalars
-            .iter()
-            .zip(points.iter())
-            .try_fold(G1Affine::identity(), |acc, (scalar, point)| {
-                let scaled_point = Self::ec_scalar_mul(*scalar, *point)?;
-                Self::ec_add(acc, scaled_point)
-            })
+        Ok(<Bn254 as Pairing>::G1::msm_unchecked(points, scalars).into())
     }
 }
 
