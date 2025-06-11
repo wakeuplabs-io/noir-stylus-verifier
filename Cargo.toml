@@ -1,5 +1,5 @@
 [workspace]
-members = ["packages/ultrahonk", "packages/contracts"]
+members = ["packages/ultrahonk", "packages/contracts", "packages/ark-ec"]
 resolver = "2"
 
 [workspace.package]

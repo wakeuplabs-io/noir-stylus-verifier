@@ -4,13 +4,7 @@ description = "A library for elliptic curves and pairings"
 documentation = "https://docs.rs/ark-ec/"
 version = "0.5.0"
 
-[workspace]
-
-# [lints]
-# workspace = true
-
 [dependencies]
-
 educe = "0.6.0"
 hashbrown = { version = "0.15", default-features = false, features = [
     "inline-more",
@@ -26,7 +20,6 @@ ark-ff = { version = "0.5.0", default-features = false }
 ark-poly = { version = "0.5.0", default-features = false }
 num-traits = { version = "0.2", default-features = false }
 num-bigint = { version = "0.4", default-features = false }
-
 
 [target.'cfg(all(target_has_atomic = "8", target_has_atomic = "16", target_has_atomic = "32", target_has_atomic = "64", target_has_atomic = "ptr"))'.dependencies]
 ahash = { version = "0.8", default-features = false }

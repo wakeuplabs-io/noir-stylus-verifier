@@ -11,7 +11,7 @@ rust-version.workspace = true
 
 [dependencies]
 ark-bn254.workspace = true
-ark-ec.workspace = true
+ark-ec = { version = "0.5.0", path = "../ark-ec" }
 ark-ff.workspace = true
 ark-poly.workspace = true
 eyre.workspace = true
