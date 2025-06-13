@@ -1,4 +1,3 @@
-use alloc::vec::Vec;
 use crate::{
     backends::HashBackend,
     decider::{types::VerifierMemory, verifier::DeciderVerifier},
@@ -9,6 +8,7 @@ use crate::{
     types::{HonkProof, ScalarField, ZeroKnowledge},
     CONST_PROOF_SIZE_LOG_N,
 };
+use alloc::vec::Vec;
 use std::marker::PhantomData;
 
 pub struct UltraHonk<P: HonkCurve, H: HashBackend> {

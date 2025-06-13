@@ -9,7 +9,7 @@ pub mod utils;
 use alloc::vec::Vec;
 
 /// Import items from the SDK. The prelude contains common traits and macros.
-use stylus_sdk::{prelude::*};
+use stylus_sdk::prelude::*;
 
 // Define some persistent storage using the Solidity ABI.
 sol_storage! {

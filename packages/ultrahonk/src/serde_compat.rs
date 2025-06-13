@@ -1,4 +1,3 @@
-
 //! Compatibility functions for serde and ark_serialize
 use alloc::vec::Vec;
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize, Compress, Validate};
