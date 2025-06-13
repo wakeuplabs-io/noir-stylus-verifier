@@ -11,11 +11,171 @@ pub struct Serialize<F: Field> {
     phantom: std::marker::PhantomData<F>,
 }
 
-pub struct SerializeC<C: CurveGroup> {
-    phantom: std::marker::PhantomData<C>,
+pub struct SerializeP {}
+
+/// An error that occurs during de/serialization
+#[derive(Debug)]
+pub enum SerdeError {
+    /// A sequence of deserialized elements is not the expected length
+    InvalidLength,
+    /// An error in the conversion of a type into a BN254 scalar field element
+    ScalarConversion,
 }
 
-pub struct SerializeP {}
+/// A trait for serializing types into byte arrays
+pub trait BytesSerializable {
+    /// Serializes a type into a vector of bytes,
+    /// for use in precompiles or the transcript
+    fn serialize_to_bytes(&self) -> Vec<u8>;
+}
+
+/// A trait for deserializing types from byte arrays
+pub trait BytesDeserializable {
+    /// The number of bytes expected to be deserialized
+    const SER_LEN: usize;
+
+    /// Deserializes a type from a slice of bytes,
+    /// returned from a precompile or transcript operation
+    fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError>
+    where
+        Self: Sized;
+
+    /// Deserializes a type from a slice of bytes at the given offset,
+    /// returned from a precompile or transcript operation
+    fn deserialize_from_bytes_with_offset(
+        bytes: &[u8],
+        offset: &mut usize,
+    ) -> Result<Self, SerdeError>
+    where
+        Self: Sized,
+    {
+        let res = Self::deserialize_from_bytes(&bytes[*offset..*offset + Self::SER_LEN])?;
+        *offset += Self::SER_LEN;
+        Ok(res)
+    }
+}
+
+impl BytesSerializable for u32 {
+    fn serialize_to_bytes(&self) -> Vec<u8> {
+        self.to_be_bytes().to_vec()
+    }
+}
+
+impl BytesDeserializable for u32 {
+    const SER_LEN: usize = 4;
+
+    fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
+        Ok(u32::from_be_bytes(
+            bytes.try_into().map_err(|_| SerdeError::InvalidLength)?,
+        ))
+    }
+}
+
+impl BytesSerializable for u64 {
+    fn serialize_to_bytes(&self) -> Vec<u8> {
+        self.to_be_bytes().to_vec()
+    }
+}
+
+impl BytesDeserializable for u64 {
+    const SER_LEN: usize = 8;
+
+    fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
+        Ok(u64::from_be_bytes(
+            bytes.try_into().map_err(|_| SerdeError::InvalidLength)?,
+        ))
+    }
+}
+
+impl BytesSerializable for G1BaseField {
+    fn serialize_to_bytes(&self) -> Vec<u8> {
+        const NUM_64_LIMBS: u32 = G1BaseField::MODULUS_BIT_SIZE.div_ceil(64);
+        const FIELDSIZE_BYTES: u32 = NUM_64_LIMBS * 8;
+
+        let mut buf = Vec::new();
+        let prev_len = buf.len();
+        for el in self.to_base_prime_field_elements() {
+            let el = el.into_bigint(); // Gets rid of montgomery form
+
+            for data in el.as_ref().iter().rev().cloned() {
+                buf.extend(data.serialize_to_bytes());
+            }
+
+            debug_assert_eq!(
+                buf.len() - prev_len,
+                FIELDSIZE_BYTES as usize * G1BaseField::extension_degree() as usize
+            );
+        }
+        buf
+    }
+}
+
+impl BytesDeserializable for G1BaseField {
+    const SER_LEN: usize = 8;
+
+    fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
+        panic!("Not implemented");
+    }
+
+    fn deserialize_from_bytes_with_offset(
+        bytes: &[u8],
+        offset: &mut usize,
+    ) -> Result<Self, SerdeError> {
+        const NUM_64_LIMBS: u32 = G1BaseField::MODULUS_BIT_SIZE.div_ceil(64);
+        let mut fields = Vec::with_capacity(G1BaseField::extension_degree() as usize);
+
+        for _ in 0..G1BaseField::extension_degree() {
+            let mut bigint: BigUint = Default::default();
+            for _ in 0..NUM_64_LIMBS {
+                let data = u64::deserialize_from_bytes_with_offset(&bytes, offset).unwrap();
+                bigint <<= 64;
+                bigint += data;
+            }
+            fields.push(G1BaseField::from(bigint));
+        }
+
+        Ok(G1BaseField::from_base_prime_field_elems(fields).expect("Should work"))
+    }
+}
+
+impl BytesSerializable for G1Affine {
+    fn serialize_to_bytes(&self) -> Vec<u8> {
+        const NUM_64_LIMBS: u32 = G1BaseField::MODULUS_BIT_SIZE.div_ceil(64);
+        const FIELDSIZE_BYTES: u32 = NUM_64_LIMBS * 8;
+        const GROUPSIZE_BYTES: u32 = FIELDSIZE_BYTES * 2; // Times extension degree
+
+        let mut buf = Vec::new();
+
+        if self.is_zero() {
+            for _ in 0..GROUPSIZE_BYTES {
+                buf.push(255);
+            }
+        } else {
+            let (x, y) = self.xy().unwrap_or_default();
+            Serialize::write_field_element(&mut buf, x);
+            Serialize::write_field_element(&mut buf, y);
+        }
+
+        buf
+    }
+}
+
+impl BytesDeserializable for G1Affine {
+    const SER_LEN: usize = 64;
+
+    fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
+        if bytes.iter().all(|&x| x == 255) {
+            return Ok(G1Affine::zero());
+        }
+
+        let mut offset = 0;
+        let first = G1BaseField::deserialize_from_bytes_with_offset(bytes, &mut offset).unwrap();
+        let second = G1BaseField::deserialize_from_bytes_with_offset(bytes, &mut offset).unwrap();
+
+        // read x first every time
+        Ok(G1Affine::new(first, second))
+    }
+}
 
 impl<F: Field> Serialize<F> {
     const NUM_64_LIMBS: u32 = <F::BasePrimeField as PrimeField>::MODULUS_BIT_SIZE.div_ceil(64);
@@ -36,7 +196,8 @@ impl<F: Field> Serialize<F> {
                 return Err(HonkProofError::InvalidProofLength);
             }
 
-            let read_num_elements = Self::read_u32(buf, &mut offset);
+            let read_num_elements =
+                u32::deserialize_from_bytes_with_offset(&buf, &mut offset).unwrap();
             if read_num_elements != num_elements as u32 {
                 return Err(HonkProofError::InvalidProofLength);
             }
@@ -68,7 +229,7 @@ impl<F: Field> Serialize<F> {
 
         let mut res = Vec::with_capacity(total_size as usize);
         if include_size {
-            Self::write_u32(&mut res, buf.len() as u32);
+            res.extend((buf.len() as u32).serialize_to_bytes());
         }
         for el in buf.iter().cloned() {
             Self::write_field_element(&mut res, el);
@@ -77,35 +238,13 @@ impl<F: Field> Serialize<F> {
         res
     }
 
-    pub(crate) fn read_u32(buf: &[u8], offset: &mut usize) -> u32 {
-        const BYTES: usize = 4;
-        let res = u32::from_be_bytes(buf[*offset..*offset + BYTES].try_into().unwrap());
-        *offset += BYTES;
-        res
-    }
-
-    pub(crate) fn read_u64(buf: &[u8], offset: &mut usize) -> u64 {
-        const BYTES: usize = 8;
-        let res = u64::from_be_bytes(buf[*offset..*offset + BYTES].try_into().unwrap());
-        *offset += BYTES;
-        res
-    }
-
-    pub fn write_u32(buf: &mut Vec<u8>, val: u32) {
-        buf.extend(val.to_be_bytes());
-    }
-
-    pub(crate) fn write_u64(buf: &mut Vec<u8>, val: u64) {
-        buf.extend(val.to_be_bytes());
-    }
-
     pub fn write_field_element(buf: &mut Vec<u8>, el: F) {
         let prev_len = buf.len();
         for el in el.to_base_prime_field_elements() {
             let el = el.into_bigint(); // Gets rid of montgomery form
 
             for data in el.as_ref().iter().rev().cloned() {
-                Self::write_u64(buf, data);
+                buf.extend(data.serialize_to_bytes());
             }
 
             debug_assert_eq!(
@@ -121,7 +260,7 @@ impl<F: Field> Serialize<F> {
         for _ in 0..F::extension_degree() {
             let mut bigint: BigUint = Default::default();
             for _ in 0..Self::NUM_64_LIMBS {
-                let data = Self::read_u64(buf, offset);
+                let data = u64::deserialize_from_bytes_with_offset(&buf, offset).unwrap();
                 bigint <<= 64;
                 bigint += data;
             }
@@ -129,63 +268,5 @@ impl<F: Field> Serialize<F> {
         }
 
         F::from_base_prime_field_elems(fields).expect("Should work")
-    }
-}
-
-impl<C: CurveGroup> SerializeC<C> {
-    const NUM_64_LIMBS: u32 =
-        <<C::Config as CurveConfig>::BaseField as Field>::BasePrimeField::MODULUS_BIT_SIZE
-            .div_ceil(64);
-    const FIELDSIZE_BYTES: u32 = Self::NUM_64_LIMBS * 8;
-    const GROUPSIZE_BYTES: u32 = Self::FIELDSIZE_BYTES * 2; // Times extension degree
-
-    pub fn group_size() -> usize {
-        Self::GROUPSIZE_BYTES as usize * C::BaseField::extension_degree() as usize
-    }
-
-    pub fn write_group_element(buf: &mut Vec<u8>, el: &C::Affine, write_x_first: bool) {
-        let prev_len = buf.len();
-
-        if el.is_zero() {
-            for _ in 0..Self::FIELDSIZE_BYTES * 2 {
-                buf.push(255);
-            }
-        } else {
-            let (x, y) = el.xy().unwrap_or_default();
-            if write_x_first {
-                Serialize::write_field_element(buf, x);
-                Serialize::write_field_element(buf, y);
-            } else {
-                Serialize::write_field_element(buf, y);
-                Serialize::write_field_element(buf, x);
-            }
-        }
-
-        debug_assert_eq!(buf.len() - prev_len, Self::FIELDSIZE_BYTES as usize * 2);
-    }
-}
-
-impl SerializeP {
-    const NUM_64_LIMBS: u32 = G1BaseField::MODULUS_BIT_SIZE.div_ceil(64);
-    pub const FIELDSIZE_BYTES: u32 = Self::NUM_64_LIMBS * 8;
-
-    pub fn write_g1_element(buf: &mut Vec<u8>, el: &G1Affine, write_x_first: bool) {
-        SerializeC::<G1Projective>::write_group_element(buf, el, write_x_first);
-    }
-
-    pub fn read_g1_element(buf: &[u8], offset: &mut usize, read_x_first: bool) -> G1Affine {
-        if buf.iter().all(|&x| x == 255) {
-            *offset += Self::FIELDSIZE_BYTES as usize * 2;
-            return G1Affine::zero();
-        }
-
-        let first = Serialize::<G1BaseField>::read_field_element(buf, offset);
-        let second = Serialize::<G1BaseField>::read_field_element(buf, offset);
-
-        if read_x_first {
-            G1Affine::new(first, second)
-        } else {
-            G1Affine::new(second, first)
-        }
     }
 }

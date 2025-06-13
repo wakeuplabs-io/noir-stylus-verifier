@@ -4,9 +4,8 @@
 //! 2. serialize objects to scalar arrays for use as public proof inputs
 
 use alloc::{vec, vec::Vec};
-use ark_ec::{short_weierstrass::SWFlags, AffineRepr};
+use ark_ec::AffineRepr;
 use ark_ff::{BigInt, BigInteger, Fp256, MontBackend, MontConfig, PrimeField, Zero};
-use ark_serialize::Flags;
 use ultrahonk::types::{G1Affine, G1BaseField, G2Affine, G2BaseField, ScalarField};
 use super::constants::{NUM_BYTES_FELT, NUM_U64S_FELT, NUM_BYTES_U64};
 
@@ -45,10 +44,6 @@ pub trait BytesDeserializable {
     where
         Self: Sized;
 }
-
-/// A wrapper type for `G1Affine` used to ensure that it is serialized
-/// in the manner expected by the transcript implementation.
-pub struct TranscriptG1(pub G1Affine);
 
 // -------------------------
 // | TRAIT IMPLEMENTATIONS |
@@ -133,21 +128,6 @@ impl BytesDeserializable for G1Affine {
             y,
             infinity: x.is_zero() && y.is_zero(),
         })
-    }
-}
-
-impl BytesSerializable for TranscriptG1 {
-    /// Replicates the functionality of `serialize_compressed` for `Affine`
-    fn serialize_to_bytes(&self) -> Vec<u8> {
-        let (x, flags) = match self.0.infinity {
-            true => (G1BaseField::zero(), SWFlags::infinity()),
-            false => (self.0.x, self.0.to_flags()),
-        };
-
-        let mut x_bytes = x.into_bigint().to_bytes_le();
-        x_bytes[NUM_BYTES_FELT - 1] |= flags.u8_bitmask();
-
-        x_bytes
     }
 }
 

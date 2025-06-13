@@ -13,7 +13,7 @@ test-all:
   cargo test --release --all-features
 
 test-ultrahonk:
-  cargo test -p ultrahonk -- --test-threads=1
+  cargo test -p ultrahonk -- --test-threads=1 --nocapture
 
 test-contracts:
   cargo test -p contracts -- --test-threads=1
