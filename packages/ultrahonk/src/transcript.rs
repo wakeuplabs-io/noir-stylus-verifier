@@ -1,7 +1,7 @@
 use crate::backends::HashBackend;
 use crate::honk_curve::{NUM_BASEFIELD_ELEMENTS, NUM_SCALARFIELD_ELEMENTS};
-use crate::types::{G1Affine, HonkProof, ScalarField};
-use crate::{HonkProofError, HonkProofResult, Utils};
+use crate::types::{G1Affine, HonkProof, HonkProofError, HonkProofResult, ScalarField};
+use crate::Utils;
 use alloc::vec::Vec;
 use ark_ec::AffineRepr;
 use ark_ff::{One, Zero};

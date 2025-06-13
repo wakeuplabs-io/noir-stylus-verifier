@@ -26,6 +26,8 @@ use crate::{
     types::ScalarField,
 };
 
+// TODO: check these constants are in use or remove
+
 pub const NUM_ALPHAS: usize = decider::relations::NUM_SUBRELATIONS - 1;
 /// The log of the max circuit size assumed in order to achieve constant sized Honk proofs
 /// AZTEC TODO(<https://github.com/AztecProtocol/barretenberg/issues/1046>): Remove the need for const sized proofs
@@ -42,41 +44,6 @@ pub const NUM_GEMINI_CLAIMS: usize = 2 * CONST_PROOF_SIZE_LOG_N + 2;
 // TODO(https://github.com/AztecProtocol/barretenberg/issues/1293): Decouple Gemini from Interleaving
 pub const NUM_INTERLEAVING_CLAIMS: u32 = 2;
 
-pub type HonkProofResult<T> = std::result::Result<T, HonkProofError>;
-
-/// The errors that may arise during the computation of a HONK proof.
-#[derive(Debug, thiserror::Error)]
-pub enum HonkProofError {
-    /// Indicates that the witness is too small for the provided circuit.
-    #[error("Cannot index into witness {0}")]
-    CorruptedWitness(usize),
-    /// Indicates that the crs is too small
-    #[error("CRS too small")]
-    CrsTooSmall,
-    /// The proof has too few elements
-    #[error("Proof too small")]
-    ProofTooSmall,
-    /// Invalid proof length
-    #[error("Invalid proof length")]
-    InvalidProofLength,
-    /// Invalid key length
-    #[error("Invalid key length")]
-    InvalidKeyLength,
-    /// Corrupted Key
-    #[error("Corrupted Key")]
-    CorruptedKey,
-    /// Expected Public Witness, Shared received
-    #[error("Expected Public Witness, Shared received")]
-    ExpectedPublicWitness,
-    #[error(transparent)]
-    IOError(#[from] std::io::Error),
-    /// Gemini evaluation challenge is in the SmallSubgroup
-    #[error("Gemini evaluation challenge is in the SmallSubgroup.")]
-    GeminiSmallSubgroup,
-    /// The Subgroup for the FFT domain is too large
-    #[error("Too large Subgroup")]
-    LargeSubgroup,
-}
 
 pub struct Utils {}
 

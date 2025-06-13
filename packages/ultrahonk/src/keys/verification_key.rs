@@ -1,11 +1,11 @@
 use crate::polynomials::polynomial_types::PrecomputedEntities;
-use crate::types::{G1Affine, G2Affine};
+use crate::types::{G1Affine, G1BaseField, G2Affine};
 use crate::{
     polynomials::polynomial_types::PRECOMPUTED_ENTITIES_SIZE,
-    serialize::{Serialize, SerializeP},
-    types::ScalarField,
-    HonkProofError, HonkProofResult,
+    serialize::{SerializeP},
+    types::{HonkProofError, HonkProofResult},
 };
+use ark_ff::PrimeField;
 use serde::{Deserialize, Serialize as SerdeSerialize};
 use crate::serialize::BytesDeserializable;
 
@@ -69,7 +69,8 @@ impl PublicComponentKey {
 }
 
 impl VerifyingKeyBarretenberg {
-    const FIELDSIZE_BYTES: u32 = SerializeP::FIELDSIZE_BYTES;
+    const NUM_64_LIMBS: u32 = <G1BaseField as PrimeField>::MODULUS_BIT_SIZE.div_ceil(64);
+    const FIELDSIZE_BYTES: u32 = Self::NUM_64_LIMBS * 8;
     const SER_FULL_SIZE: usize =
         4 * 8 + 4 + PRECOMPUTED_ENTITIES_SIZE * 2 * Self::FIELDSIZE_BYTES as usize;
     const SER_COMPRESSED_SIZE: usize = Self::SER_FULL_SIZE - 4;

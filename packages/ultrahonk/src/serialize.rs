@@ -1,10 +1,9 @@
 use crate::{
-    types::{G1Affine, G1BaseField, G1Projective},
-    HonkProofError, HonkProofResult,
+    types::{G1Affine, G1BaseField, G1Projective, MontFp256, NUM_U64S_FELT},
 };
 use alloc::vec::Vec;
 use ark_ec::{AffineRepr, CurveConfig, CurveGroup};
-use ark_ff::{Field, PrimeField};
+use ark_ff::{BigInt, BigInteger, Field, MontConfig, PrimeField, Zero};
 use num_bigint::BigUint;
 
 pub struct Serialize<F: Field> {
@@ -87,30 +86,13 @@ impl BytesDeserializable for u64 {
     }
 }
 
-impl BytesSerializable for G1BaseField {
+impl<P: MontConfig<NUM_U64S_FELT>> BytesSerializable for MontFp256<P> {
     fn serialize_to_bytes(&self) -> Vec<u8> {
-        const NUM_64_LIMBS: u32 = G1BaseField::MODULUS_BIT_SIZE.div_ceil(64);
-        const FIELDSIZE_BYTES: u32 = NUM_64_LIMBS * 8;
-
-        let mut buf = Vec::new();
-        let prev_len = buf.len();
-        for el in self.to_base_prime_field_elements() {
-            let el = el.into_bigint(); // Gets rid of montgomery form
-
-            for data in el.as_ref().iter().rev().cloned() {
-                buf.extend(data.serialize_to_bytes());
-            }
-
-            debug_assert_eq!(
-                buf.len() - prev_len,
-                FIELDSIZE_BYTES as usize * G1BaseField::extension_degree() as usize
-            );
-        }
-        buf
+        self.into_bigint().to_bytes_be()
     }
 }
 
-impl BytesDeserializable for G1BaseField {
+impl<P: MontConfig<NUM_U64S_FELT>> BytesDeserializable for MontFp256<P> {
     const SER_LEN: usize = 8;
 
     fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
@@ -131,12 +113,45 @@ impl BytesDeserializable for G1BaseField {
                 bigint <<= 64;
                 bigint += data;
             }
-            fields.push(G1BaseField::from(bigint));
+            fields.push(MontFp256::<P>::from(bigint));
         }
 
-        Ok(G1BaseField::from_base_prime_field_elems(fields).expect("Should work"))
+        Ok(MontFp256::<P>::from_base_prime_field_elems(fields).expect("Should work"))
     }
 }
+
+
+
+impl<P: MontConfig<NUM_U64S_FELT>> BytesDeserializable for Vec<MontFp256<P>> {
+    const SER_LEN: usize = 8;
+
+    fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
+        let num_64_limbs: u32 = <MontFp256<P> as PrimeField>::MODULUS_BIT_SIZE.div_ceil(64);
+        let fieldsize_bytes: u32 = num_64_limbs * 8;
+
+        let size = bytes.len();
+        let mut offset = 0;
+
+        // Check sizes
+
+        let num_elements = size / fieldsize_bytes as usize;
+        if num_elements * fieldsize_bytes as usize != size {
+            return Err(SerdeError::InvalidLength);
+        }
+
+        // Read data
+        let mut res = Vec::with_capacity(num_elements);
+        for _ in 0..num_elements {
+            res.push(MontFp256::<P>::deserialize_from_bytes_with_offset(bytes, &mut offset).unwrap());
+        }
+        debug_assert_eq!(offset, size);
+
+        Ok(res)
+    }
+}
+
+
+
 
 impl BytesSerializable for G1Affine {
     fn serialize_to_bytes(&self) -> Vec<u8> {
@@ -182,42 +197,7 @@ impl<F: Field> Serialize<F> {
     const FIELDSIZE_BYTES: u32 = Self::NUM_64_LIMBS * 8;
     const VEC_LEN_BYTES: u32 = 4;
 
-    // TODO maybe change to impl Read?
-    pub fn from_buffer(buf: &[u8], size_included: bool) -> HonkProofResult<Vec<F>> {
-        let size = buf.len();
-        let mut offset = 0;
 
-        // Check sizes
-        let num_elements = if size_included {
-            let num_elements =
-                (size - Self::VEC_LEN_BYTES as usize) / Self::FIELDSIZE_BYTES as usize;
-            if num_elements * Self::FIELDSIZE_BYTES as usize + Self::VEC_LEN_BYTES as usize != size
-            {
-                return Err(HonkProofError::InvalidProofLength);
-            }
-
-            let read_num_elements =
-                u32::deserialize_from_bytes_with_offset(&buf, &mut offset).unwrap();
-            if read_num_elements != num_elements as u32 {
-                return Err(HonkProofError::InvalidProofLength);
-            }
-            num_elements
-        } else {
-            let num_elements = size / Self::FIELDSIZE_BYTES as usize;
-            if num_elements * Self::FIELDSIZE_BYTES as usize != size {
-                return Err(HonkProofError::InvalidProofLength);
-            }
-            num_elements
-        };
-
-        // Read data
-        let mut res = Vec::with_capacity(num_elements);
-        for _ in 0..num_elements {
-            res.push(Self::read_field_element(buf, &mut offset));
-        }
-        debug_assert_eq!(offset, size);
-        Ok(res)
-    }
 
     pub(crate) fn field_size() -> usize {
         Self::FIELDSIZE_BYTES as usize * F::extension_degree() as usize

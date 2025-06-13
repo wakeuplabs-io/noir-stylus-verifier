@@ -18,6 +18,7 @@ use ultrahonk::{
     serialize::Serialize,
     types::{G1Affine, G2Affine, ScalarField, ZeroKnowledge},
 };
+use ultrahonk::serialize::BytesDeserializable;
 
 pub struct ArkKeccak256;
 
@@ -30,7 +31,7 @@ impl HashBackend for ArkKeccak256 {
         let hash_result = hasher.finalize();
 
         let mut offset = 0;
-        Serialize::read_field_element(&hash_result, &mut offset)
+        ScalarField::deserialize_from_bytes_with_offset(&hash_result, &mut offset).unwrap()
     }
 }
 
@@ -154,7 +155,7 @@ fn plain_test(name: &str, proof_file: &str, vk_file: &str, public_inputs_file: &
 
     // parse public_inputs file
     let public_inputs_u8 = std::fs::read(public_inputs_file).unwrap();
-    let public_inputs = Serialize::from_buffer(&public_inputs_u8, false).unwrap();
+    let public_inputs = Vec::<ScalarField>::deserialize_from_bytes(&public_inputs_u8).unwrap();
 
     // parse the crs
     let verifier_crs = CrsParser::<Bn254>::get_crs_g2(CRS_PATH_G2).unwrap();

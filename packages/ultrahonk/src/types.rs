@@ -1,9 +1,14 @@
 pub use crate::polynomials::polynomial_types::{PrecomputedEntities, PRECOMPUTED_ENTITIES_SIZE};
-use crate::serialize::Serialize;
-use crate::HonkProofResult;
+use crate::{serialize::Serialize};
 use alloc::vec::Vec;
 use ark_bn254::{g1::Config as G1Config, g2::Config as G2Config, Fq, Fq2, Fr};
 use ark_ec::short_weierstrass::Affine;
+use ark_ff::{Fp256, MontBackend};
+use crate::serialize::BytesDeserializable;
+
+// TODO: move to a separate file
+/// The number of u64s it takes to represent a field element
+pub const NUM_U64S_FELT: usize = 4;
 
 /// Type alias for an element of the scalar field of the Bn254 curve
 pub type ScalarField = Fr;
@@ -23,10 +28,50 @@ pub type G2BaseField = Fq2;
 /// Type alias for the G1 group of the curve
 pub type G1Projective = ark_bn254::G1Projective;
 
+/// Type alias for a 256-bit prime field element in Montgomery form
+pub type MontFp256<P> = Fp256<MontBackend<P, NUM_U64S_FELT>>;
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct HonkProof {
     proof: Vec<ScalarField>,
 }
+
+pub type HonkProofResult<T> = std::result::Result<T, HonkProofError>;
+
+/// The errors that may arise during the computation of a HONK proof.
+#[derive(Debug, thiserror::Error)]
+pub enum HonkProofError {
+    /// Indicates that the witness is too small for the provided circuit.
+    #[error("Cannot index into witness {0}")]
+    CorruptedWitness(usize),
+    /// Indicates that the crs is too small
+    #[error("CRS too small")]
+    CrsTooSmall,
+    /// The proof has too few elements
+    #[error("Proof too small")]
+    ProofTooSmall,
+    /// Invalid proof length
+    #[error("Invalid proof length")]
+    InvalidProofLength,
+    /// Invalid key length
+    #[error("Invalid key length")]
+    InvalidKeyLength,
+    /// Corrupted Key
+    #[error("Corrupted Key")]
+    CorruptedKey,
+    /// Expected Public Witness, Shared received
+    #[error("Expected Public Witness, Shared received")]
+    ExpectedPublicWitness,
+    #[error(transparent)]
+    IOError(#[from] std::io::Error),
+    /// Gemini evaluation challenge is in the SmallSubgroup
+    #[error("Gemini evaluation challenge is in the SmallSubgroup.")]
+    GeminiSmallSubgroup,
+    /// The Subgroup for the FFT domain is too large
+    #[error("Too large Subgroup")]
+    LargeSubgroup,
+}
+
 
 impl HonkProof {
     pub(crate) fn new(proof: Vec<ScalarField>) -> Self {
@@ -42,7 +87,7 @@ impl HonkProof {
     }
 
     pub fn from_buffer(buf: &[u8]) -> HonkProofResult<Self> {
-        let res = Serialize::from_buffer(buf, false)?;
+        let res = Vec::<ScalarField>::deserialize_from_bytes(buf).map_err(|_| HonkProofError::InvalidProofLength)?;
         Ok(Self::new(res))
     }
 
