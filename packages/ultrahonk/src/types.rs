@@ -1,5 +1,5 @@
 pub use crate::polynomials::polynomial_types::{PrecomputedEntities, PRECOMPUTED_ENTITIES_SIZE};
-use crate::{serialize::Serialize};
+use crate::serialize::BytesSerializable;
 use alloc::vec::Vec;
 use ark_bn254::{g1::Config as G1Config, g2::Config as G2Config, Fq, Fq2, Fr};
 use ark_ec::short_weierstrass::Affine;
@@ -83,7 +83,7 @@ impl HonkProof {
     }
 
     pub fn to_buffer(&self) -> Vec<u8> {
-        Serialize::to_buffer(&self.proof, false)
+        self.proof.serialize_to_bytes()
     }
 
     pub fn from_buffer(buf: &[u8]) -> HonkProofResult<Self> {

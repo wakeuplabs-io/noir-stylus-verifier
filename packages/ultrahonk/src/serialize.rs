@@ -1,9 +1,7 @@
-use crate::{
-    types::{G1Affine, G1BaseField, G1Projective, MontFp256, NUM_U64S_FELT},
-};
+use crate::types::{G1Affine, G1BaseField, MontFp256, NUM_U64S_FELT};
 use alloc::vec::Vec;
-use ark_ec::{AffineRepr, CurveConfig, CurveGroup};
-use ark_ff::{BigInt, BigInteger, Field, MontConfig, PrimeField, Zero};
+use ark_ec::{AffineRepr};
+use ark_ff::{BigInteger, Field, MontConfig, PrimeField};
 use num_bigint::BigUint;
 
 pub struct Serialize<F: Field> {
@@ -96,7 +94,7 @@ impl<P: MontConfig<NUM_U64S_FELT>> BytesDeserializable for MontFp256<P> {
     const SER_LEN: usize = 8;
 
     fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
-        panic!("Not implemented");
+        panic!("Not implemented TODO:");
     }
 
     fn deserialize_from_bytes_with_offset(
@@ -120,7 +118,23 @@ impl<P: MontConfig<NUM_U64S_FELT>> BytesDeserializable for MontFp256<P> {
     }
 }
 
+impl<P: MontConfig<NUM_U64S_FELT>> BytesSerializable for Vec<MontFp256<P>> {
+    fn serialize_to_bytes(&self) -> Vec<u8> {
+        let num_64_limbs: u32 = <MontFp256<P> as PrimeField>::MODULUS_BIT_SIZE.div_ceil(64);
+        let fieldsize_bytes: u32 = num_64_limbs * 8;
+        let field_size = fieldsize_bytes as usize * MontFp256::<P>::extension_degree() as usize;
 
+        let total_size = self.len() as u32 * field_size as u32;
+
+        let mut res = Vec::with_capacity(total_size as usize);
+        for el in self.iter().cloned() {
+            res.extend(el.serialize_to_bytes());
+        }
+        debug_assert_eq!(res.len(), total_size as usize);
+
+        res
+    }
+}
 
 impl<P: MontConfig<NUM_U64S_FELT>> BytesDeserializable for Vec<MontFp256<P>> {
     const SER_LEN: usize = 8;
@@ -142,7 +156,9 @@ impl<P: MontConfig<NUM_U64S_FELT>> BytesDeserializable for Vec<MontFp256<P>> {
         // Read data
         let mut res = Vec::with_capacity(num_elements);
         for _ in 0..num_elements {
-            res.push(MontFp256::<P>::deserialize_from_bytes_with_offset(bytes, &mut offset).unwrap());
+            res.push(
+                MontFp256::<P>::deserialize_from_bytes_with_offset(bytes, &mut offset).unwrap(),
+            );
         }
         debug_assert_eq!(offset, size);
 
@@ -150,28 +166,25 @@ impl<P: MontConfig<NUM_U64S_FELT>> BytesDeserializable for Vec<MontFp256<P>> {
     }
 }
 
-
-
-
 impl BytesSerializable for G1Affine {
     fn serialize_to_bytes(&self) -> Vec<u8> {
         const NUM_64_LIMBS: u32 = G1BaseField::MODULUS_BIT_SIZE.div_ceil(64);
         const FIELDSIZE_BYTES: u32 = NUM_64_LIMBS * 8;
         const GROUPSIZE_BYTES: u32 = FIELDSIZE_BYTES * 2; // Times extension degree
 
-        let mut buf = Vec::new();
+        let mut res = Vec::new();
 
         if self.is_zero() {
             for _ in 0..GROUPSIZE_BYTES {
-                buf.push(255);
+                res.push(255);
             }
         } else {
             let (x, y) = self.xy().unwrap_or_default();
-            Serialize::write_field_element(&mut buf, x);
-            Serialize::write_field_element(&mut buf, y);
+            res.extend(x.serialize_to_bytes());
+            res.extend(y.serialize_to_bytes());
         }
 
-        buf
+        res
     }
 }
 
@@ -189,64 +202,5 @@ impl BytesDeserializable for G1Affine {
 
         // read x first every time
         Ok(G1Affine::new(first, second))
-    }
-}
-
-impl<F: Field> Serialize<F> {
-    const NUM_64_LIMBS: u32 = <F::BasePrimeField as PrimeField>::MODULUS_BIT_SIZE.div_ceil(64);
-    const FIELDSIZE_BYTES: u32 = Self::NUM_64_LIMBS * 8;
-    const VEC_LEN_BYTES: u32 = 4;
-
-
-
-    pub(crate) fn field_size() -> usize {
-        Self::FIELDSIZE_BYTES as usize * F::extension_degree() as usize
-    }
-
-    pub fn to_buffer(buf: &[F], include_size: bool) -> Vec<u8> {
-        let total_size = buf.len() as u32 * Self::field_size() as u32
-            + if include_size { Self::VEC_LEN_BYTES } else { 0 };
-
-        let mut res = Vec::with_capacity(total_size as usize);
-        if include_size {
-            res.extend((buf.len() as u32).serialize_to_bytes());
-        }
-        for el in buf.iter().cloned() {
-            Self::write_field_element(&mut res, el);
-        }
-        debug_assert_eq!(res.len(), total_size as usize);
-        res
-    }
-
-    pub fn write_field_element(buf: &mut Vec<u8>, el: F) {
-        let prev_len = buf.len();
-        for el in el.to_base_prime_field_elements() {
-            let el = el.into_bigint(); // Gets rid of montgomery form
-
-            for data in el.as_ref().iter().rev().cloned() {
-                buf.extend(data.serialize_to_bytes());
-            }
-
-            debug_assert_eq!(
-                buf.len() - prev_len,
-                Self::FIELDSIZE_BYTES as usize * F::extension_degree() as usize
-            );
-        }
-    }
-
-    pub fn read_field_element(buf: &[u8], offset: &mut usize) -> F {
-        let mut fields = Vec::with_capacity(F::extension_degree() as usize);
-
-        for _ in 0..F::extension_degree() {
-            let mut bigint: BigUint = Default::default();
-            for _ in 0..Self::NUM_64_LIMBS {
-                let data = u64::deserialize_from_bytes_with_offset(&buf, offset).unwrap();
-                bigint <<= 64;
-                bigint += data;
-            }
-            fields.push(F::BasePrimeField::from(bigint));
-        }
-
-        F::from_base_prime_field_elems(fields).expect("Should work")
     }
 }

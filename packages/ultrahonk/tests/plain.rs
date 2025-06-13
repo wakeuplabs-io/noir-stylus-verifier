@@ -15,7 +15,7 @@ use ultrahonk::{
     honk_curve::HonkCurve,
     keys::verification_key::{VerifyingKey, VerifyingKeyBarretenberg},
     prelude::{HashBackend, HonkProof, UltraHonk},
-    serialize::Serialize,
+    serialize::BytesSerializable,
     types::{G1Affine, G2Affine, ScalarField, ZeroKnowledge},
 };
 use ultrahonk::serialize::BytesDeserializable;
@@ -25,7 +25,8 @@ pub struct ArkKeccak256;
 impl HashBackend for ArkKeccak256 {
     fn hash(buffer: Vec<ScalarField>) -> ScalarField {
         // Losing 2 bits of this is not an issue -> we can just reduce mod p
-        let vec = Serialize::to_buffer(&buffer, false);
+        let vec = buffer.serialize_to_bytes();
+        
         let mut hasher = Keccak256::default();
         hasher.update(vec);
         let hash_result = hasher.finalize();
