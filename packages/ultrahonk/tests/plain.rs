@@ -1,4 +1,5 @@
 use ark_bn254::Bn254;
+use ark_ec::VariableBaseMSM;
 use ark_ec::{pairing::Pairing, AffineRepr, CurveGroup};
 use ark_ff::{BigInt, Field, One};
 use ark_serialize::CanonicalDeserialize;
@@ -96,17 +97,11 @@ impl G1ArithmeticBackend for ArkHonkCurve {
 
     /// A helper for computing multi-scalar multiplications over G1
     fn msm(scalars: &[ScalarField], points: &[G1Affine]) -> Result<G1Affine, G1ArithmeticError> {
-        if scalars.len() != points.len() {
+        if scalars.len() > points.len() {
             return Err(G1ArithmeticError);
         }
 
-        scalars
-            .iter()
-            .zip(points.iter())
-            .try_fold(G1Affine::identity(), |acc, (scalar, point)| {
-                let scaled_point = Self::ec_scalar_mul(*scalar, *point)?;
-                Self::ec_add(acc, scaled_point)
-            })
+        Ok(<Bn254 as Pairing>::G1::msm_unchecked(points, scalars).into())
     }
 }
 

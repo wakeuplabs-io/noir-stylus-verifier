@@ -1,5 +1,5 @@
 [workspace]
-members = ["packages/ultrahonk", "packages/contracts"]
+members = ["packages/ultrahonk", "packages/contracts", "packages/ark-ec"]
 resolver = "2"
 
 [workspace.package]
@@ -14,19 +14,22 @@ readme = "./README.md"
 
 [workspace.dependencies]
 ark-bn254 = "^0.5.0"
-ark-ec = { version = "^0.5.0", default-features = false }
 ark-ff = "^0.5.0"
+ark-ec = "^0.5.0"
 ark-grumpkin = "^0.5.0"
-ark-poly = "^0.5.0"
+ark-poly = { version = "^0.5.0", default-features = false }
 ark-serialize = { version = "^0.5.0", features = ["derive", "std"] }
 eyre = "0.6"
-num-bigint = { version = "0.4.5" }
+num-bigint = { version = "0.4.5", default-features = false }
 num-traits = { version = "0.2.18", default-features = false }
 rand = "0.8.5"
 serde = { version = "1.0.193", features = ["derive", "rc"] }
 sha3 = "0.10.8"
 thiserror = "2"
 tracing = { version = "0.1.40" }
+
+[patch.crates-io]
+ark-ec = { path = "./packages/ark-ec" }
 
 # This profile can be used for CI in pull requests.
 [profile.ci-dev]
