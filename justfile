@@ -6,13 +6,13 @@ lint:
 build-all:
   cargo build --release --all-features
 
+build-contracts:
+  cargo build -p contracts --target wasm32-unknown-unknown
+
 test-all:
   cargo test --release --all-features
 
 check-pr: lint test-all
-
-build-contracts:
-  (cd packages/contracts && cargo build --release --target wasm32-unknown-unknown)
 
 check-contracts: build-contracts
   (cd packages/contracts && cargo stylus check --wasm-file ../../target/wasm32-unknown-unknown/release/contracts.wasm)
