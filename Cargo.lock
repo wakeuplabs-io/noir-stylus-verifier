@@ -1339,7 +1339,6 @@ dependencies = [
  "hex",
  "stylus-sdk",
  "tokio",
- "ultrahonk",
 ]
 
 [[package]]

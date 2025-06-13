@@ -26,5 +26,7 @@ jobs:
           toolchain: stable
       - run: sudo apt-get install lld
       - uses: Swatinem/rust-cache@v2
-      - name: Test with default features
+      - name: Test ultrahonk
         run: cargo test -p ultrahonk --profile ci-dev --all-features
+      - name: Test contracts
+        run: cargo test -p contracts --profile ci-dev
