@@ -1337,6 +1337,7 @@ dependencies = [
  "ethers",
  "eyre",
  "hex",
+ "num-traits",
  "stylus-sdk",
  "tokio",
  "ultrahonk",
