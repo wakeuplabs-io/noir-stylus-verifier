@@ -1,0 +1,32 @@
+name: Rust Build
+
+on:
+  push:
+    branches:
+      - develop
+    tags-ignore:
+      - v*
+  pull_request:
+
+env:
+  # incremental builds are slower and don't make much sense in ci
+  CARGO_INCREMENTAL: 0
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: FULL
+  RUSTFLAGS: "-C link-arg=-fuse-ld=lld"
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+      - name: Install cargo-stylus
+        run: cargo install cargo-stylus@0.6.0
+      - name: Build contracts 
+        run: cargo build -p contracts --target wasm32-unknown-unknown --profile ci-dev
+      - name: Check contracts 
+        run: cargo stylus check -e https://sepolia-rollup.arbitrum.io/rpc --wasm-file ./target/wasm32-unknown-unknown/release/contracts.wasm
