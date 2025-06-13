@@ -24,6 +24,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
+      - name: Install wasm32 target
+        run: rustup target add wasm32-unknown-unknown
       - name: Install cargo-stylus
         run: cargo install cargo-stylus@0.6.0
       - name: Build contracts 
