@@ -1,7 +1,9 @@
 use alloc::vec::Vec;
-use ultrahonk::{backends::G1ArithmeticError, serialize::Serialize, types::{G1Affine, G2Affine, ScalarField}};
+use ultrahonk::{backends::G1ArithmeticError, serialize::{Serialize, SerializeP}, types::{G1Affine, G2Affine, ScalarField}};
 use stylus_sdk::{alloy_primitives::Address, call::RawCall, crypto::keccak};
 use num_traits::identities::One;
+use super::serialize::{BytesDeserializable, BytesSerializable};
+use crate::utils::constants::{EC_ADD_ADDRESS_LAST_BYTE, EC_MUL_ADDRESS_LAST_BYTE, EC_PAIRING_ADDRESS_LAST_BYTE, NUM_BYTES_FELT, PAIRING_CHECK_RESULT_LAST_BYTE_INDEX};
 
 /// The hashing backend used in the Stylus VM,
 /// which uses the VM-accelerated Keccak-256 implementation
@@ -47,8 +49,7 @@ impl ultrahonk::backends::G1ArithmeticBackend for PrecompileG1ArithmeticBackend 
         };
 
         // Deserialize the affine coordinates returned from the precompile
-        let mut offset = 0;
-        Serialize::read_field_element(res_xy_bytes.as_ref(), &mut offset).map_err(|_| G1ArithmeticError)
+        G1Affine::deserialize_from_bytes(&res_xy_bytes).map_err(|_| G1ArithmeticError)
     }
 
     /// Calls the `ecMul` precompile with the given scalar and point, handling
@@ -72,7 +73,7 @@ impl ultrahonk::backends::G1ArithmeticBackend for PrecompileG1ArithmeticBackend 
 
         // Deserialize the affine coordinates returned from the precompile
         let mut offset = 0;
-        Serialize::read_field_element(res_xy_bytes.as_ref(), &mut offset).map_err(|_| G1ArithmeticError)
+        Ok(SerializeP::read_g1_element(res_xy_bytes.as_ref(), &mut offset, true))
     }
 
     /// Calls the `ecPairing` precompile with the given points, handling

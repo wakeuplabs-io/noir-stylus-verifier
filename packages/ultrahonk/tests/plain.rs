@@ -1,3 +1,6 @@
+#![macro_use]
+extern crate alloc;
+
 use alloc::vec::Vec;
 use ark_bn254::Bn254;
 use ark_ec::VariableBaseMSM;
