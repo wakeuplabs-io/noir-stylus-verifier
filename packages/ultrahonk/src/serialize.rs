@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use crate::{
     types::{G1Affine, G1BaseField, G1Projective},
     HonkProofError, HonkProofResult,

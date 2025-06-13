@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use crate::types::{G1Affine, G2Affine, ScalarField};
 
 /// A hashing backend for muxing between VM-accelerated hashing

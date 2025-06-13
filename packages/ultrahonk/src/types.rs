@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 pub use crate::polynomials::polynomial_types::{PrecomputedEntities, PRECOMPUTED_ENTITIES_SIZE};
 use crate::serialize::Serialize;
 use crate::HonkProofResult;

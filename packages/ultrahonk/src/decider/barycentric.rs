@@ -1,4 +1,5 @@
 use crate::Utils;
+use alloc::vec::Vec;
 use ark_ff::PrimeField;
 
 pub struct Barycentric {}

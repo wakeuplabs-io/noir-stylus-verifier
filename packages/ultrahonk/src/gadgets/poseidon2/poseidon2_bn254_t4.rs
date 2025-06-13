@@ -3,6 +3,7 @@
 use super::Poseidon2Params;
 use crate::types::ScalarField;
 use std::sync::LazyLock;
+use alloc::vec::Vec;
 
 const T: usize = 4;
 const D: u64 = 5;

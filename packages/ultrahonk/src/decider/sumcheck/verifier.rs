@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use super::SumcheckVerifierOutput;
 pub use crate::polynomials::polynomial::RowDisablingPolynomial;
 use crate::{

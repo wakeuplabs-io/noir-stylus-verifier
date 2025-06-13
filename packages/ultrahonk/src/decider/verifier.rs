@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use super::{shplemini::ShpleminiVerifierOpeningClaim, types::VerifierMemory};
 use crate::{
     backends::HashBackend,

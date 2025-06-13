@@ -12,6 +12,9 @@ build-contracts:
 test-all:
   cargo test --release --all-features
 
+test-contracts:
+  cargo test -p contracts -- --test-threads=1
+
 check-pr: lint test-all
 
 check-contracts: build-contracts

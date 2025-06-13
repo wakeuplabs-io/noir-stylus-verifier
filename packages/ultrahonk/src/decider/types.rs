@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use super::univariate::Univariate;
 use crate::keys::verification_key::VerifyingKey;
 use crate::types::{G1Affine, ScalarField};

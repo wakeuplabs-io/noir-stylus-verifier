@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use super::types::VerifierMemory;
 use crate::{
     backends::HashBackend, honk_curve::HonkCurve, keys::verification_key::VerifyingKey,

@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use super::{
     types::{PolyF, PolyG, PolyGShift},
     ShpleminiVerifierOpeningClaim,

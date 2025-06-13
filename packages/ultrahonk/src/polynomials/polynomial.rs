@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use crate::serde_compat;
 use crate::Utils;
 use ark_ff::PrimeField;

@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 pub(crate) mod types;
 pub(crate) mod verifier;
 use crate::types::{G1Affine, ScalarField};
