@@ -110,13 +110,16 @@ pub trait Pairing: Sized + 'static + Copy + Debug + Sync + Send + Eq {
         a: impl IntoIterator<Item = impl Into<Self::G1Prepared>>,
         b: impl IntoIterator<Item = impl Into<Self::G2Prepared>>,
     ) -> PairingOutput<Self> {
-        let backtrace = ark_std::backtrace::Backtrace::force_capture();
-        let backtrace_str = format!("{:?}", backtrace);
-        if !backtrace_str.contains("ultrahonk::backends::G1ArithmeticBackend>") {
-            panic!(
-                "Multi pairing done outside of the G1ArithmeticBackend: {}",
-                backtrace_str
-            );
+        #[cfg(feature = "only-arithmetic-backend")]
+        {
+            let backtrace = ark_std::backtrace::Backtrace::force_capture();
+            let backtrace_str = format!("{:?}", backtrace);
+            if !backtrace_str.contains("ultrahonk::backends::G1ArithmeticBackend>") {
+                panic!(
+                    "Multi pairing done outside of the G1ArithmeticBackend: {}",
+                    backtrace_str
+                );
+            }
         }
 
         Self::final_exponentiation(Self::multi_miller_loop(a, b)).unwrap()

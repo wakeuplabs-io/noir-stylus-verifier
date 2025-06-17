@@ -81,13 +81,16 @@ pub trait VariableBaseMSM: ScalarMul + for<'a> AddAssign<&'a Self::Bucket> {
         bases: &[Self::MulBase],
         bigints: &[<Self::ScalarField as PrimeField>::BigInt],
     ) -> Self {
-        let backtrace = ark_std::backtrace::Backtrace::force_capture();
-        let backtrace_str = format!("{:?}", backtrace);
-        if !backtrace_str.contains("ultrahonk::backends::G1ArithmeticBackend>") {
-            panic!(
-                "MSM bigint done outside of the G1ArithmeticBackend: {}",
-                backtrace_str
-            );
+        #[cfg(feature = "only-arithmetic-backend")]
+        {
+            let backtrace = ark_std::backtrace::Backtrace::force_capture();
+            let backtrace_str = format!("{:?}", backtrace);
+            if !backtrace_str.contains("ultrahonk::backends::G1ArithmeticBackend>") {
+                panic!(
+                    "MSM bigint done outside of the G1ArithmeticBackend: {}",
+                    backtrace_str
+                );
+            }
         }
 
         if Self::NEGATION_IS_CHEAP {

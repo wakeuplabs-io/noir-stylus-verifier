@@ -36,7 +36,7 @@ jobs:
         run: cargo install cargo-stylus@0.6.0
       
       - name: Build contracts 
-        run: cargo build -p contracts --target wasm32-unknown-unknown --profile ci-dev
+        run: cargo build -p contracts --target wasm32-unknown-unknown --profile ci-dev --features verifier
       
       - name: Check contracts 
         run: cargo stylus check -e https://sepolia-rollup.arbitrum.io/rpc --wasm-file ./target/wasm32-unknown-unknown/ci-dev/contracts.wasm

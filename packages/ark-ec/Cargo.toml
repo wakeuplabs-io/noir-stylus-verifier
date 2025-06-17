@@ -39,6 +39,7 @@ hex = "0.4"
 default = []
 std = ["ark-std/std", "ark-ff/std", "ark-serialize/std"]
 parallel = ["std", "rayon", "ark-std/parallel", "ark-serialize/parallel"]
+only-arithmetic-backend = []
 
 [target.'cfg(all(target_has_atomic = "8", target_has_atomic = "16", target_has_atomic = "32", target_has_atomic = "64", target_has_atomic = "ptr"))'.dependencies]
 ahash = { version = "0.8", default-features = false }
