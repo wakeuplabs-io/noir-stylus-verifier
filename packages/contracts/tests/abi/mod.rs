@@ -11,12 +11,12 @@ sol!(
     #[sol(rpc)]
     contract G1ArithmeticPrecompileTestContract {
         #[derive(Debug)]
-        function demo() internal pure returns (bool);
+        function testEcAdd(bytes memory a_bytes, bytes memory b_bytes) external view returns (bytes);
     }
 
     #[sol(rpc)]
     contract HashPrecompileTestContract {
         #[derive(Debug)]
-        function demo() internal pure returns (bool);
+        function testEcAdd(bytes memory a_bytes, bytes memory b_bytes) external view returns (bytes);
     }
 );
