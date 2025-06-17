@@ -31,8 +31,7 @@ impl HashBackend for ArkKeccak256 {
         hasher.update(vec);
         let hash_result = hasher.finalize();
 
-        let mut offset = 0;
-        ScalarField::deserialize_from_bytes_with_offset(&hash_result, &mut offset).unwrap()
+        ScalarField::deserialize_from_bytes(&hash_result).unwrap()
     }
 }
 

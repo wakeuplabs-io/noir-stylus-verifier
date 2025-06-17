@@ -24,9 +24,7 @@ impl ultrahonk::backends::HashBackend for StylusHasher {
         let bytes = keccak(&vec);
         let hash_result = bytes.as_ref();
 
-        let mut offset = 0;
-        ScalarField::deserialize_from_bytes_with_offset(hash_result, &mut offset).unwrap()
-        // TODO: replace with deserialize_from_bytes once available
+        ScalarField::deserialize_from_bytes(hash_result).unwrap()
     }
 }
 

@@ -85,10 +85,24 @@ impl<P: MontConfig<NUM_U64S_FELT>> BytesSerializable for MontFp256<P> {
 }
 
 impl<P: MontConfig<NUM_U64S_FELT>> BytesDeserializable for MontFp256<P> {
-    const SER_LEN: usize = 8;
+    const SER_LEN: usize = NUM_BYTES_FELT;
 
     fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
-        panic!("Not implemented TODO:");
+        const NUM_64_LIMBS: u32 = G1BaseField::MODULUS_BIT_SIZE.div_ceil(64);
+        let mut fields = Vec::with_capacity(G1BaseField::extension_degree() as usize);
+
+        let mut offset = 0;
+        for _ in 0..G1BaseField::extension_degree() {
+            let mut bigint: BigUint = Default::default();
+            for _ in 0..NUM_64_LIMBS {
+                let data = u64::deserialize_from_bytes_with_offset(&bytes, &mut offset).unwrap();
+                bigint <<= 64;
+                bigint += data;
+            }
+            fields.push(MontFp256::<P>::from(bigint));
+        }
+
+        Ok(MontFp256::<P>::from_base_prime_field_elems(fields).expect("Should work"))
     }
 
     fn deserialize_from_bytes_with_offset(
