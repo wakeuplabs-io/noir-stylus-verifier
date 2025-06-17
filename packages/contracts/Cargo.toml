@@ -22,10 +22,10 @@ serde.workspace = true
 ark-bn254.workspace = true
 serde_with.workspace = true
 postcard.workspace = true
+# rand.workspace = true
 
 [dev-dependencies]
 alloy.workspace = true
-rand.workspace = true
 alloy-primitives.workspace = true
 tokio = { version = "1.12.0", features = ["full"] }
 eyre = "0.6.8"
@@ -38,8 +38,7 @@ export-abi = ["stylus-sdk/export-abi"]
 debug = ["stylus-sdk/debug"]
 mini-alloc = ["stylus-sdk/mini-alloc"]
 verifier = []
-e2e-precompile = []
-hash-precompile = []
+e2e-backends = []
 
 [[bin]]
 name = "stylus-noir-verifier"

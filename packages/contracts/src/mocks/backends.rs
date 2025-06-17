@@ -2,21 +2,16 @@
 //! purposes. This contract is intended to be used in conjunction with a local
 //! devnet, along with testing scripts in the `integration` crate
 
-// use crate::utils::backends::PrecompileG1ArithmeticBackend;
-// use crate::utils::serde_def_types::{SerdeG1Affine, SerdeG2Affine, SerdeScalarField};
 use alloc::vec::Vec;
-// use ark_ec::AffineRepr;
-// use serde::Serialize;
 use stylus_sdk::{abi::Bytes, prelude::*};
-// use ultrahonk::backends::G1ArithmeticBackend;
 
 /// The precompile testing contract, which itself is stateless
 #[storage]
-#[cfg_attr(feature = "hash-precompile", entrypoint)]
-struct HashPrecompileTestContract;
+#[cfg_attr(feature = "e2e-backends", entrypoint)]
+struct G1ArithmeticPrecompileTestContract;
 
 #[public]
-impl HashPrecompileTestContract {
+impl G1ArithmeticPrecompileTestContract {
     pub fn demo(&self) -> bool {
         true
     }

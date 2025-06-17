@@ -1,14 +1,10 @@
-#![cfg(feature = "e2e-precompile")]
+#![cfg(feature = "e2e-backends")]
 
 use abi::{G1ArithmeticPrecompileTestContract, Verifier};
 use e2e::{Account, Revert};
 use eyre::Result;
 
 mod abi;
-
-// ============================================================================
-// Integration Tests: ECDSA
-// ============================================================================
 
 #[e2e::test]
 async fn ecrecover_works(alice: Account) -> Result<()> {
