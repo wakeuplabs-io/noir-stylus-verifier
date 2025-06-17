@@ -1,3 +1,4 @@
+#![no_std]
 #![warn(clippy::iter_over_hash_type)]
 
 #[macro_use]
@@ -21,6 +22,7 @@ pub mod verifier;
 use ark_bn254::{Fq, Fr};
 use ark_ff::{One, PrimeField};
 use num_bigint::BigUint;
+use alloc::{borrow::ToOwned};
 
 use crate::{
     honk_curve::{NUM_BASEFIELD_ELEMENTS, NUM_SCALARFIELD_ELEMENTS},

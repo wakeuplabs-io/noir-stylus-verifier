@@ -6,6 +6,7 @@ use alloc::vec::Vec;
 use ark_bn254::{g1::Config as G1Config, g2::Config as G2Config, Fq, Fq2, Fr};
 use ark_ec::short_weierstrass::Affine;
 use ark_ff::{Fp256, MontBackend};
+use crate::alloc::borrow::ToOwned;
 
 /// Type alias for an element of the scalar field of the Bn254 curve
 pub type ScalarField = Fr;

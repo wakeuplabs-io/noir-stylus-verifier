@@ -7,7 +7,7 @@ build-all:
   cargo build --release --all-features
 
 build-ultrahonk:
-  cargo build -p ultrahonk --release --features ark-ec/only-arithmetic-backend
+  cargo build -p ultrahonk --release --features ark-ec/only-arithmetic-backend --target wasm32-unknown-unknown
 
 build-contracts:
   cargo build -p contracts --target wasm32-unknown-unknown --profile release

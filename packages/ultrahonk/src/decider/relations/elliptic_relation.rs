@@ -3,6 +3,7 @@ use crate::decider::{types::ProverUnivariates, univariate::Univariate};
 use crate::honk_curve::HonkCurve;
 use crate::types::ScalarField;
 use ark_ff::{AdditiveGroup, Field, PrimeField, Zero};
+use crate::alloc::borrow::ToOwned;
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct EllipticRelationAcc<F: PrimeField> {

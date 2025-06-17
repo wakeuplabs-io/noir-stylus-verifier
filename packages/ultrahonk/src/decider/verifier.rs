@@ -12,6 +12,7 @@ use alloc::vec::Vec;
 use ark_ec::AffineRepr;
 use ark_ff::{One, Zero};
 use core::marker::PhantomData;
+use crate::alloc::string:: ToString;
 
 pub(crate) struct DeciderVerifier<P: HonkCurve, H: HashBackend> {
     pub(super) memory: VerifierMemory,
