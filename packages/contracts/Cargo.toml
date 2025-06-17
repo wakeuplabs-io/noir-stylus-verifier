@@ -22,7 +22,6 @@ serde.workspace = true
 ark-bn254.workspace = true
 serde_with.workspace = true
 postcard.workspace = true
-rand.workspace = true
 
 [dev-dependencies]
 alloy.workspace = true

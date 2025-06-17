@@ -1,11 +1,7 @@
 use crate::serde_compat;
-use crate::Utils;
 use alloc::vec::Vec;
 use ark_ff::PrimeField;
-use ark_poly::{univariate::DensePolynomial, DenseUVPolynomial, Polynomial as _};
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
-use num_traits::Zero;
-use rand::{CryptoRng, Rng};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::ops::{AddAssign, Index, IndexMut, MulAssign, SubAssign};
 
@@ -36,21 +32,6 @@ impl<'a, F: CanonicalDeserialize> Deserialize<'a> for Polynomial<F> {
 pub struct ShiftedPoly<'a, F> {
     pub(crate) coefficients: &'a [F],
     zero: F, // TACEO TODO is there a better solution
-}
-
-impl<F: Clone> ShiftedPoly<'_, F> {
-    pub fn to_vec(&self) -> Vec<F> {
-        let mut res = Vec::with_capacity(self.coefficients.len() + 1);
-        for c in self.coefficients.iter().cloned() {
-            res.push(c);
-        }
-        res.push(self.zero.clone());
-        res
-    }
-
-    pub fn as_ref(&self) -> &[F] {
-        self.coefficients
-    }
 }
 
 impl<F: Clone> Index<usize> for ShiftedPoly<'_, F> {
@@ -104,179 +85,6 @@ impl<F: Clone> Polynomial<F> {
 
     pub fn into_vec(self) -> Vec<F> {
         self.coefficients
-    }
-}
-
-impl<F: Zero + Clone> Polynomial<F> {
-    pub fn new_zero(size: usize) -> Self {
-        Self {
-            coefficients: vec![F::zero(); size],
-        }
-    }
-
-    pub fn degree(&self) -> usize {
-        let mut len = self.coefficients.len() - 1;
-        for c in self.coefficients.iter().rev() {
-            if c.is_zero() {
-                len -= 1;
-            } else {
-                break;
-            }
-        }
-        len
-    }
-}
-
-impl<F: Default + Clone> Polynomial<F> {
-    pub fn new_default(size: usize) -> Self {
-        Self {
-            coefficients: vec![F::default(); size],
-        }
-    }
-
-    // Can only shift by 1
-    pub fn shifted(&self) -> ShiftedPoly<F> {
-        assert!(!self.coefficients.is_empty());
-        ShiftedPoly {
-            coefficients: &self.coefficients[1..],
-            zero: F::default(),
-        }
-    }
-}
-
-impl<F: PrimeField> Polynomial<F> {
-    /**
-     * @brief Divides p(X) by (X-r) in-place.
-     */
-    pub fn factor_roots(&mut self, root: &F) {
-        if root.is_zero() {
-            // if one of the roots is 0 after having divided by all other roots,
-            // then p(X) = a₁⋅X + ⋯ + aₙ₋₁⋅Xⁿ⁻¹
-            // so we shift the array of coefficients to the left
-            // and the result is p(X) = a₁ + ⋯ + aₙ₋₁⋅Xⁿ⁻² and we subtract 1 from the size.
-            self.coefficients.remove(0);
-        } else {
-            // assume
-            //  • r != 0
-            //  • (X−r) | p(X)
-            //  • q(X) = ∑ᵢⁿ⁻² bᵢ⋅Xⁱ
-            //  • p(X) = ∑ᵢⁿ⁻¹ aᵢ⋅Xⁱ = (X-r)⋅q(X)
-            //
-            // p(X)         0           1           2       ...     n-2             n-1
-            //              a₀          a₁          a₂              aₙ₋₂            aₙ₋₁
-            //
-            // q(X)         0           1           2       ...     n-2             n-1
-            //              b₀          b₁          b₂              bₙ₋₂            0
-            //
-            // (X-r)⋅q(X)   0           1           2       ...     n-2             n-1
-            //              -r⋅b₀       b₀-r⋅b₁     b₁-r⋅b₂         bₙ₋₃−r⋅bₙ₋₂      bₙ₋₂
-            //
-            // b₀   = a₀⋅(−r)⁻¹
-            // b₁   = (a₁ - b₀)⋅(−r)⁻¹
-            // b₂   = (a₂ - b₁)⋅(−r)⁻¹
-            //      ⋮
-            // bᵢ   = (aᵢ − bᵢ₋₁)⋅(−r)⁻¹
-            //      ⋮
-            // bₙ₋₂ = (aₙ₋₂ − bₙ₋₃)⋅(−r)⁻¹
-            // bₙ₋₁ = 0
-
-            // For the simple case of one root we compute (−r)⁻¹ and
-            let root_inverse = (-*root).inverse().expect("Root is not zero here");
-            // set b₋₁ = 0
-            let mut temp = F::zero();
-            // We start multiplying lower coefficient by the inverse and subtracting those from highter coefficients
-            // Since (x - r) should divide the polynomial cleanly, we can guide division with lower coefficients
-            for coeff in self.coefficients.iter_mut() {
-                // at the start of the loop, temp = bᵢ₋₁
-                // and we can compute bᵢ   = (aᵢ − bᵢ₋₁)⋅(−r)⁻¹
-                temp = *coeff - temp;
-                temp *= root_inverse;
-                *coeff = temp;
-            }
-        }
-        self.coefficients.pop();
-    }
-
-    /**
-     * @brief Add random values to the coefficients of a polynomial. In practice, this is used for ensuring the
-     * commitment and evaluation of a polynomial don't leak information about the coefficients in the context of zero
-     * knowledge.
-     */
-    pub fn mask<R: Rng + CryptoRng>(&mut self, rng: &mut R) {
-        let virtual_size = self.coefficients.len();
-        assert!(
-            virtual_size >= NUM_MASKED_ROWS as usize,
-            "Insufficient space for masking"
-        );
-        for i in (virtual_size - NUM_MASKED_ROWS as usize..virtual_size).rev() {
-            self.coefficients[i] = F::rand(rng);
-        }
-    }
-
-    pub fn add_scaled_slice(&mut self, src: &[F], scalar: &F) {
-        // Barrettenberg uses multithreading here
-        for (des, src) in self.coefficients.iter_mut().zip(src.iter()) {
-            *des += *scalar * src;
-        }
-    }
-
-    pub fn add_scaled(&mut self, src: &Polynomial<F>, scalar: &F) {
-        self.add_scaled_slice(&src.coefficients, scalar);
-    }
-
-    pub fn eval_poly(&self, point: F) -> F {
-        // TACEO TODO: here we clone...
-        let poly = DensePolynomial::from_coefficients_slice(&self.coefficients);
-        poly.evaluate(&point)
-    }
-
-    pub fn random<R: Rng + CryptoRng>(size: usize, rng: &mut R) -> Self {
-        let coefficients = (0..size).map(|_| F::rand(rng)).collect();
-        Self { coefficients }
-    }
-
-    pub fn evaluate_mle(&self, evaluation_points: &[F]) -> F {
-        if self.coefficients.is_empty() {
-            return F::zero();
-        }
-
-        let n = evaluation_points.len();
-        let dim = Utils::get_msb64(self.coefficients.len() as u64 - 1) as usize + 1; // Round up to next power of 2
-
-        // To simplify handling of edge cases, we assume that the index space is always a power of 2
-        assert_eq!(self.coefficients.len(), 1 << n);
-
-        // We first fold over dim rounds l = 0,...,dim-1.
-        // in round l, n_l is the size of the buffer containing the Polynomial partially evaluated
-        // at u₀,..., u_l.
-        // In round 0, this is half the size of dim
-        let mut n_l = 1 << (dim - 1);
-        let mut tmp = vec![F::zero(); n_l];
-
-        // Note below: i * 2 + 1 + offset might equal virtual_size. This used to subtlely be handled by extra capacity
-        // padding (and there used to be no assert time checks, which this constant helps with).
-        for (i, val) in tmp.iter_mut().enumerate().take(n_l) {
-            *val = self.coefficients[i * 2]
-                + evaluation_points[0] * (self.coefficients[i * 2 + 1] - self.coefficients[i * 2]);
-        }
-
-        // partially evaluate the dim-1 remaining points
-        for (l, val) in evaluation_points.iter().enumerate().take(dim).skip(1) {
-            n_l = 1 << (dim - l - 1);
-
-            for i in 0..n_l {
-                tmp[i] = tmp[i * 2] + *val * (tmp[i * 2 + 1] - tmp[i * 2]);
-            }
-        }
-
-        let mut result = tmp[0];
-
-        // We handle the "trivial" dimensions which are full of zeros.
-        for &point in &evaluation_points[dim..n] {
-            result *= F::one() - point;
-        }
-
-        result
     }
 }
 
