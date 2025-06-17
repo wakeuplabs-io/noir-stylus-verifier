@@ -3,14 +3,14 @@
 use super::Poseidon2Params;
 use crate::types::ScalarField;
 use alloc::vec::Vec;
-use std::sync::LazyLock;
+use once_cell::sync::Lazy;
 
 const T: usize = 4;
 const D: u64 = 5;
 const ROUNDS_F: usize = 8;
 const ROUNDS_P: usize = 56;
 
-pub(crate) static MAT_DIAG_M_1: LazyLock<[ScalarField; T]> = LazyLock::new(|| {
+pub(crate) static MAT_DIAG_M_1: Lazy<[ScalarField; T]> = Lazy::new(|| {
     [
         crate::gadgets::field_from_hex_string(
             "0x10dc6e9c006ea38b04b1e03b4bd9490c0d03f98929ca1d7fb56821fd19d3b6e7",
@@ -30,7 +30,7 @@ pub(crate) static MAT_DIAG_M_1: LazyLock<[ScalarField; T]> = LazyLock::new(|| {
         .unwrap(),
     ]
 });
-pub(crate) static EXTERNAL_RC: LazyLock<Vec<[ScalarField; T]>> = LazyLock::new(|| {
+pub(crate) static EXTERNAL_RC: Lazy<Vec<[ScalarField; T]>> = Lazy::new(|| {
     vec![
         // First external
         [
@@ -180,7 +180,7 @@ pub(crate) static EXTERNAL_RC: LazyLock<Vec<[ScalarField; T]>> = LazyLock::new(|
         ],
     ]
 });
-pub(crate) static INTERNAL_RC: LazyLock<Vec<ScalarField>> = LazyLock::new(|| {
+pub(crate) static INTERNAL_RC: Lazy<Vec<ScalarField>> = Lazy::new(|| {
     vec![
         crate::gadgets::field_from_hex_string(
             "0x0c6f8f958be0e93053d7fd4fc54512855535ed1539f051dcb43a26fd926361cf",
@@ -410,8 +410,8 @@ pub(crate) static INTERNAL_RC: LazyLock<Vec<ScalarField>> = LazyLock::new(|| {
 });
 
 /// The Poseidon2 parameters for the BN254 curve with a internal state of size t=4.
-pub static POSEIDON2_BN254_T4_PARAMS: LazyLock<Poseidon2Params<ScalarField, T, D>> =
-    LazyLock::new(|| {
+pub static POSEIDON2_BN254_T4_PARAMS: Lazy<Poseidon2Params<ScalarField, T, D>> =
+    Lazy::new(|| {
         Poseidon2Params::new(
             ROUNDS_F,
             ROUNDS_P,

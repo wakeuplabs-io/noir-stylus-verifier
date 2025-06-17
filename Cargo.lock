@@ -4211,6 +4211,7 @@ dependencies = [
  "eyre",
  "num-bigint",
  "num-traits",
+ "once_cell",
  "rand 0.8.5",
  "serde",
  "sha3",
