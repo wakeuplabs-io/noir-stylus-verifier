@@ -2,11 +2,10 @@ use crate::polynomials::polynomial_types::PrecomputedEntities;
 use crate::types::{G1Affine, G1BaseField, G2Affine};
 use crate::{
     polynomials::polynomial_types::PRECOMPUTED_ENTITIES_SIZE,
-    serialize::{SerializeP},
     types::{HonkProofError, HonkProofResult},
 };
 use ark_ff::PrimeField;
-use serde::{Deserialize, Serialize as SerdeSerialize};
+use serde::{Deserialize, Serialize};
 use crate::serialize::BytesDeserializable;
 
 #[derive(Clone)]
@@ -44,7 +43,7 @@ pub struct VerifyingKeyBarretenberg {
     pub commitments: PrecomputedEntities<G1Affine>,
 }
 
-#[derive(Clone, Copy, Debug, SerdeSerialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct PublicComponentKey {
     start_idx: u32,
 }

@@ -1,14 +1,14 @@
-use crate::types::{G1Affine, G1BaseField, MontFp256, NUM_U64S_FELT};
+use crate::types::{G1Affine, G1BaseField, G2Affine, G2BaseField, MontFp256, NUM_U64S_FELT};
 use alloc::vec::Vec;
 use ark_ec::{AffineRepr};
-use ark_ff::{BigInteger, Field, MontConfig, PrimeField};
+use ark_ff::{BigInteger, Field, MontConfig, PrimeField, Zero};
 use num_bigint::BigUint;
 
-pub struct Serialize<F: Field> {
-    phantom: std::marker::PhantomData<F>,
-}
-
-pub struct SerializeP {}
+// TODO: move to constants file
+/// The number of bytes to represent field elements of the base or scalar fields
+/// for the G1 curve group, as well as the base field which is extended for the
+/// G2 curve group
+pub const NUM_BYTES_FELT: usize = 32;
 
 /// An error that occurs during de/serialization
 #[derive(Debug)]
@@ -168,23 +168,30 @@ impl<P: MontConfig<NUM_U64S_FELT>> BytesDeserializable for Vec<MontFp256<P>> {
 
 impl BytesSerializable for G1Affine {
     fn serialize_to_bytes(&self) -> Vec<u8> {
-        const NUM_64_LIMBS: u32 = G1BaseField::MODULUS_BIT_SIZE.div_ceil(64);
-        const FIELDSIZE_BYTES: u32 = NUM_64_LIMBS * 8;
-        const GROUPSIZE_BYTES: u32 = FIELDSIZE_BYTES * 2; // Times extension degree
+        let zero = G1BaseField::zero();
+        let (x, y) = self.xy().unwrap_or((zero, zero));
+        let mut bytes = Vec::with_capacity(NUM_BYTES_FELT * 2);
+        bytes.extend(x.serialize_to_bytes());
+        bytes.extend(y.serialize_to_bytes());
+        bytes
+      
+        // const NUM_64_LIMBS: u32 = G1BaseField::MODULUS_BIT_SIZE.div_ceil(64);
+        // const FIELDSIZE_BYTES: u32 = NUM_64_LIMBS * 8;
+        // const GROUPSIZE_BYTES: u32 = FIELDSIZE_BYTES * 2; // Times extension degree
 
-        let mut res = Vec::new();
+        // let mut res = Vec::new();
 
-        if self.is_zero() {
-            for _ in 0..GROUPSIZE_BYTES {
-                res.push(255);
-            }
-        } else {
-            let (x, y) = self.xy().unwrap_or_default();
-            res.extend(x.serialize_to_bytes());
-            res.extend(y.serialize_to_bytes());
-        }
+        // if self.is_zero() {
+        //     for _ in 0..GROUPSIZE_BYTES {
+        //         res.push(255);
+        //     }
+        // } else {
+        //     let (x, y) = self.xy().unwrap_or_default();
+        //     res.extend(x.serialize_to_bytes());
+        //     res.extend(y.serialize_to_bytes());
+        // }
 
-        res
+        // res
     }
 }
 
@@ -202,5 +209,49 @@ impl BytesDeserializable for G1Affine {
 
         // read x first every time
         Ok(G1Affine::new(first, second))
+    }
+}
+
+
+impl BytesSerializable for G2Affine {
+    /// Serializes a G2 point into a big-endian byte array of the coefficients
+    /// of its coordinates in the extension field, i.e.:
+    ///
+    /// Given an element of the field extension F_p^2[i] represented as ai + b,
+    /// where a and b are elements of F_p, its serialization is the
+    /// concatenation of a and b in big-endian order.
+    ///
+    /// This matches the format expected by the EVM `ecPairing` precompile, as
+    /// specified here: https://eips.ethereum.org/EIPS/eip-197#encoding
+    fn serialize_to_bytes(&self) -> Vec<u8> {
+        let zero = G2BaseField::zero();
+        let (x, y) = self.xy().unwrap_or((zero, zero));
+        let mut bytes = Vec::with_capacity(NUM_BYTES_FELT * 4);
+        bytes.extend(x.c1.serialize_to_bytes());
+        bytes.extend(x.c0.serialize_to_bytes());
+        bytes.extend(y.c1.serialize_to_bytes());
+        bytes.extend(y.c0.serialize_to_bytes());
+        bytes
+    }
+}
+
+impl BytesDeserializable for G2Affine {
+    const SER_LEN: usize = NUM_BYTES_FELT * 4;
+
+    fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
+        let mut cursor = 0;
+        let x_c1 = G1BaseField::deserialize_from_bytes_with_offset(bytes, &mut cursor)?;
+        let x_c0 = G1BaseField::deserialize_from_bytes_with_offset(bytes, &mut cursor)?;
+        let y_c1 = G1BaseField::deserialize_from_bytes_with_offset(bytes, &mut cursor)?;
+        let y_c0 = G1BaseField::deserialize_from_bytes_with_offset(bytes, &mut cursor)?;
+
+        let x = G2BaseField { c0: x_c0, c1: x_c1 };
+        let y = G2BaseField { c0: y_c0, c1: y_c1 };
+
+        Ok(G2Affine {
+            x,
+            y,
+            infinity: x.is_zero() && y.is_zero(),
+        })
     }
 }

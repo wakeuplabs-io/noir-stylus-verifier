@@ -1,8 +1,9 @@
+use core::panic;
+
 use alloc::vec::Vec;
-use ultrahonk::{backends::G1ArithmeticError, serialize::{Serialize, SerializeP}, types::{G1Affine, G2Affine, ScalarField}};
-use stylus_sdk::{alloy_primitives::Address, call::RawCall, crypto::keccak};
 use num_traits::identities::One;
-use super::serialize::{BytesDeserializable, BytesSerializable};
+use ultrahonk::{backends::G1ArithmeticError, serialize::{BytesSerializable, BytesDeserializable}, types::{G1Affine, G2Affine, ScalarField}};
+use stylus_sdk::{alloy_primitives::Address, call::RawCall, crypto::keccak};
 use crate::utils::constants::{EC_ADD_ADDRESS_LAST_BYTE, EC_MUL_ADDRESS_LAST_BYTE, EC_PAIRING_ADDRESS_LAST_BYTE, NUM_BYTES_FELT, PAIRING_CHECK_RESULT_LAST_BYTE_INDEX};
 
 /// The hashing backend used in the Stylus VM,
@@ -12,12 +13,12 @@ pub struct StylusHasher;
 impl ultrahonk::backends::HashBackend for StylusHasher {
     fn hash(buffer: Vec<ScalarField>) -> ScalarField {
         // Losing 2 bits of this is not an issue -> we can just reduce mod p
-        let vec = Serialize::to_buffer(&buffer, false);
+        let vec = buffer.serialize_to_bytes();
         let bytes = keccak(&vec);
         let hash_result = bytes.as_ref(); 
 
         let mut offset = 0;
-        Serialize::read_field_element(hash_result, &mut offset)
+        ScalarField::deserialize_from_bytes_with_offset(hash_result, &mut offset).unwrap() // TODO: replace with deserialize_from_bytes once available
     }
 }
 
@@ -41,7 +42,10 @@ impl ultrahonk::backends::G1ArithmeticBackend for PrecompileG1ArithmeticBackend 
         calldata[..NUM_BYTES_FELT * 2].copy_from_slice(&a.serialize_to_bytes());
         calldata[NUM_BYTES_FELT * 2..].copy_from_slice(&b.serialize_to_bytes());
 
-        // Call the `ecAdd` precompile
+        // cast call 0x0000000000000000000000000000000000000006 0x291d8296ce578d914fba64c4973ed3bea268984123f85d4af5a7eb97e82a99e5095c2aab35286b5a3f522cc201e0531d6ebf39b6fceed3b83d1afe36a37645260aaeafb577cdc2cad64b5e3e16c3e8e014340374be579e6489c116cc8f797afc113df6140dc8c4b92bd9ffcd4d3de194a8ee6bd132cab107c92b4f8a9d5b2f88 --rpc-url  https://sepolia-rollup.arbitrum.io/rpc
+        // panic!("cast call {:?} {:?} --rpc-url  https://sepolia-rollup.arbitrum.io/rpc", Address::with_last_byte(EC_ADD_ADDRESS_LAST_BYTE), hex::encode(calldata));
+
+        // Call the `ecAdd` precompile. TODO: fails here
         let res_xy_bytes = unsafe {
             RawCall::new_static()
                 .call(Address::with_last_byte(EC_ADD_ADDRESS_LAST_BYTE), &calldata)
@@ -50,6 +54,7 @@ impl ultrahonk::backends::G1ArithmeticBackend for PrecompileG1ArithmeticBackend 
 
         // Deserialize the affine coordinates returned from the precompile
         G1Affine::deserialize_from_bytes(&res_xy_bytes).map_err(|_| G1ArithmeticError)
+        // Ok(G1Affine::zero())
     }
 
     /// Calls the `ecMul` precompile with the given scalar and point, handling
@@ -72,8 +77,7 @@ impl ultrahonk::backends::G1ArithmeticBackend for PrecompileG1ArithmeticBackend 
         };
 
         // Deserialize the affine coordinates returned from the precompile
-        let mut offset = 0;
-        Ok(SerializeP::read_g1_element(res_xy_bytes.as_ref(), &mut offset, true))
+        Ok(G1Affine::deserialize_from_bytes(res_xy_bytes.as_ref()).unwrap())
     }
 
     /// Calls the `ecPairing` precompile with the given points, handling

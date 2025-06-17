@@ -13,6 +13,7 @@ publish = false
 readme = "./README.md"
 
 [workspace.dependencies]
+stylus-sdk = { version = "=0.9.0" }
 ark-bn254 = "^0.5.0"
 ark-ff = "^0.5.0"
 ark-ec = "^0.5.0"
@@ -28,6 +29,34 @@ serde = { version = "1.0.193", features = ["derive", "rc"] }
 sha3 = "0.10.8"
 thiserror = "2"
 tracing = { version = "0.1.40" }
+serde_with = { version = "3.4", default-features = false, features = [
+    "macros",
+    "alloc",
+] }
+postcard = { version = "1.0.0", default-features = false, features = ["alloc"] }
+
+alloy = { version = "=0.7.3", features = [
+  "contract",
+  "network",
+  "providers",
+  "provider-http",
+  "rpc-client",
+  "rpc-types-eth",
+  "signer-local",
+  "getrandom",
+] }
+# Even though `alloy` includes `alloy-primitives` and `alloy-sol-types` we need
+# to keep both versions for compatibility with the Stylus SDK. Once they start
+# using `alloy` we can remove these.
+alloy-primitives = { version = "=0.8.20", default-features = false, features = [
+  "tiny-keccak",
+] }
+alloy-sol-types = { version = "=0.8.20", default-features = false }
+alloy-sol-macro = { version = "=0.8.20", default-features = false }
+alloy-sol-macro-expander = { version = "=0.8.20", default-features = false }
+alloy-sol-macro-input = { version = "=0.8.20", default-features = false }
+
+e2e = { git = "https://github.com/OpenZeppelin/rust-contracts-stylus", tag = "v0.2.0-rc.0" }
 
 [patch.crates-io]
 ark-ec = { path = "./packages/ark-ec" }
