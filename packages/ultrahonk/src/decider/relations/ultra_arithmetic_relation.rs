@@ -90,7 +90,7 @@ impl<F: PrimeField> Relation<F> for UltraArithmeticRelation {
      *      (q_arith - 2) * (q_arith - 1) * (w_l + w_4 - w_l_shift + q_m)
      *
      * @param evals transformed to `evals + C(in(X)...)*scaling_factor`
-     * @param in an std::array containing the fully extended Univariate edges.
+     * @param in an core::array containing the fully extended Univariate edges.
      * @param parameters contains beta, gamma, and public_input_delta, ....
      * @param scaling_factor optional term to scale the evaluation before adding to evals.
      */

@@ -9,7 +9,7 @@ impl Barycentric {
 
     // build big_domain, currently the set of x_i in {domain_start, ..., big_domain_end - 1 }
     pub fn construct_big_domain<F: PrimeField>(domain_size: usize, num_evals: usize) -> Vec<F> {
-        let big_domain_size = std::cmp::max(domain_size, num_evals);
+        let big_domain_size = core::cmp::max(domain_size, num_evals);
         let mut res = Vec::with_capacity(big_domain_size);
         for i in 0..big_domain_size {
             res.push(F::from(i as u64));
@@ -46,7 +46,7 @@ impl Barycentric {
     ) -> Vec<F> {
         let domain_size = lagrange_denominators.len();
         let big_domain_size = big_domain.len();
-        assert_eq!(big_domain_size, std::cmp::max(domain_size, num_evals));
+        assert_eq!(big_domain_size, core::cmp::max(domain_size, num_evals));
 
         let res_size = domain_size * num_evals;
         let mut res = vec![F::zero(); res_size]; // default init to 0 since below does not init all elements
@@ -72,7 +72,7 @@ impl Barycentric {
         big_domain: &[F],
     ) -> Vec<F> {
         let big_domain_size = big_domain.len();
-        assert_eq!(big_domain_size, std::cmp::max(domain_size, num_evals));
+        assert_eq!(big_domain_size, core::cmp::max(domain_size, num_evals));
         let mut res = Vec::with_capacity(num_evals);
         for i in 0..num_evals {
             let mut r = F::one();

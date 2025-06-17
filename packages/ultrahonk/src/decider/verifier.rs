@@ -11,7 +11,7 @@ use crate::{
 use alloc::vec::Vec;
 use ark_ec::AffineRepr;
 use ark_ff::{One, Zero};
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 pub(crate) struct DeciderVerifier<P: HonkCurve, H: HashBackend> {
     pub(super) memory: VerifierMemory,

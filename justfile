@@ -6,6 +6,9 @@ lint:
 build-all:
   cargo build --release --all-features
 
+build-ultrahonk:
+  cargo build -p ultrahonk --release --features ark-ec/only-arithmetic-backend
+
 build-contracts:
   cargo build -p contracts --target wasm32-unknown-unknown --profile release
 

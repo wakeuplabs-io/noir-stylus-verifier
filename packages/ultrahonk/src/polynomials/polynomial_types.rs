@@ -41,7 +41,7 @@ pub struct PrecomputedEntities<T: Default> {
 impl<T: Default> PrecomputedEntities<Vec<T>> {
     pub fn new() -> Self {
         Self {
-            elements: std::array::from_fn(|_| Vec::new()),
+            elements: core::array::from_fn(|_| Vec::new()),
         }
     }
 
@@ -54,7 +54,7 @@ impl<T: Default> PrecomputedEntities<Vec<T>> {
 
 impl<T: Default> IntoIterator for PrecomputedEntities<T> {
     type Item = T;
-    type IntoIter = std::array::IntoIter<T, PRECOMPUTED_ENTITIES_SIZE>;
+    type IntoIter = core::array::IntoIter<T, PRECOMPUTED_ENTITIES_SIZE>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.elements.into_iter()
@@ -63,7 +63,7 @@ impl<T: Default> IntoIterator for PrecomputedEntities<T> {
 
 impl<T: Default> IntoIterator for ProverWitnessEntities<T> {
     type Item = T;
-    type IntoIter = std::array::IntoIter<T, PROVER_WITNESS_ENTITIES_SIZE>;
+    type IntoIter = core::array::IntoIter<T, PROVER_WITNESS_ENTITIES_SIZE>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.elements.into_iter()

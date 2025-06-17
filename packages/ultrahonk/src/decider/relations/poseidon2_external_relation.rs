@@ -69,7 +69,7 @@ impl<F: PrimeField> Relation<F> for Poseidon2ExternalRelation {
      *      v3 := t2 + v4                                           (1, 3, 5, 7)
      *
      * @param evals transformed to `evals + C(in(X)...)*scaling_factor`
-     * @param in an std::array containing the fully extended Univariate edges.
+     * @param in an core::array containing the fully extended Univariate edges.
      * @param parameters contains beta, gamma, and public_input_delta, ....
      * @param scaling_factor optional term to scale the evaluation before adding to evals.
      */

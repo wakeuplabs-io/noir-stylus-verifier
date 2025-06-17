@@ -11,7 +11,6 @@ use e2e::{Account, Revert};
 use eyre::Result;
 use rand::{thread_rng, RngCore};
 use serde::Serialize;
-use std::assert_eq;
 use ultrahonk::{
     serialize::{BytesDeserializable, BytesSerializable},
     types::{G1Affine, G2Affine, ScalarField},

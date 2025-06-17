@@ -3,7 +3,7 @@ use alloc::vec::Vec;
 use ark_ff::PrimeField;
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use std::ops::{AddAssign, Index, IndexMut, MulAssign, SubAssign};
+use core::ops::{AddAssign, Index, IndexMut, MulAssign, SubAssign};
 
 // The number of last rows in ProverPolynomials that are randomized to mask
 // 1) witness commitments,

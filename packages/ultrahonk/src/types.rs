@@ -33,7 +33,7 @@ pub struct HonkProof {
     proof: Vec<ScalarField>,
 }
 
-pub type HonkProofResult<T> = std::result::Result<T, HonkProofError>;
+pub type HonkProofResult<T> = Result<T, HonkProofError>;
 
 /// The errors that may arise during the computation of a HONK proof.
 #[derive(Debug, thiserror::Error)]
@@ -59,8 +59,6 @@ pub enum HonkProofError {
     /// Expected Public Witness, Shared received
     #[error("Expected Public Witness, Shared received")]
     ExpectedPublicWitness,
-    #[error(transparent)]
-    IOError(#[from] std::io::Error),
     /// Gemini evaluation challenge is in the SmallSubgroup
     #[error("Gemini evaluation challenge is in the SmallSubgroup.")]
     GeminiSmallSubgroup,
@@ -135,7 +133,7 @@ pub struct ShiftedWitnessEntities<T: Default> {
 
 impl<T: Default> IntoIterator for WitnessEntities<T> {
     type Item = T;
-    type IntoIter = std::array::IntoIter<T, WITNESS_ENTITIES_SIZE>;
+    type IntoIter = core::array::IntoIter<T, WITNESS_ENTITIES_SIZE>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.elements.into_iter()
@@ -145,7 +143,7 @@ impl<T: Default> IntoIterator for WitnessEntities<T> {
 impl<T: Default> WitnessEntities<Vec<T>> {
     pub fn new() -> Self {
         Self {
-            elements: std::array::from_fn(|_| Vec::new()),
+            elements: core::array::from_fn(|_| Vec::new()),
         }
     }
 
@@ -158,7 +156,7 @@ impl<T: Default> WitnessEntities<Vec<T>> {
 
 impl<T: Default> IntoIterator for ShiftedWitnessEntities<T> {
     type Item = T;
-    type IntoIter = std::array::IntoIter<T, SHIFTED_WITNESS_ENTITIES_SIZE>;
+    type IntoIter = core::array::IntoIter<T, SHIFTED_WITNESS_ENTITIES_SIZE>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.elements.into_iter()
@@ -168,7 +166,7 @@ impl<T: Default> IntoIterator for ShiftedWitnessEntities<T> {
 impl<T: Default> ShiftedWitnessEntities<Vec<T>> {
     pub fn new() -> Self {
         Self {
-            elements: std::array::from_fn(|_| Vec::new()),
+            elements: core::array::from_fn(|_| Vec::new()),
         }
     }
 
@@ -181,12 +179,12 @@ impl<T: Default> ShiftedWitnessEntities<Vec<T>> {
 
 impl<T: Default> IntoIterator for AllEntities<T> {
     type Item = T;
-    type IntoIter = std::iter::Chain<
-        std::iter::Chain<
-            std::array::IntoIter<T, PRECOMPUTED_ENTITIES_SIZE>,
-            std::array::IntoIter<T, WITNESS_ENTITIES_SIZE>,
+    type IntoIter = core::iter::Chain<
+        core::iter::Chain<
+            core::array::IntoIter<T, PRECOMPUTED_ENTITIES_SIZE>,
+            core::array::IntoIter<T, WITNESS_ENTITIES_SIZE>,
         >,
-        std::array::IntoIter<T, SHIFTED_WITNESS_ENTITIES_SIZE>,
+        core::array::IntoIter<T, SHIFTED_WITNESS_ENTITIES_SIZE>,
     >;
 
     fn into_iter(self) -> Self::IntoIter {

@@ -19,7 +19,7 @@ use crate::{
     types::ScalarField,
 };
 use ark_ff::{One, Zero};
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 pub(crate) type SumcheckRoundOutput<F, const U: usize> = Univariate<F, U>;
 

@@ -7,7 +7,8 @@ use alloc::vec::Vec;
 use ark_ec::AffineRepr;
 use ark_ff::{One, Zero};
 use num_bigint::BigUint;
-use std::{collections::BTreeMap, ops::Index};
+use core::ops::Index;
+use alloc::collections::BTreeMap;
 
 pub struct Transcript<H>
 where
@@ -21,7 +22,7 @@ where
     is_first_challenge: bool,
     current_round_data: Vec<ScalarField>,
     previous_challenge: ScalarField,
-    phantom_data: std::marker::PhantomData<H>,
+    phantom_data: core::marker::PhantomData<H>,
 }
 
 impl<H> Default for Transcript<H>
@@ -224,7 +225,7 @@ where
         // to domain separate all the data. (See https://safe-hash.dev)
 
         let mut full_buffer = Vec::new();
-        std::mem::swap(&mut full_buffer, &mut self.current_round_data);
+        core::mem::swap(&mut full_buffer, &mut self.current_round_data);
 
         if self.is_first_challenge {
             // Update is_first_challenge for the future
