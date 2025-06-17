@@ -13,7 +13,7 @@ alloy-primitives.workspace = true
 alloy-sol-types.workspace = true
 stylus-sdk.workspace = true
 hex = { version = "0.4", default-features = false }
-# ultrahonk = { path = "../ultrahonk" }
+ultrahonk = { path = "../ultrahonk" }
 num-traits.workspace = true
 ark-ff.workspace = true
 ark-serialize.workspace = true
@@ -22,7 +22,7 @@ serde.workspace = true
 ark-bn254.workspace = true
 serde_with.workspace = true
 postcard.workspace = true
-# rand.workspace = true
+rand.workspace = true
 
 [dev-dependencies]
 alloy.workspace = true
