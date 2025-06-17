@@ -16,6 +16,8 @@ sol!(
         function testEcMul(bytes memory a_bytes, bytes memory b_bytes) external view returns (bytes);
         #[derive(Debug)]
         function testEcPairing(bytes memory a_bytes, bytes memory b_bytes) external view returns (bool);
+        #[derive(Debug)]
+        function testHash(bytes memory a_bytes) external view returns (bytes);
     }
 
 );

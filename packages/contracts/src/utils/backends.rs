@@ -18,13 +18,10 @@ use ultrahonk::{
 pub struct PrecompileHasher;
 
 impl ultrahonk::backends::HashBackend for PrecompileHasher {
-    fn hash(buffer: Vec<ScalarField>) -> ScalarField {
+    fn hash(bytes: Vec<u8>) -> Vec<u8> {
         // Losing 2 bits of this is not an issue -> we can just reduce mod p
-        let vec = buffer.serialize_to_bytes();
-        let bytes = keccak(&vec);
-        let hash_result = bytes.as_ref();
-
-        ScalarField::deserialize_from_bytes(hash_result).unwrap()
+        let res = keccak(&bytes);
+        res.to_vec()
     }
 }
 

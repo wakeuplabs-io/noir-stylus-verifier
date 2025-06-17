@@ -45,8 +45,7 @@ impl PrecompileTestContract {
 
     /// Invokes the `hash` precompile on the given inputs
     pub fn test_hash(&self, a_bytes: Bytes) -> Result<Bytes, Vec<u8>> {
-        let a: SerdeScalarField = postcard::from_bytes(a_bytes.as_slice()).unwrap();
-        let c = PrecompileHasher::hash(vec![a.0]);
-        Ok(postcard::to_allocvec(&SerdeScalarField(c)).unwrap().into())
+        let c = PrecompileHasher::hash(a_bytes.as_slice().to_vec());
+        Ok(c.into())
     }
 }

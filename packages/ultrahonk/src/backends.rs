@@ -4,7 +4,7 @@ use alloc::vec::Vec;
 /// A hashing backend for muxing between VM-accelerated hashing
 /// and native Rust hashing
 pub trait HashBackend {
-    fn hash(buffer: Vec<ScalarField>) -> ScalarField;
+    fn hash(buffer: Vec<u8>) -> Vec<u8>;
 }
 
 /// An error that occurs when performing elliptic curve arithmetic
