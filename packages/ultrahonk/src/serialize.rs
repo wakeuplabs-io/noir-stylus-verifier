@@ -1,6 +1,6 @@
 use crate::types::{G1Affine, G1BaseField, G2Affine, G2BaseField, MontFp256, NUM_U64S_FELT};
 use alloc::vec::Vec;
-use ark_ec::{AffineRepr};
+use ark_ec::AffineRepr;
 use ark_ff::{BigInteger, Field, MontConfig, PrimeField, Zero};
 use num_bigint::BigUint;
 
@@ -174,7 +174,7 @@ impl BytesSerializable for G1Affine {
         bytes.extend(x.serialize_to_bytes());
         bytes.extend(y.serialize_to_bytes());
         bytes
-      
+
         // const NUM_64_LIMBS: u32 = G1BaseField::MODULUS_BIT_SIZE.div_ceil(64);
         // const FIELDSIZE_BYTES: u32 = NUM_64_LIMBS * 8;
         // const GROUPSIZE_BYTES: u32 = FIELDSIZE_BYTES * 2; // Times extension degree
@@ -211,7 +211,6 @@ impl BytesDeserializable for G1Affine {
         Ok(G1Affine::new(first, second))
     }
 }
-
 
 impl BytesSerializable for G2Affine {
     /// Serializes a G2 point into a big-endian byte array of the coefficients

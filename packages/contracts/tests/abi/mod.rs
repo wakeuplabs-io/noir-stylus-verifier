@@ -20,4 +20,3 @@ sol!(
         function demo() internal pure returns (bool);
     }
 );
-

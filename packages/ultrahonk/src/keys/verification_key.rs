@@ -1,4 +1,5 @@
 use crate::polynomials::polynomial_types::PrecomputedEntities;
+use crate::serialize::BytesDeserializable;
 use crate::types::{G1Affine, G1BaseField, G2Affine};
 use crate::{
     polynomials::polynomial_types::PRECOMPUTED_ENTITIES_SIZE,
@@ -6,7 +7,6 @@ use crate::{
 };
 use ark_ff::PrimeField;
 use serde::{Deserialize, Serialize};
-use crate::serialize::BytesDeserializable;
 
 #[derive(Clone)]
 pub struct VerifyingKey {
@@ -79,7 +79,7 @@ impl VerifyingKeyBarretenberg {
         if size != Self::SER_FULL_SIZE && size != Self::SER_COMPRESSED_SIZE {
             return Err(HonkProofError::InvalidKeyLength);
         }
-        
+
         // Read data
         let mut offset = 0;
         let circuit_size = u64::deserialize_from_bytes_with_offset(&buf, &mut offset).unwrap();

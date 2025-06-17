@@ -2,13 +2,13 @@
 //! Deserialize} on the foreign Arkworks, Alloy, and other types that we compose
 //! into complex structs.
 
-use stylus_sdk::alloy_primitives::{Address, FixedBytes, Uint};
 use ark_bn254::{g1::Config as G1Config, g2::Config as G2Config, Fq2Config, FqConfig, FrConfig};
 use ark_ec::short_weierstrass::Affine;
 use ark_ff::{BigInt, Fp, Fp2ConfigWrapper, FpConfig, MontBackend, QuadExtField};
 use core::marker::PhantomData;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, DeserializeAs, SerializeAs};
+use stylus_sdk::alloy_primitives::{Address, FixedBytes, Uint};
 use ultrahonk::types::{G1Affine, G1BaseField, G2Affine, G2BaseField, ScalarField};
 
 /// This macro implements the `SerializeAs` and `DeserializeAs` traits for a

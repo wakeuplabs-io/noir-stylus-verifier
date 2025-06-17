@@ -1,10 +1,10 @@
-use stylus_sdk::prelude::*;
 use crate::utils::constants::{
     EC_ADD_ADDRESS_LAST_BYTE, EC_MUL_ADDRESS_LAST_BYTE, EC_PAIRING_ADDRESS_LAST_BYTE,
     NUM_BYTES_FELT, PAIRING_CHECK_RESULT_LAST_BYTE_INDEX,
 };
 use alloc::vec::Vec;
 use num_traits::identities::One;
+use stylus_sdk::prelude::*;
 use stylus_sdk::{alloy_primitives::Address, call::RawCall, crypto::keccak};
 use ultrahonk::{
     backends::G1ArithmeticError,
@@ -54,7 +54,6 @@ impl ultrahonk::backends::G1ArithmeticBackend for PrecompileG1ArithmeticBackend 
             RawCall::new_static()
                 .call(Address::with_last_byte(EC_ADD_ADDRESS_LAST_BYTE), &calldata)
                 .map_err(|_| G1ArithmeticError)?
-
         };
 
         // Deserialize the affine coordinates returned from the precompile
@@ -79,7 +78,6 @@ impl ultrahonk::backends::G1ArithmeticBackend for PrecompileG1ArithmeticBackend 
                 .call(Address::with_last_byte(EC_MUL_ADDRESS_LAST_BYTE), &calldata)
                 .map_err(|_| G1ArithmeticError)?
         };
-
 
         // Deserialize the affine coordinates returned from the precompile
         Ok(G1Affine::deserialize_from_bytes(res_xy_bytes.as_ref()).unwrap())

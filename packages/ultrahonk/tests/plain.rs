@@ -10,6 +10,7 @@ use ark_serialize::CanonicalDeserialize;
 use eyre::{anyhow, Result};
 use sha3::{Digest, Keccak256};
 use std::{fs::File, io::Read, marker::PhantomData, path::Path, str::FromStr};
+use ultrahonk::serialize::BytesDeserializable;
 use ultrahonk::{
     backends::{G1ArithmeticBackend, G1ArithmeticError},
     honk_curve::HonkCurve,
@@ -18,7 +19,6 @@ use ultrahonk::{
     serialize::BytesSerializable,
     types::{G1Affine, G2Affine, ScalarField, ZeroKnowledge},
 };
-use ultrahonk::serialize::BytesDeserializable;
 
 pub struct ArkKeccak256;
 
@@ -26,7 +26,7 @@ impl HashBackend for ArkKeccak256 {
     fn hash(buffer: Vec<ScalarField>) -> ScalarField {
         // Losing 2 bits of this is not an issue -> we can just reduce mod p
         let vec = buffer.serialize_to_bytes();
-        
+
         let mut hasher = Keccak256::default();
         hasher.update(vec);
         let hash_result = hasher.finalize();

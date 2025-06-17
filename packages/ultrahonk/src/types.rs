@@ -1,10 +1,10 @@
 pub use crate::polynomials::polynomial_types::{PrecomputedEntities, PRECOMPUTED_ENTITIES_SIZE};
+use crate::serialize::BytesDeserializable;
 use crate::serialize::BytesSerializable;
 use alloc::vec::Vec;
 use ark_bn254::{g1::Config as G1Config, g2::Config as G2Config, Fq, Fq2, Fr};
 use ark_ec::short_weierstrass::Affine;
 use ark_ff::{Fp256, MontBackend};
-use crate::serialize::BytesDeserializable;
 
 // TODO: move to a separate file
 /// The number of u64s it takes to represent a field element
@@ -72,7 +72,6 @@ pub enum HonkProofError {
     LargeSubgroup,
 }
 
-
 impl HonkProof {
     pub(crate) fn new(proof: Vec<ScalarField>) -> Self {
         Self { proof }
@@ -87,7 +86,8 @@ impl HonkProof {
     }
 
     pub fn from_buffer(buf: &[u8]) -> HonkProofResult<Self> {
-        let res = Vec::<ScalarField>::deserialize_from_bytes(buf).map_err(|_| HonkProofError::InvalidProofLength)?;
+        let res = Vec::<ScalarField>::deserialize_from_bytes(buf)
+            .map_err(|_| HonkProofError::InvalidProofLength)?;
         Ok(Self::new(res))
     }
 

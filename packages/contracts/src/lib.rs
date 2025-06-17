@@ -2,8 +2,8 @@
 #![cfg_attr(not(any(test, feature = "export-abi")), no_main)]
 #![cfg_attr(not(any(test, feature = "export-abi")), no_std)]
 
-pub mod utils;
 pub mod mocks;
+pub mod utils;
 
 #[macro_use]
 extern crate alloc;

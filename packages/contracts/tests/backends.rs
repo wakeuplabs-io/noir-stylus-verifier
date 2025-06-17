@@ -1,7 +1,7 @@
 #![cfg(feature = "e2e-backends")]
 
-use core::panic;
 use abi::{G1ArithmeticPrecompileTestContract, Verifier};
+use core::panic;
 use e2e::{Account, Revert};
 use eyre::Result;
 
