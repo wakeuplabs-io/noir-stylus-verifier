@@ -15,9 +15,9 @@ use ultrahonk::{
 
 /// The hashing backend used in the Stylus VM,
 /// which uses the VM-accelerated Keccak-256 implementation
-pub struct StylusHasher;
+pub struct PrecompileHasher;
 
-impl ultrahonk::backends::HashBackend for StylusHasher {
+impl ultrahonk::backends::HashBackend for PrecompileHasher {
     fn hash(buffer: Vec<ScalarField>) -> ScalarField {
         // Losing 2 bits of this is not an issue -> we can just reduce mod p
         let vec = buffer.serialize_to_bytes();
