@@ -1,15 +1,15 @@
+use crate::alloc::{borrow::ToOwned, string::String};
 use crate::backends::HashBackend;
 use crate::honk_curve::{NUM_BASEFIELD_ELEMENTS, NUM_SCALARFIELD_ELEMENTS};
 use crate::serialize::{BytesDeserializable, BytesSerializable};
 use crate::types::{G1Affine, HonkProof, HonkProofError, HonkProofResult, ScalarField};
 use crate::Utils;
+use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
 use ark_ec::AffineRepr;
 use ark_ff::{One, Zero};
-use num_bigint::BigUint;
 use core::ops::Index;
-use alloc::collections::BTreeMap;
-use crate::alloc::{borrow::ToOwned, string::String};
+use num_bigint::BigUint;
 
 pub struct Transcript<H>
 where

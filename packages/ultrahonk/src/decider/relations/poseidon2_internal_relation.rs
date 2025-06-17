@@ -1,4 +1,5 @@
 use super::Relation;
+use crate::alloc::borrow::ToOwned;
 use crate::decider::{
     types::{ClaimedEvaluations, ProverUnivariates, RelationParameters},
     univariate::Univariate,
@@ -6,7 +7,6 @@ use crate::decider::{
 use crate::gadgets::poseidon2::POSEIDON2_BN254_T4_PARAMS;
 use ark_ff::{PrimeField, Zero};
 use num_bigint::BigUint;
-use crate::alloc::borrow::ToOwned;
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct Poseidon2InternalRelationAcc<F: PrimeField> {

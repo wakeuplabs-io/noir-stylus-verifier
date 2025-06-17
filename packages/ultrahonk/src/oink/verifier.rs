@@ -3,10 +3,10 @@ use crate::{
     backends::HashBackend, honk_curve::HonkCurve, keys::verification_key::VerifyingKey,
     transcript::Transcript, types::ScalarField, verifier::HonkVerifyResult, NUM_ALPHAS,
 };
+use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use ark_ff::One;
 use core::{array, marker::PhantomData};
-use alloc::string::{String, ToString};
 
 pub(crate) struct Oink<P: HonkCurve, H: HashBackend> {
     phantom_data: PhantomData<P>,

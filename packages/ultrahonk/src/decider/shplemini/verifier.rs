@@ -2,6 +2,10 @@ use super::{
     types::{PolyF, PolyG, PolyGShift},
     ShpleminiVerifierOpeningClaim,
 };
+use crate::alloc::{
+    borrow::ToOwned,
+    string::{String, ToString},
+};
 use crate::{
     backends::HashBackend,
     decider::{
@@ -18,7 +22,6 @@ use crate::{
 use alloc::vec::Vec;
 use ark_ec::AffineRepr;
 use ark_ff::{Field, One, Zero};
-use crate::alloc::{borrow::ToOwned, string::{String, ToString}};
 
 impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
     pub fn get_g_shift_evaluations(

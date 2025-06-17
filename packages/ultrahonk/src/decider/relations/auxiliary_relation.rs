@@ -1,11 +1,11 @@
 use super::Relation;
+use crate::alloc::borrow::ToOwned;
 use crate::decider::{
     types::{ClaimedEvaluations, ProverUnivariates, RelationParameters},
     univariate::Univariate,
 };
 use ark_ff::{One, PrimeField, Zero};
 use num_bigint::BigUint;
-use crate::alloc::borrow::ToOwned;
 
 /**
  * AZTEC TODO(https://github.com/AztecProtocol/barretenberg/issues/757): Investigate optimizations.

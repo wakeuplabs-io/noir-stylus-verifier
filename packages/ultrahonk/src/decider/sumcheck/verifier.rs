@@ -1,4 +1,8 @@
 use super::SumcheckVerifierOutput;
+use crate::alloc::{
+    borrow::ToOwned,
+    string::{String, ToString},
+};
 pub use crate::polynomials::polynomial::RowDisablingPolynomial;
 use crate::{
     backends::HashBackend,
@@ -15,7 +19,6 @@ use crate::{
 };
 use alloc::vec::Vec;
 use ark_ff::{One, Zero};
-use crate::alloc::{borrow::ToOwned, string::{String, ToString}};
 
 // Keep in mind, the UltraHonk protocol (UltraFlavor) does not per default have ZK
 impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {

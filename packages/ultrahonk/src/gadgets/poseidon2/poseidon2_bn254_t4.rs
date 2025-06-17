@@ -410,13 +410,12 @@ pub(crate) static INTERNAL_RC: Lazy<Vec<ScalarField>> = Lazy::new(|| {
 });
 
 /// The Poseidon2 parameters for the BN254 curve with a internal state of size t=4.
-pub static POSEIDON2_BN254_T4_PARAMS: Lazy<Poseidon2Params<ScalarField, T, D>> =
-    Lazy::new(|| {
-        Poseidon2Params::new(
-            ROUNDS_F,
-            ROUNDS_P,
-            &MAT_DIAG_M_1,
-            &EXTERNAL_RC,
-            &INTERNAL_RC,
-        )
-    });
+pub static POSEIDON2_BN254_T4_PARAMS: Lazy<Poseidon2Params<ScalarField, T, D>> = Lazy::new(|| {
+    Poseidon2Params::new(
+        ROUNDS_F,
+        ROUNDS_P,
+        &MAT_DIAG_M_1,
+        &EXTERNAL_RC,
+        &INTERNAL_RC,
+    )
+});

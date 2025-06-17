@@ -1,4 +1,5 @@
 use super::Relation;
+use crate::alloc::borrow::ToOwned;
 use crate::decider::{
     types::{
         ClaimedEvaluations, ProverUnivariates, RelationParameters, MAX_PARTIAL_RELATION_LENGTH,
@@ -6,7 +7,6 @@ use crate::decider::{
     univariate::Univariate,
 };
 use ark_ff::{PrimeField, Zero};
-use crate::alloc::borrow::ToOwned;
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct LogDerivLookupRelationAcc<F: PrimeField> {
