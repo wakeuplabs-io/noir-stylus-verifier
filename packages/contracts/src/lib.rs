@@ -3,6 +3,7 @@
 #![cfg_attr(not(any(test, feature = "export-abi")), no_std)]
 
 pub mod utils;
+pub mod mocks;
 
 #[macro_use]
 extern crate alloc;
@@ -10,7 +11,7 @@ use alloc::vec::Vec;
 use stylus_sdk::prelude::*;
 
 sol_storage! {
-    #[entrypoint]
+    #[cfg_attr(feature = "verifier", entrypoint)]
     pub struct VerifierContract {
     }
 }
@@ -20,6 +21,11 @@ impl VerifierContract {
     pub fn verify(&self) -> bool {
         true
     }
+
+    // #[cfg(feature = "e2e")]
+    // pub fn demo(&self) -> bool {
+    //     true
+    // }
 }
 
 #[cfg(test)]

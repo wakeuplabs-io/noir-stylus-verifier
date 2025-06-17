@@ -1,0 +1,49 @@
+//! Testing contract which wraps EVM precompile functionality for testing
+//! purposes. This contract is intended to be used in conjunction with a local
+//! devnet, along with testing scripts in the `integration` crate
+
+// use crate::utils::backends::PrecompileG1ArithmeticBackend;
+// use crate::utils::serde_def_types::{SerdeG1Affine, SerdeG2Affine, SerdeScalarField};
+use alloc::vec::Vec;
+// use ark_ec::AffineRepr;
+// use serde::Serialize;
+use stylus_sdk::{abi::Bytes, prelude::*};
+// use ultrahonk::backends::G1ArithmeticBackend;
+
+/// The precompile testing contract, which itself is stateless
+#[storage]
+#[cfg_attr(feature = "e2e-precompile", entrypoint)]
+struct G1ArithmeticPrecompileTestContract;
+
+#[public]
+impl G1ArithmeticPrecompileTestContract {
+    pub fn demo(&self) -> bool {
+        true
+    }
+
+    // /// Invokes the `ecAdd` precompile on the given inputs
+    // pub fn test_ec_add(&self, a_bytes: Bytes, b_bytes: Bytes) -> Result<Bytes, Vec<u8>> {
+    //     let a: SerdeG1Affine = postcard::from_bytes(a_bytes.as_slice()).unwrap();
+    //     let b: SerdeG1Affine = postcard::from_bytes(b_bytes.as_slice()).unwrap();
+
+    //     let c = PrecompileG1ArithmeticBackend::ec_add(a.0, b.0).unwrap();
+    //     let c_bytes = postcard::to_allocvec(&SerdeG1Affine(c)).unwrap();
+    //     Ok(c_bytes.into())
+    // }
+
+    // /// Invokes the `ecMul` precompile on the given inputs
+    // pub fn test_ec_mul(&self, a_bytes: Bytes, b_bytes: Bytes) -> Result<Bytes, Vec<u8>> {
+    //     let a: SerdeScalarField = postcard::from_bytes(a_bytes.as_slice()).unwrap();
+    //     let b: SerdeG1Affine = postcard::from_bytes(b_bytes.as_slice()).unwrap();
+    //     let c = PrecompileG1ArithmeticBackend::ec_scalar_mul(a.0, b.0).unwrap();
+    //     Ok(postcard::to_allocvec(&SerdeG1Affine(c)).unwrap().into())
+    // }
+
+    // /// Invokes the `ecPairing` precompile on the given inputs
+    // pub fn test_ec_pairing(&self, a_bytes: Bytes, b_bytes: Bytes) -> Result<bool, Vec<u8>> {
+    //     let a: SerdeG1Affine = postcard::from_bytes(a_bytes.as_slice()).unwrap();
+    //     let b: SerdeG2Affine = postcard::from_bytes(b_bytes.as_slice()).unwrap();
+
+    //     Ok(PrecompileG1ArithmeticBackend::ec_pairing_check(a.0, -a.0, b.0, b.0).unwrap())
+    // }
+}

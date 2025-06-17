@@ -13,7 +13,7 @@ alloy-primitives.workspace = true
 alloy-sol-types.workspace = true
 stylus-sdk.workspace = true
 hex = { version = "0.4", default-features = false }
-ultrahonk = { path = "../ultrahonk" }
+# ultrahonk = { path = "../ultrahonk" }
 num-traits.workspace = true
 ark-ff.workspace = true
 ark-serialize.workspace = true
@@ -23,7 +23,6 @@ ark-bn254.workspace = true
 serde_with.workspace = true
 postcard.workspace = true
 
-
 [dev-dependencies]
 alloy.workspace = true
 rand.workspace = true
@@ -31,14 +30,16 @@ alloy-primitives.workspace = true
 tokio = { version = "1.12.0", features = ["full"] }
 eyre = "0.6.8"
 e2e.workspace = true
-stylus-sdk = { workspace = true, features = ["testing"] }
+stylus-sdk = { workspace = true, features = ["stylus-test"] }
 
 [features]
 default = ["mini-alloc"]
 export-abi = ["stylus-sdk/export-abi"]
 debug = ["stylus-sdk/debug"]
 mini-alloc = ["stylus-sdk/mini-alloc"]
-e2e = []
+verifier = []
+e2e-precompile = []
+hash-precompile = []
 
 [[bin]]
 name = "stylus-noir-verifier"

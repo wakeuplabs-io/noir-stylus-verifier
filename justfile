@@ -7,7 +7,7 @@ build-all:
   cargo build --release --all-features
 
 build-contracts:
-  cargo build -p contracts --target wasm32-unknown-unknown
+  cargo build -p contracts --target wasm32-unknown-unknown --profile release
 
 test-all:
   cargo test --release --all-features

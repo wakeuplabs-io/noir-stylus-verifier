@@ -1,8 +1,6 @@
 use crate::decider::barycentric::Barycentric;
 use ark_ff::{PrimeField, Zero};
-use rand::{CryptoRng, Rng};
 use std::{
-    array,
     ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 
@@ -227,11 +225,6 @@ impl<F: PrimeField, const SIZE: usize> Univariate<F, SIZE> {
         } else {
             *result += extended;
         }
-    }
-
-    pub(crate) fn get_random<R: Rng + CryptoRng>(rng: &mut R) -> Self {
-        let evaluations = array::from_fn(|_| F::rand(rng));
-        Self { evaluations }
     }
 }
 
