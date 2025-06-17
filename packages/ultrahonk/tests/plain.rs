@@ -13,11 +13,11 @@ use std::{fs::File, io::Read, marker::PhantomData, path::Path, str::FromStr};
 use ultrahonk::serialize::BytesDeserializable;
 use ultrahonk::{
     backends::{G1ArithmeticBackend, G1ArithmeticError},
+    constants::HASH_OUTPUT_SIZE,
     honk_curve::HonkCurve,
     keys::verification_key::{VerifyingKey, VerifyingKeyBarretenberg},
     prelude::{HashBackend, HonkProof, UltraHonk},
     types::{G1Affine, G2Affine, ScalarField, ZeroKnowledge},
-    constants::HASH_OUTPUT_SIZE
 };
 
 pub struct ArkKeccak256;

@@ -1,4 +1,7 @@
-use crate::{constants::HASH_OUTPUT_SIZE, types::{G1Affine, G2Affine, ScalarField}};
+use crate::{
+    constants::HASH_OUTPUT_SIZE,
+    types::{G1Affine, G2Affine, ScalarField},
+};
 
 /// A hashing backend for muxing between VM-accelerated hashing
 /// and native Rust hashing
