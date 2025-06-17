@@ -5,10 +5,7 @@ use alloc::vec::Vec;
 use ark_bn254::{g1::Config as G1Config, g2::Config as G2Config, Fq, Fq2, Fr};
 use ark_ec::short_weierstrass::Affine;
 use ark_ff::{Fp256, MontBackend};
-
-// TODO: move to a separate file
-/// The number of u64s it takes to represent a field element
-pub const NUM_U64S_FELT: usize = 4;
+use crate::constants::NUM_U64S_FELT;
 
 /// Type alias for an element of the scalar field of the Bn254 curve
 pub type ScalarField = Fr;

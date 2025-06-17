@@ -1,6 +1,6 @@
 use crate::utils::constants::{
     EC_ADD_ADDRESS_LAST_BYTE, EC_MUL_ADDRESS_LAST_BYTE, EC_PAIRING_ADDRESS_LAST_BYTE,
-    NUM_BYTES_FELT, PAIRING_CHECK_RESULT_LAST_BYTE_INDEX,
+    PAIRING_CHECK_RESULT_LAST_BYTE_INDEX,
 };
 use alloc::vec::Vec;
 use num_traits::identities::One;
@@ -10,6 +10,7 @@ use ultrahonk::{
     backends::G1ArithmeticError,
     serialize::{BytesDeserializable, BytesSerializable},
     types::{G1Affine, G2Affine, ScalarField},
+    constants::NUM_BYTES_FELT,
 };
 
 /// The hashing backend used in the Stylus VM,

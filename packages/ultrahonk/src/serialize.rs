@@ -1,14 +1,8 @@
-use crate::types::{G1Affine, G1BaseField, G2Affine, G2BaseField, MontFp256, NUM_U64S_FELT};
+use crate::{constants::{NUM_BYTES_FELT, NUM_U64S_FELT}, types::{G1Affine, G1BaseField, G2Affine, G2BaseField, MontFp256}};
 use alloc::vec::Vec;
 use ark_ec::AffineRepr;
 use ark_ff::{BigInteger, Field, MontConfig, PrimeField, Zero};
 use num_bigint::BigUint;
-
-// TODO: move to constants file
-/// The number of bytes to represent field elements of the base or scalar fields
-/// for the G1 curve group, as well as the base field which is extended for the
-/// G2 curve group
-pub const NUM_BYTES_FELT: usize = 32;
 
 /// An error that occurs during de/serialization
 #[derive(Debug)]
