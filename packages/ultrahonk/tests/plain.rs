@@ -17,17 +17,18 @@ use ultrahonk::{
     keys::verification_key::{VerifyingKey, VerifyingKeyBarretenberg},
     prelude::{HashBackend, HonkProof, UltraHonk},
     types::{G1Affine, G2Affine, ScalarField, ZeroKnowledge},
+    constants::HASH_OUTPUT_SIZE
 };
 
 pub struct ArkKeccak256;
 
 impl HashBackend for ArkKeccak256 {
-    fn hash(buffer: Vec<u8>) -> Vec<u8> {
+    fn hash(buffer: &[u8]) -> [u8; HASH_OUTPUT_SIZE] {
         // Losing 2 bits of this is not an issue -> we can just reduce mod p
         let mut hasher = Keccak256::default();
         hasher.update(buffer);
         let hash_result = hasher.finalize();
-        hash_result.to_vec()
+        hash_result.try_into().unwrap()
     }
 }
 

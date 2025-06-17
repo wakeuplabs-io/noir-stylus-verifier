@@ -1,6 +1,6 @@
 #![cfg(feature = "e2e-backends")]
 
-use abi::{G1ArithmeticPrecompileTestContract, Verifier};
+use abi::{PrecompileTestContract, Verifier};
 use alloy_primitives::keccak256;
 use alloy_primitives::Bytes;
 use ark_ec::AffineRepr;
@@ -23,7 +23,7 @@ mod abi;
 async fn test_ec_add(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
     let mut rng = thread_rng();
-    let contract = G1ArithmeticPrecompileTestContract::new(contract_addr, &alice.wallet);
+    let contract = PrecompileTestContract::new(contract_addr, &alice.wallet);
 
     let a = G1Affine::rand(&mut rng);
     let b = G1Affine::rand(&mut rng);
@@ -46,7 +46,7 @@ async fn test_ec_add(alice: Account) -> Result<()> {
 #[e2e::test]
 async fn test_ec_mul(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
-    let contract = G1ArithmeticPrecompileTestContract::new(contract_addr, &alice.wallet);
+    let contract = PrecompileTestContract::new(contract_addr, &alice.wallet);
     let mut rng = thread_rng();
 
     let a = ScalarField::rand(&mut rng);
@@ -73,7 +73,7 @@ async fn test_ec_mul(alice: Account) -> Result<()> {
 #[e2e::test]
 async fn test_ec_pairing(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
-    let contract = G1ArithmeticPrecompileTestContract::new(contract_addr, &alice.wallet);
+    let contract = PrecompileTestContract::new(contract_addr, &alice.wallet);
     let mut rng = thread_rng();
 
     let a = G1Affine::rand(&mut rng);
@@ -96,7 +96,7 @@ async fn test_ec_pairing(alice: Account) -> Result<()> {
 #[e2e::test]
 async fn test_hash(alice: Account) -> Result<()> {
     let contract_addr = alice.as_deployer().deploy().await?.contract_address;
-    let contract = G1ArithmeticPrecompileTestContract::new(contract_addr, &alice.wallet);
+    let contract = PrecompileTestContract::new(contract_addr, &alice.wallet);
     let mut rng = thread_rng();
 
     let mut msg = [0u8; 32];

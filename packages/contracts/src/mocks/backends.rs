@@ -45,7 +45,7 @@ impl PrecompileTestContract {
 
     /// Invokes the `hash` precompile on the given inputs
     pub fn test_hash(&self, a_bytes: Bytes) -> Result<Bytes, Vec<u8>> {
-        let c = PrecompileHasher::hash(a_bytes.as_slice().to_vec());
-        Ok(c.into())
+        let c = PrecompileHasher::hash(a_bytes.as_slice());
+        Ok(c.to_vec().into())
     }
 }

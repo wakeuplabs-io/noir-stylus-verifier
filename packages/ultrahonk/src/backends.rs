@@ -1,10 +1,9 @@
-use crate::types::{G1Affine, G2Affine, ScalarField};
-use alloc::vec::Vec;
+use crate::{constants::HASH_OUTPUT_SIZE, types::{G1Affine, G2Affine, ScalarField}};
 
 /// A hashing backend for muxing between VM-accelerated hashing
 /// and native Rust hashing
 pub trait HashBackend {
-    fn hash(buffer: Vec<u8>) -> Vec<u8>;
+    fn hash(buffer: &[u8]) -> [u8; HASH_OUTPUT_SIZE];
 }
 
 /// An error that occurs when performing elliptic curve arithmetic

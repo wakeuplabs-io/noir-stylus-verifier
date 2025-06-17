@@ -9,7 +9,7 @@ sol!(
     }
 
     #[sol(rpc)]
-    contract G1ArithmeticPrecompileTestContract {
+    contract PrecompileTestContract {
         #[derive(Debug)]
         function testEcAdd(bytes memory a_bytes, bytes memory b_bytes) external view returns (bytes);
         #[derive(Debug)]

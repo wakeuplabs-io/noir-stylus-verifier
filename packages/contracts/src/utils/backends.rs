@@ -8,7 +8,7 @@ use stylus_sdk::prelude::*;
 use stylus_sdk::{alloy_primitives::Address, call::RawCall, crypto::keccak};
 use ultrahonk::{
     backends::G1ArithmeticError,
-    constants::NUM_BYTES_FELT,
+    constants::{NUM_BYTES_FELT,HASH_OUTPUT_SIZE},
     serialize::{BytesDeserializable, BytesSerializable},
     types::{G1Affine, G2Affine, ScalarField},
 };
@@ -18,10 +18,10 @@ use ultrahonk::{
 pub struct PrecompileHasher;
 
 impl ultrahonk::backends::HashBackend for PrecompileHasher {
-    fn hash(bytes: Vec<u8>) -> Vec<u8> {
+    fn hash(bytes: &[u8]) -> [u8; HASH_OUTPUT_SIZE] {
         // Losing 2 bits of this is not an issue -> we can just reduce mod p
         let res = keccak(&bytes);
-        res.to_vec()
+        res.try_into().unwrap()
     }
 }
 
