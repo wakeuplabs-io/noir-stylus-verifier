@@ -8,9 +8,9 @@ use stylus_sdk::prelude::*;
 use stylus_sdk::{alloy_primitives::Address, call::RawCall, crypto::keccak};
 use ultrahonk::{
     backends::G1ArithmeticError,
+    constants::NUM_BYTES_FELT,
     serialize::{BytesDeserializable, BytesSerializable},
     types::{G1Affine, G2Affine, ScalarField},
-    constants::NUM_BYTES_FELT,
 };
 
 /// The hashing backend used in the Stylus VM,

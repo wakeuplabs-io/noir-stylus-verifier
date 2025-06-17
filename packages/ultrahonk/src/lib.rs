@@ -4,6 +4,7 @@
 extern crate alloc;
 
 pub mod backends;
+pub mod constants;
 pub mod decider;
 pub mod gadgets;
 pub mod honk_curve;
@@ -16,7 +17,6 @@ pub mod serialize;
 pub mod transcript;
 pub mod types;
 pub mod verifier;
-pub mod constants;
 
 use ark_bn254::{Fq, Fr};
 use ark_ff::{One, PrimeField};

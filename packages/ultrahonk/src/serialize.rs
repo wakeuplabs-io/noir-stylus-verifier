@@ -1,4 +1,7 @@
-use crate::{constants::{NUM_BYTES_FELT, NUM_U64S_FELT}, types::{G1Affine, G1BaseField, G2Affine, G2BaseField, MontFp256}};
+use crate::{
+    constants::{NUM_BYTES_FELT, NUM_U64S_FELT},
+    types::{G1Affine, G1BaseField, G2Affine, G2BaseField, MontFp256},
+};
 use alloc::vec::Vec;
 use ark_ec::AffineRepr;
 use ark_ff::{BigInteger, Field, MontConfig, PrimeField, Zero};
