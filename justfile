@@ -20,7 +20,7 @@ test-contracts:
   cargo test -p contracts -- --test-threads=1
 
 test-e2e:
-  ./scripts/test-e2e.sh
+  ./scripts/e2e-tests.sh
 
 check-pr: lint test-all
 
