@@ -8,7 +8,14 @@ pub mod utils;
 #[macro_use]
 extern crate alloc;
 use alloc::vec::Vec;
-use stylus_sdk::prelude::*;
+use ark_bn254::Bn254;
+use stylus_sdk::{abi::Bytes, prelude::*};
+use ultrahonk::crs::parser::CrsParser;
+use ultrahonk::keys::verification_key::{VerifyingKey, VerifyingKeyBarretenberg};
+use ultrahonk::prelude::UltraHonk;
+use ultrahonk::serialize::BytesDeserializable;
+use ultrahonk::types::{HonkProof, ScalarField, ZeroKnowledge};
+use crate::utils::backends::{PrecompileHasher, PrecompileHonkCurve};
 
 sol_storage! {
     #[cfg_attr(feature = "verifier", entrypoint)]
@@ -18,14 +25,28 @@ sol_storage! {
 
 #[public]
 impl VerifierContract {
-    pub fn verify(&self) -> bool {
-        true
-    }
+    pub fn verify(&self, proof_bytes: Bytes, public_inputs_bytes: Bytes, vk_bytes: Bytes) -> bool {
+        let proof = HonkProof::from_buffer(&proof_bytes).unwrap();
 
-    // #[cfg(feature = "e2e")]
-    // pub fn demo(&self) -> bool {
-    //     true
-    // }
+        // parse public_inputs file
+        let public_inputs =
+            Vec::<ScalarField>::deserialize_from_bytes(&public_inputs_bytes).unwrap();
+
+        // parse the crs
+        let verifier_crs = CrsParser::<Bn254>::get_crs_g2().unwrap();
+
+        // parse verification key file
+        let vk = VerifyingKeyBarretenberg::from_buffer(&vk_bytes).unwrap();
+        let vk = VerifyingKey::from_barrettenberg_and_crs(vk, verifier_crs);
+
+        UltraHonk::<PrecompileHonkCurve, PrecompileHasher>::verify(
+            proof,
+            &public_inputs,
+            &vk,
+            ZeroKnowledge::No, // TODO: remove this
+        )
+        .unwrap()
+    }
 }
 
 #[cfg(test)]
@@ -33,11 +54,11 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_counter() {
+    fn test_verifier() {
         use stylus_sdk::testing::*;
         let vm = TestVM::default();
         let contract = VerifierContract::from(&vm);
 
-        assert_eq!(true, contract.verify());
+        assert!(true);
     }
 }

@@ -28,9 +28,12 @@ impl ultrahonk::backends::HashBackend for PrecompileHasher {
 /// The G1 arithmetic backend used in the Stylus VM,
 /// which calls out to the EC arithmetic EVM precompiles
 #[storage]
-pub struct PrecompileG1ArithmeticBackend;
+pub struct PrecompileHonkCurve;
 
-impl ultrahonk::backends::G1ArithmeticBackend for PrecompileG1ArithmeticBackend {
+impl ultrahonk::honk_curve::HonkCurve for PrecompileHonkCurve {
+}
+
+impl ultrahonk::backends::G1ArithmeticBackend for PrecompileHonkCurve {
     /// Calls the `ecAdd` precompile with the given points, handling
     /// de/serialization
     fn ec_add(a: G1Affine, b: G1Affine) -> Result<G1Affine, G1ArithmeticError> {
