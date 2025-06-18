@@ -9,18 +9,18 @@ keywords = ["arbitrum", "ethereum", "stylus", "alloy"]
 description = "Stylus noir verifier"
 
 [dependencies]
-alloy-primitives.workspace = true
-alloy-sol-types.workspace = true
-stylus-sdk.workspace = true
+alloy-primitives = { workspace = true, default-features = false }
+alloy-sol-types = { workspace = true, default-features = false }
+stylus-sdk = { workspace = true, default-features = false }
 ultrahonk = { path = "../ultrahonk" }
-num-traits.workspace = true
-ark-ff.workspace = true
-ark-serialize.workspace = true
-ark-ec.workspace = true
-serde.workspace = true
-ark-bn254.workspace = true
-serde_with.workspace = true
-postcard.workspace = true
+ark-ff = { workspace = true, default-features = false }
+ark-ec = { workspace = true, default-features = false }
+ark-bn254 = { workspace = true, default-features = false }
+ark-serialize = { workspace = true, default-features = false }
+serde = { workspace = true, default-features = false, features = ["derive"] }
+num-traits = { workspace = true, default-features = false }
+serde_with = { workspace = true, default-features = false, features = ["alloc"] }
+postcard = { workspace = true, default-features = false, features = ["alloc"] }
 
 [dev-dependencies]
 alloy.workspace = true

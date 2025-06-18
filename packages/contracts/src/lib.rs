@@ -14,7 +14,7 @@ use ultrahonk::crs::parser::CrsParser;
 use ultrahonk::keys::verification_key::{VerifyingKey, VerifyingKeyBarretenberg};
 use ultrahonk::prelude::UltraHonk;
 use ultrahonk::serialize::BytesDeserializable;
-use ultrahonk::types::{HonkProof, ScalarField, ZeroKnowledge};
+use ultrahonk::types::{HonkProof, ScalarField};
 
 use crate::utils::backends::{PrecompileHasher, PrecompileHonkCurve};
 
@@ -44,7 +44,6 @@ impl VerifierContract {
             proof,
             &public_inputs,
             &vk,
-            ZeroKnowledge::No, // TODO: remove this
         )
         .unwrap()
     }

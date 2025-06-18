@@ -5,11 +5,11 @@ use crate::{
     keys::verification_key::VerifyingKey,
     oink::verifier::OinkVerifier,
     transcript::Transcript,
-    types::{HonkProof, HonkProofError, ScalarField, ZeroKnowledge},
+    types::{HonkProof, HonkProofError, ScalarField},
     CONST_PROOF_SIZE_LOG_N,
 };
 use alloc::vec::Vec;
-use core::{fmt::Error, marker::PhantomData};
+use core::{marker::PhantomData};
 
 pub struct UltraHonk<P: HonkCurve, H: HashBackend> {
     phantom_data: PhantomData<P>,
@@ -33,7 +33,6 @@ impl<P: HonkCurve, H: HashBackend> UltraHonk<P, H> {
         honk_proof: HonkProof,
         public_inputs: &[ScalarField],
         verifying_key: &VerifyingKey,
-        has_zk: ZeroKnowledge,
     ) -> HonkVerifyResult<bool> {
         let honk_proof = honk_proof.insert_public_inputs(public_inputs.to_vec());
 
@@ -49,6 +48,6 @@ impl<P: HonkCurve, H: HashBackend> UltraHonk<P, H> {
         memory.relation_parameters.gate_challenges =
             Self::generate_gate_challenges(&mut transcript);
         let decider_verifier = DeciderVerifier::<P, H>::new(memory);
-        decider_verifier.verify(circuit_size, &crs, transcript, has_zk)
+        decider_verifier.verify(circuit_size, &crs, transcript)
     }
 }

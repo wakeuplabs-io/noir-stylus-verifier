@@ -6,7 +6,6 @@ use ark_bn254::Bn254;
 use ark_ec::VariableBaseMSM;
 use ark_ec::{pairing::Pairing, AffineRepr, CurveGroup};
 use ark_ff::{One};
-use eyre::Result;
 use sha3::{Digest, Keccak256};
 use ultrahonk::{
     crs::parser::CrsParser,
@@ -16,7 +15,7 @@ use ultrahonk::{
     honk_curve::HonkCurve,
     keys::verification_key::{VerifyingKey, VerifyingKeyBarretenberg},
     prelude::{HashBackend, HonkProof, UltraHonk},
-    types::{G1Affine, G2Affine, ScalarField, ZeroKnowledge},
+    types::{G1Affine, G2Affine, ScalarField},
 };
 
 pub struct ArkKeccak256;
@@ -98,7 +97,6 @@ fn plain_test(name: &str, proof_file: &str, vk_file: &str, public_inputs_file: &
         proof,
         &public_inputs,
         &vk,
-        ZeroKnowledge::No, // TODO: remove this
     )
     .unwrap();
 

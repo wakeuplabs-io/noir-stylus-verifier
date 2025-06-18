@@ -357,19 +357,3 @@ impl<T: Default> ShiftedWitnessEntities<T> {
         &mut self.elements[Self::Z_PERM]
     }
 }
-
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum ZeroKnowledge {
-    No,
-    Yes,
-}
-
-impl From<bool> for ZeroKnowledge {
-    fn from(value: bool) -> Self {
-        if value {
-            ZeroKnowledge::Yes
-        } else {
-            ZeroKnowledge::No
-        }
-    }
-}
