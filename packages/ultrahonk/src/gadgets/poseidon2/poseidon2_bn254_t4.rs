@@ -3,7 +3,7 @@
 use super::Poseidon2Params;
 use crate::types::ScalarField;
 use alloc::vec::Vec;
-use once_cell::sync::Lazy;
+use spin::lazy::Lazy;
 
 const T: usize = 4;
 const D: u64 = 5;

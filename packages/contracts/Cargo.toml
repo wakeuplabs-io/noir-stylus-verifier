@@ -14,10 +14,9 @@ alloy-sol-types.workspace = true
 stylus-sdk.workspace = true
 ultrahonk = { path = "../ultrahonk" }
 ark-ff.workspace = true
-ark-serialize.workspace = true
 ark-ec.workspace = true
-serde.workspace = true
 ark-bn254.workspace = true
+serde.workspace = true
 serde_with.workspace = true
 postcard.workspace = true
 

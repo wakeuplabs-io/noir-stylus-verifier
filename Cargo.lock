@@ -1511,7 +1511,6 @@ dependencies = [
  "ark-bn254",
  "ark-ec",
  "ark-ff 0.5.0",
- "ark-serialize 0.5.0",
  "e2e",
  "postcard",
  "rand 0.8.5",
@@ -3690,6 +3689,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "spin"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d5fe4ccb98d9c292d56fec89a5e07da7fc4cf0dc11e156b41793132775d3e591"
+dependencies = [
+ "lock_api",
+]
+
+[[package]]
 name = "spki"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4205,10 +4213,10 @@ dependencies = [
  "ark-poly",
  "ark-serialize 0.5.0",
  "num-bigint",
- "once_cell",
  "rand 0.8.5",
  "serde",
  "sha3",
+ "spin",
  "thiserror",
 ]
 
