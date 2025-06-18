@@ -15,7 +15,7 @@ use ultrahonk::{
     honk_curve::HonkCurve,
     keys::verification_key::{VerifyingKey, VerifyingKeyBarretenberg},
     prelude::{HashBackend, HonkProof, UltraHonk},
-    types::{G1Affine, G2Affine, ScalarField, ZeroKnowledge},
+    types::{G1Affine, G2Affine, ScalarField},
 };
 
 pub struct ArkKeccak256;
@@ -94,8 +94,7 @@ fn plain_test(name: &str, proof_file: &str, vk_file: &str, public_inputs_file: &
     let is_valid = UltraHonk::<ArkHonkCurve, ArkKeccak256>::verify(
         proof,
         &public_inputs,
-        &vk,
-        ZeroKnowledge::No,
+        &vk
     )
     .unwrap();
 

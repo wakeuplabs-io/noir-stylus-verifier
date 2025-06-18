@@ -1,9 +1,5 @@
 use super::SumcheckVerifierOutput;
-use crate::alloc::{
-    borrow::ToOwned,
-    string::{String, ToString},
-};
-pub use crate::polynomials::polynomial::RowDisablingPolynomial;
+use crate::alloc::{borrow::ToOwned, string::ToString};
 use crate::{
     backends::HashBackend,
     decider::{
@@ -13,22 +9,20 @@ use crate::{
     honk_curve::HonkCurve,
     prelude::GateSeparatorPolynomial,
     transcript::Transcript,
-    types::{ScalarField, ZeroKnowledge, NUM_ALL_ENTITIES},
+    types::{ScalarField, NUM_ALL_ENTITIES},
     verifier::HonkVerifyResult,
     CONST_PROOF_SIZE_LOG_N,
 };
 use alloc::vec::Vec;
-use ark_ff::{One, Zero};
+use ark_ff::Zero;
 
 // Keep in mind, the UltraHonk protocol (UltraFlavor) does not per default have ZK
 impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
     pub(crate) fn sumcheck_verify<const SIZE: usize>(
         &mut self,
         transcript: &mut Transcript<H>,
-        has_zk: ZeroKnowledge,
         padding_indicator_array: &[ScalarField; CONST_PROOF_SIZE_LOG_N],
     ) -> HonkVerifyResult<SumcheckVerifierOutput<ScalarField>> {
-
         let mut verified: bool = true;
 
         // Pad gate challenges for Protogalaxy DeciderVerifier and AVM
@@ -39,16 +33,6 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         );
 
         let mut sum_check_round = SumcheckVerifierRound::<P>::default();
-        let mut libra_challenge = ScalarField::one();
-        if has_zk == ZeroKnowledge::Yes {
-            // If running zero-knowledge sumcheck the target total sum is corrected by the claimed sum of libra masking
-            // multivariate over the hypercube
-
-            let libra_total_sum = transcript.receive_fr_from_prover("Libra:Sum".to_string())?;
-            libra_challenge = transcript.get_challenge("Libra:Challenge".to_string());
-            sum_check_round.target_total_sum += libra_total_sum * libra_challenge;
-        }
-
         let mut multivariate_challenge = Vec::with_capacity(CONST_PROOF_SIZE_LOG_N);
 
         for (round_idx, &padding_value) in padding_indicator_array.iter().enumerate() {
@@ -91,7 +75,7 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
 
         // Evaluate the Honk relation at the point (u_0, ..., u_{d-1}) using claimed evaluations of prover polynomials.
 
-        let mut full_honk_purported_value =
+        let full_honk_purported_value =
             SumcheckVerifierRound::<P>::compute_full_relation_purported_value(
                 &self.memory.claimed_evaluations,
                 &self.memory.relation_parameters,
@@ -99,22 +83,7 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
             );
 
         // For ZK Flavors: the evaluation of the Row Disabling Polynomial at the sumcheck challenge
-        let claimed_libra_evaluation = if has_zk == ZeroKnowledge::Yes {
-            let libra_evaluation =
-                transcript.receive_fr_from_prover("Libra:claimed_evaluation".to_string())?;
-            // No recursive flavor, otherwise we need to make some modifications to the following
-
-            let correcting_factor = RowDisablingPolynomial::evaluate_at_challenge_with_padding(
-                &multivariate_challenge,
-                padding_indicator_array,
-            );
-
-            full_honk_purported_value =
-                full_honk_purported_value * correcting_factor + libra_evaluation * libra_challenge;
-            Some(libra_evaluation)
-        } else {
-            None
-        };
+        let claimed_libra_evaluation = None;
 
         let checked = full_honk_purported_value == sum_check_round.target_total_sum;
         verified = verified && checked;

@@ -7,7 +7,7 @@ pub use crate::types::HonkProof;
 pub use crate::types::{ShiftedWitnessEntities, WitnessEntities};
 pub use crate::verifier::UltraHonk;
 
-pub use crate::polynomials::polynomial::{Polynomial, RowDisablingPolynomial, NUM_MASKED_ROWS};
+pub use crate::polynomials::polynomial::{Polynomial, NUM_MASKED_ROWS};
 pub use crate::polynomials::polynomial_types::Polynomials;
 pub use crate::polynomials::polynomial_types::{
     PrecomputedEntities, ProverWitnessEntities, PRECOMPUTED_ENTITIES_SIZE,

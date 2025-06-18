@@ -13,7 +13,6 @@ pub(crate) struct VerifierMemory {
 
 pub(crate) const MAX_PARTIAL_RELATION_LENGTH: usize = 7;
 pub(crate) const BATCHED_RELATION_PARTIAL_LENGTH: usize = MAX_PARTIAL_RELATION_LENGTH + 1;
-pub(crate) const BATCHED_RELATION_PARTIAL_LENGTH_ZK: usize = BATCHED_RELATION_PARTIAL_LENGTH + 1;
 
 pub(crate) type ProverUnivariates<F> = AllEntities<Univariate<F, MAX_PARTIAL_RELATION_LENGTH>>;
 pub(crate) type PartiallyEvaluatePolys<F> = AllEntities<Vec<F>>;
