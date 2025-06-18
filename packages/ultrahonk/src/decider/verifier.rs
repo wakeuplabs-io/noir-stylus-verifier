@@ -33,8 +33,6 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         opening_pair: &mut ShpleminiVerifierOpeningClaim,
         mut transcript: Transcript<H>,
     ) -> HonkVerifyResult<(G1Affine, G1Affine)> {
-        tracing::trace!("Reduce and verify opening pair");
-
         let quotient_commitment = transcript.receive_point_from_prover("KZG:W".to_string())?;
         opening_pair.commitments.push(quotient_commitment);
         opening_pair.scalars.push(opening_pair.challenge);
@@ -53,7 +51,6 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         mut transcript: Transcript<H>,
         has_zk: ZeroKnowledge,
     ) -> HonkVerifyResult<bool> {
-        tracing::trace!("Decider verification");
         let log_circuit_size = Utils::get_msb32(circuit_size);
 
         let mut padding_indicator_array = [ScalarField::zero(); CONST_PROOF_SIZE_LOG_N];
@@ -79,7 +76,6 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
                 &padding_indicator_array,
             )?;
             if !sumcheck_output.verified {
-                tracing::trace!("Sumcheck failed");
                 return Ok(false);
             }
 
@@ -98,7 +94,6 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
                 &padding_indicator_array,
             )?;
             if !sumcheck_output.verified {
-                tracing::trace!("Sumcheck failed");
                 return Ok(false);
             }
 

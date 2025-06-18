@@ -250,8 +250,6 @@ impl<F: PrimeField> Relation<F> for LogDerivLookupRelation {
         relation_parameters: &RelationParameters<F>,
         scaling_factor: &F,
     ) {
-        tracing::trace!("Accumulate LogDerivLookupRelation");
-
         let inverses = input.witness.lookup_inverses(); // Degree 1
         let read_counts = input.witness.lookup_read_counts(); // Degree 1
         let read_selector = input.precomputed.q_lookup(); // Degree 1
@@ -287,8 +285,6 @@ impl<F: PrimeField> Relation<F> for LogDerivLookupRelation {
         relation_parameters: &RelationParameters<F>,
         scaling_factor: &F,
     ) {
-        tracing::trace!("Accumulate LogDerivLookupRelation");
-
         let inverses = input.witness.lookup_inverses(); // Degree 1
         let read_counts = input.witness.lookup_read_counts(); // Degree 1
         let read_selector = input.precomputed.q_lookup(); // Degree 1

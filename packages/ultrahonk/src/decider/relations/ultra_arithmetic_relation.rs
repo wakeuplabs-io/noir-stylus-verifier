@@ -101,8 +101,6 @@ impl<F: PrimeField> Relation<F> for UltraArithmeticRelation {
         _relation_parameters: &RelationParameters<F>,
         scaling_factor: &F,
     ) {
-        tracing::trace!("Accumulate UltraArithmeticRelation");
-
         let w_l = input.witness.w_l();
         let w_r = input.witness.w_r();
         let w_o = input.witness.w_o();
@@ -152,8 +150,6 @@ impl<F: PrimeField> Relation<F> for UltraArithmeticRelation {
         _relation_parameters: &RelationParameters<F>,
         scaling_factor: &F,
     ) {
-        tracing::trace!("Accumulate UltraArithmeticRelation_Verify");
-
         let w_l = input.witness.w_l();
         let w_r = input.witness.w_r();
         let w_o = input.witness.w_o();

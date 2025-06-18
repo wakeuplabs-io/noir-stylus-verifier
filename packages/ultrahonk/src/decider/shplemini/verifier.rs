@@ -87,7 +87,6 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         shplonk_eval_challenge: &ScalarField,
         gemini_eval_challenge_powers: &[ScalarField],
     ) -> Vec<ScalarField> {
-        tracing::trace!("Compute inverted gemini denominators");
         let virtual_log_n = gemini_eval_challenge_powers.len();
         let num_gemini_claims = 2 * virtual_log_n;
         let mut denominators = Vec::with_capacity(num_gemini_claims);
@@ -114,8 +113,6 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         // const core::vector<RefVector<Commitment>>& concatenation_group_commitments = {},
         // RefSpan<ScalarField> concatenated_evaluations = {}
     ) -> HonkVerifyResult<ShpleminiVerifierOpeningClaim> {
-        tracing::trace!("Compute batch opening claim");
-
         let virtual_log_n = multivariate_challenge.len();
 
         let has_zk = ZeroKnowledge::from(libra_commitments.is_some());
@@ -349,8 +346,6 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         batched_evaluation: &mut ScalarField,
         gemini_batching_challenge_power: &ScalarField,
     ) {
-        tracing::trace!("Batch multivariate opening claims");
-
         let mut current_batching_challenge = *gemini_batching_challenge_power;
         let unshifted_evaluations = Self::get_f_evaluations(&self.memory.claimed_evaluations);
         let shifted_evaluations = Self::get_g_shift_evaluations(&self.memory.claimed_evaluations);
@@ -433,7 +428,6 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         opening_claim: &mut ShpleminiVerifierOpeningClaim,
         constant_term_accumulator: &mut ScalarField,
     ) {
-        tracing::trace!("Receive batch gemini claims");
         let virtual_log_n = gemini_neg_evaluations.len();
         // Start from 1, because the commitment to A_0 is reconstructed from the commitments to the multilinear
         // polynomials. The corresponding evaluations are also handled separately.

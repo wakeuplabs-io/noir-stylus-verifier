@@ -20,8 +20,6 @@ pub(crate) type HonkVerifyResult<T> = Result<T, eyre::Report>;
 
 impl<P: HonkCurve, H: HashBackend> UltraHonk<P, H> {
     pub(crate) fn generate_gate_challenges(transcript: &mut Transcript<H>) -> Vec<ScalarField> {
-        tracing::trace!("generate gate challenges");
-
         let mut gate_challenges: Vec<ScalarField> = Vec::with_capacity(CONST_PROOF_SIZE_LOG_N);
 
         for idx in 0..CONST_PROOF_SIZE_LOG_N {
@@ -37,7 +35,6 @@ impl<P: HonkCurve, H: HashBackend> UltraHonk<P, H> {
         verifying_key: &VerifyingKey,
         has_zk: ZeroKnowledge,
     ) -> HonkVerifyResult<bool> {
-        tracing::trace!("UltraHonk verification");
         let honk_proof = honk_proof.insert_public_inputs(public_inputs.to_vec());
 
         let mut transcript = Transcript::<H>::new_verifier(honk_proof);

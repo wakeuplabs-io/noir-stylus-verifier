@@ -28,7 +28,6 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         has_zk: ZeroKnowledge,
         padding_indicator_array: &[ScalarField; CONST_PROOF_SIZE_LOG_N],
     ) -> HonkVerifyResult<SumcheckVerifierOutput<ScalarField>> {
-        tracing::trace!("Sumcheck verify");
 
         let mut verified: bool = true;
 
@@ -53,7 +52,6 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         let mut multivariate_challenge = Vec::with_capacity(CONST_PROOF_SIZE_LOG_N);
 
         for (round_idx, &padding_value) in padding_indicator_array.iter().enumerate() {
-            tracing::trace!("Sumcheck verify round {}", round_idx);
             let round_univariate_label = format!("Sumcheck:univariate_{}", round_idx);
 
             let evaluations =
