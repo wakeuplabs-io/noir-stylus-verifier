@@ -5,13 +5,12 @@ use alloc::vec::Vec;
 use ark_bn254::Bn254;
 use ark_ec::VariableBaseMSM;
 use ark_ec::{pairing::Pairing, AffineRepr, CurveGroup};
-use ark_ff::{BigInt, Field, One};
-use ark_serialize::CanonicalDeserialize;
-use eyre::{anyhow, Result};
+use ark_ff::{One};
+use eyre::Result;
 use sha3::{Digest, Keccak256};
-use std::{fs::File, io::Read, marker::PhantomData, path::Path, str::FromStr};
-use ultrahonk::serialize::BytesDeserializable;
 use ultrahonk::{
+    crs::parser::CrsParser,
+    serialize::BytesDeserializable,
     backends::{G1ArithmeticBackend, G1ArithmeticError},
     constants::HASH_OUTPUT_SIZE,
     honk_curve::HonkCurve,
@@ -32,41 +31,11 @@ impl HashBackend for ArkKeccak256 {
     }
 }
 
-struct CrsParser<P: Pairing> {
-    _marker: PhantomData<P>,
-}
-
-impl<P: Pairing> CrsParser<P> {
-    fn convert_endianness_inplace(buffer: &mut [u8]) {
-        for chunk in buffer.chunks_exact_mut(32) {
-            chunk.reverse();
-        }
-    }
-
-    fn read_transcript_g2(g2_x: &mut P::G2Affine, path: impl AsRef<Path>) -> Result<()> {
-        let g2_size = std::mem::size_of::<<P::G2 as CurveGroup>::BaseField>() * 2;
-
-        assert!(std::mem::size_of::<P::G2Affine>() >= g2_size);
-        let mut buffer = vec![0; g2_size];
-
-        let file = File::open(path)?;
-        let mut file = file.take(g2_size as u64);
-        file.read_exact(&mut buffer[..])?;
-        Self::convert_endianness_inplace(&mut buffer);
-        *g2_x = P::G2Affine::deserialize_uncompressed(&mut &buffer[..])
-            .map_err(|e| anyhow!("Failed to deserialize G2Affine from transcript file: {}", e))?;
-        Ok(())
-    }
-
-    pub fn get_crs_g2(path_g2: impl AsRef<Path>) -> Result<P::G2Affine> {
-        let mut g2_x = P::G2Affine::default();
-        Self::read_transcript_g2(&mut g2_x, path_g2)?;
-
-        Ok(g2_x)
-    }
-}
 
 pub struct ArkHonkCurve;
+
+impl HonkCurve for ArkHonkCurve {
+}
 
 impl G1ArithmeticBackend for ArkHonkCurve {
     /// Add two points in G1
@@ -107,45 +76,7 @@ impl G1ArithmeticBackend for ArkHonkCurve {
     }
 }
 
-impl HonkCurve for ArkHonkCurve {
-    fn get_curve_b() -> ScalarField {
-        // We are getting grumpkin::b, which is -17
-        -ScalarField::from(17)
-    }
-
-    fn get_subgroup_generator() -> ScalarField {
-        let val = ark_bn254::Fr::from(BigInt::new([
-            14453002906517207670,
-            7023718024139043376,
-            17331575720852783024,
-            554159777355432964,
-        ]));
-        debug_assert_eq!(
-            val,
-            ark_bn254::Fr::from_str(
-                "3478517300119284901893091970156912948790432420133812234316178878452092729974",
-            )
-            .unwrap()
-        );
-
-        val
-    }
-
-    fn get_subgroup_generator_inverse() -> ScalarField {
-        let val = ark_bn254::Fr::from(BigInt::new([
-            7578525993492149718,
-            11911168646041470090,
-            7238721496332547558,
-            2327185798872627923,
-        ]));
-        debug_assert_eq!(val, Self::get_subgroup_generator().inverse().unwrap());
-        val
-    }
-}
-
 fn plain_test(name: &str, proof_file: &str, vk_file: &str, public_inputs_file: &str) {
-    const CRS_PATH_G2: &str = "./src/crs/bn254_g2.dat";
-
     // parse proof file
     let proof_u8 = std::fs::read(proof_file).unwrap();
     let proof = HonkProof::from_buffer(&proof_u8).unwrap();
@@ -155,7 +86,8 @@ fn plain_test(name: &str, proof_file: &str, vk_file: &str, public_inputs_file: &
     let public_inputs = Vec::<ScalarField>::deserialize_from_bytes(&public_inputs_u8).unwrap();
 
     // parse the crs
-    let verifier_crs = CrsParser::<Bn254>::get_crs_g2(CRS_PATH_G2).unwrap();
+    // let crs_u8 = std::fs::read("./src/crs/bn254_g2.dat").unwrap();
+    let verifier_crs = CrsParser::<Bn254>::get_crs_g2().unwrap();
 
     // parse verification key file
     let vk_u8 = std::fs::read(vk_file).unwrap();
@@ -166,7 +98,7 @@ fn plain_test(name: &str, proof_file: &str, vk_file: &str, public_inputs_file: &
         proof,
         &public_inputs,
         &vk,
-        ZeroKnowledge::No,
+        ZeroKnowledge::No, // TODO: remove this
     )
     .unwrap();
 

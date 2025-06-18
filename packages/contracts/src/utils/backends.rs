@@ -2,9 +2,7 @@ use crate::utils::constants::{
     EC_ADD_ADDRESS_LAST_BYTE, EC_MUL_ADDRESS_LAST_BYTE, EC_PAIRING_ADDRESS_LAST_BYTE,
     PAIRING_CHECK_RESULT_LAST_BYTE_INDEX,
 };
-use alloc::vec::Vec;
 use num_traits::identities::One;
-use stylus_sdk::prelude::*;
 use stylus_sdk::{alloy_primitives::Address, call::RawCall, crypto::keccak};
 use ultrahonk::{
     backends::G1ArithmeticError,
@@ -27,10 +25,13 @@ impl ultrahonk::backends::HashBackend for PrecompileHasher {
 
 /// The G1 arithmetic backend used in the Stylus VM,
 /// which calls out to the EC arithmetic EVM precompiles
-#[storage]
-pub struct PrecompileG1ArithmeticBackend;
+pub struct PrecompileHonkCurve;
 
-impl ultrahonk::backends::G1ArithmeticBackend for PrecompileG1ArithmeticBackend {
+impl ultrahonk::honk_curve::HonkCurve for PrecompileHonkCurve {
+}
+
+
+impl ultrahonk::backends::G1ArithmeticBackend for PrecompileHonkCurve {
     /// Calls the `ecAdd` precompile with the given points, handling
     /// de/serialization
     fn ec_add(a: G1Affine, b: G1Affine) -> Result<G1Affine, G1ArithmeticError> {
