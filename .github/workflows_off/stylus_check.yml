@@ -1,3 +1,4 @@
+# off until ultrahonk package is fully compatible with stylus
 name: Stylus Check
 
 on:

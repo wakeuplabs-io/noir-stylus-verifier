@@ -15,6 +15,7 @@ use crate::{
     CONST_PROOF_SIZE_LOG_N, NUM_INTERLEAVING_CLAIMS, NUM_LIBRA_COMMITMENTS,
     NUM_SMALL_IPA_EVALUATIONS,
 };
+use alloc::vec::Vec;
 use ark_ec::AffineRepr;
 use ark_ff::{Field, One, Zero};
 

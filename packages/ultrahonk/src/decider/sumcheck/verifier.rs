@@ -13,6 +13,7 @@ use crate::{
     verifier::HonkVerifyResult,
     CONST_PROOF_SIZE_LOG_N,
 };
+use alloc::vec::Vec;
 use ark_ff::{One, Zero};
 
 // Keep in mind, the UltraHonk protocol (UltraFlavor) does not per default have ZK

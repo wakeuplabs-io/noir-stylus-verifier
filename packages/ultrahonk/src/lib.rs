@@ -1,5 +1,8 @@
 #![warn(clippy::iter_over_hash_type)]
 
+#[macro_use]
+extern crate alloc;
+
 pub mod backends;
 pub mod decider;
 pub mod gadgets;

@@ -1,4 +1,5 @@
 use super::polynomial::Polynomial;
+use alloc::vec::Vec;
 use ark_ff::PrimeField;
 use serde::{Deserialize, Serialize};
 

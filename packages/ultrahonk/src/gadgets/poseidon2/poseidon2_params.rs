@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use ark_ff::PrimeField;
 
 /// A parameter set containing the parameters for the Poseidon2 permutation.

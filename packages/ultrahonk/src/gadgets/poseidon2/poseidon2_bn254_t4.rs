@@ -2,6 +2,7 @@
 /// [https://github.com/HorizenLabs/poseidon2/blob/main/poseidon2_rust_params.sage](https://github.com/HorizenLabs/poseidon2/blob/main/poseidon2_rust_params.sage)
 use super::Poseidon2Params;
 use crate::types::ScalarField;
+use alloc::vec::Vec;
 use std::sync::LazyLock;
 
 const T: usize = 4;

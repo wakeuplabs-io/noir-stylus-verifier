@@ -2,6 +2,7 @@ use super::univariate::Univariate;
 use crate::keys::verification_key::VerifyingKey;
 use crate::types::{G1Affine, ScalarField};
 use crate::{types::AllEntities, NUM_ALPHAS};
+use alloc::vec::Vec;
 use ark_ff::PrimeField;
 use std::vec;
 

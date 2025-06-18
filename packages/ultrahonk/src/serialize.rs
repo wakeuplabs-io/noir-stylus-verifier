@@ -2,6 +2,7 @@ use crate::{
     types::{G1Affine, G1BaseField, G1Projective},
     HonkProofError, HonkProofResult,
 };
+use alloc::vec::Vec;
 use ark_ec::{AffineRepr, CurveConfig, CurveGroup};
 use ark_ff::{Field, PrimeField};
 use num_bigint::BigUint;

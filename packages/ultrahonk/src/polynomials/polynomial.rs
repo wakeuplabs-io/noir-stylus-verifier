@@ -1,5 +1,6 @@
 use crate::serde_compat;
 use crate::Utils;
+use alloc::vec::Vec;
 use ark_ff::PrimeField;
 use ark_poly::{univariate::DensePolynomial, DenseUVPolynomial, Polynomial as _};
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};

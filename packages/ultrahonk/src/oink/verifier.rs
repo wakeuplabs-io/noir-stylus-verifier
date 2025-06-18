@@ -3,6 +3,7 @@ use crate::{
     backends::HashBackend, honk_curve::HonkCurve, keys::verification_key::VerifyingKey,
     transcript::Transcript, types::ScalarField, verifier::HonkVerifyResult, NUM_ALPHAS,
 };
+use alloc::vec::Vec;
 use ark_ff::One;
 use std::{array, marker::PhantomData};
 
