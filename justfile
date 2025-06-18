@@ -7,10 +7,13 @@ build-all:
   cargo build --release --all-features
 
 build-contracts:
-  cargo build -p contracts --target wasm32-unknown-unknown
+  cargo build -p contracts --target wasm32-unknown-unknown --profile release
 
 test-all:
   cargo test --release --all-features
+
+test-ultrahonk:
+  cargo test -p ultrahonk -- --test-threads=1 --nocapture
 
 test-contracts:
   cargo test -p contracts -- --test-threads=1

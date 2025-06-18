@@ -10,12 +10,13 @@ use ark_serialize::CanonicalDeserialize;
 use eyre::{anyhow, Result};
 use sha3::{Digest, Keccak256};
 use std::{fs::File, io::Read, marker::PhantomData, path::Path, str::FromStr};
+use ultrahonk::serialize::BytesDeserializable;
 use ultrahonk::{
     backends::{G1ArithmeticBackend, G1ArithmeticError},
     honk_curve::HonkCurve,
     keys::verification_key::{VerifyingKey, VerifyingKeyBarretenberg},
     prelude::{HashBackend, HonkProof, UltraHonk},
-    serialize::Serialize,
+    serialize::BytesSerializable,
     types::{G1Affine, G2Affine, ScalarField, ZeroKnowledge},
 };
 
@@ -24,13 +25,13 @@ pub struct ArkKeccak256;
 impl HashBackend for ArkKeccak256 {
     fn hash(buffer: Vec<ScalarField>) -> ScalarField {
         // Losing 2 bits of this is not an issue -> we can just reduce mod p
-        let vec = Serialize::to_buffer(&buffer, false);
+        let vec = buffer.serialize_to_bytes();
+
         let mut hasher = Keccak256::default();
         hasher.update(vec);
         let hash_result = hasher.finalize();
 
-        let mut offset = 0;
-        Serialize::read_field_element(&hash_result, &mut offset)
+        ScalarField::deserialize_from_bytes(&hash_result).unwrap()
     }
 }
 
@@ -154,7 +155,7 @@ fn plain_test(name: &str, proof_file: &str, vk_file: &str, public_inputs_file: &
 
     // parse public_inputs file
     let public_inputs_u8 = std::fs::read(public_inputs_file).unwrap();
-    let public_inputs = Serialize::from_buffer(&public_inputs_u8, false).unwrap();
+    let public_inputs = Vec::<ScalarField>::deserialize_from_bytes(&public_inputs_u8).unwrap();
 
     // parse the crs
     let verifier_crs = CrsParser::<Bn254>::get_crs_g2(CRS_PATH_G2).unwrap();

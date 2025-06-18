@@ -9,25 +9,36 @@ keywords = ["arbitrum", "ethereum", "stylus", "alloy"]
 description = "Stylus noir verifier"
 
 [dependencies]
-alloy-primitives = "=0.8.20"
-alloy-sol-types = "=0.8.20"
-stylus-sdk = "0.9.0"
+alloy-primitives.workspace = true
+alloy-sol-types.workspace = true
+stylus-sdk.workspace = true
 hex = { version = "0.4", default-features = false }
 ultrahonk = { path = "../ultrahonk" }
+num-traits.workspace = true
+ark-ff.workspace = true
+ark-serialize.workspace = true
+ark-ec.workspace = true
+serde.workspace = true
+ark-bn254.workspace = true
+serde_with.workspace = true
+postcard.workspace = true
+rand.workspace = true
 
 [dev-dependencies]
-alloy-primitives = { version = "=0.8.20", features = ["sha3-keccak"] }
+alloy.workspace = true
+alloy-primitives.workspace = true
 tokio = { version = "1.12.0", features = ["full"] }
-ethers = "2.0"
 eyre = "0.6.8"
-stylus-sdk = { version = "0.9.0", features = ["stylus-test"] }
-dotenv = "0.15.0"
+e2e.workspace = true
+stylus-sdk = { workspace = true, features = ["stylus-test"] }
 
 [features]
 default = ["mini-alloc"]
 export-abi = ["stylus-sdk/export-abi"]
 debug = ["stylus-sdk/debug"]
 mini-alloc = ["stylus-sdk/mini-alloc"]
+verifier = []
+e2e-backends = []
 
 [[bin]]
 name = "stylus-noir-verifier"
