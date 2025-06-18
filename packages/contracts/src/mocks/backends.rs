@@ -1,6 +1,8 @@
+#![cfg(feature = "e2e-backends")]
+
 //! Testing contract which wraps EVM precompile functionality for testing
 //! purposes. This contract is intended to be used in conjunction with a local
-//! devnet, along with testing scripts in the `integration` crate
+//! devnet
 
 use crate::utils::{
     backends::{PrecompileHonkCurve, PrecompileHasher},

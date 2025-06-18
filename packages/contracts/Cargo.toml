@@ -16,6 +16,7 @@ ultrahonk = { path = "../ultrahonk" }
 ark-ff.workspace = true
 ark-ec.workspace = true
 ark-bn254.workspace = true
+
 serde.workspace = true
 serde_with.workspace = true
 postcard.workspace = true
@@ -42,13 +43,3 @@ path = "src/main.rs"
 
 [lib]
 crate-type = ["lib", "cdylib"]
-
-[profile.release]
-codegen-units = 1
-strip = true
-lto = true
-panic = "abort"
-
-# If you need to reduce the binary size, it is advisable to try other
-# optimization levels, such as "s" and "z"
-opt-level = 3
