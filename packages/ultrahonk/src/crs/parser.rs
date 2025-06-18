@@ -31,7 +31,7 @@ impl<P: Pairing> CrsParser<P> {
         buffer.copy_from_slice(&include_bytes!("./bn254_g2.dat")[..g2_size]);
         Self::convert_endianness_inplace(&mut buffer);
         *g2_x = P::G2Affine::deserialize_uncompressed(&mut &buffer[..])
-            .map_err(|e| CrsError::DeserializationError)?;
+            .map_err(|_e| CrsError::DeserializationError)?;
         Ok(())
     }
 

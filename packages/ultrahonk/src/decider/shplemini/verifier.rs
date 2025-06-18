@@ -2,19 +2,18 @@ use super::{
     types::{PolyF, PolyG, PolyGShift},
     ShpleminiVerifierOpeningClaim,
 };
-use crate::{alloc::string::ToString, types::HonkProofError};
+use crate::alloc::string::ToString;
 use crate::{
     backends::HashBackend,
     decider::{
         types::{ClaimedEvaluations, VerifierCommitments},
         verifier::DeciderVerifier,
     },
-    honk_curve::{HonkCurve, LIBRA_UNIVARIATES_LENGTH, SUBGROUP_SIZE},
+    honk_curve::HonkCurve,
     transcript::Transcript,
     types::{G1Affine, ScalarField},
     verifier::HonkVerifyResult,
-    CONST_PROOF_SIZE_LOG_N, NUM_INTERLEAVING_CLAIMS, NUM_LIBRA_COMMITMENTS,
-    NUM_SMALL_IPA_EVALUATIONS,
+    CONST_PROOF_SIZE_LOG_N, NUM_INTERLEAVING_CLAIMS,
 };
 use alloc::vec::Vec;
 use ark_ec::AffineRepr;
@@ -465,190 +464,6 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         fold_pos_evaluations.reverse();
 
         fold_pos_evaluations
-    }
-
-    /**
-     * @brief Add the opening data corresponding to Libra masking univariates to the batched opening claim
-     *
-     * @details After verifying ZK Sumcheck, the verifier has to validate the claims about the evaluations of Libra
-     * univariates used to mask Sumcheck round univariates. To minimize the overhead of such openings, we continue
-     * the Shplonk batching started in Gemini, i.e. we add new claims multiplied by a suitable power of the Shplonk
-     * batching challenge and re-use the evaluation challenge sampled to prove the evaluations of Gemini
-     * polynomials.
-     *
-     * @param commitments
-     * @param scalars
-     * @param libra_commitments
-     * @param libra_univariate_evaluations
-     * @param multivariate_challenge
-     * @param shplonk_batching_challenge
-     * @param shplonk_evaluation_challenge
-     */
-    #[expect(clippy::too_many_arguments)]
-    fn add_zk_data(
-        virtual_log_n: usize,
-        commitments: &mut Vec<G1Affine>,
-        scalars: &mut Vec<ScalarField>,
-        constant_term_accumulator: &mut ScalarField,
-        libra_commitments: &[G1Affine; NUM_LIBRA_COMMITMENTS],
-        libra_evaluations: &[ScalarField; NUM_SMALL_IPA_EVALUATIONS],
-        gemini_evaluation_challenge: &ScalarField,
-        shplonk_batching_challenge_powers: &[ScalarField],
-        shplonk_evaluation_challenge: &ScalarField,
-    ) -> HonkVerifyResult<()> {
-        commitments.reserve(NUM_LIBRA_COMMITMENTS);
-        // Add Libra commitments to the vector of commitments
-        for &commitment in libra_commitments.iter() {
-            commitments.push(commitment);
-        }
-
-        // Compute corresponding scalars and the correction to the constant term
-        let mut denominators = [ScalarField::zero(); NUM_SMALL_IPA_EVALUATIONS];
-        let mut batching_scalars = [ScalarField::zero(); NUM_SMALL_IPA_EVALUATIONS];
-        let subgroup_generator = P::get_subgroup_generator();
-
-        // Compute Shplonk denominators and invert them
-        denominators[0] = (*shplonk_evaluation_challenge - *gemini_evaluation_challenge)
-            .inverse()
-            .expect("non-zero");
-        denominators[1] = (*shplonk_evaluation_challenge
-            - subgroup_generator * *gemini_evaluation_challenge)
-            .inverse()
-            .expect("non-zero");
-        denominators[2] = denominators[0];
-        denominators[3] = denominators[0];
-
-        // Compute the scalars to be multiplied against the commitments [libra_concatenated], [grand_sum], [grand_sum], and
-        // [libra_quotient]
-        for idx in 0..NUM_SMALL_IPA_EVALUATIONS {
-            let scaling_factor = denominators[idx]
-                * shplonk_batching_challenge_powers
-                    [2 * virtual_log_n + NUM_INTERLEAVING_CLAIMS as usize + idx];
-            batching_scalars[idx] = -scaling_factor;
-            *constant_term_accumulator += scaling_factor * libra_evaluations[idx];
-        }
-
-        // To save a scalar mul, add the sum of the batching scalars corresponding to the big sum evaluations
-        scalars.reserve(NUM_SMALL_IPA_EVALUATIONS - 1);
-        scalars.push(batching_scalars[0]);
-        scalars.push(batching_scalars[1] + batching_scalars[2]);
-        scalars.push(batching_scalars[3]);
-        Ok(())
-    }
-
-    fn check_evaluations_consistency(
-        libra_evaluations: &[ScalarField],
-        gemini_evaluation_challenge: ScalarField,
-        multilinear_challenge: &[ScalarField],
-        inner_product_eval_claim: ScalarField,
-    ) -> HonkVerifyResult<bool> {
-        let subgroup_generator_inverse = P::get_subgroup_generator_inverse();
-
-        // Compute the evaluation of the vanishing polynomia Z_H(X) at X = gemini_evaluation_challenge
-        let vanishing_poly_eval =
-            gemini_evaluation_challenge.pow([SUBGROUP_SIZE as u64]) - ScalarField::one();
-
-        // AZTEC TODO(https://github.com/AztecProtocol/barretenberg/issues/1194). Handle edge cases in PCS
-        // AZTEC TODO(https://github.com/AztecProtocol/barretenberg/issues/1186). Insecure pattern.
-        let gemini_challenge_in_small_subgroup = vanishing_poly_eval == ScalarField::zero();
-
-        // The probability of this event is negligible but it has to be processed correctly
-        if gemini_challenge_in_small_subgroup {
-            return Err(HonkProofError::GeminiSmallSubgroup);
-        }
-
-        // Construct the challenge polynomial from the sumcheck challenge, the verifier has to evaluate it on its own
-        let challenge_polynomial_lagrange =
-            Self::compute_challenge_polynomial(multilinear_challenge);
-
-        // Compute the evaluations of the challenge polynomial, Lagrange first, and Lagrange last for the fixed small
-        // subgroup
-        let [challenge_poly, lagrange_first, lagrange_last] =
-            Self::compute_batched_barycentric_evaluations(
-                &challenge_polynomial_lagrange,
-                gemini_evaluation_challenge,
-                &subgroup_generator_inverse,
-                &vanishing_poly_eval,
-            );
-
-        let concatenated_at_r = libra_evaluations[0];
-        let grand_sum_shifted_eval = libra_evaluations[1];
-        let grand_sum_eval = libra_evaluations[2];
-        let quotient_eval = libra_evaluations[3];
-
-        // Compute the evaluation of
-        // L_1(X) * A(X) + (X - 1/g) (A(gX) - A(X) - F(X) G(X)) + L_{|H|}(X)(A(X) - s) - Z_H(X) * Q(X)
-        let mut diff = lagrange_first * grand_sum_eval;
-        diff += (gemini_evaluation_challenge - subgroup_generator_inverse)
-            * (grand_sum_shifted_eval - grand_sum_eval - concatenated_at_r * challenge_poly);
-        diff += lagrange_last * (grand_sum_eval - inner_product_eval_claim)
-            - vanishing_poly_eval * quotient_eval;
-
-        Ok(diff == ScalarField::zero())
-    }
-
-    fn compute_challenge_polynomial(multivariate_challenge: &[ScalarField]) -> Vec<ScalarField> {
-        let mut challenge_polynomial_lagrange = vec![ScalarField::zero(); SUBGROUP_SIZE];
-
-        challenge_polynomial_lagrange[0] = ScalarField::one();
-
-        // Populate the vector with the powers of the challenges
-        for (idx_poly, challenge) in multivariate_challenge
-            .iter()
-            .enumerate()
-            .take(CONST_PROOF_SIZE_LOG_N)
-        {
-            let current_idx = 1 + LIBRA_UNIVARIATES_LENGTH * idx_poly;
-            challenge_polynomial_lagrange[current_idx] = ScalarField::one();
-            for idx in 1..LIBRA_UNIVARIATES_LENGTH {
-                // Recursively compute the powers of the challenge
-                challenge_polynomial_lagrange[current_idx + idx] =
-                    challenge_polynomial_lagrange[current_idx + idx - 1] * challenge;
-            }
-        }
-
-        challenge_polynomial_lagrange
-    }
-
-    fn compute_batched_barycentric_evaluations(
-        coeffs: &[ScalarField],
-        r: ScalarField,
-        inverse_root_of_unity: &ScalarField,
-        vanishing_poly_eval: &ScalarField,
-    ) -> [ScalarField; 3] {
-        let mut denominators = vec![ScalarField::zero(); SUBGROUP_SIZE];
-        let one = ScalarField::one();
-        let mut numerator = *vanishing_poly_eval;
-
-        numerator *= ScalarField::from(SUBGROUP_SIZE as u64)
-            .inverse()
-            .expect("non-zero"); // (r^n - 1) / n
-
-        denominators[0] = r - one;
-        let mut work_root = *inverse_root_of_unity; // g^{-1}
-
-        // Compute the denominators of the Lagrange polynomials evaluated at r
-        for denominator in denominators.iter_mut().skip(1) {
-            *denominator = work_root * r;
-            *denominator -= one; // r * g^{-i} - 1
-            work_root *= *inverse_root_of_unity;
-        }
-
-        // Invert/Batch invert denominators
-        crate::Utils::batch_invert(&mut denominators);
-
-        let mut result = [ScalarField::zero(); 3];
-
-        // Accumulate the evaluation of the polynomials given by `coeffs` vector
-        for (coeff, denominator) in coeffs.iter().zip(denominators.iter()) {
-            result[0] += *coeff * *denominator; // + coeffs_i * 1/(r * g^{-i}  - 1)
-        }
-
-        result[0] *= numerator; // The evaluation of the polynomials given by its evaluations over H
-        result[1] = denominators[0] * numerator; // Lagrange first evaluated at r
-        result[2] = denominators[SUBGROUP_SIZE - 1] * numerator; // Lagrange last evaluated at r
-
-        result
     }
 
     /**

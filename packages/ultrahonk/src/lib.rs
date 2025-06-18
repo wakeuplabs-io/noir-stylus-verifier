@@ -36,10 +36,6 @@ pub const NUM_ALPHAS: usize = decider::relations::NUM_SUBRELATIONS - 1;
 /// AZTEC TODO(<https://github.com/AztecProtocol/barretenberg/issues/1046>): Remove the need for const sized proofs
 pub const CONST_PROOF_SIZE_LOG_N: usize = 28;
 
-// For ZK Flavors: the number of the commitments required by Libra and SmallSubgroupIPA.
-pub const NUM_LIBRA_COMMITMENTS: usize = 3;
-pub const NUM_SMALL_IPA_EVALUATIONS: usize = 4;
-
 // The interleaving trick needed for Translator adds 2 extra claims to Gemini fold claims
 // TODO(https://github.com/AztecProtocol/barretenberg/issues/1293): Decouple Gemini from Interleaving
 pub const NUM_INTERLEAVING_CLAIMS: u32 = 2;

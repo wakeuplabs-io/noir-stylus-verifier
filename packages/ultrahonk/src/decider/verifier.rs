@@ -39,7 +39,7 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         let p_1 = -quotient_commitment.into_group();
 
         let p_0 = P::msm(&opening_pair.scalars, &opening_pair.commitments)
-            .map_err(|e| HonkProofError::MSMError)?;
+            .map_err(|_e| HonkProofError::MSMError)?;
 
         Ok((p_0, p_1.into()))
     }
