@@ -18,6 +18,7 @@ pub mod serialize;
 pub mod transcript;
 pub mod types;
 pub mod verifier;
+pub mod crs;
 
 use alloc::borrow::ToOwned;
 use ark_bn254::{Fq, Fr};
