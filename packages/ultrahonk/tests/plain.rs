@@ -5,12 +5,9 @@ use alloc::vec::Vec;
 use ark_bn254::Bn254;
 use ark_ec::VariableBaseMSM;
 use ark_ec::{pairing::Pairing, AffineRepr, CurveGroup};
-use ark_ff::{BigInt, Field, One};
-use ark_serialize::CanonicalDeserialize;
-use eyre::{anyhow, Result};
+use ark_ff::One;
 use sha3::{Digest, Keccak256};
 use ultrahonk::crs::parser::CrsParser;
-use std::{fs::File, io::Read, marker::PhantomData, path::Path, str::FromStr};
 use ultrahonk::serialize::BytesDeserializable;
 use ultrahonk::{
     backends::{G1ArithmeticBackend, G1ArithmeticError},

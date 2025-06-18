@@ -8,7 +8,6 @@ use ark_ff::UniformRand;
 use contracts::utils::serde_def_types::{SerdeG1Affine, SerdeG2Affine, SerdeScalarField};
 use core::panic;
 use e2e::{Account, Revert};
-use eyre::Result;
 use rand::{thread_rng, RngCore};
 use serde::Serialize;
 use ultrahonk::{

@@ -66,6 +66,12 @@ pub enum HonkProofError {
     /// The Subgroup for the FFT domain is too large
     #[error("Too large Subgroup")]
     LargeSubgroup,
+    /// Failed to deserialize G2Affine from transcript file
+    #[error("Failed to deserialize G2Affine from file")]
+    DeserializationError(),
+    /// MSM error
+    #[error("MSM error")]
+    MSMError,
 }
 
 impl HonkProof {
