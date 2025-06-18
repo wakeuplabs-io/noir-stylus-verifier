@@ -7,9 +7,8 @@ use crate::Utils;
 use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
 use ark_ec::AffineRepr;
-use ark_ff::{One, Zero};
 use core::ops::Index;
-use num_bigint::BigUint;
+use ark_ff::{PrimeField, BigInteger, Zero};
 
 pub struct Transcript<H>
 where
@@ -188,17 +187,19 @@ where
     }
 
     fn split_challenge(challenge: ScalarField) -> [ScalarField; 2] {
-        // match the parameter used in stdlib, which is derived from cycle_scalar (is 128)
-        const LO_BITS: usize = 128;
-        let biguint: BigUint = challenge.into();
-
-        let lower_mask = (BigUint::one() << LO_BITS) - BigUint::one();
-        let lo = &biguint & lower_mask;
-        let hi = biguint >> LO_BITS;
-
-        let lo = ScalarField::from(lo);
-        let hi = ScalarField::from(hi);
-
+        // Get the 32 bytes (256 bits) in little-endian order
+        let bytes = challenge.into_bigint().to_bytes_le();
+    
+        // Lower 128 bits (first 16 bytes)
+        let mut lo_bytes = [0u8; 32];
+        lo_bytes[..16].copy_from_slice(&bytes[..16]);
+        let lo = ScalarField::from_le_bytes_mod_order(&lo_bytes);
+    
+        // Upper 128 bits (next 16 bytes)
+        let mut hi_bytes = [0u8; 32];
+        hi_bytes[..16].copy_from_slice(&bytes[16..32]);
+        let hi = ScalarField::from_le_bytes_mod_order(&hi_bytes);
+    
         [lo, hi]
     }
 

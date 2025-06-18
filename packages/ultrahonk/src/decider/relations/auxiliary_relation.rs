@@ -4,8 +4,7 @@ use crate::decider::{
     types::{ClaimedEvaluations, ProverUnivariates, RelationParameters},
     univariate::Univariate,
 };
-use ark_ff::{One, PrimeField, Zero};
-use num_bigint::BigUint;
+use ark_ff::{PrimeField, Zero};
 
 /**
  * AZTEC TODO(https://github.com/AztecProtocol/barretenberg/issues/757): Investigate optimizations.
@@ -192,7 +191,7 @@ impl<F: PrimeField> Relation<F> for AuxiliaryRelation {
         let q_arith = input.precomputed.q_arith();
         let q_aux = input.precomputed.q_aux();
 
-        let limb_size = F::from(BigUint::one() << 68);
+        let limb_size = F::from(1u128 << 68);
         let sublimb_shift = F::from(1u64 << 14);
 
         /*
@@ -467,7 +466,7 @@ impl<F: PrimeField> Relation<F> for AuxiliaryRelation {
         let q_arith = input.precomputed.q_arith();
         let q_aux = input.precomputed.q_aux();
 
-        let limb_size = F::from(BigUint::one() << 68);
+        let limb_size = F::from(1u128 << 68);
         let sublimb_shift = F::from(1u64 << 14);
 
         /*

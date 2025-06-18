@@ -56,6 +56,8 @@ alloy-sol-macro-expander = { version = "=0.8.20", default-features = false }
 alloy-sol-macro-input = { version = "=0.8.20", default-features = false }
 spin = { version = "0.10.0" }
 
+hex = { version = "0.4.3" }
+
 e2e = { git = "https://github.com/OpenZeppelin/rust-contracts-stylus", tag = "v0.2.0-rc.0" }
 
 [patch.crates-io]

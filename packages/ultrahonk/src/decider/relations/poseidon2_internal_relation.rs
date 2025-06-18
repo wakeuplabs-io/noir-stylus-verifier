@@ -5,8 +5,7 @@ use crate::decider::{
     univariate::Univariate,
 };
 use crate::gadgets::poseidon2::POSEIDON2_BN254_T4_PARAMS;
-use ark_ff::{PrimeField, Zero};
-use num_bigint::BigUint;
+use ark_ff::{BigInteger, PrimeField, Zero};
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct Poseidon2InternalRelationAcc<F: PrimeField> {
@@ -105,18 +104,26 @@ impl<F: PrimeField> Relation<F> for Poseidon2InternalRelation {
         let q_pos_by_scaling = q_poseidon2_internal.to_owned() * scaling_factor;
 
         // TACEO TODO this poseidon instance is very hardcoded to the bn254 curve
-        let internal_matrix_diag_0 = F::from(BigUint::from(
-            POSEIDON2_BN254_T4_PARAMS.mat_internal_diag_m_1[0],
-        ));
-        let internal_matrix_diag_1 = F::from(BigUint::from(
-            POSEIDON2_BN254_T4_PARAMS.mat_internal_diag_m_1[1],
-        ));
-        let internal_matrix_diag_2 = F::from(BigUint::from(
-            POSEIDON2_BN254_T4_PARAMS.mat_internal_diag_m_1[2],
-        ));
-        let internal_matrix_diag_3 = F::from(BigUint::from(
-            POSEIDON2_BN254_T4_PARAMS.mat_internal_diag_m_1[3],
-        ));
+        let internal_matrix_diag_0 = F::from_le_bytes_mod_order(
+            &POSEIDON2_BN254_T4_PARAMS.mat_internal_diag_m_1[0]
+                .into_bigint()
+                .to_bytes_le(),
+        );
+        let internal_matrix_diag_1 = F::from_le_bytes_mod_order(
+            &POSEIDON2_BN254_T4_PARAMS.mat_internal_diag_m_1[1]
+                .into_bigint()
+                .to_bytes_le(),
+        );
+        let internal_matrix_diag_2 = F::from_le_bytes_mod_order(
+            &POSEIDON2_BN254_T4_PARAMS.mat_internal_diag_m_1[2]
+                .into_bigint()
+                .to_bytes_le(),
+        );
+        let internal_matrix_diag_3 = F::from_le_bytes_mod_order(
+            &POSEIDON2_BN254_T4_PARAMS.mat_internal_diag_m_1[3]
+                .into_bigint()
+                .to_bytes_le(),
+        );
 
         let mut v1 = u1 * internal_matrix_diag_0;
         v1 += &sum;
@@ -187,18 +194,26 @@ impl<F: PrimeField> Relation<F> for Poseidon2InternalRelation {
         let q_pos_by_scaling = q_poseidon2_internal.to_owned() * scaling_factor;
 
         // TACEO TODO this poseidon instance is very hardcoded to the bn254 curve
-        let internal_matrix_diag_0 = F::from(BigUint::from(
-            POSEIDON2_BN254_T4_PARAMS.mat_internal_diag_m_1[0],
-        ));
-        let internal_matrix_diag_1 = F::from(BigUint::from(
-            POSEIDON2_BN254_T4_PARAMS.mat_internal_diag_m_1[1],
-        ));
-        let internal_matrix_diag_2 = F::from(BigUint::from(
-            POSEIDON2_BN254_T4_PARAMS.mat_internal_diag_m_1[2],
-        ));
-        let internal_matrix_diag_3 = F::from(BigUint::from(
-            POSEIDON2_BN254_T4_PARAMS.mat_internal_diag_m_1[3],
-        ));
+        let internal_matrix_diag_0 = F::from_le_bytes_mod_order(
+            &POSEIDON2_BN254_T4_PARAMS.mat_internal_diag_m_1[0]
+                .into_bigint()
+                .to_bytes_le(),
+        );
+        let internal_matrix_diag_1 = F::from_le_bytes_mod_order(
+            &POSEIDON2_BN254_T4_PARAMS.mat_internal_diag_m_1[1]
+                .into_bigint()
+                .to_bytes_le(),
+        );
+        let internal_matrix_diag_2 = F::from_le_bytes_mod_order(
+            &POSEIDON2_BN254_T4_PARAMS.mat_internal_diag_m_1[2]
+                .into_bigint()
+                .to_bytes_le(),
+        );
+        let internal_matrix_diag_3 = F::from_le_bytes_mod_order(
+            &POSEIDON2_BN254_T4_PARAMS.mat_internal_diag_m_1[3]
+                .into_bigint()
+                .to_bytes_le(),
+        );
 
         let mut v1 = u1 * internal_matrix_diag_0;
         v1 += &sum;

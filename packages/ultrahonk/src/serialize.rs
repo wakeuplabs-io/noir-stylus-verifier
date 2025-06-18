@@ -4,8 +4,7 @@ use crate::{
 };
 use alloc::vec::Vec;
 use ark_ec::AffineRepr;
-use ark_ff::{BigInteger, Field, MontConfig, PrimeField, Zero};
-use num_bigint::BigUint;
+use ark_ff::{BigInteger, Field, MontConfig, PrimeField, Zero,};
 
 /// An error that occurs during de/serialization
 #[derive(Debug)]
@@ -91,41 +90,44 @@ impl<P: MontConfig<NUM_U64S_FELT>> BytesDeserializable for MontFp256<P> {
     const SER_LEN: usize = NUM_BYTES_FELT;
 
     fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
+        // Number of 64-bit limbs needed to represent a base-field element
         const NUM_64_LIMBS: u32 = G1BaseField::MODULUS_BIT_SIZE.div_ceil(64);
-        let mut fields = Vec::with_capacity(G1BaseField::extension_degree() as usize);
-
-        let mut offset = 0;
-        for _ in 0..G1BaseField::extension_degree() {
-            let mut bigint: BigUint = Default::default();
-            for _ in 0..NUM_64_LIMBS {
-                let data = u64::deserialize_from_bytes_with_offset(&bytes, &mut offset).unwrap();
-                bigint <<= 64;
-                bigint += data;
-            }
-            fields.push(MontFp256::<P>::from(bigint));
+        let fieldsize_bytes: usize = (NUM_64_LIMBS * 8) as usize;
+        let ext_degree = G1BaseField::extension_degree() as usize;
+        let expected_len = fieldsize_bytes * ext_degree;
+        if bytes.len() != expected_len {
+            return Err(SerdeError::InvalidLength);
         }
 
-        Ok(MontFp256::<P>::from_base_prime_field_elems(fields).expect("Should work"))
+        // Reconstruct each coefficient directly from its BE byte slice.
+        let mut offset = 0;
+        let mut coeffs = Vec::with_capacity(ext_degree);
+        for _ in 0..ext_degree {
+            let slice = &bytes[offset..offset + fieldsize_bytes];
+            coeffs.push(MontFp256::<P>::from_be_bytes_mod_order(slice));
+            offset += fieldsize_bytes;
+        }
+
+        Ok(MontFp256::<P>::from_base_prime_field_elems(coeffs).expect("Should work"))
     }
 
     fn deserialize_from_bytes_with_offset(
         bytes: &[u8],
         offset: &mut usize,
     ) -> Result<Self, SerdeError> {
+        // Compute the byte length of one field element (including extension degree)
         const NUM_64_LIMBS: u32 = G1BaseField::MODULUS_BIT_SIZE.div_ceil(64);
-        let mut fields = Vec::with_capacity(G1BaseField::extension_degree() as usize);
+        let fieldsize_bytes: usize = (NUM_64_LIMBS * 8) as usize;
+        let ext_degree = G1BaseField::extension_degree() as usize;
+        let total_bytes = fieldsize_bytes * ext_degree;
 
-        for _ in 0..G1BaseField::extension_degree() {
-            let mut bigint: BigUint = Default::default();
-            for _ in 0..NUM_64_LIMBS {
-                let data = u64::deserialize_from_bytes_with_offset(&bytes, offset).unwrap();
-                bigint <<= 64;
-                bigint += data;
-            }
-            fields.push(MontFp256::<P>::from(bigint));
+        if *offset + total_bytes > bytes.len() {
+            return Err(SerdeError::InvalidLength);
         }
 
-        Ok(MontFp256::<P>::from_base_prime_field_elems(fields).expect("Should work"))
+        let res = Self::deserialize_from_bytes(&bytes[*offset..*offset + total_bytes])?;
+        *offset += total_bytes;
+        Ok(res)
     }
 }
 

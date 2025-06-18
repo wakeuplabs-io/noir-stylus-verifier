@@ -6,6 +6,7 @@ extern crate alloc;
 
 pub mod backends;
 pub mod constants;
+pub mod crs;
 pub mod decider;
 pub mod gadgets;
 pub mod honk_curve;
@@ -18,12 +19,10 @@ pub mod serialize;
 pub mod transcript;
 pub mod types;
 pub mod verifier;
-pub mod crs;
 
 use alloc::borrow::ToOwned;
 use ark_bn254::{Fq, Fr};
-use ark_ff::{One, PrimeField};
-use num_bigint::BigUint;
+use ark_ff::{BigInteger, PrimeField};
 
 use crate::{
     honk_curve::{NUM_BASEFIELD_ELEMENTS, NUM_SCALARFIELD_ELEMENTS},
@@ -35,7 +34,6 @@ pub const NUM_ALPHAS: usize = decider::relations::NUM_SUBRELATIONS - 1;
 /// The log of the max circuit size assumed in order to achieve constant sized Honk proofs
 /// AZTEC TODO(<https://github.com/AztecProtocol/barretenberg/issues/1046>): Remove the need for const sized proofs
 pub const CONST_PROOF_SIZE_LOG_N: usize = 28;
-
 
 // The interleaving trick needed for Translator adds 2 extra claims to Gemini fold claims
 // TODO(https://github.com/AztecProtocol/barretenberg/issues/1293): Decouple Gemini from Interleaving
@@ -63,22 +61,22 @@ impl Utils {
 
     fn convert_basefield_back(src: &[Fr]) -> Fq {
         debug_assert_eq!(src.len(), NUM_BASEFIELD_ELEMENTS);
-        bn254_fq_to_fr_rev(&src[0], &src[1])
+
+        // Get the raw field element as little-endian bytes
+        let res0_bytes = src[0].into_bigint().to_bytes_le();
+        let res1_bytes = src[1].into_bigint().to_bytes_le();
+
+        // Extract lower 136 bits from res0 (17 bytes)
+        let mut value_bytes = [0u8; 32];
+        value_bytes[..17].copy_from_slice(&res0_bytes[..17]);
+
+        // Extract upper 118 bits from res1 (15 bytes)
+        // Place them at offset 17 (i.e., shifted by 136 bits)
+        for i in 0..15 {
+            value_bytes[17 + i] = res1_bytes[i];
+        }
+
+        // Now value_bytes is the 256-bit little-endian representation
+        Fq::from_le_bytes_mod_order(&value_bytes)
     }
-}
-
-const NUM_LIMB_BITS: u32 = 68;
-const TOTAL_BITS: u32 = 254;
-
-fn bn254_fq_to_fr_rev(res0: &Fr, res1: &Fr) -> Fq {
-    // Combines the two elements into one uint256_t, and then convert that to a grumpkin::fr
-
-    let res0 = BigUint::from(*res0);
-    let res1 = BigUint::from(*res1);
-
-    debug_assert!(res0 < (BigUint::one() << (NUM_LIMB_BITS * 2))); // lower 136 bits
-    debug_assert!(res1 < (BigUint::one() << (TOTAL_BITS - NUM_LIMB_BITS * 2))); // upper 254-136=118 bits
-
-    let value = res0 + (res1 << (NUM_LIMB_BITS * 2));
-    ark_bn254::Fq::from(value)
 }
