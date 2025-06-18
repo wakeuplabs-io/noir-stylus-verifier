@@ -85,8 +85,6 @@ impl EllipticRelation {
         _relation_parameters: &RelationParameters<ScalarField>,
         scaling_factor: &ScalarField,
     ) {
-        tracing::trace!("Accumulate EllipticRelation");
-
         // AZTEC TODO(@zac - williamson #2608 when Pedersen refactor is completed,
         // replace old addition relations with these ones and
         // remove endomorphism coefficient in ecc add gate(not used))
@@ -169,8 +167,6 @@ impl EllipticRelation {
     ) where
         ScalarField: PrimeField,
     {
-        tracing::trace!("Accumulate EllipticRelation");
-
         // AZTEC TODO(@zac - williamson #2608 when Pedersen refactor is completed,
         // replace old addition relations with these ones and
         // remove endomorphism coefficient in ecc add gate(not used))

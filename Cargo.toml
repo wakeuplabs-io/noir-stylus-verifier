@@ -28,7 +28,6 @@ rand = "0.8.5"
 serde = { version = "1.0.193", features = ["derive", "rc"] }
 sha3 = "0.10.8"
 thiserror = "2"
-tracing = { version = "0.1.40" }
 serde_with = { version = "3.4", default-features = false, features = [
     "macros",
     "alloc",
@@ -62,6 +61,17 @@ e2e = { git = "https://github.com/OpenZeppelin/rust-contracts-stylus", tag = "v0
 [patch.crates-io]
 ark-ec = { path = "./packages/ark-ec" }
 
+[profile.release]
+codegen-units = 1        # prefer efficiency to compile time
+panic = "abort"          # use simple panics
+strip = true             # remove debug info
+lto = true               # link time optimization
+debug = false            # no debug data
+rpath = false            # no run-time search path
+debug-assertions = false # prune debug assertions
+incremental = false      # no incremental builds
+opt-level = 's'          # optimize for size
+
 # This profile can be used for CI in pull requests.
 [profile.ci-dev]
 opt-level = 1
@@ -69,5 +79,3 @@ inherits = "dev"
 incremental = false
 debug = true
 overflow-checks = false
-# [profile.ci-dev.build-override]
-# opt-level = 3

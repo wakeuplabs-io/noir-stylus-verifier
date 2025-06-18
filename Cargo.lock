@@ -4216,7 +4216,6 @@ dependencies = [
  "serde",
  "sha3",
  "thiserror",
- "tracing",
 ]
 
 [[package]]

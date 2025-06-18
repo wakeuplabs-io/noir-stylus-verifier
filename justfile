@@ -10,7 +10,10 @@ build-ultrahonk:
   cargo build -p ultrahonk --release --features ark-ec/only-arithmetic-backend --target wasm32-unknown-unknown
 
 build-contracts:
-  cargo build -p contracts --target wasm32-unknown-unknown --profile release
+  cargo build -p contracts --target wasm32-unknown-unknown --release --features verifier
+
+optimize-contracts: build-contracts
+  wasm-opt --enable-bulk-memory  -Oz -o ./target/wasm32-unknown-unknown/release/contracts-opt.wasm ./target/wasm32-unknown-unknown/release/contracts.wasm
 
 test-all:
   cargo test --release --all-features
@@ -27,5 +30,5 @@ test-e2e:
 
 check-pr: lint test-all
 
-check-contracts: build-contracts
-  (cd packages/contracts && cargo stylus check --wasm-file ../../target/wasm32-unknown-unknown/release/contracts.wasm)
+check-contracts: optimize-contracts
+  cargo stylus check -e https://sepolia-rollup.arbitrum.io/rpc --wasm-file ./target/wasm32-unknown-unknown/release/contracts-opt.wasm --verbose

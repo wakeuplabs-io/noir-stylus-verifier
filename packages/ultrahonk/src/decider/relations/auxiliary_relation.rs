@@ -170,8 +170,6 @@ impl<F: PrimeField> Relation<F> for AuxiliaryRelation {
         relation_parameters: &RelationParameters<F>,
         scaling_factor: &F,
     ) {
-        tracing::trace!("Accumulate AuxiliaryRelation");
-
         let eta = &relation_parameters.eta_1;
         let eta_two = &relation_parameters.eta_2;
         let eta_three = &relation_parameters.eta_3;
@@ -447,8 +445,6 @@ impl<F: PrimeField> Relation<F> for AuxiliaryRelation {
         relation_parameters: &RelationParameters<F>,
         scaling_factor: &F,
     ) {
-        tracing::trace!("Accumulate AuxiliaryRelation");
-
         let eta = &relation_parameters.eta_1;
         let eta_two = &relation_parameters.eta_2;
         let eta_three = &relation_parameters.eta_3;
