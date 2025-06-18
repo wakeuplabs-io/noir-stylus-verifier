@@ -2,10 +2,10 @@ use super::{
     types::{PolyF, PolyG, PolyGShift},
     ShpleminiVerifierOpeningClaim,
 };
-use crate::alloc::{
+use crate::{alloc::{
     borrow::ToOwned,
     string::{String, ToString},
-};
+}, types::HonkProofError};
 use crate::{
     backends::HashBackend,
     decider::{
@@ -621,7 +621,7 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
 
         // The probability of this event is negligible but it has to be processed correctly
         if gemini_challenge_in_small_subgroup {
-            return Err(eyre::eyre!("Gemini challenge is in the small subgroup"));
+            return Err(HonkProofError::GeminiSmallSubgroup);
         }
 
         // Construct the challenge polynomial from the sumcheck challenge, the verifier has to evaluate it on its own

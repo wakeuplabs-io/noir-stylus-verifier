@@ -5,18 +5,18 @@ use crate::{
     keys::verification_key::VerifyingKey,
     oink::verifier::OinkVerifier,
     transcript::Transcript,
-    types::{HonkProof, ScalarField, ZeroKnowledge},
+    types::{HonkProof, HonkProofError, ScalarField, ZeroKnowledge},
     CONST_PROOF_SIZE_LOG_N,
 };
 use alloc::vec::Vec;
-use core::marker::PhantomData;
+use core::{fmt::Error, marker::PhantomData};
 
 pub struct UltraHonk<P: HonkCurve, H: HashBackend> {
     phantom_data: PhantomData<P>,
     phantom_hasher: PhantomData<H>,
 }
 
-pub(crate) type HonkVerifyResult<T> = Result<T, eyre::Report>;
+pub(crate) type HonkVerifyResult<T> = Result<T, HonkProofError>;
 
 impl<P: HonkCurve, H: HashBackend> UltraHonk<P, H> {
     pub(crate) fn generate_gate_challenges(transcript: &mut Transcript<H>) -> Vec<ScalarField> {

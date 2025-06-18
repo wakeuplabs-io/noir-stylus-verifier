@@ -1,5 +1,6 @@
 use super::{shplemini::ShpleminiVerifierOpeningClaim, types::VerifierMemory};
 use crate::alloc::string::ToString;
+use crate::types::HonkProofError;
 use crate::{
     backends::HashBackend,
     decider::types::{BATCHED_RELATION_PARTIAL_LENGTH, BATCHED_RELATION_PARTIAL_LENGTH_ZK},
@@ -39,7 +40,7 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         let p_1 = -quotient_commitment.into_group();
 
         let p_0 = P::msm(&opening_pair.scalars, &opening_pair.commitments)
-            .map_err(|e| eyre::eyre!("MSM error: {:?}", e))?;
+            .map_err(|e| HonkProofError::MSMError)?;
 
         Ok((p_0, p_1.into()))
     }

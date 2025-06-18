@@ -66,6 +66,8 @@ pub enum HonkProofError {
     /// The Subgroup for the FFT domain is too large
     #[error("Too large Subgroup")]
     LargeSubgroup,
+    #[error("MSM error")]
+    MSMError,
 }
 
 impl HonkProof {
