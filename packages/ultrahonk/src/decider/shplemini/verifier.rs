@@ -2,6 +2,10 @@ use super::{
     types::{PolyF, PolyG, PolyGShift},
     ShpleminiVerifierOpeningClaim,
 };
+use crate::alloc::{
+    borrow::ToOwned,
+    string::{String, ToString},
+};
 use crate::{
     backends::HashBackend,
     decider::{
@@ -107,7 +111,7 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         libra_univariate_evaluation: Option<ScalarField>,
         consistency_checked: &mut bool,
         padding_indicator_array: &[ScalarField; CONST_PROOF_SIZE_LOG_N],
-        // const std::vector<RefVector<Commitment>>& concatenation_group_commitments = {},
+        // const core::vector<RefVector<Commitment>>& concatenation_group_commitments = {},
         // RefSpan<ScalarField> concatenated_evaluations = {}
     ) -> HonkVerifyResult<ShpleminiVerifierOpeningClaim> {
         tracing::trace!("Compute batch opening claim");

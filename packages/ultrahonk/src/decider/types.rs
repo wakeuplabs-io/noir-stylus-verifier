@@ -2,9 +2,8 @@ use super::univariate::Univariate;
 use crate::keys::verification_key::VerifyingKey;
 use crate::types::{G1Affine, ScalarField};
 use crate::{types::AllEntities, NUM_ALPHAS};
-use alloc::vec::Vec;
+use alloc::{vec, vec::Vec};
 use ark_ff::PrimeField;
-use std::vec;
 
 pub(crate) struct VerifierMemory {
     pub(crate) verifier_commitments: VerifierCommitments<G1Affine>,

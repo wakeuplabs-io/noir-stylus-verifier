@@ -3,9 +3,10 @@ use crate::{
     backends::HashBackend, honk_curve::HonkCurve, keys::verification_key::VerifyingKey,
     transcript::Transcript, types::ScalarField, verifier::HonkVerifyResult, NUM_ALPHAS,
 };
+use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use ark_ff::One;
-use std::{array, marker::PhantomData};
+use core::{array, marker::PhantomData};
 
 pub(crate) struct Oink<P: HonkCurve, H: HashBackend> {
     phantom_data: PhantomData<P>,
@@ -88,8 +89,8 @@ impl<P: HonkCurve, H: HashBackend> Oink<P, H> {
 pub(crate) struct OinkVerifier<P: HonkCurve, H: HashBackend> {
     memory: VerifierMemory,
     pub public_inputs: Vec<ScalarField>,
-    phantom_hasher: std::marker::PhantomData<H>,
-    phantom_curve: std::marker::PhantomData<P>,
+    phantom_hasher: core::marker::PhantomData<H>,
+    phantom_curve: core::marker::PhantomData<P>,
 }
 
 impl<P: HonkCurve, H: HashBackend> Default for OinkVerifier<P, H> {

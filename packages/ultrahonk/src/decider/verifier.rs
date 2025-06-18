@@ -1,4 +1,5 @@
 use super::{shplemini::ShpleminiVerifierOpeningClaim, types::VerifierMemory};
+use crate::alloc::string::ToString;
 use crate::{
     backends::HashBackend,
     decider::types::{BATCHED_RELATION_PARTIAL_LENGTH, BATCHED_RELATION_PARTIAL_LENGTH_ZK},
@@ -11,7 +12,7 @@ use crate::{
 use alloc::vec::Vec;
 use ark_ec::AffineRepr;
 use ark_ff::{One, Zero};
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 pub(crate) struct DeciderVerifier<P: HonkCurve, H: HashBackend> {
     pub(super) memory: VerifierMemory,

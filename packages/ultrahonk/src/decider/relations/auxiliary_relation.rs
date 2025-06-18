@@ -1,4 +1,5 @@
 use super::Relation;
+use crate::alloc::borrow::ToOwned;
 use crate::decider::{
     types::{ClaimedEvaluations, ProverUnivariates, RelationParameters},
     univariate::Univariate,
@@ -9,7 +10,7 @@ use num_bigint::BigUint;
 /**
  * AZTEC TODO(https://github.com/AztecProtocol/barretenberg/issues/757): Investigate optimizations.
  * It seems that we could have:
- *     static constexpr std::array<size_t, 6> SUBRELATION_PARTIAL_LENGTHS{
+ *     static constexpr core::array<size_t, 6> SUBRELATION_PARTIAL_LENGTHS{
  *     5 // auxiliary sub-relation;
  *     6 // ROM consistency sub-relation 1
  *     6 // ROM consistency sub-relation 2
@@ -159,7 +160,7 @@ impl<F: PrimeField> Relation<F> for AuxiliaryRelation {
      * N.B.2 The q_c selector is used to store circuit-specific values in the RAM/ROM access gate
      *
      * @param evals transformed to `evals + C(in(X)...)*scaling_factor`
-     * @param in an std::array containing the Totaly extended Univariate edges.
+     * @param in an core::array containing the Totaly extended Univariate edges.
      * @param parameters contains beta, gamma, and public_input_delta, ....
      * @param scaling_factor optional term to scale the evaluation before adding to evals.
      */

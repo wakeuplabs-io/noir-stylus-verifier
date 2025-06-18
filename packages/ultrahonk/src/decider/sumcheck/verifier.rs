@@ -1,4 +1,8 @@
 use super::SumcheckVerifierOutput;
+use crate::alloc::{
+    borrow::ToOwned,
+    string::{String, ToString},
+};
 pub use crate::polynomials::polynomial::RowDisablingPolynomial;
 use crate::{
     backends::HashBackend,

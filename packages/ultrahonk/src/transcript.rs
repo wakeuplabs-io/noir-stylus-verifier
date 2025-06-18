@@ -1,13 +1,15 @@
+use crate::alloc::{borrow::ToOwned, string::String};
 use crate::backends::HashBackend;
 use crate::honk_curve::{NUM_BASEFIELD_ELEMENTS, NUM_SCALARFIELD_ELEMENTS};
 use crate::serialize::{BytesDeserializable, BytesSerializable};
 use crate::types::{G1Affine, HonkProof, HonkProofError, HonkProofResult, ScalarField};
 use crate::Utils;
+use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
 use ark_ec::AffineRepr;
 use ark_ff::{One, Zero};
+use core::ops::Index;
 use num_bigint::BigUint;
-use std::{collections::BTreeMap, ops::Index};
 
 pub struct Transcript<H>
 where
@@ -21,7 +23,7 @@ where
     is_first_challenge: bool,
     current_round_data: Vec<ScalarField>,
     previous_challenge: ScalarField,
-    phantom_data: std::marker::PhantomData<H>,
+    phantom_data: core::marker::PhantomData<H>,
 }
 
 impl<H> Default for Transcript<H>
@@ -67,11 +69,6 @@ where
 
     pub fn get_proof(self) -> HonkProof {
         HonkProof::new(self.proof_data)
-    }
-
-    #[expect(dead_code)]
-    pub(crate) fn print(&self) {
-        self.manifest.print();
     }
 
     #[expect(dead_code)]
@@ -224,7 +221,7 @@ where
         // to domain separate all the data. (See https://safe-hash.dev)
 
         let mut full_buffer = Vec::new();
-        std::mem::swap(&mut full_buffer, &mut self.current_round_data);
+        core::mem::swap(&mut full_buffer, &mut self.current_round_data);
 
         if self.is_first_challenge {
             // Update is_first_challenge for the future
@@ -280,30 +277,12 @@ pub(crate) struct RoundData {
     entries: Vec<(String, usize)>,
 }
 
-impl RoundData {
-    pub(crate) fn print(&self) {
-        for label in self.challenge_label.iter() {
-            println!("\tchallenge: {}", label);
-        }
-        for entry in self.entries.iter() {
-            println!("\telement ({}): {}", entry.1, entry.0);
-        }
-    }
-}
-
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct TranscriptManifest {
     manifest: BTreeMap<usize, RoundData>,
 }
 
 impl TranscriptManifest {
-    pub(crate) fn print(&self) {
-        for round in self.manifest.iter() {
-            println!("Round: {}", round.0);
-            round.1.print();
-        }
-    }
-
     pub(crate) fn add_challenge(&mut self, round: usize, labels: &[String]) {
         self.manifest
             .entry(round)

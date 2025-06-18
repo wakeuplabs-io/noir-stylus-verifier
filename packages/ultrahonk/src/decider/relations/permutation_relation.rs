@@ -1,4 +1,5 @@
 use super::Relation;
+use crate::alloc::borrow::ToOwned;
 use crate::decider::{
     types::{ClaimedEvaluations, ProverUnivariates, RelationParameters},
     univariate::Univariate,
@@ -86,7 +87,7 @@ impl<F: PrimeField> Relation<F> for UltraPermutationRelation {
      * computing point-wise evaluations of the sub-relations. \todo Protogalaxy Accumulation
      *
      * @param evals transformed to `evals + C(in(X)...)*scaling_factor`
-     * @param in an std::array containing the fully extended Univariate edges.
+     * @param in an core::array containing the fully extended Univariate edges.
      * @param parameters contains beta, gamma, and public_input_delta, ....
      * @param scaling_factor optional term to scale the evaluation before adding to evals.
      */

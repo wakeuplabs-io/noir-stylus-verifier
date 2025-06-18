@@ -1,6 +1,7 @@
+use crate::alloc::borrow::ToOwned;
 use crate::decider::barycentric::Barycentric;
 use ark_ff::{PrimeField, Zero};
-use std::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use core::ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 #[derive(Clone, Debug)]
 pub struct Univariate<F, const SIZE: usize> {
