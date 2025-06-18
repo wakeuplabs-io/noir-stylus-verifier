@@ -71,11 +71,6 @@ where
         HonkProof::new(self.proof_data)
     }
 
-    #[expect(dead_code)]
-    pub(crate) fn get_manifest(&self) -> &TranscriptManifest {
-        &self.manifest
-    }
-
     fn add_element_frs_to_hash_buffer(&mut self, label: String, elements: &[ScalarField]) {
         // Add an entry to the current round of the manifest
         let len = elements.len();
@@ -297,11 +292,6 @@ impl TranscriptManifest {
             .or_default()
             .entries
             .push((element_label, element_size));
-    }
-
-    #[expect(dead_code)]
-    pub(crate) fn size(&self) -> usize {
-        self.manifest.len()
     }
 }
 

@@ -3,7 +3,7 @@ use crate::alloc::string::ToString;
 use crate::types::HonkProofError;
 use crate::{
     backends::HashBackend,
-    decider::types::{BATCHED_RELATION_PARTIAL_LENGTH},
+    decider::types::BATCHED_RELATION_PARTIAL_LENGTH,
     honk_curve::HonkCurve,
     transcript::Transcript,
     types::{G1Affine, G2Affine, ScalarField},
@@ -61,7 +61,7 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
                 ScalarField::zero()
             };
         }
-        let (sumcheck_output, libra_commitments) = {
+        let sumcheck_output = {
             let sumcheck_output = self.sumcheck_verify::<BATCHED_RELATION_PARTIAL_LENGTH>(
                 &mut transcript,
                 &padding_indicator_array,
@@ -70,16 +70,12 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
                 return Ok(false);
             }
 
-            (sumcheck_output, None)
+            sumcheck_output
         };
 
-        let mut consistency_checked = true;
         let mut opening_claim = self.compute_batch_opening_claim(
             sumcheck_output.multivariate_challenge,
             &mut transcript,
-            libra_commitments,
-            sumcheck_output.claimed_libra_evaluation,
-            &mut consistency_checked,
             &padding_indicator_array,
         )?;
 
@@ -91,6 +87,6 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
             G2Affine::generator(),
         )
         .unwrap();
-        Ok(sumcheck_output.verified && pcs_verified && consistency_checked)
+        Ok(sumcheck_output.verified && pcs_verified)
     }
 }

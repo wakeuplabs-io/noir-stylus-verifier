@@ -102,16 +102,12 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         &self,
         multivariate_challenge: Vec<ScalarField>,
         transcript: &mut Transcript<H>,
-        libra_commitments: Option<Vec<G1Affine>>,
-        libra_univariate_evaluation: Option<ScalarField>,
-        consistency_checked: &mut bool,
         padding_indicator_array: &[ScalarField; CONST_PROOF_SIZE_LOG_N],
         // const core::vector<RefVector<Commitment>>& concatenation_group_commitments = {},
         // RefSpan<ScalarField> concatenated_evaluations = {}
     ) -> HonkVerifyResult<ShpleminiVerifierOpeningClaim> {
         let virtual_log_n = multivariate_challenge.len();
 
-        let mut hiding_polynomial_commitment = G1Affine::default();
         let mut batched_evaluation = ScalarField::zero();
 
         // Get the challenge ρ to batch commitments to multilinear polynomials and their shifts
