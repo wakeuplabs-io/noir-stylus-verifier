@@ -1515,7 +1515,6 @@ dependencies = [
  "ark-serialize 0.5.0",
  "e2e",
  "eyre",
- "hex",
  "num-traits",
  "postcard",
  "rand 0.8.5",
