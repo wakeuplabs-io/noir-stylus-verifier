@@ -3,7 +3,6 @@ use crate::utils::constants::{
     PAIRING_CHECK_RESULT_LAST_BYTE_INDEX,
 };
 use alloc::vec::Vec;
-use num_traits::identities::One;
 use stylus_sdk::prelude::*;
 use stylus_sdk::{alloy_primitives::Address, call::RawCall, crypto::keccak};
 use ultrahonk::{
@@ -12,6 +11,7 @@ use ultrahonk::{
     serialize::{BytesDeserializable, BytesSerializable},
     types::{G1Affine, G2Affine, ScalarField},
 };
+use ark_ff::One;
 
 /// The hashing backend used in the Stylus VM,
 /// which uses the VM-accelerated Keccak-256 implementation

@@ -13,7 +13,6 @@ alloy-primitives.workspace = true
 alloy-sol-types.workspace = true
 stylus-sdk.workspace = true
 ultrahonk = { path = "../ultrahonk" }
-num-traits.workspace = true
 ark-ff.workspace = true
 ark-serialize.workspace = true
 ark-ec.workspace = true
