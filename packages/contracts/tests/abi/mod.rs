@@ -9,14 +9,15 @@ sol!(
     }
 
     #[sol(rpc)]
-    contract G1ArithmeticPrecompileTestContract {
+    contract PrecompileTestContract {
         #[derive(Debug)]
-        function demo() internal pure returns (bool);
+        function testEcAdd(bytes memory a_bytes, bytes memory b_bytes) external view returns (bytes);
+        #[derive(Debug)]
+        function testEcMul(bytes memory a_bytes, bytes memory b_bytes) external view returns (bytes);
+        #[derive(Debug)]
+        function testEcPairing(bytes memory a_bytes, bytes memory b_bytes) external view returns (bool);
+        #[derive(Debug)]
+        function testHash(bytes memory a_bytes) external view returns (bytes);
     }
 
-    #[sol(rpc)]
-    contract HashPrecompileTestContract {
-        #[derive(Debug)]
-        function demo() internal pure returns (bool);
-    }
 );

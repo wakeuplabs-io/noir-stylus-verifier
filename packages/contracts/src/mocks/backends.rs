@@ -3,7 +3,7 @@
 //! devnet, along with testing scripts in the `integration` crate
 
 use crate::utils::{
-    backends::{PrecompileG1ArithmeticBackend, StylusHasher},
+    backends::{PrecompileG1ArithmeticBackend, PrecompileHasher},
     serde_def_types::{SerdeG1Affine, SerdeG2Affine, SerdeScalarField},
 };
 use alloc::vec::Vec;
@@ -13,10 +13,10 @@ use ultrahonk::backends::{G1ArithmeticBackend, HashBackend};
 /// The precompile testing contract, which itself is stateless
 #[storage]
 #[cfg_attr(feature = "e2e-backends", entrypoint)]
-struct G1ArithmeticPrecompileTestContract;
+struct PrecompileTestContract;
 
 #[public]
-impl G1ArithmeticPrecompileTestContract {
+impl PrecompileTestContract {
     /// Invokes the `ecAdd` precompile on the given inputs
     pub fn test_ec_add(&self, a_bytes: Bytes, b_bytes: Bytes) -> Result<Bytes, Vec<u8>> {
         let a: SerdeG1Affine = postcard::from_bytes(a_bytes.as_slice()).unwrap();
@@ -45,8 +45,7 @@ impl G1ArithmeticPrecompileTestContract {
 
     /// Invokes the `hash` precompile on the given inputs
     pub fn test_hash(&self, a_bytes: Bytes) -> Result<Bytes, Vec<u8>> {
-        let a: SerdeScalarField = postcard::from_bytes(a_bytes.as_slice()).unwrap();
-        let c = StylusHasher::hash(vec![a.0]);
-        Ok(postcard::to_allocvec(&SerdeScalarField(c)).unwrap().into())
+        let c = PrecompileHasher::hash(a_bytes.as_slice());
+        Ok(c.to_vec().into())
     }
 }

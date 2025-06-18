@@ -13,25 +13,22 @@ use std::{fs::File, io::Read, marker::PhantomData, path::Path, str::FromStr};
 use ultrahonk::serialize::BytesDeserializable;
 use ultrahonk::{
     backends::{G1ArithmeticBackend, G1ArithmeticError},
+    constants::HASH_OUTPUT_SIZE,
     honk_curve::HonkCurve,
     keys::verification_key::{VerifyingKey, VerifyingKeyBarretenberg},
     prelude::{HashBackend, HonkProof, UltraHonk},
-    serialize::BytesSerializable,
     types::{G1Affine, G2Affine, ScalarField, ZeroKnowledge},
 };
 
 pub struct ArkKeccak256;
 
 impl HashBackend for ArkKeccak256 {
-    fn hash(buffer: Vec<ScalarField>) -> ScalarField {
+    fn hash(buffer: &[u8]) -> [u8; HASH_OUTPUT_SIZE] {
         // Losing 2 bits of this is not an issue -> we can just reduce mod p
-        let vec = buffer.serialize_to_bytes();
-
         let mut hasher = Keccak256::default();
-        hasher.update(vec);
+        hasher.update(buffer);
         let hash_result = hasher.finalize();
-
-        ScalarField::deserialize_from_bytes(&hash_result).unwrap()
+        hash_result.try_into().unwrap()
     }
 }
 

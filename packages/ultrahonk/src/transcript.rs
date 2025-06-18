@@ -1,5 +1,6 @@
 use crate::backends::HashBackend;
 use crate::honk_curve::{NUM_BASEFIELD_ELEMENTS, NUM_SCALARFIELD_ELEMENTS};
+use crate::serialize::{BytesDeserializable, BytesSerializable};
 use crate::types::{G1Affine, HonkProof, HonkProofError, HonkProofResult, ScalarField};
 use crate::Utils;
 use alloc::vec::Vec;
@@ -236,7 +237,8 @@ where
         // Hash the full buffer with poseidon2, which is believed to be a collision resistant hash function and a random
         // oracle, removing the need to pre-hash to compress and then hash with a random oracle, as we previously did
         // with Pedersen and Blake3s.
-        let new_challenge = H::hash(full_buffer);
+        let new_challenge_bytes = H::hash(full_buffer.serialize_to_bytes().as_slice());
+        let new_challenge = ScalarField::deserialize_from_bytes(&new_challenge_bytes).unwrap();
         let new_challenges = Self::split_challenge(new_challenge);
 
         // update previous challenge buffer for next time we call this function

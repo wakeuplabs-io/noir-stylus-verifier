@@ -1,6 +1,14 @@
-# off until ultrahonk package is fully compatible with stylus
-name: Stylus Check
-
+# This workflow runs our end-to-end tests suite.
+#
+# It roughly follows these steps:
+# - Install rust
+# - Install `cargo-stylus`
+# - Spin up `nitro-testnode`
+#
+# Contract deployments and account funding happen on a per-test basis.
+name: e2e
+permissions:
+  contents: read
 on:
   push:
     branches:
@@ -8,35 +16,33 @@ on:
     tags-ignore:
       - v*
   pull_request:
-
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 env:
-  # incremental builds are slower and don't make much sense in ci
-  CARGO_INCREMENTAL: 0
   CARGO_TERM_COLOR: always
-  RUST_BACKTRACE: FULL
-
 jobs:
-  build:
-    name: Build
+  required:
+    name: tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
-      
+
       - name: Install wasm32 target
         run: rustup target add wasm32-unknown-unknown
-      
+
       - name: Install build tools
         run: sudo apt-get update && sudo apt-get install -y build-essential gcc lld
       
       - name: Install cargo-stylus
         run: cargo install cargo-stylus@0.6.0
-      
-      - name: Build contracts 
-        run: cargo build -p contracts --target wasm32-unknown-unknown --profile ci-dev
-      
-      - name: Check contracts 
-        run: cargo stylus check -e https://sepolia-rollup.arbitrum.io/rpc --wasm-file ./target/wasm32-unknown-unknown/ci-dev/contracts.wasm
+
+      - name: Setup nitro node
+        run: ./scripts/nitro-testnode.sh -d -i
+
+      - name: run integration tests
+        run: ./scripts/e2e-tests.sh

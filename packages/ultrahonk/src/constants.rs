@@ -15,3 +15,6 @@ pub const NUM_BYTES_U64: usize = 8;
 /// That is, a fixed-point representation of a real number `r` is:
 ///     floor(r * 2^FIXED_POINT_PRECISION_BITS)
 pub const FIXED_POINT_PRECISION_BITS: u64 = 63;
+
+/// The number of bytes in a hash digest used by the transcript
+pub const HASH_OUTPUT_SIZE: usize = 32;

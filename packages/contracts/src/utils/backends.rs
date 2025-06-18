@@ -8,23 +8,20 @@ use stylus_sdk::prelude::*;
 use stylus_sdk::{alloy_primitives::Address, call::RawCall, crypto::keccak};
 use ultrahonk::{
     backends::G1ArithmeticError,
-    constants::NUM_BYTES_FELT,
+    constants::{HASH_OUTPUT_SIZE, NUM_BYTES_FELT},
     serialize::{BytesDeserializable, BytesSerializable},
     types::{G1Affine, G2Affine, ScalarField},
 };
 
 /// The hashing backend used in the Stylus VM,
 /// which uses the VM-accelerated Keccak-256 implementation
-pub struct StylusHasher;
+pub struct PrecompileHasher;
 
-impl ultrahonk::backends::HashBackend for StylusHasher {
-    fn hash(buffer: Vec<ScalarField>) -> ScalarField {
+impl ultrahonk::backends::HashBackend for PrecompileHasher {
+    fn hash(bytes: &[u8]) -> [u8; HASH_OUTPUT_SIZE] {
         // Losing 2 bits of this is not an issue -> we can just reduce mod p
-        let vec = buffer.serialize_to_bytes();
-        let bytes = keccak(&vec);
-        let hash_result = bytes.as_ref();
-
-        ScalarField::deserialize_from_bytes(hash_result).unwrap()
+        let res = keccak(&bytes);
+        res.try_into().unwrap()
     }
 }
 
