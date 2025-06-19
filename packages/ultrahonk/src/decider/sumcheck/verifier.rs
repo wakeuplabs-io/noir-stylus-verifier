@@ -82,15 +82,11 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
                 gate_separators,
             );
 
-        // For ZK Flavors: the evaluation of the Row Disabling Polynomial at the sumcheck challenge
-        let claimed_libra_evaluation = None;
-
         let checked = full_honk_purported_value == sum_check_round.target_total_sum;
         verified = verified && checked;
         Ok(SumcheckVerifierOutput {
             multivariate_challenge,
             verified,
-            claimed_libra_evaluation,
         })
     }
 
