@@ -295,11 +295,3 @@ impl TranscriptManifest {
             .push((element_label, element_size));
     }
 }
-
-impl Index<usize> for TranscriptManifest {
-    type Output = RoundData;
-
-    fn index(&self, index: usize) -> &Self::Output {
-        &self.manifest[&index]
-    }
-}

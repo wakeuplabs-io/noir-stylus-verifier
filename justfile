@@ -13,6 +13,8 @@ build-contracts:
   cargo build -p contracts --target wasm32-unknown-unknown --release --features verifier
 
 optimize-contracts: build-contracts
+  twiggy top -n 100 target/wasm32-unknown-unknown/release/contracts.wasm > top.txt
+  twiggy monos -n 100 target/wasm32-unknown-unknown/release/contracts.wasm > monos.txt
   wasm-opt --enable-bulk-memory  -Oz -o ./target/wasm32-unknown-unknown/release/contracts-opt.wasm ./target/wasm32-unknown-unknown/release/contracts.wasm
 
 

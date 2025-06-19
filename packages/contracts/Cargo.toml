@@ -10,7 +10,7 @@ description = "Stylus noir verifier"
 
 [dependencies]
 alloy-primitives.workspace = true
-alloy-sol-types.workspace = true
+# alloy-sol-types.workspace = true
 stylus-sdk.workspace = true
 ultrahonk = { path = "../ultrahonk" }
 ark-ff.workspace = true

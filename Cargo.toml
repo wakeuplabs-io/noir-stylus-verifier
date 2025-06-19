@@ -64,11 +64,12 @@ e2e = { git = "https://github.com/OpenZeppelin/rust-contracts-stylus", tag = "v0
 ark-ec = { path = "./packages/ark-ec" }
 
 [profile.release]
+strip = "none"
+# strip = true             # remove debug info
+debug = false            # no debug data
 codegen-units = 1        # prefer efficiency to compile time
 panic = "abort"          # use simple panics
-strip = true             # remove debug info
 lto = true               # link time optimization
-debug = false            # no debug data
 rpath = false            # no run-time search path
 debug-assertions = false # prune debug assertions
 incremental = false      # no incremental builds
@@ -83,3 +84,5 @@ debug = true
 overflow-checks = false
 # [profile.ci-dev.build-override]
 # opt-level = 3
+
+
