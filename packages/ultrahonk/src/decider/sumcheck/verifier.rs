@@ -5,9 +5,9 @@ use crate::{
     backends::HashBackend,
     decider::{
         sumcheck::round_verifier::{SumcheckRoundOutput, SumcheckVerifierRound},
+        types::GateSeparatorPolynomial,
         verifier::DeciderVerifier,
     },
-    prelude::GateSeparatorPolynomial,
     transcript::Transcript,
     types::{ScalarField, NUM_ALL_ENTITIES},
     verifier::HonkVerifyResult,

@@ -12,7 +12,7 @@ use ark_bn254::Bn254;
 use stylus_sdk::{abi::Bytes, prelude::*};
 use ultrahonk::crs::parser::CrsParser;
 use ultrahonk::keys::verification_key::{VerifyingKey, VerifyingKeyBarretenberg};
-use ultrahonk::prelude::UltraHonk;
+use ultrahonk::verifier::UltraHonk;
 use ultrahonk::serialize::BytesDeserializable;
 use ultrahonk::types::{HonkProof, ScalarField};
 use crate::utils::backends::{PrecompileHashBackend, PrecompileG1ArithmeticBackend};

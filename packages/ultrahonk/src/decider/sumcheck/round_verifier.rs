@@ -12,8 +12,8 @@ use crate::{
             ultra_arithmetic_relation::UltraArithmeticRelation,
             AllRelationEvaluations, Relation,
         },
-        types::{ClaimedEvaluations, RelationParameters},
-    }, prelude::GateSeparatorPolynomial, types::ScalarField
+        types::{ClaimedEvaluations, RelationParameters, GateSeparatorPolynomial},
+    }, types::{ScalarField}
 };
 use ark_ff::{One, Zero};
 use core::marker::PhantomData;

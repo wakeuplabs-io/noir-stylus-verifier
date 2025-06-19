@@ -12,7 +12,6 @@ pub mod gadgets;
 pub mod keys;
 pub mod oink;
 pub mod polynomials;
-pub mod prelude;
 pub mod serde_compat;
 pub mod serialize;
 pub mod transcript;

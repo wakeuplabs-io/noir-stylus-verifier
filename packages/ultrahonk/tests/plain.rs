@@ -7,14 +7,14 @@ use ark_ec::VariableBaseMSM;
 use ark_ec::{pairing::Pairing, AffineRepr, CurveGroup};
 use ark_ff::One;
 use sha3::{Digest, Keccak256};
-use ultrahonk::crs::parser::CrsParser;
-use ultrahonk::serialize::BytesDeserializable;
 use ultrahonk::{
-    backends::{G1ArithmeticBackend, G1ArithmeticError},
+    backends::{G1ArithmeticBackend, G1ArithmeticError, HashBackend},
     constants::HASH_OUTPUT_SIZE,
+    crs::parser::CrsParser,
     keys::verification_key::{VerifyingKey, VerifyingKeyBarretenberg},
-    prelude::{HashBackend, HonkProof, UltraHonk},
-    types::{G1Affine, G2Affine, ScalarField},
+    serialize::BytesDeserializable,
+    types::{G1Affine, G2Affine, ScalarField, HonkProof},
+    verifier::UltraHonk,
 };
 
 pub struct ArkKeccak256;
