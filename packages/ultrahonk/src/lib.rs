@@ -11,7 +11,6 @@ pub mod decider;
 pub mod gadgets;
 pub mod keys;
 pub mod oink;
-pub mod polynomials;
 pub mod serialize;
 pub mod transcript;
 pub mod types;

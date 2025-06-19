@@ -35,4 +35,5 @@ pub const NUM_SCALARFIELD_ELEMENTS: usize = 1;
 // We are getting grumpkin::b, which is -17
 pub static HONK_CURVE_B: Lazy<ScalarField> = Lazy::new(|| -ScalarField::from(17));
 
-
+/// The number of elements in the precomputed entities array
+pub const PRECOMPUTED_ENTITIES_SIZE: usize = 27;

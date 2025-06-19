@@ -1,9 +1,7 @@
-use crate::polynomials::polynomial_types::PrecomputedEntities;
+use crate::constants::PRECOMPUTED_ENTITIES_SIZE;
 use crate::serialize::BytesDeserializable;
-use crate::types::{G1Affine, G1BaseField, G2Affine};
-use crate::{
-    polynomials::polynomial_types::PRECOMPUTED_ENTITIES_SIZE,
-    types::{HonkProofError, HonkProofResult},
+use crate::types::{
+    G1Affine, G1BaseField, G2Affine, HonkProofError, HonkProofResult, PrecomputedEntities,
 };
 use ark_ff::PrimeField;
 use serde::{Deserialize, Serialize};

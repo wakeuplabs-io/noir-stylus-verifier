@@ -1,5 +1,4 @@
-pub use crate::polynomials::polynomial_types::PrecomputedEntities;
-use crate::types::{ShiftedWitnessEntities, WitnessEntities};
+use crate::types::{ShiftedWitnessEntities, WitnessEntities, PrecomputedEntities};
 
 pub(crate) struct PolyF<'a, T: Default> {
     pub(crate) precomputed: &'a PrecomputedEntities<T>,
