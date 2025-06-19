@@ -75,6 +75,11 @@ debug-assertions = false # prune debug assertions
 incremental = false      # no incremental builds
 opt-level = 's'          # optimize for size
 
+# but do optimize all the other dependencies
+[profile.release.package."*"]
+codegen-units = 1 # better optimizations
+opt-level = "z"
+
 # This profile can be used for CI in pull requests.
 [profile.ci-dev]
 opt-level = 1
