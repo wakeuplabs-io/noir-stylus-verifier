@@ -1,10 +1,10 @@
 use super::{shplemini::ShpleminiVerifierOpeningClaim, types::VerifierMemory};
 use crate::alloc::string::ToString;
+use crate::backends::G1ArithmeticBackend;
 use crate::types::HonkProofError;
 use crate::{
     backends::HashBackend,
     decider::types::BATCHED_RELATION_PARTIAL_LENGTH,
-    honk_curve::HonkCurve,
     transcript::Transcript,
     types::{G1Affine, G2Affine, ScalarField},
     verifier::HonkVerifyResult,
@@ -14,13 +14,13 @@ use ark_ec::AffineRepr;
 use ark_ff::{One, Zero};
 use core::marker::PhantomData;
 
-pub(crate) struct DeciderVerifier<P: HonkCurve, H: HashBackend> {
+pub(crate) struct DeciderVerifier<P: G1ArithmeticBackend, H: HashBackend> {
     pub(super) memory: VerifierMemory,
     phantom_data: PhantomData<P>,
     phantom_hasher: PhantomData<H>,
 }
 
-impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
+impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
     pub(crate) fn new(memory: VerifierMemory) -> Self {
         Self {
             memory,

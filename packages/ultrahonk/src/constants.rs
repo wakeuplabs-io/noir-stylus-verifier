@@ -1,3 +1,6 @@
+use spin::Lazy;
+use crate::types::ScalarField;
+
 /// The number of bytes to represent field elements of the base or scalar fields
 /// for the G1 curve group, as well as the base field which is extended for the
 /// G2 curve group
@@ -18,3 +21,18 @@ pub const FIXED_POINT_PRECISION_BITS: u64 = 63;
 
 /// The number of bytes in a hash digest used by the transcript
 pub const HASH_OUTPUT_SIZE: usize = 32;
+
+/// The number of base field elements in the ultrahonk::HonkCurve representation.
+///
+/// This is the number of elements required to represent the G1 curve.
+pub const NUM_BASEFIELD_ELEMENTS: usize = 2;
+
+/// The number of scalar field elements in the ultrahonk::HonkCurve representation.
+///
+/// This is the number of elements required to represent the scalar field.
+pub const NUM_SCALARFIELD_ELEMENTS: usize = 1;
+
+// We are getting grumpkin::b, which is -17
+pub static HONK_CURVE_B: Lazy<ScalarField> = Lazy::new(|| -ScalarField::from(17));
+
+

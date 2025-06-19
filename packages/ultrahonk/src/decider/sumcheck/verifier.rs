@@ -1,12 +1,12 @@
 use super::SumcheckVerifierOutput;
 use crate::alloc::{borrow::ToOwned, string::ToString};
+use crate::backends::G1ArithmeticBackend;
 use crate::{
     backends::HashBackend,
     decider::{
         sumcheck::round_verifier::{SumcheckRoundOutput, SumcheckVerifierRound},
         verifier::DeciderVerifier,
     },
-    honk_curve::HonkCurve,
     prelude::GateSeparatorPolynomial,
     transcript::Transcript,
     types::{ScalarField, NUM_ALL_ENTITIES},
@@ -17,7 +17,7 @@ use alloc::vec::Vec;
 use ark_ff::Zero;
 
 // Keep in mind, the UltraHonk protocol (UltraFlavor) does not per default have ZK
-impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
+impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
     pub(crate) fn sumcheck_verify<const SIZE: usize>(
         &mut self,
         transcript: &mut Transcript<H>,

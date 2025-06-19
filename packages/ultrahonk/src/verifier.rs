@@ -1,7 +1,6 @@
 use crate::{
-    backends::HashBackend,
+    backends::{G1ArithmeticBackend, HashBackend},
     decider::{types::VerifierMemory, verifier::DeciderVerifier},
-    honk_curve::HonkCurve,
     keys::verification_key::VerifyingKey,
     oink::verifier::OinkVerifier,
     transcript::Transcript,
@@ -11,15 +10,15 @@ use crate::{
 use alloc::vec::Vec;
 use core::marker::PhantomData;
 
-pub struct UltraHonk<P: HonkCurve, H: HashBackend> {
+pub struct UltraHonk<P: G1ArithmeticBackend, H: HashBackend> {
     phantom_data: PhantomData<P>,
     phantom_hasher: PhantomData<H>,
 }
 
 pub(crate) type HonkVerifyResult<T> = Result<T, HonkProofError>;
 
-impl<P: HonkCurve, H: HashBackend> UltraHonk<P, H> {
-    pub(crate) fn generate_gate_challenges(transcript: &mut Transcript<H>) -> Vec<ScalarField> {
+impl<P: G1ArithmeticBackend, H: HashBackend> UltraHonk<P, H> {
+     fn generate_gate_challenges(transcript: &mut Transcript<H>) -> Vec<ScalarField> {
         let mut gate_challenges: Vec<ScalarField> = Vec::with_capacity(CONST_PROOF_SIZE_LOG_N);
 
         for idx in 0..CONST_PROOF_SIZE_LOG_N {

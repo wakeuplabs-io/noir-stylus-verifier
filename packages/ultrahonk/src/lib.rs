@@ -9,7 +9,6 @@ pub mod constants;
 pub mod crs;
 pub mod decider;
 pub mod gadgets;
-pub mod honk_curve;
 pub mod keys;
 pub mod oink;
 pub mod polynomials;
@@ -25,7 +24,7 @@ use ark_bn254::{Fq, Fr};
 use ark_ff::{BigInteger, PrimeField};
 
 use crate::{
-    honk_curve::{NUM_BASEFIELD_ELEMENTS, NUM_SCALARFIELD_ELEMENTS},
+    constants::{NUM_BASEFIELD_ELEMENTS, NUM_SCALARFIELD_ELEMENTS},
     types::ScalarField,
 };
 

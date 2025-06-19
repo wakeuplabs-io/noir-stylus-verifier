@@ -187,24 +187,6 @@ impl BytesSerializable for G1Affine {
         bytes.extend(x.serialize_to_bytes());
         bytes.extend(y.serialize_to_bytes());
         bytes
-
-        // const NUM_64_LIMBS: u32 = G1BaseField::MODULUS_BIT_SIZE.div_ceil(64);
-        // const FIELDSIZE_BYTES: u32 = NUM_64_LIMBS * 8;
-        // const GROUPSIZE_BYTES: u32 = FIELDSIZE_BYTES * 2; // Times extension degree
-
-        // let mut res = Vec::new();
-
-        // if self.is_zero() {
-        //     for _ in 0..GROUPSIZE_BYTES {
-        //         res.push(255);
-        //     }
-        // } else {
-        //     let (x, y) = self.xy().unwrap_or_default();
-        //     res.extend(x.serialize_to_bytes());
-        //     res.extend(y.serialize_to_bytes());
-        // }
-
-        // res
     }
 }
 

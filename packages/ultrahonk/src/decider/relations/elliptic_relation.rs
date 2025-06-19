@@ -1,7 +1,8 @@
 use crate::alloc::borrow::ToOwned;
+use crate::backends::G1ArithmeticBackend;
 use crate::decider::types::{ClaimedEvaluations, RelationParameters};
 use crate::decider::{types::ProverUnivariates, univariate::Univariate};
-use crate::honk_curve::HonkCurve;
+use crate::constants::HONK_CURVE_B;
 use crate::types::ScalarField;
 use ark_ff::{AdditiveGroup, Field, PrimeField, Zero};
 
@@ -79,7 +80,7 @@ impl EllipticRelation {
      * @param parameters contains beta, gamma, and public_input_delta, ....
      * @param scaling_factor optional term to scale the evaluation before adding to evals.
      */
-    pub(crate) fn accumulate<P: HonkCurve>(
+    pub(crate) fn accumulate<P: G1ArithmeticBackend>(
         univariate_accumulator: &mut EllipticRelationAcc<ScalarField>,
         input: &ProverUnivariates<ScalarField>,
         _relation_parameters: &RelationParameters<ScalarField>,
@@ -130,9 +131,8 @@ impl EllipticRelation {
         // (x3 + x1 + x1) (4y1*y1) - 9 * x1 * x1 * x1 * x1 = 0
         // N.B. we're using the equivalence x1*x1*x1 === y1*y1 - curve_b to reduce degree by 1
 
-        let curve_b = P::get_curve_b(); // here we need the extra constraint on the Curve
         let x1_mul_3 = x_1.to_owned() + x_1 + x_1;
-        let x_pow_4_mul_3 = (y1_sqr.to_owned() - &curve_b) * &x1_mul_3;
+        let x_pow_4_mul_3 = (y1_sqr.to_owned() - &*HONK_CURVE_B) * &x1_mul_3;
         let mut y1_sqr_mul_4 = y1_sqr.double();
         y1_sqr_mul_4.double_in_place();
         let x1_pow_4_mul_9 = x_pow_4_mul_3.to_owned().double() + &x_pow_4_mul_3;
@@ -159,7 +159,7 @@ impl EllipticRelation {
         }
     }
 
-    pub(crate) fn verify_accumulate<P: HonkCurve>(
+    pub(crate) fn verify_accumulate<P: G1ArithmeticBackend>(
         univariate_accumulator: &mut EllipticRelationEvals<ScalarField>,
         input: &ClaimedEvaluations<ScalarField>,
         _relation_parameters: &RelationParameters<ScalarField>,
@@ -212,9 +212,8 @@ impl EllipticRelation {
         // (x3 + x1 + x1) (4y1*y1) - 9 * x1 * x1 * x1 * x1 = 0
         // N.B. we're using the equivalence x1*x1*x1 === y1*y1 - curve_b to reduce degree by 1
 
-        let curve_b = P::get_curve_b(); // here we need the extra constraint on the Curve
         let x1_mul_3 = x_1.to_owned() + x_1 + x_1;
-        let x_pow_4_mul_3 = (y1_sqr.to_owned() - curve_b) * x1_mul_3;
+        let x_pow_4_mul_3 = (y1_sqr.to_owned() - &*HONK_CURVE_B) * x1_mul_3;
         let mut y1_sqr_mul_4 = y1_sqr.double();
         y1_sqr_mul_4.double_in_place();
         let x1_pow_4_mul_9 = x_pow_4_mul_3.to_owned().double() + x_pow_4_mul_3;

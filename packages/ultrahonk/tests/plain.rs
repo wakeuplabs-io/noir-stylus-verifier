@@ -12,7 +12,6 @@ use ultrahonk::serialize::BytesDeserializable;
 use ultrahonk::{
     backends::{G1ArithmeticBackend, G1ArithmeticError},
     constants::HASH_OUTPUT_SIZE,
-    honk_curve::HonkCurve,
     keys::verification_key::{VerifyingKey, VerifyingKeyBarretenberg},
     prelude::{HashBackend, HonkProof, UltraHonk},
     types::{G1Affine, G2Affine, ScalarField},
@@ -69,9 +68,6 @@ impl G1ArithmeticBackend for ArkHonkCurve {
 
         Ok(<Bn254 as Pairing>::G1::msm_unchecked(points, scalars).into())
     }
-}
-
-impl HonkCurve for ArkHonkCurve {
 }
 
 fn plain_test(name: &str, proof_file: &str, vk_file: &str, public_inputs_file: &str) {

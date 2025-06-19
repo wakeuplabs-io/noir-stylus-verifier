@@ -1,6 +1,7 @@
 use super::types::VerifierMemory;
+use crate::backends::G1ArithmeticBackend;
 use crate::{
-    backends::HashBackend, honk_curve::HonkCurve, keys::verification_key::VerifyingKey,
+    backends::HashBackend, keys::verification_key::VerifyingKey,
     transcript::Transcript, types::ScalarField, verifier::HonkVerifyResult, NUM_ALPHAS,
 };
 use alloc::string::{String, ToString};
@@ -8,18 +9,18 @@ use alloc::vec::Vec;
 use ark_ff::One;
 use core::{array, marker::PhantomData};
 
-pub(crate) struct Oink<P: HonkCurve, H: HashBackend> {
+pub(crate) struct Oink<P: G1ArithmeticBackend, H: HashBackend> {
     phantom_data: PhantomData<P>,
     phantom_hasher: PhantomData<H>,
 }
 
-impl<P: HonkCurve, H: HashBackend> Default for Oink<P, H> {
+impl<P: G1ArithmeticBackend, H: HashBackend> Default for Oink<P, H> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<P: HonkCurve, H: HashBackend> Oink<P, H> {
+impl<P: G1ArithmeticBackend, H: HashBackend> Oink<P, H> {
     pub(crate) fn new() -> Self {
         Self {
             phantom_data: PhantomData,
@@ -83,20 +84,20 @@ impl<P: HonkCurve, H: HashBackend> Oink<P, H> {
     }
 }
 
-pub(crate) struct OinkVerifier<P: HonkCurve, H: HashBackend> {
+pub(crate) struct OinkVerifier<P: G1ArithmeticBackend, H: HashBackend> {
     memory: VerifierMemory,
     pub public_inputs: Vec<ScalarField>,
     phantom_hasher: core::marker::PhantomData<H>,
     phantom_curve: core::marker::PhantomData<P>,
 }
 
-impl<P: HonkCurve, H: HashBackend> Default for OinkVerifier<P, H> {
+impl<P: G1ArithmeticBackend, H: HashBackend> Default for OinkVerifier<P, H> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<P: HonkCurve, H: HashBackend> OinkVerifier<P, H> {
+impl<P: G1ArithmeticBackend, H: HashBackend> OinkVerifier<P, H> {
     pub(crate) fn new() -> Self {
         Self {
             memory: VerifierMemory::default(),

@@ -9,25 +9,25 @@ pub struct Univariate<F, const SIZE: usize> {
 }
 
 impl<F: PrimeField, const SIZE: usize> Univariate<F, SIZE> {
-    pub(crate) fn double(self) -> Self {
+    pub fn double(self) -> Self {
         let mut result = self;
         result.double_in_place();
         result
     }
 
-    pub(crate) fn double_in_place(&mut self) {
+    pub fn double_in_place(&mut self) {
         for i in 0..SIZE {
             self.evaluations[i].double_in_place();
         }
     }
 
-    pub(crate) fn sqr(self) -> Self {
+    pub fn sqr(self) -> Self {
         let mut result = self;
         result.square_in_place();
         result
     }
 
-    pub(crate) fn square_in_place(&mut self) {
+    pub fn square_in_place(&mut self) {
         for i in 0..SIZE {
             self.evaluations[i].square_in_place();
         }
@@ -209,7 +209,7 @@ impl<F: PrimeField, const SIZE: usize> Univariate<F, SIZE> {
         result
     }
 
-    pub(crate) fn extend_and_batch_univariates<const SIZE2: usize>(
+    pub fn extend_and_batch_univariates<const SIZE2: usize>(
         &self,
         result: &mut Univariate<F, SIZE2>,
         extended_random_poly: &Univariate<F, SIZE2>,

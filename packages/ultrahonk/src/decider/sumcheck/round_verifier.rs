@@ -1,6 +1,6 @@
 use super::super::univariate::Univariate;
 use crate::{
-    decider::{
+    backends::G1ArithmeticBackend, decider::{
         relations::{
             auxiliary_relation::AuxiliaryRelation,
             delta_range_constraint_relation::DeltaRangeConstraintRelation,
@@ -13,28 +13,25 @@ use crate::{
             AllRelationEvaluations, Relation,
         },
         types::{ClaimedEvaluations, RelationParameters},
-    },
-    honk_curve::HonkCurve,
-    prelude::GateSeparatorPolynomial,
-    types::ScalarField,
+    }, prelude::GateSeparatorPolynomial, types::ScalarField
 };
 use ark_ff::{One, Zero};
 use core::marker::PhantomData;
 
 pub(crate) type SumcheckRoundOutput<F, const U: usize> = Univariate<F, U>;
 
-pub(crate) struct SumcheckVerifierRound<P: HonkCurve> {
+pub(crate) struct SumcheckVerifierRound<P: G1ArithmeticBackend> {
     pub(crate) target_total_sum: ScalarField,
     pub(crate) round_failed: bool,
     phantom: PhantomData<P>,
 }
 
-impl<P: HonkCurve> Default for SumcheckVerifierRound<P> {
+impl<P: G1ArithmeticBackend> Default for SumcheckVerifierRound<P> {
     fn default() -> Self {
         Self::new()
     }
 }
-impl<P: HonkCurve> SumcheckVerifierRound<P> {
+impl<P: G1ArithmeticBackend> SumcheckVerifierRound<P> {
     pub(crate) fn new() -> Self {
         Self {
             target_total_sum: ScalarField::zero(),

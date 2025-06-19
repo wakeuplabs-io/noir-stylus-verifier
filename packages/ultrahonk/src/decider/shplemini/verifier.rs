@@ -2,14 +2,13 @@ use super::{
     types::{PolyF, PolyG, PolyGShift},
     ShpleminiVerifierOpeningClaim,
 };
-use crate::{alloc::string::ToString};
+use crate::{alloc::string::ToString, backends::G1ArithmeticBackend};
 use crate::{
     backends::HashBackend,
     decider::{
         types::{ClaimedEvaluations, VerifierCommitments},
         verifier::DeciderVerifier,
     },
-    honk_curve::{HonkCurve},
     transcript::Transcript,
     types::{G1Affine, ScalarField},
     verifier::HonkVerifyResult,
@@ -19,7 +18,7 @@ use alloc::vec::Vec;
 use ark_ec::AffineRepr;
 use ark_ff::{Field, One, Zero};
 
-impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
+impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
     pub fn get_g_shift_evaluations(
         evaluations: &ClaimedEvaluations<ScalarField>,
     ) -> PolyGShift<ScalarField> {

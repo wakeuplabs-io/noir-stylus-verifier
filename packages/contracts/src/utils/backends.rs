@@ -15,9 +15,9 @@ use ark_ff::One;
 
 /// The hashing backend used in the Stylus VM,
 /// which uses the VM-accelerated Keccak-256 implementation
-pub struct PrecompileHasher;
+pub struct PrecompileHashBackend;
 
-impl ultrahonk::backends::HashBackend for PrecompileHasher {
+impl ultrahonk::backends::HashBackend for PrecompileHashBackend {
     fn hash(bytes: &[u8]) -> [u8; HASH_OUTPUT_SIZE] {
         // Losing 2 bits of this is not an issue -> we can just reduce mod p
         let res = keccak(&bytes);
@@ -28,12 +28,9 @@ impl ultrahonk::backends::HashBackend for PrecompileHasher {
 /// The G1 arithmetic backend used in the Stylus VM,
 /// which calls out to the EC arithmetic EVM precompiles
 #[storage]
-pub struct PrecompileHonkCurve;
+pub struct PrecompileG1ArithmeticBackend;
 
-impl ultrahonk::honk_curve::HonkCurve for PrecompileHonkCurve {
-}
-
-impl ultrahonk::backends::G1ArithmeticBackend for PrecompileHonkCurve {
+impl ultrahonk::backends::G1ArithmeticBackend for PrecompileG1ArithmeticBackend {
     /// Calls the `ecAdd` precompile with the given points, handling
     /// de/serialization
     fn ec_add(a: G1Affine, b: G1Affine) -> Result<G1Affine, G1ArithmeticError> {

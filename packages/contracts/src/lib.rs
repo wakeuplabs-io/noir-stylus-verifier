@@ -15,7 +15,7 @@ use ultrahonk::keys::verification_key::{VerifyingKey, VerifyingKeyBarretenberg};
 use ultrahonk::prelude::UltraHonk;
 use ultrahonk::serialize::BytesDeserializable;
 use ultrahonk::types::{HonkProof, ScalarField};
-use crate::utils::backends::{PrecompileHasher, PrecompileHonkCurve};
+use crate::utils::backends::{PrecompileHashBackend, PrecompileG1ArithmeticBackend};
 
 sol_storage! {
     #[cfg_attr(feature = "verifier", entrypoint)]
@@ -39,7 +39,7 @@ impl VerifierContract {
         let vk = VerifyingKeyBarretenberg::from_buffer(&vk_bytes).unwrap();
         let vk = VerifyingKey::from_barrettenberg_and_crs(vk, verifier_crs);
 
-        UltraHonk::<PrecompileHonkCurve, PrecompileHasher>::verify(
+        UltraHonk::<PrecompileG1ArithmeticBackend, PrecompileHashBackend>::verify(
             proof,
             &public_inputs,
             &vk,
