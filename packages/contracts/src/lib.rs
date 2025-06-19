@@ -8,7 +8,6 @@ pub mod utils;
 #[macro_use]
 extern crate alloc;
 use alloc::vec::Vec;
-use ark_bn254::Bn254;
 use stylus_sdk::{abi::Bytes, prelude::*};
 use ultrahonk::crs::parser::CrsParser;
 use ultrahonk::keys::verification_key::{VerifyingKey, VerifyingKeyBarretenberg};
