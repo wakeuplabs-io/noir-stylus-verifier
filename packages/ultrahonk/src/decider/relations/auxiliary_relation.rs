@@ -61,13 +61,6 @@ impl<F: PrimeField> Relation<F> for AuxiliaryRelation {
     type Acc = AuxiliaryRelationAcc<F>;
     type VerifyAcc = AuxiliaryRelationEvals<F>;
 
-    const SKIPPABLE: bool = true;
-
-    fn skip(input: &ProverUnivariates<F>) -> bool {
-        <Self as Relation<F>>::check_skippable();
-        input.precomputed.q_aux().is_zero()
-    }
-
     /**
      * @brief Expression for the generalized permutation sort gate.
      * @details The following explanation is reproduced from the Plonk analog 'plookup_auxiliary_widget':

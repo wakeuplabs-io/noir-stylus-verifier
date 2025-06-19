@@ -88,13 +88,6 @@ impl<F: PrimeField> Relation<F> for DeltaRangeConstraintRelation {
     type Acc = DeltaRangeConstraintRelationAcc<F>;
     type VerifyAcc = DeltaRangeConstraintRelationEvals<F>;
 
-    const SKIPPABLE: bool = true;
-
-    fn skip(input: &ProverUnivariates<F>) -> bool {
-        <Self as Relation<F>>::check_skippable();
-        input.precomputed.q_delta_range().is_zero()
-    }
-
     fn verify_accumulate(
         univariate_accumulator: &mut Self::VerifyAcc,
         input: &ClaimedEvaluations<F>,

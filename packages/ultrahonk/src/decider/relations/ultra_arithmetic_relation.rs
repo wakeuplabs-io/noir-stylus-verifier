@@ -37,13 +37,6 @@ impl<F: PrimeField> Relation<F> for UltraArithmeticRelation {
     type Acc = UltraArithmeticRelationAcc<F>;
     type VerifyAcc = UltraArithmeticRelationEvals<F>;
 
-    const SKIPPABLE: bool = true;
-
-    fn skip(input: &ProverUnivariates<F>) -> bool {
-        <Self as Relation<F>>::check_skippable();
-        input.precomputed.q_arith().is_zero()
-    }
-
     fn verify_accumulate(
         univariate_accumulator: &mut Self::VerifyAcc,
         input: &ClaimedEvaluations<F>,

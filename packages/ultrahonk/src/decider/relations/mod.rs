@@ -24,16 +24,6 @@ pub(crate) trait Relation<F: PrimeField> {
     type Acc: Default;
     type VerifyAcc: Default;
 
-    const SKIPPABLE: bool;
-
-    fn check_skippable() {
-        if !Self::SKIPPABLE {
-            panic!("Cannot skip this relation");
-        }
-    }
-
-    fn skip(input: &ProverUnivariates<F>) -> bool;
-
     fn verify_accumulate(
         univariate_accumulator: &mut Self::VerifyAcc,
         input: &ClaimedEvaluations<F>,

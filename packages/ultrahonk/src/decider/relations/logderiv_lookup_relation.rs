@@ -200,13 +200,6 @@ impl<F: PrimeField> Relation<F> for LogDerivLookupRelation {
     type Acc = LogDerivLookupRelationAcc<F>;
     type VerifyAcc = LogDerivLookupRelationEvals<F>;
 
-    const SKIPPABLE: bool = true;
-
-    fn skip(input: &ProverUnivariates<F>) -> bool {
-        <Self as Relation<F>>::check_skippable();
-        input.precomputed.q_lookup().is_zero() && input.witness.lookup_read_counts().is_zero()
-    }
-
     fn verify_accumulate(
         univariate_accumulator: &mut Self::VerifyAcc,
         input: &ClaimedEvaluations<F>,

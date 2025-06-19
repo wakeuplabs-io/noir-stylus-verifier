@@ -66,15 +66,6 @@ impl<F: PrimeField> Relation<F> for UltraPermutationRelation {
     type Acc = UltraPermutationRelationAcc<F>;
     type VerifyAcc = UltraPermutationRelationEvals<F>;
 
-    const SKIPPABLE: bool = true;
-
-    fn skip(input: &ProverUnivariates<F>) -> bool {
-        <Self as Relation<F>>::check_skippable();
-        // If z_perm == z_perm_shift, this implies that none of the wire values for the present input are involved in
-        // non-trivial copy constraints.
-        (input.witness.z_perm().to_owned() - input.shifted_witness.z_perm()).is_zero()
-    }
-
     fn verify_accumulate(
         univariate_accumulator: &mut Self::VerifyAcc,
         input: &ClaimedEvaluations<F>,

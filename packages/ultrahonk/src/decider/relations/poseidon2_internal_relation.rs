@@ -44,14 +44,6 @@ impl<F: PrimeField> Relation<F> for Poseidon2InternalRelation {
     type Acc = Poseidon2InternalRelationAcc<F>;
     type VerifyAcc = Poseidon2InternalRelationEvals<F>;
 
-    const SKIPPABLE: bool = true;
-
-    fn skip(input: &ProverUnivariates<F>) -> bool {
-        <Self as Relation<F>>::check_skippable();
-        input.precomputed.q_poseidon2_internal().is_zero()
-    }
-
-
     fn verify_accumulate(
         univariate_accumulator: &mut Self::VerifyAcc,
         input: &ClaimedEvaluations<F>,
