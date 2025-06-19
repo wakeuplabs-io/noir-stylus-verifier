@@ -7,7 +7,6 @@ use crate::Utils;
 use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
 use ark_ec::AffineRepr;
-use core::ops::Index;
 use ark_ff::{PrimeField, BigInteger, Zero};
 
 pub struct Transcript<H>

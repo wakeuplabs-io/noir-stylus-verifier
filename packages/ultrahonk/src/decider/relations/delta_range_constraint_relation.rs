@@ -1,63 +1,7 @@
 use super::Relation;
 use crate::alloc::borrow::ToOwned;
-use crate::decider::{
-    types::{ClaimedEvaluations, ProverUnivariates, RelationParameters},
-    univariate::Univariate,
-};
-use ark_ff::{PrimeField, Zero};
-
-#[derive(Clone, Debug, Default)]
-pub(crate) struct DeltaRangeConstraintRelationAcc<F: PrimeField> {
-    pub(crate) r0: Univariate<F, 6>,
-    pub(crate) r1: Univariate<F, 6>,
-    pub(crate) r2: Univariate<F, 6>,
-    pub(crate) r3: Univariate<F, 6>,
-}
-
-impl<F: PrimeField> DeltaRangeConstraintRelationAcc<F> {
-    pub(crate) fn scale(&mut self, elements: &[F]) {
-        assert!(elements.len() == DeltaRangeConstraintRelation::NUM_RELATIONS);
-        self.r0 *= elements[0];
-        self.r1 *= elements[1];
-        self.r2 *= elements[2];
-        self.r3 *= elements[3];
-    }
-
-    pub(crate) fn extend_and_batch_univariates<const SIZE: usize>(
-        &self,
-        result: &mut Univariate<F, SIZE>,
-        extended_random_poly: &Univariate<F, SIZE>,
-        partial_evaluation_result: &F,
-    ) {
-        self.r0.extend_and_batch_univariates(
-            result,
-            extended_random_poly,
-            partial_evaluation_result,
-            true,
-        );
-
-        self.r1.extend_and_batch_univariates(
-            result,
-            extended_random_poly,
-            partial_evaluation_result,
-            true,
-        );
-
-        self.r2.extend_and_batch_univariates(
-            result,
-            extended_random_poly,
-            partial_evaluation_result,
-            true,
-        );
-
-        self.r3.extend_and_batch_univariates(
-            result,
-            extended_random_poly,
-            partial_evaluation_result,
-            true,
-        );
-    }
-}
+use crate::decider::types::{ClaimedEvaluations, RelationParameters};
+use ark_ff::PrimeField;
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct DeltaRangeConstraintRelationEvals<F: PrimeField> {
@@ -85,7 +29,6 @@ impl DeltaRangeConstraintRelation {
 }
 
 impl<F: PrimeField> Relation<F> for DeltaRangeConstraintRelation {
-    type Acc = DeltaRangeConstraintRelationAcc<F>;
     type VerifyAcc = DeltaRangeConstraintRelationEvals<F>;
 
     fn verify_accumulate(
@@ -94,7 +37,6 @@ impl<F: PrimeField> Relation<F> for DeltaRangeConstraintRelation {
         _relation_parameters: &RelationParameters<F>,
         scaling_factor: &F,
     ) {
-
         let w_1 = input.witness.w_l();
         let w_2 = input.witness.w_r();
         let w_3 = input.witness.w_o();

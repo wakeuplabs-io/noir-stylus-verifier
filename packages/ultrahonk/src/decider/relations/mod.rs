@@ -7,7 +7,7 @@ pub(crate) mod poseidon2_external_relation;
 pub(crate) mod poseidon2_internal_relation;
 pub(crate) mod ultra_arithmetic_relation;
 
-use super::types::{ClaimedEvaluations, ProverUnivariates, RelationParameters};
+use super::types::{ClaimedEvaluations, RelationParameters};
 use ark_ff::PrimeField;
 use auxiliary_relation::{AuxiliaryRelation, AuxiliaryRelationEvals};
 use delta_range_constraint_relation::{
@@ -21,7 +21,6 @@ use poseidon2_internal_relation::{Poseidon2InternalRelation, Poseidon2InternalRe
 use ultra_arithmetic_relation::{UltraArithmeticRelation, UltraArithmeticRelationEvals};
 
 pub(crate) trait Relation<F: PrimeField> {
-    type Acc: Default;
     type VerifyAcc: Default;
 
     fn verify_accumulate(

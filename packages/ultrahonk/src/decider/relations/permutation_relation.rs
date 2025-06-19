@@ -1,45 +1,7 @@
 use super::Relation;
 use crate::alloc::borrow::ToOwned;
-use crate::decider::{
-    types::{ClaimedEvaluations, ProverUnivariates, RelationParameters},
-    univariate::Univariate,
-};
-use ark_ff::{PrimeField, Zero};
-
-#[derive(Clone, Debug, Default)]
-pub(crate) struct UltraPermutationRelationAcc<F: PrimeField> {
-    pub(crate) r0: Univariate<F, 6>,
-    pub(crate) r1: Univariate<F, 3>,
-}
-
-impl<F: PrimeField> UltraPermutationRelationAcc<F> {
-    pub(crate) fn scale(&mut self, elements: &[F]) {
-        assert!(elements.len() == UltraPermutationRelation::NUM_RELATIONS);
-        self.r0 *= elements[0];
-        self.r1 *= elements[1];
-    }
-
-    pub(crate) fn extend_and_batch_univariates<const SIZE: usize>(
-        &self,
-        result: &mut Univariate<F, SIZE>,
-        extended_random_poly: &Univariate<F, SIZE>,
-        partial_evaluation_result: &F,
-    ) {
-        self.r0.extend_and_batch_univariates(
-            result,
-            extended_random_poly,
-            partial_evaluation_result,
-            true,
-        );
-
-        self.r1.extend_and_batch_univariates(
-            result,
-            extended_random_poly,
-            partial_evaluation_result,
-            true,
-        );
-    }
-}
+use crate::decider::types::{ClaimedEvaluations, RelationParameters};
+use ark_ff::PrimeField;
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct UltraPermutationRelationEvals<F: PrimeField> {
@@ -63,7 +25,6 @@ impl UltraPermutationRelation {
 }
 
 impl<F: PrimeField> Relation<F> for UltraPermutationRelation {
-    type Acc = UltraPermutationRelationAcc<F>;
     type VerifyAcc = UltraPermutationRelationEvals<F>;
 
     fn verify_accumulate(

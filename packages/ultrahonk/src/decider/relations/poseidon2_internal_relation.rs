@@ -1,19 +1,10 @@
 use super::Relation;
 use crate::alloc::borrow::ToOwned;
 use crate::decider::{
-    types::{ClaimedEvaluations, ProverUnivariates, RelationParameters},
-    univariate::Univariate,
+    types::{ClaimedEvaluations, RelationParameters},
 };
 use crate::gadgets::poseidon2::POSEIDON2_BN254_T4_PARAMS;
-use ark_ff::{BigInteger, PrimeField, Zero};
-
-#[derive(Clone, Debug, Default)]
-pub(crate) struct Poseidon2InternalRelationAcc<F: PrimeField> {
-    pub(crate) r0: Univariate<F, 7>,
-    pub(crate) r1: Univariate<F, 7>,
-    pub(crate) r2: Univariate<F, 7>,
-    pub(crate) r3: Univariate<F, 7>,
-}
+use ark_ff::{BigInteger, PrimeField};
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct Poseidon2InternalRelationEvals<F: PrimeField> {
@@ -41,7 +32,6 @@ impl Poseidon2InternalRelation {
 }
 
 impl<F: PrimeField> Relation<F> for Poseidon2InternalRelation {
-    type Acc = Poseidon2InternalRelationAcc<F>;
     type VerifyAcc = Poseidon2InternalRelationEvals<F>;
 
     fn verify_accumulate(

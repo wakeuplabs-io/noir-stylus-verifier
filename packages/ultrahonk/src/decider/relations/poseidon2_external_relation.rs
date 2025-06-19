@@ -1,18 +1,7 @@
 use super::Relation;
 use crate::alloc::borrow::ToOwned;
-use crate::decider::{
-    types::{ClaimedEvaluations, ProverUnivariates, RelationParameters},
-    univariate::Univariate,
-};
-use ark_ff::{PrimeField, Zero};
-
-#[derive(Clone, Debug, Default)]
-pub(crate) struct Poseidon2ExternalRelationAcc<F: PrimeField> {
-    pub(crate) r0: Univariate<F, 7>,
-    pub(crate) r1: Univariate<F, 7>,
-    pub(crate) r2: Univariate<F, 7>,
-    pub(crate) r3: Univariate<F, 7>,
-}
+use crate::decider::types::{ClaimedEvaluations, RelationParameters};
+use ark_ff::PrimeField;
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct Poseidon2ExternalRelationEvals<F: PrimeField> {
@@ -40,7 +29,6 @@ impl Poseidon2ExternalRelation {
 }
 
 impl<F: PrimeField> Relation<F> for Poseidon2ExternalRelation {
-    type Acc = Poseidon2ExternalRelationAcc<F>;
     type VerifyAcc = Poseidon2ExternalRelationEvals<F>;
 
     fn verify_accumulate(

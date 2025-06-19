@@ -1,32 +1,7 @@
 use super::Relation;
 use crate::alloc::borrow::ToOwned;
-use crate::decider::{
-    types::{ClaimedEvaluations, ProverUnivariates, RelationParameters},
-    univariate::Univariate,
-};
-use ark_ff::{PrimeField, Zero};
-
-/**
- * AZTEC TODO(https://github.com/AztecProtocol/barretenberg/issues/757): Investigate optimizations.
- * It seems that we could have:
- *     static constexpr core::array<size_t, 6> SUBRELATION_PARTIAL_LENGTHS{
- *     5 // auxiliary sub-relation;
- *     6 // ROM consistency sub-relation 1
- *     6 // ROM consistency sub-relation 2
- *     6 // RAM consistency sub-relation 1
- *     5 // RAM consistency sub-relation 2
- *     5 // RAM consistency sub-relation 3
- * };
- */
-#[derive(Clone, Debug, Default)]
-pub(crate) struct AuxiliaryRelationAcc<F: PrimeField> {
-    pub(crate) r0: Univariate<F, 6>,
-    pub(crate) r1: Univariate<F, 6>,
-    pub(crate) r2: Univariate<F, 6>,
-    pub(crate) r3: Univariate<F, 6>,
-    pub(crate) r4: Univariate<F, 6>,
-    pub(crate) r5: Univariate<F, 6>,
-}
+use crate::decider::types::{ClaimedEvaluations, RelationParameters};
+use ark_ff::PrimeField;
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct AuxiliaryRelationEvals<F: PrimeField> {
@@ -58,7 +33,6 @@ impl AuxiliaryRelation {
 }
 
 impl<F: PrimeField> Relation<F> for AuxiliaryRelation {
-    type Acc = AuxiliaryRelationAcc<F>;
     type VerifyAcc = AuxiliaryRelationEvals<F>;
 
     /**

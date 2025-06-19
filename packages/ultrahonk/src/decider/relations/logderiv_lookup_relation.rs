@@ -1,47 +1,7 @@
 use super::Relation;
 use crate::alloc::borrow::ToOwned;
-use crate::decider::{
-    types::{
-        ClaimedEvaluations, ProverUnivariates, RelationParameters, MAX_PARTIAL_RELATION_LENGTH,
-    },
-    univariate::Univariate,
-};
-use ark_ff::{PrimeField, Zero};
-
-#[derive(Clone, Debug, Default)]
-pub(crate) struct LogDerivLookupRelationAcc<F: PrimeField> {
-    pub(crate) r0: Univariate<F, 5>,
-    pub(crate) r1: Univariate<F, 5>,
-}
-
-impl<F: PrimeField> LogDerivLookupRelationAcc<F> {
-    pub(crate) fn scale(&mut self, elements: &[F]) {
-        assert!(elements.len() == LogDerivLookupRelation::NUM_RELATIONS);
-        self.r0 *= elements[0];
-        self.r1 *= elements[1];
-    }
-
-    pub(crate) fn extend_and_batch_univariates<const SIZE: usize>(
-        &self,
-        result: &mut Univariate<F, SIZE>,
-        extended_random_poly: &Univariate<F, SIZE>,
-        partial_evaluation_result: &F,
-    ) {
-        self.r0.extend_and_batch_univariates(
-            result,
-            extended_random_poly,
-            partial_evaluation_result,
-            true,
-        );
-
-        self.r1.extend_and_batch_univariates(
-            result,
-            extended_random_poly,
-            partial_evaluation_result,
-            false,
-        );
-    }
-}
+use crate::decider::types::{ClaimedEvaluations, RelationParameters};
+use ark_ff::PrimeField;
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct LogDerivLookupRelationEvals<F: PrimeField> {
@@ -65,56 +25,11 @@ impl LogDerivLookupRelation {
 }
 
 impl LogDerivLookupRelation {
-    // Used in the inverse correctness subrelation; facilitates only computing inverses where necessary
-    fn compute_inverse_exists<F: PrimeField>(
-        input: &ProverUnivariates<F>,
-    ) -> Univariate<F, MAX_PARTIAL_RELATION_LENGTH> {
-        let row_has_write = input.witness.lookup_read_tags();
-        let row_has_read = input.precomputed.q_lookup();
-
-        -(row_has_write.to_owned() * row_has_read) + row_has_write + row_has_read
-    }
-
     fn compute_inverse_exists_verifier<F: PrimeField>(input: &ClaimedEvaluations<F>) -> F {
         let row_has_write = input.witness.lookup_read_tags();
         let row_has_read = input.precomputed.q_lookup();
 
         -(row_has_write.to_owned() * row_has_read) + row_has_write + row_has_read
-    }
-
-    fn compute_read_term<F: PrimeField>(
-        input: &ProverUnivariates<F>,
-        relation_parameters: &RelationParameters<F>,
-    ) -> Univariate<F, MAX_PARTIAL_RELATION_LENGTH> {
-        let gamma = &relation_parameters.gamma;
-        let eta_1 = &relation_parameters.eta_1;
-        let eta_2 = &relation_parameters.eta_2;
-        let eta_3 = &relation_parameters.eta_3;
-        let w_1 = input.witness.w_l();
-        let w_2 = input.witness.w_r();
-        let w_3 = input.witness.w_o();
-        let w_1_shift = input.shifted_witness.w_l();
-        let w_2_shift = input.shifted_witness.w_r();
-        let w_3_shift = input.shifted_witness.w_o();
-        let table_index = input.precomputed.q_o();
-        let negative_column_1_step_size = input.precomputed.q_r();
-        let negative_column_2_step_size = input.precomputed.q_m();
-        let negative_column_3_step_size = input.precomputed.q_c();
-
-        // The wire values for lookup gates are accumulators structured in such a way that the differences w_i -
-        // step_size*w_i_shift result in values present in column i of a corresponding table. See the documentation in
-        // method get_lookup_accumulators() in  for a detailed explanation.
-        let derived_table_entry_1 =
-            w_1.to_owned() + gamma + negative_column_1_step_size.to_owned() * w_1_shift;
-        let derived_table_entry_2 = negative_column_2_step_size.to_owned() * w_2_shift + w_2;
-        let derived_table_entry_3 = negative_column_3_step_size.to_owned() * w_3_shift + w_3;
-
-        // (w_1 + \gamma q_2*w_1_shift) + η(w_2 + q_m*w_2_shift) + η₂(w_3 + q_c*w_3_shift) + η₃q_index.
-        // deg 2 or 3
-        derived_table_entry_1
-            + derived_table_entry_2 * eta_1
-            + derived_table_entry_3 * eta_2
-            + table_index.to_owned() * eta_3
     }
 
     fn compute_read_term_verifier<F: PrimeField>(
@@ -152,28 +67,6 @@ impl LogDerivLookupRelation {
             + table_index.to_owned() * eta_3
     }
 
-    // Compute table_1 + gamma + table_2 * eta + table_3 * eta_2 + table_4 * eta_3
-    fn compute_write_term<F: PrimeField>(
-        input: &ProverUnivariates<F>,
-        relation_parameters: &RelationParameters<F>,
-    ) -> Univariate<F, MAX_PARTIAL_RELATION_LENGTH> {
-        let gamma = &relation_parameters.gamma;
-        let eta_1 = &relation_parameters.eta_1;
-        let eta_2 = &relation_parameters.eta_2;
-        let eta_3 = &relation_parameters.eta_3;
-
-        let table_1 = input.precomputed.table_1();
-        let table_2 = input.precomputed.table_2();
-        let table_3 = input.precomputed.table_3();
-        let table_4 = input.precomputed.table_4();
-
-        table_1.to_owned()
-            + gamma
-            + table_2.to_owned() * eta_1
-            + table_3.to_owned() * eta_2
-            + table_4.to_owned() * eta_3
-    }
-
     fn compute_write_term_verifier<F: PrimeField>(
         input: &ClaimedEvaluations<F>,
         relation_parameters: &RelationParameters<F>,
@@ -197,7 +90,6 @@ impl LogDerivLookupRelation {
 }
 
 impl<F: PrimeField> Relation<F> for LogDerivLookupRelation {
-    type Acc = LogDerivLookupRelationAcc<F>;
     type VerifyAcc = LogDerivLookupRelationEvals<F>;
 
     fn verify_accumulate(

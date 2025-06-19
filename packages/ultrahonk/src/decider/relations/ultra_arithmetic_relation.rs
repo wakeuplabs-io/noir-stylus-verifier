@@ -1,16 +1,7 @@
 use super::Relation;
 use crate::alloc::borrow::ToOwned;
-use crate::decider::{
-    types::{ClaimedEvaluations, ProverUnivariates, RelationParameters},
-    univariate::Univariate,
-};
-use ark_ff::{PrimeField, Zero};
-
-#[derive(Clone, Debug, Default)]
-pub(crate) struct UltraArithmeticRelationAcc<F: PrimeField> {
-    pub(crate) r0: Univariate<F, 6>,
-    pub(crate) r1: Univariate<F, 5>,
-}
+use crate::decider::types::{ClaimedEvaluations, RelationParameters};
+use ark_ff::PrimeField;
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct UltraArithmeticRelationEvals<F: PrimeField> {
@@ -34,7 +25,6 @@ impl UltraArithmeticRelation {
 }
 
 impl<F: PrimeField> Relation<F> for UltraArithmeticRelation {
-    type Acc = UltraArithmeticRelationAcc<F>;
     type VerifyAcc = UltraArithmeticRelationEvals<F>;
 
     fn verify_accumulate(
