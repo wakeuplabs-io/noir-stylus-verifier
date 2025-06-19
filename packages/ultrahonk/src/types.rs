@@ -1,8 +1,7 @@
 use crate::alloc::borrow::ToOwned;
 use crate::constants::NUM_U64S_FELT;
 pub use crate::polynomials::polynomial_types::{PrecomputedEntities, PRECOMPUTED_ENTITIES_SIZE};
-use crate::serialize::BytesDeserializable;
-use crate::serialize::BytesSerializable;
+use crate::serialize::{BytesDeserializable, BytesSerializable};
 use alloc::vec::Vec;
 use ark_bn254::{g1::Config as G1Config, g2::Config as G2Config, Fq, Fq2, Fr};
 use ark_ec::short_weierstrass::Affine;
@@ -110,6 +109,7 @@ impl HonkProof {
 
 pub(crate) const NUM_ALL_ENTITIES: usize =
     WITNESS_ENTITIES_SIZE + PRECOMPUTED_ENTITIES_SIZE + SHIFTED_WITNESS_ENTITIES_SIZE;
+
 #[derive(Default)]
 pub(crate) struct AllEntities<T: Default> {
     pub(crate) witness: WitnessEntities<T>,
@@ -133,32 +133,10 @@ pub struct WitnessEntities<T: Default> {
 }
 
 const SHIFTED_WITNESS_ENTITIES_SIZE: usize = 5;
+
 #[derive(Default, Clone)]
 pub struct ShiftedWitnessEntities<T: Default> {
     pub(crate) elements: [T; SHIFTED_WITNESS_ENTITIES_SIZE],
-}
-
-impl<T: Default> IntoIterator for WitnessEntities<T> {
-    type Item = T;
-    type IntoIter = core::array::IntoIter<T, WITNESS_ENTITIES_SIZE>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.elements.into_iter()
-    }
-}
-
-impl<T: Default> WitnessEntities<Vec<T>> {
-    pub fn new() -> Self {
-        Self {
-            elements: core::array::from_fn(|_| Vec::new()),
-        }
-    }
-
-    pub fn add(&mut self, witness_entity: WitnessEntities<T>) {
-        for (src, dst) in witness_entity.into_iter().zip(self.iter_mut()) {
-            dst.push(src);
-        }
-    }
 }
 
 impl<T: Default> IntoIterator for ShiftedWitnessEntities<T> {
@@ -170,37 +148,6 @@ impl<T: Default> IntoIterator for ShiftedWitnessEntities<T> {
     }
 }
 
-impl<T: Default> ShiftedWitnessEntities<Vec<T>> {
-    pub fn new() -> Self {
-        Self {
-            elements: core::array::from_fn(|_| Vec::new()),
-        }
-    }
-
-    pub fn add(&mut self, shifted_witness_entities: ShiftedWitnessEntities<T>) {
-        for (src, dst) in shifted_witness_entities.into_iter().zip(self.iter_mut()) {
-            dst.push(src);
-        }
-    }
-}
-
-impl<T: Default> IntoIterator for AllEntities<T> {
-    type Item = T;
-    type IntoIter = core::iter::Chain<
-        core::iter::Chain<
-            core::array::IntoIter<T, PRECOMPUTED_ENTITIES_SIZE>,
-            core::array::IntoIter<T, WITNESS_ENTITIES_SIZE>,
-        >,
-        core::array::IntoIter<T, SHIFTED_WITNESS_ENTITIES_SIZE>,
-    >;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.precomputed
-            .into_iter()
-            .chain(self.witness)
-            .chain(self.shifted_witness)
-    }
-}
 
 impl<T: Default> WitnessEntities<T> {
     /// column 0

@@ -1,32 +1,16 @@
 use super::polynomial::Polynomial;
-use alloc::vec::Vec;
 use ark_ff::PrimeField;
 use serde::{Deserialize, Serialize};
 
 // This is what we get from the proving key, we shift at a later point
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Default)]
 pub struct Polynomials<F: PrimeField> {
     pub witness: ProverWitnessEntities<Polynomial<F>>,
     pub precomputed: PrecomputedEntities<Polynomial<F>>,
 }
 
-impl<F: PrimeField> Polynomials<F> {
-    pub fn new(circuit_size: usize) -> Self {
-        let mut polynomials = Self::default();
-        // Shifting is done at a later point
-        polynomials
-            .iter_mut()
-            .for_each(|el| el.resize(circuit_size, Default::default()));
-
-        polynomials
-    }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Polynomial<F>> {
-        self.witness.iter_mut().chain(self.precomputed.iter_mut())
-    }
-}
-
 pub const PROVER_WITNESS_ENTITIES_SIZE: usize = 6;
+
 #[derive(Default, Serialize, Deserialize)]
 pub struct ProverWitnessEntities<T: Default> {
     pub elements: [T; PROVER_WITNESS_ENTITIES_SIZE],
@@ -38,127 +22,12 @@ pub struct PrecomputedEntities<T: Default> {
     pub elements: [T; PRECOMPUTED_ENTITIES_SIZE],
 }
 
-impl<T: Default> PrecomputedEntities<Vec<T>> {
-    pub fn new() -> Self {
-        Self {
-            elements: core::array::from_fn(|_| Vec::new()),
-        }
-    }
-
-    pub fn add(&mut self, precomputed_entities: PrecomputedEntities<T>) {
-        for (src, dst) in precomputed_entities.into_iter().zip(self.iter_mut()) {
-            dst.push(src);
-        }
-    }
-}
-
 impl<T: Default> IntoIterator for PrecomputedEntities<T> {
     type Item = T;
     type IntoIter = core::array::IntoIter<T, PRECOMPUTED_ENTITIES_SIZE>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.elements.into_iter()
-    }
-}
-
-impl<T: Default> IntoIterator for ProverWitnessEntities<T> {
-    type Item = T;
-    type IntoIter = core::array::IntoIter<T, PROVER_WITNESS_ENTITIES_SIZE>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.elements.into_iter()
-    }
-}
-
-impl<T: Default> ProverWitnessEntities<T> {
-    /// column 0
-    pub(crate) const W_L: usize = 0;
-    /// column 1
-    pub const W_R: usize = 1;
-    /// column 2
-    pub(crate) const W_O: usize = 2;
-    /// column 3 (modified by prover)
-    pub(crate) const W_4: usize = 3;
-    /// column 6
-    const LOOKUP_READ_COUNTS: usize = 4;
-    /// column 7
-    const LOOKUP_READ_TAGS: usize = 5;
-
-    // const Z_PERM: usize = 4; // column 4 (computed by prover)
-    // const LOOKUP_INVERSES: usize = 5; // column 5 (computed by prover);
-
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
-        self.elements.iter()
-    }
-
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
-        self.elements.iter_mut()
-    }
-
-    pub fn into_wires(self) -> impl Iterator<Item = T> {
-        self.elements
-            .into_iter()
-            // .skip(Self::W_L)
-            .take(Self::W_4 + 1 - Self::W_L)
-    }
-
-    pub fn get_wires(&self) -> &[T] {
-        &self.elements[Self::W_L..=Self::W_4]
-    }
-
-    pub fn get_wires_mut(&mut self) -> &mut [T] {
-        &mut self.elements[Self::W_L..=Self::W_4]
-    }
-
-    pub fn w_l(&self) -> &T {
-        &self.elements[Self::W_L]
-    }
-
-    pub fn w_l_mut(&mut self) -> &mut T {
-        &mut self.elements[Self::W_L]
-    }
-
-    pub fn w_r(&self) -> &T {
-        &self.elements[Self::W_R]
-    }
-
-    pub fn w_r_mut(&mut self) -> &mut T {
-        &mut self.elements[Self::W_R]
-    }
-
-    pub fn w_o(&self) -> &T {
-        &self.elements[Self::W_O]
-    }
-
-    pub fn w_o_mut(&mut self) -> &mut T {
-        &mut self.elements[Self::W_O]
-    }
-
-    pub fn w_4(&self) -> &T {
-        &self.elements[Self::W_4]
-    }
-
-    pub fn lookup_read_counts(&self) -> &T {
-        &self.elements[Self::LOOKUP_READ_COUNTS]
-    }
-
-    pub fn lookup_read_counts_mut(&mut self) -> &mut T {
-        &mut self.elements[Self::LOOKUP_READ_COUNTS]
-    }
-
-    pub fn lookup_read_tags(&self) -> &T {
-        &self.elements[Self::LOOKUP_READ_TAGS]
-    }
-
-    pub fn lookup_read_tags_mut(&mut self) -> &mut T {
-        &mut self.elements[Self::LOOKUP_READ_TAGS]
-    }
-
-    pub fn lookup_read_counts_and_tags(&self) -> &[T] {
-        &self.elements[Self::LOOKUP_READ_COUNTS..Self::LOOKUP_READ_TAGS + 1]
-    }
-    pub fn lookup_read_counts_and_tags_mut(&mut self) -> &mut [T] {
-        &mut self.elements[Self::LOOKUP_READ_COUNTS..Self::LOOKUP_READ_TAGS + 1]
     }
 }
 

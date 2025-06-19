@@ -181,6 +181,7 @@ impl<F: PrimeField> Relation<F> for DeltaRangeConstraintRelation {
         _relation_parameters: &RelationParameters<F>,
         scaling_factor: &F,
     ) {
+
         let w_1 = input.witness.w_l();
         let w_2 = input.witness.w_r();
         let w_3 = input.witness.w_o();
