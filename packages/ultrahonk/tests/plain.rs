@@ -80,7 +80,7 @@ fn plain_test(name: &str, proof_file: &str, vk_file: &str, public_inputs_file: &
     let public_inputs = Vec::<ScalarField>::deserialize_from_bytes(&public_inputs_u8).unwrap();
 
     // parse the crs
-    let verifier_crs = CrsParser::<Bn254>::get_crs_g2().unwrap();
+    let verifier_crs = CrsParser::get_crs_g2().unwrap();
 
     // parse verification key file
     let vk_u8 = std::fs::read(vk_file).unwrap();

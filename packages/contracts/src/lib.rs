@@ -33,7 +33,7 @@ impl VerifierContract {
             Vec::<ScalarField>::deserialize_from_bytes(&public_inputs_bytes).unwrap();
 
         // parse the crs
-        let verifier_crs = CrsParser::<Bn254>::get_crs_g2().unwrap();
+        let verifier_crs = CrsParser::get_crs_g2().unwrap();
 
         // parse verification key file
         let vk = VerifyingKeyBarretenberg::from_buffer(&vk_bytes).unwrap();
