@@ -46,7 +46,7 @@ impl Utils {
         inp.ilog2()
     }
 
-    fn batch_invert<F: PrimeField>(coeffs: &mut [F]) {
+    fn batch_invert(coeffs: &mut [ScalarField]) {
         ark_ff::batch_inversion(coeffs);
     }
 

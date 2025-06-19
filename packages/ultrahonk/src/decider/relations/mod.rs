@@ -7,8 +7,9 @@ pub(crate) mod poseidon2_external_relation;
 pub(crate) mod poseidon2_internal_relation;
 pub(crate) mod ultra_arithmetic_relation;
 
+use ark_ff::Zero;
+use crate::types::ScalarField;
 use super::types::{ClaimedEvaluations, RelationParameters};
-use ark_ff::PrimeField;
 use auxiliary_relation::{AuxiliaryRelation, AuxiliaryRelationEvals};
 use delta_range_constraint_relation::{
     DeltaRangeConstraintRelation, DeltaRangeConstraintRelationEvals,
@@ -20,14 +21,14 @@ use poseidon2_external_relation::{Poseidon2ExternalRelation, Poseidon2ExternalRe
 use poseidon2_internal_relation::{Poseidon2InternalRelation, Poseidon2InternalRelationEvals};
 use ultra_arithmetic_relation::{UltraArithmeticRelation, UltraArithmeticRelationEvals};
 
-pub(crate) trait Relation<F: PrimeField> {
+pub(crate) trait Relation {
     type VerifyAcc: Default;
 
     fn verify_accumulate(
         univariate_accumulator: &mut Self::VerifyAcc,
-        input: &ClaimedEvaluations<F>,
-        relation_parameters: &RelationParameters<F>,
-        scaling_factor: &F,
+        input: &ClaimedEvaluations,
+        relation_parameters: &RelationParameters,
+        scaling_factor: &ScalarField,
     );
 }
 
@@ -41,21 +42,21 @@ pub(crate) const NUM_SUBRELATIONS: usize = UltraArithmeticRelation::NUM_RELATION
     + Poseidon2InternalRelation::NUM_RELATIONS;
 
 #[derive(Default)]
-pub(crate) struct AllRelationEvaluations<F: PrimeField> {
-    pub(crate) r_arith: UltraArithmeticRelationEvals<F>,
-    pub(crate) r_perm: UltraPermutationRelationEvals<F>,
-    pub(crate) r_lookup: LogDerivLookupRelationEvals<F>,
-    pub(crate) r_delta: DeltaRangeConstraintRelationEvals<F>,
-    pub(crate) r_elliptic: EllipticRelationEvals<F>,
-    pub(crate) r_aux: AuxiliaryRelationEvals<F>,
-    pub(crate) r_pos_ext: Poseidon2ExternalRelationEvals<F>,
-    pub(crate) r_pos_int: Poseidon2InternalRelationEvals<F>,
+pub(crate) struct AllRelationEvaluations {
+    pub(crate) r_arith: UltraArithmeticRelationEvals,
+    pub(crate) r_perm: UltraPermutationRelationEvals,
+    pub(crate) r_lookup: LogDerivLookupRelationEvals,
+    pub(crate) r_delta: DeltaRangeConstraintRelationEvals,
+    pub(crate) r_elliptic: EllipticRelationEvals,
+    pub(crate) r_aux: AuxiliaryRelationEvals,
+    pub(crate) r_pos_ext: Poseidon2ExternalRelationEvals,
+    pub(crate) r_pos_int: Poseidon2InternalRelationEvals,
 }
 
-impl<F: PrimeField> AllRelationEvaluations<F> {
-    pub(crate) fn scale_and_batch_elements(&self, first_scalar: F, elements: &[F]) -> F {
+impl AllRelationEvaluations {
+    pub(crate) fn scale_and_batch_elements(&self, first_scalar: ScalarField, elements: &[ScalarField]) -> ScalarField {
         assert!(elements.len() == NUM_SUBRELATIONS - 1);
-        let mut output = F::zero();
+        let mut output = ScalarField::zero();
         self.r_arith
             .scale_and_batch_elements(&[first_scalar, elements[0]], &mut output);
         self.r_perm

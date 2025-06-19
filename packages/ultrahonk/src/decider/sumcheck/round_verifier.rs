@@ -64,10 +64,10 @@ impl<P: G1ArithmeticBackend> SumcheckVerifierRound<P> {
         !sumcheck_round_failed
     }
 
-    fn accumulate_one_relation_evaluations<R: Relation<ScalarField>>(
+    fn accumulate_one_relation_evaluations<R: Relation>(
         univariate_accumulator: &mut R::VerifyAcc,
-        extended_edges: &ClaimedEvaluations<ScalarField>,
-        relation_parameters: &RelationParameters<ScalarField>,
+        extended_edges: &ClaimedEvaluations,
+        relation_parameters: &RelationParameters,
         scaling_factor: &ScalarField,
     ) {
         R::verify_accumulate(
@@ -79,9 +79,9 @@ impl<P: G1ArithmeticBackend> SumcheckVerifierRound<P> {
     }
 
     fn accumulate_elliptic_curve_relation_evaluations(
-        univariate_accumulator: &mut EllipticRelationEvals<ScalarField>,
-        extended_edges: &ClaimedEvaluations<ScalarField>,
-        relation_parameters: &RelationParameters<ScalarField>,
+        univariate_accumulator: &mut EllipticRelationEvals,
+        extended_edges: &ClaimedEvaluations,
+        relation_parameters: &RelationParameters,
         scaling_factor: &ScalarField,
     ) {
         EllipticRelation::verify_accumulate::<P>(
@@ -93,9 +93,9 @@ impl<P: G1ArithmeticBackend> SumcheckVerifierRound<P> {
     }
 
     fn accumulate_relation_evaluations(
-        univariate_accumulators: &mut AllRelationEvaluations<ScalarField>,
-        extended_edges: &ClaimedEvaluations<ScalarField>,
-        relation_parameters: &RelationParameters<ScalarField>,
+        univariate_accumulators: &mut AllRelationEvaluations,
+        extended_edges: &ClaimedEvaluations,
+        relation_parameters: &RelationParameters,
         scaling_factor: &ScalarField,
     ) {
         Self::accumulate_one_relation_evaluations::<UltraArithmeticRelation>(
@@ -149,12 +149,12 @@ impl<P: G1ArithmeticBackend> SumcheckVerifierRound<P> {
     }
 
     pub(crate) fn compute_full_relation_purported_value(
-        purported_evaluations: &ClaimedEvaluations<ScalarField>,
-        relation_parameters: &RelationParameters<ScalarField>,
-        gate_sparators: GateSeparatorPolynomial<ScalarField>,
+        purported_evaluations: &ClaimedEvaluations,
+        relation_parameters: &RelationParameters,
+        gate_sparators: GateSeparatorPolynomial,
     ) -> ScalarField {
 
-        let mut relation_evaluations = AllRelationEvaluations::<ScalarField>::default();
+        let mut relation_evaluations = AllRelationEvaluations::default();
 
         Self::accumulate_relation_evaluations(
             &mut relation_evaluations,

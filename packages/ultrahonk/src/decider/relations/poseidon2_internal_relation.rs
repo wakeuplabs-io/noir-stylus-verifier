@@ -4,18 +4,19 @@ use crate::decider::{
     types::{ClaimedEvaluations, RelationParameters},
 };
 use crate::gadgets::poseidon2::POSEIDON2_BN254_T4_PARAMS;
-use ark_ff::{BigInteger, PrimeField};
+use crate::types::ScalarField;
+use ark_ff::{BigInteger, Field, PrimeField};
 
 #[derive(Clone, Debug, Default)]
-pub(crate) struct Poseidon2InternalRelationEvals<F: PrimeField> {
-    pub(crate) r0: F,
-    pub(crate) r1: F,
-    pub(crate) r2: F,
-    pub(crate) r3: F,
+pub(crate) struct Poseidon2InternalRelationEvals {
+    pub(crate) r0: ScalarField,
+    pub(crate) r1: ScalarField,
+    pub(crate) r2: ScalarField,
+    pub(crate) r3: ScalarField,
 }
 
-impl<F: PrimeField> Poseidon2InternalRelationEvals<F> {
-    pub(crate) fn scale_and_batch_elements(&self, running_challenge: &[F], result: &mut F) {
+impl Poseidon2InternalRelationEvals {
+    pub(crate) fn scale_and_batch_elements(&self, running_challenge: &[ScalarField], result: &mut ScalarField) {
         assert!(running_challenge.len() == Poseidon2InternalRelation::NUM_RELATIONS);
 
         *result += self.r0 * running_challenge[0];
@@ -31,14 +32,14 @@ impl Poseidon2InternalRelation {
     pub(crate) const NUM_RELATIONS: usize = 4;
 }
 
-impl<F: PrimeField> Relation<F> for Poseidon2InternalRelation {
-    type VerifyAcc = Poseidon2InternalRelationEvals<F>;
+impl Relation for Poseidon2InternalRelation {
+    type VerifyAcc = Poseidon2InternalRelationEvals;
 
     fn verify_accumulate(
         univariate_accumulator: &mut Self::VerifyAcc,
-        input: &ClaimedEvaluations<F>,
-        _relation_parameters: &RelationParameters<F>,
-        scaling_factor: &F,
+        input: &ClaimedEvaluations,
+        _relation_parameters: &RelationParameters,
+        scaling_factor: &ScalarField,
     ) {
         let w_l = input.witness.w_l();
         let w_r = input.witness.w_r();
@@ -68,22 +69,22 @@ impl<F: PrimeField> Relation<F> for Poseidon2InternalRelation {
         let q_pos_by_scaling = q_poseidon2_internal.to_owned() * scaling_factor;
 
         // TACEO TODO this poseidon instance is very hardcoded to the bn254 curve
-        let internal_matrix_diag_0 = F::from_le_bytes_mod_order(
+        let internal_matrix_diag_0 = ScalarField::from_le_bytes_mod_order(
             &POSEIDON2_BN254_T4_PARAMS.mat_internal_diag_m_1[0]
                 .into_bigint()
                 .to_bytes_le(),
         );
-        let internal_matrix_diag_1 = F::from_le_bytes_mod_order(
+        let internal_matrix_diag_1 = ScalarField::from_le_bytes_mod_order(
             &POSEIDON2_BN254_T4_PARAMS.mat_internal_diag_m_1[1]
                 .into_bigint()
                 .to_bytes_le(),
         );
-        let internal_matrix_diag_2 = F::from_le_bytes_mod_order(
+        let internal_matrix_diag_2 = ScalarField::from_le_bytes_mod_order(
             &POSEIDON2_BN254_T4_PARAMS.mat_internal_diag_m_1[2]
                 .into_bigint()
                 .to_bytes_le(),
         );
-        let internal_matrix_diag_3 = F::from_le_bytes_mod_order(
+        let internal_matrix_diag_3 = ScalarField::from_le_bytes_mod_order(
             &POSEIDON2_BN254_T4_PARAMS.mat_internal_diag_m_1[3]
                 .into_bigint()
                 .to_bytes_le(),

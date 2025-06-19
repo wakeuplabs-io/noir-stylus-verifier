@@ -1,20 +1,21 @@
 use super::Relation;
 use crate::alloc::borrow::ToOwned;
 use crate::decider::types::{ClaimedEvaluations, RelationParameters};
-use ark_ff::PrimeField;
+use crate::types::ScalarField;
+use ark_ff::{Field, One};
 
 #[derive(Clone, Debug, Default)]
-pub(crate) struct AuxiliaryRelationEvals<F: PrimeField> {
-    pub(crate) r0: F,
-    pub(crate) r1: F,
-    pub(crate) r2: F,
-    pub(crate) r3: F,
-    pub(crate) r4: F,
-    pub(crate) r5: F,
+pub(crate) struct AuxiliaryRelationEvals {
+    pub(crate) r0: ScalarField,
+    pub(crate) r1: ScalarField,
+    pub(crate) r2: ScalarField,
+    pub(crate) r3: ScalarField,
+    pub(crate) r4: ScalarField,
+    pub(crate) r5: ScalarField,
 }
 
-impl<F: PrimeField> AuxiliaryRelationEvals<F> {
-    pub(crate) fn scale_and_batch_elements(&self, running_challenge: &[F], result: &mut F) {
+impl AuxiliaryRelationEvals {
+    pub(crate) fn scale_and_batch_elements(&self, running_challenge: &[ScalarField], result: &mut ScalarField) {
         assert!(running_challenge.len() == AuxiliaryRelation::NUM_RELATIONS);
 
         *result += self.r0 * running_challenge[0];
@@ -32,8 +33,8 @@ impl AuxiliaryRelation {
     pub(crate) const NUM_RELATIONS: usize = 6;
 }
 
-impl<F: PrimeField> Relation<F> for AuxiliaryRelation {
-    type VerifyAcc = AuxiliaryRelationEvals<F>;
+impl Relation for AuxiliaryRelation {
+    type VerifyAcc = AuxiliaryRelationEvals;
 
     /**
      * @brief Expression for the generalized permutation sort gate.
@@ -72,9 +73,9 @@ impl<F: PrimeField> Relation<F> for AuxiliaryRelation {
 
     fn verify_accumulate(
         univariate_accumulator: &mut Self::VerifyAcc,
-        input: &ClaimedEvaluations<F>,
-        relation_parameters: &RelationParameters<F>,
-        scaling_factor: &F,
+        input: &ClaimedEvaluations,
+        relation_parameters: &RelationParameters,
+        scaling_factor: &ScalarField,
     ) {
         let eta = &relation_parameters.eta_1;
         let eta_two = &relation_parameters.eta_2;
@@ -98,8 +99,8 @@ impl<F: PrimeField> Relation<F> for AuxiliaryRelation {
         let q_arith = input.precomputed.q_arith();
         let q_aux = input.precomputed.q_aux();
 
-        let limb_size = F::from(1u128 << 68);
-        let sublimb_shift = F::from(1u64 << 14);
+        let limb_size = ScalarField::from(1u128 << 68);
+        let sublimb_shift = ScalarField::from(1u64 << 14);
 
         /*
          * Non native field arithmetic gate 2
@@ -229,7 +230,7 @@ impl<F: PrimeField> Relation<F> for AuxiliaryRelation {
 
         let index_is_monotonically_increasing = index_delta.to_owned().square() - index_delta; // deg 2
 
-        let index_delta_one = -index_delta + F::one();
+        let index_delta_one = -index_delta + ScalarField::one();
 
         let adjacent_values_match_if_adjacent_indices_match = record_delta * index_delta_one; // deg 2
 
@@ -276,7 +277,7 @@ impl<F: PrimeField> Relation<F> for AuxiliaryRelation {
 
         let value_delta = w_3_shift.to_owned() - w_3;
         let adjacent_values_match_if_adjacent_indices_match_and_next_access_is_a_read_operation =
-            value_delta * index_delta_one * (-next_gate_access_type.to_owned() + F::one()); // deg 3 or 4
+            value_delta * index_delta_one * (-next_gate_access_type.to_owned() + ScalarField::one()); // deg 3 or 4
 
         // We can't apply the RAM consistency check identity on the final entry in the sorted list (the wires in the
         // next gate would make the identity fail).  We need to validate that its 'access type' bool is correct. Can't

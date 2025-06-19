@@ -2,43 +2,43 @@ use crate::keys::verification_key::VerifyingKey;
 use crate::types::{G1Affine, ScalarField};
 use crate::{types::AllEntities, NUM_ALPHAS};
 use alloc::{vec::Vec};
-use ark_ff::PrimeField;
+use ark_ff::One;
 
 pub(crate) struct VerifierMemory {
-    pub(crate) verifier_commitments: VerifierCommitments<G1Affine>,
-    pub(crate) relation_parameters: RelationParameters<ScalarField>,
-    pub(crate) claimed_evaluations: ClaimedEvaluations<ScalarField>,
+    pub(crate) verifier_commitments: VerifierCommitments,
+    pub(crate) relation_parameters: RelationParameters,
+    pub(crate) claimed_evaluations: ClaimedEvaluations,
 }
 
 pub(crate) const MAX_PARTIAL_RELATION_LENGTH: usize = 7;
 pub(crate) const BATCHED_RELATION_PARTIAL_LENGTH: usize = MAX_PARTIAL_RELATION_LENGTH + 1;
 
-pub(crate) type ClaimedEvaluations<F> = AllEntities<F>;
-pub(crate) type VerifierCommitments<P> = AllEntities<P>;
+pub(crate) type ClaimedEvaluations = AllEntities<ScalarField>;
+pub(crate) type VerifierCommitments = AllEntities<G1Affine>;
 
-pub(crate) struct RelationParameters<F: PrimeField> {
-    pub(crate) eta_1: F,
-    pub(crate) eta_2: F,
-    pub(crate) eta_3: F,
-    pub(crate) beta: F,
-    pub(crate) gamma: F,
-    pub(crate) public_input_delta: F,
-    pub(crate) alphas: [F; NUM_ALPHAS],
-    pub(crate) gate_challenges: Vec<F>,
+pub(crate) struct RelationParameters {
+    pub(crate) eta_1: ScalarField,
+    pub(crate) eta_2: ScalarField,
+    pub(crate) eta_3: ScalarField,
+    pub(crate) beta: ScalarField,
+    pub(crate) gamma: ScalarField,
+    pub(crate) public_input_delta: ScalarField,
+    pub(crate) alphas: [ScalarField; NUM_ALPHAS],
+    pub(crate) gate_challenges: Vec<ScalarField>,
 }
 
-pub struct GateSeparatorPolynomial<F: PrimeField> {
-    betas: Vec<F>,
-    pub partial_evaluation_result: F,
+pub struct GateSeparatorPolynomial {
+    betas: Vec<ScalarField>,
+    pub partial_evaluation_result: ScalarField,
     current_element_idx: usize,
     pub periodicity: usize,
 }
 
-impl<F: PrimeField> GateSeparatorPolynomial<F> {
-    pub fn new_without_products(betas: Vec<F>) -> Self {
+impl GateSeparatorPolynomial {
+    pub fn new_without_products(betas: Vec<ScalarField>) -> Self {
         let current_element_idx = 0;
         let periodicity = 2;
-        let partial_evaluation_result = F::ONE;
+        let partial_evaluation_result = ScalarField::one();
 
         Self {
             betas,
@@ -47,11 +47,11 @@ impl<F: PrimeField> GateSeparatorPolynomial<F> {
             periodicity,
         }
     }
-    pub fn partially_evaluate_with_padding(&mut self, round_challenge: F, indicator: F) {
+    pub fn partially_evaluate_with_padding(&mut self, round_challenge: ScalarField, indicator: ScalarField) {
         let current_univariate_eval =
-            F::ONE + (round_challenge * (self.betas[self.current_element_idx] - F::ONE));
+            ScalarField::one() + (round_challenge * (self.betas[self.current_element_idx] - ScalarField::one()));
         // If dummy round, make no update to the partial_evaluation_result
-        self.partial_evaluation_result = (F::ONE - indicator) * self.partial_evaluation_result
+        self.partial_evaluation_result = (ScalarField::one() - indicator) * self.partial_evaluation_result
             + indicator * self.partial_evaluation_result * current_univariate_eval;
         self.current_element_idx += 1;
         self.periodicity *= 2;

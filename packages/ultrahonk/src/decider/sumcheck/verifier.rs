@@ -22,7 +22,7 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
         &mut self,
         transcript: &mut Transcript<H>,
         padding_indicator_array: &[ScalarField; CONST_PROOF_SIZE_LOG_N],
-    ) -> HonkVerifyResult<SumcheckVerifierOutput<ScalarField>> {
+    ) -> HonkVerifyResult<SumcheckVerifierOutput> {
         let mut verified: bool = true;
 
         // Pad gate challenges for Protogalaxy DeciderVerifier and AVM

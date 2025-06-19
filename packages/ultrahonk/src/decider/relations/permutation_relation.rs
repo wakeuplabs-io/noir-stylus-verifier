@@ -1,16 +1,16 @@
 use super::Relation;
 use crate::alloc::borrow::ToOwned;
 use crate::decider::types::{ClaimedEvaluations, RelationParameters};
-use ark_ff::PrimeField;
+use crate::types::ScalarField;
 
 #[derive(Clone, Debug, Default)]
-pub(crate) struct UltraPermutationRelationEvals<F: PrimeField> {
-    pub(crate) r0: F,
-    pub(crate) r1: F,
+pub(crate) struct UltraPermutationRelationEvals {
+    pub(crate) r0: ScalarField,
+    pub(crate) r1: ScalarField,
 }
 
-impl<F: PrimeField> UltraPermutationRelationEvals<F> {
-    pub(crate) fn scale_and_batch_elements(&self, running_challenge: &[F], result: &mut F) {
+impl UltraPermutationRelationEvals {
+    pub(crate) fn scale_and_batch_elements(&self, running_challenge: &[ScalarField], result: &mut ScalarField) {
         assert!(running_challenge.len() == UltraPermutationRelation::NUM_RELATIONS);
 
         *result += self.r0 * running_challenge[0];
@@ -24,14 +24,14 @@ impl UltraPermutationRelation {
     pub(crate) const NUM_RELATIONS: usize = 2;
 }
 
-impl<F: PrimeField> Relation<F> for UltraPermutationRelation {
-    type VerifyAcc = UltraPermutationRelationEvals<F>;
+impl Relation for UltraPermutationRelation {
+    type VerifyAcc = UltraPermutationRelationEvals;
 
     fn verify_accumulate(
         univariate_accumulator: &mut Self::VerifyAcc,
-        input: &ClaimedEvaluations<F>,
-        relation_parameters: &RelationParameters<F>,
-        scaling_factor: &F,
+        input: &ClaimedEvaluations,
+        relation_parameters: &RelationParameters,
+        scaling_factor: &ScalarField,
     ) {
         let w_1 = input.witness.w_l();
         let w_2 = input.witness.w_r();

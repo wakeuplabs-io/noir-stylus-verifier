@@ -1,16 +1,16 @@
 use super::Relation;
 use crate::alloc::borrow::ToOwned;
 use crate::decider::types::{ClaimedEvaluations, RelationParameters};
-use ark_ff::PrimeField;
+use crate::types::ScalarField;
 
 #[derive(Clone, Debug, Default)]
-pub(crate) struct LogDerivLookupRelationEvals<F: PrimeField> {
-    pub(crate) r0: F,
-    pub(crate) r1: F,
+pub(crate) struct LogDerivLookupRelationEvals {
+    pub(crate) r0: ScalarField,
+    pub(crate) r1: ScalarField,
 }
 
-impl<F: PrimeField> LogDerivLookupRelationEvals<F> {
-    pub(crate) fn scale_and_batch_elements(&self, running_challenge: &[F], result: &mut F) {
+impl LogDerivLookupRelationEvals {
+    pub(crate) fn scale_and_batch_elements(&self, running_challenge: &[ScalarField], result: &mut ScalarField) {
         assert!(running_challenge.len() == LogDerivLookupRelation::NUM_RELATIONS);
 
         *result += self.r0 * running_challenge[0];
@@ -25,17 +25,17 @@ impl LogDerivLookupRelation {
 }
 
 impl LogDerivLookupRelation {
-    fn compute_inverse_exists_verifier<F: PrimeField>(input: &ClaimedEvaluations<F>) -> F {
+    fn compute_inverse_exists_verifier(input: &ClaimedEvaluations) -> ScalarField {
         let row_has_write = input.witness.lookup_read_tags();
         let row_has_read = input.precomputed.q_lookup();
 
         -(row_has_write.to_owned() * row_has_read) + row_has_write + row_has_read
     }
 
-    fn compute_read_term_verifier<F: PrimeField>(
-        input: &ClaimedEvaluations<F>,
-        relation_parameters: &RelationParameters<F>,
-    ) -> F {
+    fn compute_read_term_verifier(
+        input: &ClaimedEvaluations,
+        relation_parameters: &RelationParameters,
+    ) -> ScalarField {
         let gamma = &relation_parameters.gamma;
         let eta_1 = &relation_parameters.eta_1;
         let eta_2 = &relation_parameters.eta_2;
@@ -67,10 +67,10 @@ impl LogDerivLookupRelation {
             + table_index.to_owned() * eta_3
     }
 
-    fn compute_write_term_verifier<F: PrimeField>(
-        input: &ClaimedEvaluations<F>,
-        relation_parameters: &RelationParameters<F>,
-    ) -> F {
+    fn compute_write_term_verifier(
+        input: &ClaimedEvaluations,
+        relation_parameters: &RelationParameters,
+    ) -> ScalarField {
         let gamma = &relation_parameters.gamma;
         let eta_1 = &relation_parameters.eta_1;
         let eta_2 = &relation_parameters.eta_2;
@@ -89,14 +89,14 @@ impl LogDerivLookupRelation {
     }
 }
 
-impl<F: PrimeField> Relation<F> for LogDerivLookupRelation {
-    type VerifyAcc = LogDerivLookupRelationEvals<F>;
+impl Relation for LogDerivLookupRelation {
+    type VerifyAcc = LogDerivLookupRelationEvals;
 
     fn verify_accumulate(
         univariate_accumulator: &mut Self::VerifyAcc,
-        input: &ClaimedEvaluations<F>,
-        relation_parameters: &RelationParameters<F>,
-        scaling_factor: &F,
+        input: &ClaimedEvaluations,
+        relation_parameters: &RelationParameters,
+        scaling_factor: &ScalarField,
     ) {
         let inverses = input.witness.lookup_inverses(); // Degree 1
         let read_counts = input.witness.lookup_read_counts(); // Degree 1

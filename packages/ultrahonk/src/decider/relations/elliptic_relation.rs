@@ -1,18 +1,22 @@
 use crate::alloc::borrow::ToOwned;
 use crate::backends::G1ArithmeticBackend;
-use crate::decider::types::{ClaimedEvaluations, RelationParameters};
 use crate::constants::HONK_CURVE_B;
+use crate::decider::types::{ClaimedEvaluations, RelationParameters};
 use crate::types::ScalarField;
 use ark_ff::{AdditiveGroup, Field, PrimeField};
 
 #[derive(Clone, Debug, Default)]
-pub(crate) struct EllipticRelationEvals<F: PrimeField> {
-    pub(crate) r0: F,
-    pub(crate) r1: F,
+pub(crate) struct EllipticRelationEvals {
+    pub(crate) r0: ScalarField,
+    pub(crate) r1: ScalarField,
 }
 
-impl<F: PrimeField> EllipticRelationEvals<F> {
-    pub(crate) fn scale_and_batch_elements(&self, running_challenge: &[F], result: &mut F) {
+impl EllipticRelationEvals {
+    pub(crate) fn scale_and_batch_elements(
+        &self,
+        running_challenge: &[ScalarField],
+        result: &mut ScalarField,
+    ) {
         assert!(running_challenge.len() == EllipticRelation::NUM_RELATIONS);
 
         *result += self.r0 * running_challenge[0];
@@ -26,13 +30,11 @@ impl EllipticRelation {
     pub(crate) const NUM_RELATIONS: usize = 2;
 
     pub(crate) fn verify_accumulate<P: G1ArithmeticBackend>(
-        univariate_accumulator: &mut EllipticRelationEvals<ScalarField>,
-        input: &ClaimedEvaluations<ScalarField>,
-        _relation_parameters: &RelationParameters<ScalarField>,
+        univariate_accumulator: &mut EllipticRelationEvals,
+        input: &ClaimedEvaluations,
+        _relation_parameters: &RelationParameters,
         scaling_factor: &ScalarField,
-    ) where
-        ScalarField: PrimeField,
-    {
+    ) {
         // AZTEC TODO(@zac - williamson #2608 when Pedersen refactor is completed,
         // replace old addition relations with these ones and
         // remove endomorphism coefficient in ecc add gate(not used))

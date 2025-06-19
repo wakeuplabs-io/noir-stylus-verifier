@@ -1,9 +1,9 @@
 use alloc::vec::Vec;
-use ark_ff::PrimeField;
+use crate::types::ScalarField;
 
 /// A parameter set containing the parameters for the Poseidon2 permutation.
 #[derive(Clone, Debug)]
-pub struct Poseidon2Params<F: PrimeField, const T: usize, const D: u64> {
+pub struct Poseidon2Params<const T: usize, const D: u64> {
     /// The amount of external rounds at the beginning of the permutation.
     pub rounds_f_beginning: usize,
     /// The amount of external rounds at the end of the permutation.
@@ -11,20 +11,20 @@ pub struct Poseidon2Params<F: PrimeField, const T: usize, const D: u64> {
     /// The amount of internal rounds.
     pub rounds_p: usize,
     /// The diagonal of t x t matrix of the internal permutation. Each element is taken minus 1 for more efficient implementations.
-    pub mat_internal_diag_m_1: &'static [F; T],
+    pub mat_internal_diag_m_1: &'static [ScalarField; T],
     /// The round constants of the external rounds.
-    pub round_constants_external: &'static Vec<[F; T]>,
+    pub round_constants_external: &'static Vec<[ScalarField; T]>,
     /// The round constants of the internal rounds.
-    pub round_constants_internal: &'static Vec<F>,
+    pub round_constants_internal: &'static Vec<ScalarField>,
 }
 
-impl<F: PrimeField, const T: usize, const D: u64> Poseidon2Params<F, T, D> {
+impl< const T: usize, const D: u64> Poseidon2Params< T, D> {
     pub(crate) fn new(
         rounds_f: usize,
         rounds_p: usize,
-        mat_internal_diag_m_1: &'static [F; T],
-        round_constants_external: &'static Vec<[F; T]>,
-        round_constants_internal: &'static Vec<F>,
+        mat_internal_diag_m_1: &'static [ScalarField; T],
+        round_constants_external: &'static Vec<[ScalarField; T]>,
+        round_constants_internal: &'static Vec<ScalarField>,
     ) -> Self {
         assert!(T == 2 || T == 3 || ((T <= 24) && (T % 4 == 0)));
         assert!(D % 2 == 1);

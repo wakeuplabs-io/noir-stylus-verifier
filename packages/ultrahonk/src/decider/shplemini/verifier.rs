@@ -20,26 +20,26 @@ use ark_ff::{Field, One, Zero};
 
 impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
     pub fn get_g_shift_evaluations(
-        evaluations: &ClaimedEvaluations<ScalarField>,
+        evaluations: &ClaimedEvaluations,
     ) -> PolyGShift<ScalarField> {
         PolyGShift {
             wires: &evaluations.shifted_witness,
         }
     }
 
-    pub fn get_g_shift_comms(evaluations: &VerifierCommitments<G1Affine>) -> PolyG<G1Affine> {
+    pub fn get_g_shift_comms(evaluations: &VerifierCommitments) -> PolyG<G1Affine> {
         PolyG {
             wires: evaluations.witness.to_be_shifted().try_into().unwrap(),
         }
     }
 
-    pub fn get_f_evaluations(evaluations: &ClaimedEvaluations<ScalarField>) -> PolyF<ScalarField> {
+    pub fn get_f_evaluations(evaluations: &ClaimedEvaluations) -> PolyF<ScalarField> {
         PolyF {
             precomputed: &evaluations.precomputed,
             witness: &evaluations.witness,
         }
     }
-    pub fn get_f_comms(evaluations: &ClaimedEvaluations<G1Affine>) -> PolyF<G1Affine> {
+    pub fn get_f_comms(evaluations: &VerifierCommitments) -> PolyF<G1Affine> {
         PolyF {
             precomputed: &evaluations.precomputed,
             witness: &evaluations.witness,
