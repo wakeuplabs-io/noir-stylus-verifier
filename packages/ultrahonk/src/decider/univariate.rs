@@ -2,11 +2,11 @@ use crate::{decider::barycentric::Barycentric, types::ScalarField};
 use ark_ff::{One, Zero};
 
 #[derive(Clone, Debug)]
-pub struct Univariate<F, const SIZE: usize> {
-    pub evaluations: [F; SIZE],
+pub struct Univariate<const SIZE: usize> {
+    pub evaluations: [ScalarField; SIZE],
 }
 
-impl<const SIZE: usize> Univariate<ScalarField, SIZE> {
+impl<const SIZE: usize> Univariate<SIZE> {
     pub(crate) fn evaluate(&self, u: ScalarField) -> ScalarField {
         if u == ScalarField::zero() {
             return self.evaluations[0];

@@ -32,7 +32,7 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
             self.memory.relation_parameters.gate_challenges.to_owned(),
         );
 
-        let mut sum_check_round = SumcheckVerifierRound::<P>::default();
+        let mut sum_check_round = SumcheckVerifierRound::default();
         let mut multivariate_challenge = Vec::with_capacity(CONST_PROOF_SIZE_LOG_N);
 
         for (round_idx, &padding_value) in padding_indicator_array.iter().enumerate() {
@@ -76,7 +76,7 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
         // Evaluate the Honk relation at the point (u_0, ..., u_{d-1}) using claimed evaluations of prover polynomials.
 
         let full_honk_purported_value =
-            SumcheckVerifierRound::<P>::compute_full_relation_purported_value(
+            SumcheckVerifierRound::compute_full_relation_purported_value(
                 &self.memory.claimed_evaluations,
                 &self.memory.relation_parameters,
                 gate_separators,

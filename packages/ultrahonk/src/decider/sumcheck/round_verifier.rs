@@ -1,6 +1,6 @@
 use super::super::univariate::Univariate;
 use crate::{
-    backends::G1ArithmeticBackend, decider::{
+    decider::{
         relations::{
             auxiliary_relation::AuxiliaryRelation,
             delta_range_constraint_relation::DeltaRangeConstraintRelation,
@@ -12,37 +12,36 @@ use crate::{
             ultra_arithmetic_relation::UltraArithmeticRelation,
             AllRelationEvaluations, Relation,
         },
-        types::{ClaimedEvaluations, RelationParameters, GateSeparatorPolynomial},
-    }, types::{ScalarField}
+        types::{ClaimedEvaluations, GateSeparatorPolynomial, RelationParameters},
+    },
+    types::ScalarField,
 };
 use ark_ff::{One, Zero};
-use core::marker::PhantomData;
 
-pub(crate) type SumcheckRoundOutput<F, const U: usize> = Univariate<F, U>;
+pub(crate) type SumcheckRoundOutput<const U: usize> = Univariate<U>;
 
-pub(crate) struct SumcheckVerifierRound<P: G1ArithmeticBackend> {
+pub(crate) struct SumcheckVerifierRound {
     pub(crate) target_total_sum: ScalarField,
     pub(crate) round_failed: bool,
-    phantom: PhantomData<P>,
 }
 
-impl<P: G1ArithmeticBackend> Default for SumcheckVerifierRound<P> {
+impl Default for SumcheckVerifierRound {
     fn default() -> Self {
         Self::new()
     }
 }
-impl<P: G1ArithmeticBackend> SumcheckVerifierRound<P> {
+
+impl SumcheckVerifierRound {
     pub(crate) fn new() -> Self {
         Self {
             target_total_sum: ScalarField::zero(),
             round_failed: false,
-            phantom: PhantomData,
         }
     }
 
     pub(crate) fn compute_next_target_sum<const SIZE: usize>(
         &mut self,
-        univariate: &SumcheckRoundOutput<ScalarField, SIZE>,
+        univariate: &SumcheckRoundOutput<SIZE>,
         round_challenge: ScalarField,
         indicator: ScalarField,
     ) {
@@ -52,7 +51,7 @@ impl<P: G1ArithmeticBackend> SumcheckVerifierRound<P> {
 
     pub(crate) fn check_sum<const SIZE: usize>(
         &mut self,
-        univariate: &SumcheckRoundOutput<ScalarField, SIZE>,
+        univariate: &SumcheckRoundOutput<SIZE>,
         indicator: ScalarField,
     ) -> bool {
         let total_sum = (ScalarField::one() - indicator) * self.target_total_sum
@@ -84,7 +83,7 @@ impl<P: G1ArithmeticBackend> SumcheckVerifierRound<P> {
         relation_parameters: &RelationParameters,
         scaling_factor: &ScalarField,
     ) {
-        EllipticRelation::verify_accumulate::<P>(
+        EllipticRelation::verify_accumulate(
             univariate_accumulator,
             extended_edges,
             relation_parameters,
@@ -153,7 +152,6 @@ impl<P: G1ArithmeticBackend> SumcheckVerifierRound<P> {
         relation_parameters: &RelationParameters,
         gate_sparators: GateSeparatorPolynomial,
     ) -> ScalarField {
-
         let mut relation_evaluations = AllRelationEvaluations::default();
 
         Self::accumulate_relation_evaluations(

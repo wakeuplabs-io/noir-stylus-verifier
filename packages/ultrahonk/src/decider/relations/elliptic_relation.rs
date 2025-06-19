@@ -1,9 +1,8 @@
 use crate::alloc::borrow::ToOwned;
-use crate::backends::G1ArithmeticBackend;
 use crate::constants::HONK_CURVE_B;
 use crate::decider::types::{ClaimedEvaluations, RelationParameters};
 use crate::types::ScalarField;
-use ark_ff::{AdditiveGroup, Field, PrimeField};
+use ark_ff::{AdditiveGroup, Field};
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct EllipticRelationEvals {
@@ -29,7 +28,7 @@ pub(crate) struct EllipticRelation {}
 impl EllipticRelation {
     pub(crate) const NUM_RELATIONS: usize = 2;
 
-    pub(crate) fn verify_accumulate<P: G1ArithmeticBackend>(
+    pub(crate) fn verify_accumulate(
         univariate_accumulator: &mut EllipticRelationEvals,
         input: &ClaimedEvaluations,
         _relation_parameters: &RelationParameters,
