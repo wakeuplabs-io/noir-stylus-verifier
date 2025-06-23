@@ -10,13 +10,17 @@ build-ultrahonk:
   cargo build -p ultrahonk --release --features ark-ec/only-arithmetic-backend --target wasm32-unknown-unknown
 
 build-contracts:
-  cargo build -p contracts --target wasm32-unknown-unknown --release --features verifier
+  cargo +nightly build -p contracts --target wasm32-unknown-unknown --release --features verifier -Z unstable-options -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort
+
+profile-contracts: 
+  twiggy top target/wasm32-unknown-unknown/release/contracts.wasm > ./profile/top.txt
+  twiggy monos target/wasm32-unknown-unknown/release/contracts.wasm > ./profile/monos.txt
+  twiggy paths target/wasm32-unknown-unknown/release/contracts.wasm > ./profile/path.txt
+  twiggy dominators target/wasm32-unknown-unknown/release/contracts.wasm > ./profile/dominators.txt
+  twiggy garbage target/wasm32-unknown-unknown/release/contracts.wasm > ./profile/garbage.txt
 
 optimize-contracts: build-contracts
-  twiggy top -n 100 target/wasm32-unknown-unknown/release/contracts.wasm > top.txt
-  twiggy monos -n 100 target/wasm32-unknown-unknown/release/contracts.wasm > monos.txt
   wasm-opt --enable-bulk-memory  -Oz -o ./target/wasm32-unknown-unknown/release/contracts-opt.wasm ./target/wasm32-unknown-unknown/release/contracts.wasm
-
 
 test-all:
   cargo test --release --all-features
