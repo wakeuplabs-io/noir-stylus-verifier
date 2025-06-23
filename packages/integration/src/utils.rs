@@ -1,6 +1,5 @@
 //! Utilities for the deploy scripts.
 
-use colored::Colorize;
 use crate::{constants::MANIFEST_DIR_ENV_VAR, errors::ScriptError, types::StylusContract};
 use alloy::{
     network::{Ethereum, EthereumWallet},
@@ -12,6 +11,7 @@ use alloy::{
 };
 use alloy_contract::{CallBuilder, CallDecoder};
 use alloy_primitives::Bytes;
+use colored::Colorize;
 use eyre::Result;
 use serde::Serialize;
 use std::{
@@ -166,7 +166,7 @@ pub fn build_stylus_contract(contract: &StylusContract) -> Result<PathBuf, Scrip
         .ancestors()
         .nth(2)
         .ok_or(ScriptError::ContractCompilation(String::from(
-            "Could not find contracts directory",
+            "Could not find root directory",
         )))?;
 
     // Build the contracts
@@ -209,7 +209,7 @@ pub async fn deploy_stylus_contract(
         .ancestors()
         .nth(2)
         .ok_or(ScriptError::ContractCompilation(String::from(
-            "Could not find contracts directory",
+            "Could not find root directory",
         )))?;
 
     // Compute the expected deployment address
@@ -229,7 +229,8 @@ pub async fn deploy_stylus_contract(
     deploy_cmd.arg(priv_key);
     deploy_cmd.current_dir(workspace_path);
 
-    command_success_or(deploy_cmd, "Failed to deploy contracts")?;
+    command_success_or(deploy_cmd, "Failed to deploy contract")
+        .map_err(|e| ScriptError::ContractDeployment(e.to_string()))?;
 
     Ok(deployed_address)
 }
