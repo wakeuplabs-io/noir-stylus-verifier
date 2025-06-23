@@ -1,5 +1,6 @@
 //! Integration tests for precompile functionality
 
+use alloy_primitives::keccak256;
 use ark_ec::AffineRepr;
 use ark_ff::UniformRand;
 use contracts::utils::serde_def_types::{SerdeG1Affine, SerdeG2Affine, SerdeScalarField};
@@ -75,3 +76,21 @@ async fn test_ec_pairing(ctx: TestContext) -> Result<()> {
     assert_true_result!(res)
 }
 integration_test_async!(test_ec_pairing);
+
+
+async fn test_hash(ctx: TestContext) -> Result<()> {
+    let contract = PrecompileTestContract::new(ctx.precompiles_contract_address, ctx.client.provider());
+    let mut rng = thread_rng();
+
+    let mut msg = [0u8; 32];
+    rng.fill_bytes(&mut msg);
+
+    let c_bytes = contract
+        .testHash(serialize_to_calldata(&msg)?)
+        .call()
+        .await?
+        ._0;
+
+    assert_eq_result!(c_bytes, keccak256(&msg).to_vec())
+}
+integration_test_async!(test_hash);

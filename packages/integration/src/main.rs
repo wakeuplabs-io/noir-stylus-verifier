@@ -13,17 +13,16 @@ use clap::Parser;
 use cli::Cli;
 use colored::Colorize;
 use std::io::{stdout, Write};
-use std::{borrow::Borrow, process::exit};
-use tokio::runtime::{Builder as RuntimeBuilder, Handle};
+use std::process::exit;
 
 mod abis;
+mod assertions;
 mod cli;
 mod constants;
 mod errors;
 mod tests;
 mod types;
 mod utils;
-mod assertions;
 
 /// An instance of the verifier contract
 pub type VerifierTestInstance = VerifierInstance<(), DynProvider, Ethereum>;
@@ -140,9 +139,7 @@ async fn main() {
     let mut all_success = true;
     for test_wrapper in inventory::iter::<TestWrapper>.into_iter() {
         let test = &test_wrapper.0;
-        if args.borrow().test.is_some()
-            && !test.name.contains(args.borrow().test.as_deref().unwrap())
-        {
+        if args.test.is_some() && !test.name.contains(args.test.as_deref().unwrap()) {
             continue;
         }
 
