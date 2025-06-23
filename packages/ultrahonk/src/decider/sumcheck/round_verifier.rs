@@ -1,7 +1,7 @@
 use super::super::univariate::Univariate;
 use crate::{
     decider::{
-        relations::{
+        sumcheck::relations::{
             auxiliary_relation::AuxiliaryRelation,
             delta_range_constraint_relation::DeltaRangeConstraintRelation,
             elliptic_relation::{EllipticRelation, EllipticRelationEvals},
