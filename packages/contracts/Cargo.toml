@@ -25,7 +25,6 @@ postcard.workspace = true
 alloy.workspace = true
 alloy-primitives.workspace = true
 tokio = { version = "1.12.0", features = ["full"] }
-e2e.workspace = true
 stylus-sdk = { workspace = true, features = ["stylus-test"] }
 rand.workspace = true
 eyre.workspace = true
