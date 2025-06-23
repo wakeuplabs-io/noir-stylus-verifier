@@ -72,7 +72,7 @@ lto = true               # link time optimization
 rpath = false            # no run-time search path
 debug-assertions = false # prune debug assertions
 incremental = false      # no incremental builds
-opt-level = 's'          # optimize for size
+opt-level = 'z'          # optimize for size
 
 # but do optimize all the other dependencies
 [profile.release.package."*"]
