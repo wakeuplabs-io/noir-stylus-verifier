@@ -5,7 +5,7 @@ sol!(
     #[sol(rpc)]
    contract Verifier {
         #[derive(Debug)]
-        function verify() internal pure returns (bool);
+        function verify(bytes proof_bytes, bytes public_inputs_bytes, bytes vk_bytes) internal pure returns (bool);
     }
 
     #[sol(rpc)]

@@ -1,6 +1,6 @@
 #![cfg(feature = "e2e-backends")]
 
-use abi::{PrecompileTestContract, Verifier};
+use abi::{PrecompileTestContract};
 use alloy_primitives::keccak256;
 use alloy_primitives::Bytes;
 use ark_ec::AffineRepr;
@@ -14,6 +14,7 @@ use ultrahonk::{
     serialize::{BytesDeserializable, BytesSerializable},
     types::{G1Affine, G2Affine, ScalarField},
 };
+use eyre::Result;
 
 mod abi;
 

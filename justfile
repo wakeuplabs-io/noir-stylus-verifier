@@ -10,7 +10,7 @@ build-ultrahonk:
   cargo build -p ultrahonk --release --features ark-ec/only-arithmetic-backend --target wasm32-unknown-unknown
 
 build-contracts:
-  cargo +nightly build -p contracts --target wasm32-unknown-unknown --release --features verifier -Z unstable-options -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort
+  cargo build -p contracts --target wasm32-unknown-unknown --release --features verifier -Z unstable-options -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort
 
 profile-contracts: 
   twiggy top target/wasm32-unknown-unknown/release/contracts.wasm > ./profile/top.txt
@@ -34,6 +34,9 @@ test-contracts:
 
 test-e2e:
   ./scripts/e2e-tests.sh
+
+nitro-testnode:
+  ./scripts/nitro-testnode.sh
 
 check-pr: lint test-all
 

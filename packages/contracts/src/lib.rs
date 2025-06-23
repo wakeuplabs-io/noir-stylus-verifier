@@ -2,7 +2,11 @@
 #![cfg_attr(not(any(test, feature = "export-abi")), no_main)]
 #![cfg_attr(not(any(test, feature = "export-abi")), no_std)]
 
+#[cfg(any(
+    feature = "e2e-backends",
+))]
 pub mod mocks;
+
 pub mod utils;
 
 #[macro_use]
@@ -44,19 +48,5 @@ impl VerifierContract {
             &vk,
         )
         .unwrap()
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test_verifier() {
-        use stylus_sdk::testing::*;
-        let vm = TestVM::default();
-        let contract = VerifierContract::from(&vm);
-
-        assert!(true);
     }
 }

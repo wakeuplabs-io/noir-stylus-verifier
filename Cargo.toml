@@ -59,6 +59,8 @@ hex = { version = "0.4.3" }
 
 e2e = { git = "https://github.com/OpenZeppelin/rust-contracts-stylus", tag = "v0.2.0-rc.0" }
 
+eyre = { version = "0.6.10" }
+
 [patch.crates-io]
 ark-ec = { path = "./packages/ark-ec" }
 
