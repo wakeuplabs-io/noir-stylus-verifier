@@ -9,8 +9,9 @@ build-all:
 build-ultrahonk:
   cargo build -p ultrahonk --release --features ark-ec/only-arithmetic-backend --target wasm32-unknown-unknown
 
-build-contracts:
-  cargo build -p contracts --target wasm32-unknown-unknown --release --features verifier -Z unstable-options -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort
+build-contract contract:
+  cargo build -p contracts --target wasm32-unknown-unknown --release --features {{contract}} -Z unstable-options -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort && \
+  mv ./target/wasm32-unknown-unknown/release/contracts.wasm ./target/wasm32-unknown-unknown/release/{{contract}}.wasm
 
 profile-contracts: 
   twiggy top target/wasm32-unknown-unknown/release/contracts.wasm > ./profile/top.txt
@@ -19,8 +20,11 @@ profile-contracts:
   twiggy dominators target/wasm32-unknown-unknown/release/contracts.wasm > ./profile/dominators.txt
   twiggy garbage target/wasm32-unknown-unknown/release/contracts.wasm > ./profile/garbage.txt
 
-optimize-contracts: build-contracts
-  wasm-opt --enable-bulk-memory  -Oz -o ./target/wasm32-unknown-unknown/release/contracts-opt.wasm ./target/wasm32-unknown-unknown/release/contracts.wasm
+optimize-contract contract:
+  wasm-opt --enable-bulk-memory  -Oz -o ./target/wasm32-unknown-unknown/release/{{contract}}-opt.wasm ./target/wasm32-unknown-unknown/release/{{contract}}.wasm
+
+deploy-contract contract rpc_url="http://localhost:8547" priv_key="0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659":
+  cargo stylus deploy -e {{rpc_url}} --wasm-file ./target/wasm32-unknown-unknown/release/{{contract}}-opt.wasm --private-key {{priv_key}} --verbose --no-verify
 
 test-all:
   cargo test --release --all-features
@@ -40,5 +44,7 @@ nitro-testnode:
 
 check-pr: lint test-all
 
-check-contracts: optimize-contracts
-  cargo stylus check -e https://sepolia-rollup.arbitrum.io/rpc --wasm-file ./target/wasm32-unknown-unknown/release/contracts-opt.wasm --verbose
+check-contract contract: 
+  just build-contract {{contract}} && \
+  just optimize-contract {{contract}} && \
+  cargo stylus check -e https://sepolia-rollup.arbitrum.io/rpc --wasm-file ./target/wasm32-unknown-unknown/release/{{contract}}-opt.wasm --verbose

@@ -1,5 +1,5 @@
 [workspace]
-members = ["packages/ultrahonk", "packages/contracts", "packages/ark-ec"]
+members = ["packages/ultrahonk", "packages/contracts", "packages/ark-ec", "packages/integration"]
 resolver = "2"
 
 [workspace.package]
@@ -28,13 +28,14 @@ serde = { version = "1.0.193", features = ["derive", "rc"] }
 sha3 = "0.10.8"
 thiserror = "2"
 tracing = { version = "0.1.40" }
+tracing-subscriber = { version = "0.3.0" }
 serde_with = { version = "3.4", default-features = false, features = [
     "macros",
     "alloc",
 ] }
 postcard = { version = "1.0.0", default-features = false, features = ["alloc"] }
-
-alloy = { version = "=0.7.3", features = [
+alloy-contract = { version = "0.11", default-features = false }
+alloy = { version = "=0.11", features = [
   "contract",
   "network",
   "providers",
@@ -56,10 +57,18 @@ alloy-sol-macro-expander = { version = "=0.8.20", default-features = false }
 alloy-sol-macro-input = { version = "=0.8.20", default-features = false }
 
 hex = { version = "0.4.3" }
+clap = { version = "4.4.7", features = ["derive"] }
+eyre = { version = "0.6.10" }
+tokio = { version = "1.12.0", features = ["full"] }
+inventory = { version = "0.3.20" }
+itertools = "0.12"
+colored = "2.0.0"
+futures = "0.3.31"
 
+
+# TODO: remove
 e2e = { git = "https://github.com/OpenZeppelin/rust-contracts-stylus", tag = "v0.2.0-rc.0" }
 
-eyre = { version = "0.6.10" }
 
 [patch.crates-io]
 ark-ec = { path = "./packages/ark-ec" }
