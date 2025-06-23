@@ -23,6 +23,7 @@ mod errors;
 mod tests;
 mod types;
 mod utils;
+mod assertions;
 
 /// An instance of the verifier contract
 pub type VerifierTestInstance = VerifierInstance<(), DynProvider, Ethereum>;
@@ -45,13 +46,11 @@ pub struct TestContext {
 
 impl TestContext {
     async fn try_new(value: Cli) -> Result<Self, ScriptError> {
-        let client = Handle::current()
-            .block_on(setup_client(&value.priv_key, &value.rpc_url))
-            .unwrap();
+        let client = setup_client(&value.priv_key, &value.rpc_url).await.unwrap();
 
         // build contracts
-        build_stylus_contract(&StylusContract::Verifier).unwrap();
         build_stylus_contract(&StylusContract::PrecompileTestContract).unwrap();
+        // build_stylus_contract(&StylusContract::Verifier).unwrap();
 
         // deploy contracts
         let precompiles_contract_address = deploy_stylus_contract(
@@ -61,18 +60,18 @@ impl TestContext {
             client.clone(),
         )
         .await?;
-        let verifier_contract_address = deploy_stylus_contract(
-            &StylusContract::Verifier,
-            &value.rpc_url,
-            &value.priv_key,
-            client.clone(),
-        )
-        .await?;
+        // let verifier_contract_address = deploy_stylus_contract(
+        //     &StylusContract::Verifier,
+        //     &value.rpc_url,
+        //     &value.priv_key,
+        //     client.clone(),
+        // )
+        // .await?;
 
         Ok(Self {
             client,
             precompiles_contract_address,
-            verifier_contract_address,
+            verifier_contract_address: Address::random(),
         })
     }
 
@@ -111,70 +110,57 @@ struct SkipCLI {
     skip: String,
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let args = Cli::parse();
     let print_harness = match args.verbosity {
         TestVerbosity::Quiet => false,
         _ => true,
     };
 
-    let runtime = RuntimeBuilder::new_multi_thread()
-        .enable_all()
-        .build()
-        .unwrap();
+    let tests_ctx = TestContext::try_new(args.clone()).await.unwrap();
 
-    let tests_ctx: TestContext = Handle::current()
-        .block_on(TestContext::try_new(args.clone()))
-        .unwrap();
+    // ---------
+    // | Setup |
+    // ---------
 
-    let result = runtime.spawn_blocking(move || {
-        // ---------
-        // | Setup |
-        // ---------
+    if print_harness {
+        println!("\n\n{}\n", "Running integration tests...".blue());
+    }
+
+    // Call the setup callback if requested
+    if matches!(args.verbosity, TestVerbosity::Verbose) {
+        tracing_subscriber::fmt().pretty().init();
+    }
+
+    // ----------------
+    // | Test Harness |
+    // ----------------
+
+    let mut all_success = true;
+    for test_wrapper in inventory::iter::<TestWrapper>.into_iter() {
+        let test = &test_wrapper.0;
+        if args.borrow().test.is_some()
+            && !test.name.contains(args.borrow().test.as_deref().unwrap())
+        {
+            continue;
+        }
 
         if print_harness {
-            println!("\n\n{}\n", "Running integration tests...".blue());
+            // Flush the write buffer before the test executes. We print success or
+            // failure on the same line as the "Running", but if the
+            // test panics, we want to know which test was run
+            print!("Running {}... ", test.name);
+            stdout().flush().unwrap();
         }
+        let res: eyre::Result<()> = match test.test_fn {
+            IntegrationTestFn::SynchronousFn(f) => f(tests_ctx.clone()),
+            IntegrationTestFn::AsynchronousFn(f) => f(tests_ctx.clone()).await,
+        };
 
-        // Call the setup callback if requested
-        if matches!(args.verbosity, TestVerbosity::Verbose) {
-            tracing_subscriber::fmt().pretty().init();
-        }
+        all_success &= validate_success(res, print_harness);
+    }
 
-        // ----------------
-        // | Test Harness |
-        // ----------------
-
-        let mut all_success = true;
-        for test_wrapper in inventory::iter::<TestWrapper>.into_iter() {
-            let test = &test_wrapper.0;
-            if args.borrow().test.is_some()
-                && !test.name.contains(args.borrow().test.as_deref().unwrap())
-            {
-                continue;
-            }
-
-            if print_harness {
-                // Flush the write buffer before the test executes. We print success or
-                // failure on the same line as the "Running", but if the
-                // test panics, we want to know which test was run
-                print!("Running {}... ", test.name);
-                stdout().flush().unwrap();
-            }
-            let res: eyre::Result<()> = match test.test_fn {
-                IntegrationTestFn::SynchronousFn(f) => f(tests_ctx.clone()),
-                IntegrationTestFn::AsynchronousFn(f) => {
-                    Handle::current().block_on(f(tests_ctx.clone()))
-                }
-            };
-
-            all_success &= validate_success(res, print_harness);
-        }
-
-        all_success
-    });
-
-    let all_success = runtime.block_on(result).unwrap();
     if all_success {
         if print_harness {
             println!("\n{}", "Integration tests successful!".green(),);

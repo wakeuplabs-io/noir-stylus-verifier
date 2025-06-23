@@ -12,7 +12,7 @@ use ultrahonk::backends::{G1ArithmeticBackend, HashBackend};
 
 /// The precompile testing contract, which itself is stateless
 #[storage]
-#[cfg_attr(feature = "e2e-backends", entrypoint)]
+#[entrypoint]
 struct PrecompileTestContract;
 
 #[public]

@@ -24,3 +24,5 @@ thiserror = { workspace = true }
 inventory = { workspace = true }
 futures = { workspace = true }
 colored = { workspace = true }
+ultrahonk = { path = "../ultrahonk" }
+contracts = { path = "../contracts" }

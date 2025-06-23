@@ -10,6 +10,8 @@ use alloy::{
     transports::http::reqwest::Url,
 };
 use alloy_contract::{CallBuilder, CallDecoder};
+use alloy_primitives::Bytes;
+use serde::Serialize;
 use std::{
     borrow::Borrow,
     env,
@@ -17,6 +19,7 @@ use std::{
     process::{Command, Stdio},
     str::FromStr,
 };
+use eyre::Result;
 
 /// The call builder type used in the scripts
 pub type EthereumCall<'a, C> = CallBuilder<(), &'a DynProvider, C, Ethereum>;
@@ -159,20 +162,22 @@ pub fn build_stylus_contract(contract: &StylusContract) -> Result<PathBuf, Scrip
     let current_dir = PathBuf::from(env::var(MANIFEST_DIR_ENV_VAR).unwrap());
     let workspace_path = current_dir
         .parent()
-        .ok_or(ScriptError::ContractCompilation(String::from(
-            "Could not find contracts directory",
-        )))?;
+        .ok_or(ScriptError::ContractCompilation(String::from("Could not find contracts directory")))?
+        .parent()
+        .ok_or(ScriptError::ContractCompilation(String::from("Could not find contracts directory")))?;
 
     // Build the contracts
     let mut build_cmd = Command::new("just");
-    build_cmd.arg(format!("build-contract {}", contract));
+    build_cmd.arg("build-contract");
+    build_cmd.arg(contract.to_string());
     build_cmd.current_dir(workspace_path);
 
     command_success_or(build_cmd, "Failed to build contracts")?;
 
     // Optimize the WASM file
     let mut optimize_cmd = Command::new("just");
-    optimize_cmd.arg(format!("optimize-contract {}", contract));
+    optimize_cmd.arg("optimize-contract");
+    optimize_cmd.arg(contract.to_string());
     optimize_cmd.current_dir(workspace_path);
 
     command_success_or(optimize_cmd, "Failed to optimize contracts")?;
@@ -195,9 +200,9 @@ pub async fn deploy_stylus_contract(
     let current_dir = PathBuf::from(env::var(MANIFEST_DIR_ENV_VAR).unwrap());
     let workspace_path = current_dir
         .parent()
-        .ok_or(ScriptError::ContractCompilation(String::from(
-            "Could not find contracts directory",
-        )))?;
+        .ok_or(ScriptError::ContractCompilation(String::from("Could not find contracts directory")))?
+        .parent()
+        .ok_or(ScriptError::ContractCompilation(String::from("Could not find contracts directory")))?;
 
     // Compute the expected deployment address
     let deployer_address = client.address();
@@ -210,13 +215,18 @@ pub async fn deploy_stylus_contract(
 
     let mut deploy_cmd = Command::new("just");
     deploy_cmd.stdout(Stdio::inherit()).stderr(Stdio::inherit());
-    deploy_cmd.arg(format!(
-        "deploy-contract {} {} {}",
-        contract, rpc_url, priv_key
-    ));
+    deploy_cmd.arg("deploy-contract");
+    deploy_cmd.arg(contract.to_string());
+    deploy_cmd.arg(rpc_url);
+    deploy_cmd.arg(priv_key);
     deploy_cmd.current_dir(workspace_path);
 
     command_success_or(deploy_cmd, "Failed to deploy contracts")?;
 
     Ok(deployed_address)
+}
+
+
+pub fn serialize_to_calldata<T: Serialize>(t: &T) -> Result<Bytes> {
+    Ok(postcard::to_allocvec(t)?.into())
 }

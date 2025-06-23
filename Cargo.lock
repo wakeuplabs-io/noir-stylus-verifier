@@ -2559,6 +2559,7 @@ dependencies = [
  "ark-ff 0.5.0",
  "clap",
  "colored",
+ "contracts",
  "eyre",
  "futures",
  "inventory",
@@ -2571,6 +2572,7 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-subscriber",
+ "ultrahonk",
 ]
 
 [[package]]

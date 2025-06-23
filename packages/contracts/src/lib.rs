@@ -3,7 +3,7 @@
 #![cfg_attr(not(any(test, feature = "export-abi")), no_std)]
 
 #[cfg(any(
-    feature = "e2e-backends",
+    feature = "precompile-test-contract",
 ))]
 pub mod mocks;
 

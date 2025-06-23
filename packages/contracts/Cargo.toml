@@ -36,7 +36,7 @@ export-abi = ["stylus-sdk/export-abi"]
 debug = ["stylus-sdk/debug"]
 mini-alloc = ["stylus-sdk/mini-alloc"]
 verifier = []
-e2e-backends = []
+precompile-test-contract = []
 
 [[bin]]
 name = "stylus-noir-verifier"

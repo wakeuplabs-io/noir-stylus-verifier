@@ -24,6 +24,8 @@ optimize-contract contract:
   wasm-opt --enable-bulk-memory  -Oz -o ./target/wasm32-unknown-unknown/release/{{contract}}-opt.wasm ./target/wasm32-unknown-unknown/release/{{contract}}.wasm
 
 deploy-contract contract rpc_url="http://localhost:8547" priv_key="0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659":
+  just build-contract {{contract}} && \
+  just optimize-contract {{contract}} && \
   cargo stylus deploy -e {{rpc_url}} --wasm-file ./target/wasm32-unknown-unknown/release/{{contract}}-opt.wasm --private-key {{priv_key}} --verbose --no-verify
 
 test-all:

@@ -1,5 +1,3 @@
-#![cfg(feature = "e2e-backends")]
-
 //! Types & trait implementations to enable deriving serde::{Serialize,
 //! Deserialize} on the foreign Arkworks, Alloy, and other types that we compose
 //! into complex structs.

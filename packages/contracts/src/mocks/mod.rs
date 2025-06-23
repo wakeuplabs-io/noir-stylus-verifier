@@ -1,3 +1,3 @@
-#![cfg(feature = "e2e-backends")]
+#![cfg(feature = "precompile-test-contract")]
 
 pub mod backends;
