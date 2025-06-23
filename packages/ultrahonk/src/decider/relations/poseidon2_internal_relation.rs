@@ -1,11 +1,9 @@
 use super::Relation;
 use crate::alloc::borrow::ToOwned;
-use crate::decider::{
-    types::{ClaimedEvaluations, RelationParameters},
-};
-use crate::gadgets::poseidon2::POSEIDON2_BN254_T4_PARAMS;
+use crate::decider::types::{ClaimedEvaluations, RelationParameters};
 use crate::types::ScalarField;
-use ark_ff::{BigInteger, Field, PrimeField};
+use crate::Utils;
+use ark_ff::Field;
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct Poseidon2InternalRelationEvals {
@@ -16,7 +14,11 @@ pub(crate) struct Poseidon2InternalRelationEvals {
 }
 
 impl Poseidon2InternalRelationEvals {
-    pub(crate) fn scale_and_batch_elements(&self, running_challenge: &[ScalarField], result: &mut ScalarField) {
+    pub(crate) fn scale_and_batch_elements(
+        &self,
+        running_challenge: &[ScalarField],
+        result: &mut ScalarField,
+    ) {
         assert!(running_challenge.len() == Poseidon2InternalRelation::NUM_RELATIONS);
 
         *result += self.r0 * running_challenge[0];
@@ -69,26 +71,22 @@ impl Relation for Poseidon2InternalRelation {
         let q_pos_by_scaling = q_poseidon2_internal.to_owned() * scaling_factor;
 
         // TACEO TODO this poseidon instance is very hardcoded to the bn254 curve
-        let internal_matrix_diag_0 = ScalarField::from_le_bytes_mod_order(
-            &POSEIDON2_BN254_T4_PARAMS.mat_internal_diag_m_1[0]
-                .into_bigint()
-                .to_bytes_le(),
-        );
-        let internal_matrix_diag_1 = ScalarField::from_le_bytes_mod_order(
-            &POSEIDON2_BN254_T4_PARAMS.mat_internal_diag_m_1[1]
-                .into_bigint()
-                .to_bytes_le(),
-        );
-        let internal_matrix_diag_2 = ScalarField::from_le_bytes_mod_order(
-            &POSEIDON2_BN254_T4_PARAMS.mat_internal_diag_m_1[2]
-                .into_bigint()
-                .to_bytes_le(),
-        );
-        let internal_matrix_diag_3 = ScalarField::from_le_bytes_mod_order(
-            &POSEIDON2_BN254_T4_PARAMS.mat_internal_diag_m_1[3]
-                .into_bigint()
-                .to_bytes_le(),
-        );
+        let internal_matrix_diag_0 = Utils::field_from_hex_string(
+            "0x10dc6e9c006ea38b04b1e03b4bd9490c0d03f98929ca1d7fb56821fd19d3b6e7",
+        )
+        .unwrap();
+        let internal_matrix_diag_1 = Utils::field_from_hex_string(
+            "0x0c28145b6a44df3e0149b3d0a30b3bb599df9756d4dd9b84a86b38cfb45a740b",
+        )
+        .unwrap();
+        let internal_matrix_diag_2 = Utils::field_from_hex_string(
+            "0x00544b8338791518b2c7645a50392798b21f75bb60e3596170067d00141cac15",
+        )
+        .unwrap();
+        let internal_matrix_diag_3 = Utils::field_from_hex_string(
+            "0x222c01175718386f2e2e82eb122789e352e105a3b8fa852613bc534433ee428b",
+        )
+        .unwrap();
 
         let mut v1 = u1 * internal_matrix_diag_0;
         v1 += &sum;
