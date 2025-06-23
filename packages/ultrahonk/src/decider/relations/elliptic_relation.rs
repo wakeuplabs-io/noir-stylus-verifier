@@ -1,5 +1,5 @@
 use crate::alloc::borrow::ToOwned;
-use crate::constants::HONK_CURVE_B;
+use crate::constants::get_honk_curve_b;
 use crate::decider::types::{ClaimedEvaluations, RelationParameters};
 use crate::types::ScalarField;
 use ark_ff::{AdditiveGroup, Field};
@@ -80,7 +80,7 @@ impl EllipticRelation {
         // N.B. we're using the equivalence x1*x1*x1 === y1*y1 - curve_b to reduce degree by 1
 
         let x1_mul_3 = x_1.to_owned() + x_1 + x_1;
-        let x_pow_4_mul_3 = (y1_sqr.to_owned() - &*HONK_CURVE_B) * x1_mul_3;
+        let x_pow_4_mul_3 = (y1_sqr.to_owned() - get_honk_curve_b()) * x1_mul_3;
         let mut y1_sqr_mul_4 = y1_sqr.double();
         y1_sqr_mul_4.double_in_place();
         let x1_pow_4_mul_9 = x_pow_4_mul_3.to_owned().double() + x_pow_4_mul_3;

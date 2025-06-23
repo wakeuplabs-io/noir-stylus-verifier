@@ -1,4 +1,3 @@
-use spin::Lazy;
 use crate::types::ScalarField;
 
 /// The number of bytes to represent field elements of the base or scalar fields
@@ -32,8 +31,10 @@ pub const NUM_BASEFIELD_ELEMENTS: usize = 2;
 /// This is the number of elements required to represent the scalar field.
 pub const NUM_SCALARFIELD_ELEMENTS: usize = 1;
 
-// We are getting grumpkin::b, which is -17
-pub static HONK_CURVE_B: Lazy<ScalarField> = Lazy::new(|| -ScalarField::from(17));
-
 /// The number of elements in the precomputed entities array
 pub const PRECOMPUTED_ENTITIES_SIZE: usize = 27;
+
+// We are getting grumpkin::b, which is -17. Cannot use a static because it is not a constant and avoid using Lazy to avoid size bloat.
+pub fn get_honk_curve_b() -> ScalarField {
+    -ScalarField::from(17)
+}
