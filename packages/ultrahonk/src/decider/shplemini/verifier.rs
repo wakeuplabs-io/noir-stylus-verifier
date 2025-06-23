@@ -48,7 +48,7 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
 
     pub fn get_fold_commitments(
         virtual_log_n: u32,
-        transcript: &mut Transcript<H>,
+        transcript: &mut Transcript,
     ) -> HonkVerifyResult<Vec<G1Affine>> {
         let fold_commitments: Vec<_> = (0..virtual_log_n - 1)
             .map(|i| transcript.receive_point_from_prover(format!("Gemini:FOLD_{}", i + 1)))
@@ -58,7 +58,7 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
 
     pub fn get_gemini_evaluations(
         virtual_log_n: u32,
-        transcript: &mut Transcript<H>,
+        transcript: &mut Transcript,
     ) -> HonkVerifyResult<Vec<ScalarField>> {
         let gemini_evaluations: Vec<_> = (1..=virtual_log_n)
             .map(|i| transcript.receive_fr_from_prover(format!("Gemini:a_{}", i + 1)))
@@ -100,7 +100,7 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
     pub fn compute_batch_opening_claim(
         &self,
         multivariate_challenge: Vec<ScalarField>,
-        transcript: &mut Transcript<H>,
+        transcript: &mut Transcript,
         padding_indicator_array: &[ScalarField; CONST_PROOF_SIZE_LOG_N],
         // const core::vector<RefVector<Commitment>>& concatenation_group_commitments = {},
         // RefSpan<ScalarField> concatenated_evaluations = {}
@@ -110,14 +110,14 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
         let mut batched_evaluation = ScalarField::zero();
 
         // Get the challenge ρ to batch commitments to multilinear polynomials and their shifts
-        let gemini_batching_challenge = transcript.get_challenge("rho".to_string());
+        let gemini_batching_challenge = transcript.get_challenge::<H>("rho".to_string());
 
         // Process Gemini transcript data:
         // - Get Gemini commitments (com(A₁), com(A₂), … , com(Aₙ₋₁))
         let fold_commitments = Self::get_fold_commitments(virtual_log_n as u32, transcript)?;
 
         // - Get Gemini evaluation challenge for Aᵢ, i = 0, … , d−1
-        let gemini_evaluation_challenge = transcript.get_challenge("Gemini:r".to_string());
+        let gemini_evaluation_challenge = transcript.get_challenge::<H>("Gemini:r".to_string());
 
         // - Get evaluations (A₀(−r), A₁(−r²), ... , Aₙ₋₁(−r²⁽ⁿ⁻¹⁾))
         let gemini_fold_neg_evaluations =
@@ -137,7 +137,7 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
 
         // Process Shplonk transcript data:
         // - Get Shplonk batching challenge
-        let shplonk_batching_challenge = transcript.get_challenge("Shplonk:nu".to_string());
+        let shplonk_batching_challenge = transcript.get_challenge::<H>("Shplonk:nu".to_string());
 
         // Compute the powers of ν that are required for batching Gemini, SmallSubgroupIPA, and committed sumcheck
         // univariate opening claims.
@@ -153,7 +153,7 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
         // the k commitments to unshifted polynomials and gⱼ are the m commitments to shifted polynomials
 
         // Get Shplonk opening point z
-        let shplonk_evaluation_challenge = transcript.get_challenge("Shplonk:z".to_string());
+        let shplonk_evaluation_challenge = transcript.get_challenge::<H>("Shplonk:z".to_string());
 
         // Start computing the scalar to be multiplied by [1]₁
         let mut constant_term_accumulator = ScalarField::zero();

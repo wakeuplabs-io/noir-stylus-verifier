@@ -1,6 +1,7 @@
 use super::{shplemini::ShpleminiVerifierOpeningClaim, types::VerifierMemory};
 use crate::alloc::string::ToString;
 use crate::backends::G1ArithmeticBackend;
+use crate::keys::verification_key::VerifyingKey;
 use crate::types::HonkProofError;
 use crate::{
     backends::HashBackend,
@@ -10,6 +11,7 @@ use crate::{
     verifier::HonkVerifyResult,
     Utils, CONST_PROOF_SIZE_LOG_N,
 };
+use alloc::vec::Vec;
 use ark_ec::AffineRepr;
 use ark_ff::{One, Zero};
 use core::marker::PhantomData;
@@ -31,7 +33,7 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
 
     pub(crate) fn reduce_verify_shplemini(
         opening_pair: &mut ShpleminiVerifierOpeningClaim,
-        mut transcript: Transcript<H>,
+        transcript: &mut Transcript,
     ) -> HonkVerifyResult<(G1Affine, G1Affine)> {
         let quotient_commitment = transcript.receive_point_from_prover("KZG:W".to_string())?;
         opening_pair.commitments.push(quotient_commitment);
@@ -48,7 +50,7 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
         mut self,
         circuit_size: u32,
         crs: &G2Affine,
-        mut transcript: Transcript<H>,
+        mut transcript: Transcript,
     ) -> HonkVerifyResult<bool> {
         let log_circuit_size = Utils::get_msb32(circuit_size);
 
@@ -61,17 +63,10 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
                 ScalarField::zero()
             };
         }
-        let sumcheck_output = {
-            let sumcheck_output = self.sumcheck_verify::<BATCHED_RELATION_PARTIAL_LENGTH>(
-                &mut transcript,
-                &padding_indicator_array,
-            )?;
-            if !sumcheck_output.verified {
-                return Ok(false);
-            }
-
-            sumcheck_output
-        };
+        let sumcheck_output = self.sumcheck_verify::<BATCHED_RELATION_PARTIAL_LENGTH>(
+            &mut transcript,
+            &padding_indicator_array,
+        )?;
 
         let mut opening_claim = self.compute_batch_opening_claim(
             sumcheck_output.multivariate_challenge,
@@ -79,7 +74,7 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
             &padding_indicator_array,
         )?;
 
-        let pairing_points = Self::reduce_verify_shplemini(&mut opening_claim, transcript)?;
+        let pairing_points = Self::reduce_verify_shplemini(&mut opening_claim, &mut transcript)?;
         let pcs_verified = P::ec_pairing_check(
             pairing_points.0,
             pairing_points.1,
@@ -88,5 +83,71 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
         )
         .unwrap();
         Ok(sumcheck_output.verified && pcs_verified)
+    }
+
+    pub(crate) fn verify_sumcheck(
+        &mut self,
+        vk: &VerifyingKey,
+        transcript: &mut Transcript,
+    ) -> HonkVerifyResult<bool> {
+        let log_circuit_size = Utils::get_msb32(vk.circuit_size);
+
+        let mut padding_indicator_array = [ScalarField::zero(); CONST_PROOF_SIZE_LOG_N];
+
+        for (idx, value) in padding_indicator_array.iter_mut().enumerate() {
+            *value = if idx < log_circuit_size as usize {
+                ScalarField::one()
+            } else {
+                ScalarField::zero()
+            };
+        }
+        let sumcheck_output = self.sumcheck_verify::<BATCHED_RELATION_PARTIAL_LENGTH>(
+            transcript,
+            &padding_indicator_array,
+        )?;
+
+        Ok(sumcheck_output.verified)
+    }
+
+    pub(crate) fn verify_shplemini(
+        &mut self,
+        vk: &VerifyingKey,
+        transcript: &mut Transcript,
+    ) -> HonkVerifyResult<bool> {
+        let log_circuit_size = Utils::get_msb32(vk.circuit_size);
+
+        let mut padding_indicator_array = [ScalarField::zero(); CONST_PROOF_SIZE_LOG_N];
+
+        for (idx, value) in padding_indicator_array.iter_mut().enumerate() {
+            *value = if idx < log_circuit_size as usize {
+                ScalarField::one()
+            } else {
+                ScalarField::zero()
+            };
+        }
+
+        let mut multivariate_challenge = Vec::with_capacity(CONST_PROOF_SIZE_LOG_N);
+        for (round_idx, _padding_value) in padding_indicator_array.iter().enumerate() {
+            let round_challenge =
+                transcript.get_challenge::<H>(format!("Sumcheck:u_{}", round_idx));
+            multivariate_challenge.push(round_challenge);
+        }
+
+        let mut opening_claim = self.compute_batch_opening_claim(
+            multivariate_challenge,
+            transcript,
+            &padding_indicator_array,
+        )?;
+
+        let pairing_points = Self::reduce_verify_shplemini(&mut opening_claim, transcript)?;
+        let pcs_verified = P::ec_pairing_check(
+            pairing_points.0,
+            pairing_points.1,
+            vk.crs,
+            G2Affine::generator(),
+        )
+        .unwrap();
+
+        Ok(pcs_verified)
     }
 }

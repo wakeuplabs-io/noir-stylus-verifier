@@ -9,22 +9,20 @@ use alloc::vec::Vec;
 use ark_ff::One;
 use core::{array, marker::PhantomData};
 
-pub(crate) struct Oink<P: G1ArithmeticBackend, H: HashBackend> {
+pub(crate) struct Oink<P: G1ArithmeticBackend> {
     phantom_data: PhantomData<P>,
-    phantom_hasher: PhantomData<H>,
 }
 
-impl<P: G1ArithmeticBackend, H: HashBackend> Default for Oink<P, H> {
+impl<P: G1ArithmeticBackend> Default for Oink<P> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<P: G1ArithmeticBackend, H: HashBackend> Oink<P, H> {
+impl<P: G1ArithmeticBackend> Oink<P> {
     pub(crate) fn new() -> Self {
         Self {
             phantom_data: PhantomData,
-            phantom_hasher: PhantomData,
         }
     }
 
@@ -75,34 +73,32 @@ impl<P: G1ArithmeticBackend, H: HashBackend> Oink<P, H> {
     }
 
     /// Generate relation separators alphas for sumcheck/combiner computation
-    pub(crate) fn generate_alphas_round(
+    pub(crate) fn generate_alphas_round<H: HashBackend>(
         alphas: &mut [ScalarField; NUM_ALPHAS],
-        transcript: &mut Transcript<H>,
+        transcript: &mut Transcript,
     ) {
         let args: [String; NUM_ALPHAS] = array::from_fn(|i| format!("alpha_{}", i));
-        alphas.copy_from_slice(&transcript.get_challenges(&args));
+        alphas.copy_from_slice(&transcript.get_challenges::<H>(&args));
     }
 }
 
-pub(crate) struct OinkVerifier<P: G1ArithmeticBackend, H: HashBackend> {
+pub(crate) struct OinkVerifier<P: G1ArithmeticBackend> {
     memory: VerifierMemory,
     pub public_inputs: Vec<ScalarField>,
-    phantom_hasher: core::marker::PhantomData<H>,
     phantom_curve: core::marker::PhantomData<P>,
 }
 
-impl<P: G1ArithmeticBackend, H: HashBackend> Default for OinkVerifier<P, H> {
+impl<P: G1ArithmeticBackend> Default for OinkVerifier<P> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<P: G1ArithmeticBackend, H: HashBackend> OinkVerifier<P, H> {
+impl<P: G1ArithmeticBackend> OinkVerifier<P> {
     pub(crate) fn new() -> Self {
         Self {
             memory: VerifierMemory::default(),
             public_inputs: Default::default(),
-            phantom_hasher: Default::default(),
             phantom_curve: Default::default(),
         }
     }
@@ -110,7 +106,7 @@ impl<P: G1ArithmeticBackend, H: HashBackend> OinkVerifier<P, H> {
     fn execute_preamble_round(
         &mut self,
         verifying_key: &VerifyingKey,
-        transcript: &mut Transcript<H>,
+        transcript: &mut Transcript,
     ) -> HonkVerifyResult<()> {
         let circuit_size = verifying_key.circuit_size as u64;
         let public_input_size = verifying_key.num_public_inputs as u64;
@@ -132,7 +128,7 @@ impl<P: G1ArithmeticBackend, H: HashBackend> OinkVerifier<P, H> {
 
     fn execute_wire_commitments_round(
         &mut self,
-        transcript: &mut Transcript<H>,
+        transcript: &mut Transcript,
     ) -> HonkVerifyResult<()> {
         *self.memory.witness_commitments.w_l_mut() =
             transcript.receive_point_from_prover("W_L".to_string())?;
@@ -145,11 +141,11 @@ impl<P: G1ArithmeticBackend, H: HashBackend> OinkVerifier<P, H> {
         Ok(())
     }
 
-    fn execute_sorted_list_accumulator_round(
+    fn execute_sorted_list_accumulator_round<H: HashBackend>(
         &mut self,
-        transcript: &mut Transcript<H>,
+        transcript: &mut Transcript,
     ) -> HonkVerifyResult<()> {
-        let challs = transcript.get_challenges(&[
+        let challs = transcript.get_challenges::<H>(&[
             "eta".to_string(),
             "eta_two".to_string(),
             "eta_three".to_string(),
@@ -170,11 +166,11 @@ impl<P: G1ArithmeticBackend, H: HashBackend> OinkVerifier<P, H> {
         Ok(())
     }
 
-    fn execute_log_derivative_inverse_round(
+    fn execute_log_derivative_inverse_round<H: HashBackend>(
         &mut self,
-        transcript: &mut Transcript<H>,
+            transcript: &mut Transcript,
     ) -> HonkVerifyResult<()> {
-        let challs = transcript.get_challenges(&["beta".to_string(), "gamma".to_string()]);
+        let challs = transcript.get_challenges::<H>(&["beta".to_string(), "gamma".to_string()]);
         self.memory.challenges.beta = challs[0];
         self.memory.challenges.gamma = challs[1];
 
@@ -188,9 +184,9 @@ impl<P: G1ArithmeticBackend, H: HashBackend> OinkVerifier<P, H> {
     fn execute_grand_product_computation_round(
         &mut self,
         verifying_key: &VerifyingKey,
-        transcript: &mut Transcript<H>,
+        transcript: &mut Transcript,
     ) -> HonkVerifyResult<()> {
-        self.memory.public_input_delta = Oink::<P, H>::compute_public_input_delta(
+        self.memory.public_input_delta = Oink::<P>::compute_public_input_delta(
             &self.memory.challenges.beta,
             &self.memory.challenges.gamma,
             &self.public_inputs,
@@ -202,17 +198,17 @@ impl<P: G1ArithmeticBackend, H: HashBackend> OinkVerifier<P, H> {
         Ok(())
     }
 
-    pub(crate) fn verify(
+    pub(crate) fn build_memory<H: HashBackend>(
         mut self,
         verifying_key: &VerifyingKey,
-        transcript: &mut Transcript<H>,
+        transcript: &mut Transcript,
     ) -> HonkVerifyResult<VerifierMemory> {
         self.execute_preamble_round(verifying_key, transcript)?;
         self.execute_wire_commitments_round(transcript)?;
-        self.execute_sorted_list_accumulator_round(transcript)?;
-        self.execute_log_derivative_inverse_round(transcript)?;
+        self.execute_sorted_list_accumulator_round::<H>(transcript)?;
+        self.execute_log_derivative_inverse_round::<H>(transcript)?;
         self.execute_grand_product_computation_round(verifying_key, transcript)?;
-        Oink::<P, H>::generate_alphas_round(&mut self.memory.challenges.alphas, transcript);
+        Oink::<P>::generate_alphas_round::<H>(&mut self.memory.challenges.alphas, transcript);
         Ok(self.memory)
     }
 }

@@ -9,9 +9,8 @@ use alloc::vec::Vec;
 use ark_ec::AffineRepr;
 use ark_ff::{PrimeField, BigInteger, Zero};
 
-pub struct Transcript<H>
-where
-    H: HashBackend,
+#[derive(Clone)]
+pub struct Transcript
 {
     proof_data: Vec<ScalarField>,
     manifest: TranscriptManifest,
@@ -21,22 +20,15 @@ where
     is_first_challenge: bool,
     current_round_data: Vec<ScalarField>,
     previous_challenge: ScalarField,
-    phantom_data: core::marker::PhantomData<H>,
 }
 
-impl<H> Default for Transcript<H>
-where
-    H: HashBackend,
-{
+impl Default for Transcript {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<H> Transcript<H>
-where
-    H: HashBackend,
-{
+impl Transcript {
     pub fn new() -> Self {
         Self {
             proof_data: Default::default(),
@@ -47,7 +39,6 @@ where
             is_first_challenge: true,
             current_round_data: Default::default(),
             previous_challenge: Default::default(),
-            phantom_data: Default::default(),
         }
     }
 
@@ -61,7 +52,6 @@ where
             is_first_challenge: true,
             current_round_data: Default::default(),
             previous_challenge: Default::default(),
-            phantom_data: Default::default(),
         }
     }
 
@@ -202,7 +192,7 @@ where
         [lo, hi]
     }
 
-    fn get_next_duplex_challenge_buffer(&mut self, num_challenges: usize) -> [ScalarField; 2] {
+    fn get_next_duplex_challenge_buffer<H: HashBackend>(&mut self, num_challenges: usize) -> [ScalarField; 2] {
         // challenges need at least 110 bits in them to match the presumed security parameter of the BN254 curve.
         assert!(num_challenges <= 2);
         // Prevent challenge generation if this is the first challenge we're generating,
@@ -238,26 +228,26 @@ where
         new_challenges
     }
 
-    pub fn get_challenge(&mut self, label: String) -> ScalarField {
+    pub fn get_challenge<H: HashBackend>(&mut self, label: String) -> ScalarField {
         self.manifest.add_challenge(self.round_number, &[label]);
-        let challenge = self.get_next_duplex_challenge_buffer(1)[0];
+        let challenge = self.get_next_duplex_challenge_buffer::<H>(1)[0];
         let res = challenge.to_owned();
         self.round_number += 1;
         res
     }
 
-    pub fn get_challenges(&mut self, labels: &[String]) -> Vec<ScalarField> {
+    pub fn get_challenges<H: HashBackend>(&mut self, labels: &[String]) -> Vec<ScalarField> {
         let num_challenges = labels.len();
         self.manifest.add_challenge(self.round_number, labels);
 
         let mut res = Vec::with_capacity(num_challenges);
         for _ in 0..num_challenges >> 1 {
-            let challenge_buffer = self.get_next_duplex_challenge_buffer(2);
+            let challenge_buffer = self.get_next_duplex_challenge_buffer::<H>(2);
             res.push(challenge_buffer[0].to_owned());
             res.push(challenge_buffer[1].to_owned());
         }
         if num_challenges & 1 == 1 {
-            let challenge_buffer = self.get_next_duplex_challenge_buffer(1);
+            let challenge_buffer = self.get_next_duplex_challenge_buffer::<H>(1);
             res.push(challenge_buffer[0].to_owned());
         }
 

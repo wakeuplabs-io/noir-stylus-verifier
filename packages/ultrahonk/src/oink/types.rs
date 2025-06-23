@@ -3,19 +3,19 @@ use crate::{
     NUM_ALPHAS,
 };
 
-pub(crate) struct VerifierMemory {
-    pub(crate) public_input_delta: ScalarField,
-    pub(crate) witness_commitments: WitnessEntities<G1Affine>,
-    pub(crate) challenges: Challenges,
+pub struct VerifierMemory {
+    pub public_input_delta: ScalarField,
+    pub witness_commitments: WitnessEntities<G1Affine>,
+    pub challenges: Challenges,
 }
 
-pub(crate) struct Challenges {
-    pub(crate) eta_1: ScalarField,
-    pub(crate) eta_2: ScalarField,
-    pub(crate) eta_3: ScalarField,
-    pub(crate) beta: ScalarField,
-    pub(crate) gamma: ScalarField,
-    pub(crate) alphas: [ScalarField; NUM_ALPHAS],
+pub struct Challenges {
+    pub eta_1: ScalarField,
+    pub eta_2: ScalarField,
+    pub eta_3: ScalarField,
+    pub beta: ScalarField,
+    pub gamma: ScalarField,
+    pub alphas: [ScalarField; NUM_ALPHAS],
 }
 
 impl Default for Challenges {

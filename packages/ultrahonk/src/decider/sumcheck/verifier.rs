@@ -20,7 +20,7 @@ use ark_ff::Zero;
 impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
     pub(crate) fn sumcheck_verify<const SIZE: usize>(
         &mut self,
-        transcript: &mut Transcript<H>,
+        transcript: &mut Transcript,
         padding_indicator_array: &[ScalarField; CONST_PROOF_SIZE_LOG_N],
     ) -> HonkVerifyResult<SumcheckVerifierOutput> {
         let mut verified: bool = true;
@@ -42,7 +42,7 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
                 transcript.receive_fr_array_from_verifier::<SIZE>(round_univariate_label)?;
             let round_univariate = SumcheckRoundOutput { evaluations };
 
-            let round_challenge = transcript.get_challenge(format!("Sumcheck:u_{}", round_idx));
+            let round_challenge = transcript.get_challenge::<H>(format!("Sumcheck:u_{}", round_idx));
 
             let checked = sum_check_round.check_sum(&round_univariate, padding_value);
             verified = verified && checked;
