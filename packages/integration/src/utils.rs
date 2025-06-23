@@ -1,5 +1,6 @@
 //! Utilities for the deploy scripts.
 
+use colored::Colorize;
 use crate::{constants::MANIFEST_DIR_ENV_VAR, errors::ScriptError, types::StylusContract};
 use alloy::{
     network::{Ethereum, EthereumWallet},
@@ -158,6 +159,8 @@ fn command_success_or(mut cmd: Command, err_msg: &str) -> Result<(), ScriptError
 /// Assumes that `cargo`, the `nightly` toolchain, and `wasm-opt` are locally
 /// available.
 pub fn build_stylus_contract(contract: &StylusContract) -> Result<PathBuf, ScriptError> {
+    println!("{}", format!("Building contract {:?}...", contract).blue());
+
     let current_dir = PathBuf::from(env::var(MANIFEST_DIR_ENV_VAR).unwrap());
     let workspace_path = current_dir
         .ancestors()
@@ -199,6 +202,8 @@ pub async fn deploy_stylus_contract(
     priv_key: &str,
     client: LocalWalletHttpClient,
 ) -> Result<Address, ScriptError> {
+    println!("{}", format!("Deploying contract {:?}...", contract).blue());
+
     let current_dir = PathBuf::from(env::var(MANIFEST_DIR_ENV_VAR).unwrap());
     let workspace_path = current_dir
         .ancestors()

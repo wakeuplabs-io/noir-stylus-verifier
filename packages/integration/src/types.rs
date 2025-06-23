@@ -7,7 +7,7 @@ use std::{
 };
 
 /// The possible Stylus contracts to deploy
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum StylusContract {
     /// The verifier contract
     Verifier,

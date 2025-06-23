@@ -3,7 +3,7 @@ use alloy::sol;
 
 sol!(
     #[sol(rpc)]
-   contract Verifier {
+   contract VerifierContract {
         #[derive(Debug)]
         function verify(bytes proof_bytes, bytes public_inputs_bytes, bytes vk_bytes) internal pure returns (bool);
     }

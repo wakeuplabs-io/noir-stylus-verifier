@@ -11,7 +11,7 @@ use crate::{abis::PrecompileTestContract, assert_eq_result, assert_true_result, 
 
 /// Test how the contracts call the `ecAdd` precompile
 async fn test_ec_add(ctx: TestContext) -> Result<()> {
-    let contract = PrecompileTestContract::new(ctx.precompiles_contract_address, ctx.client.provider());
+    let contract = ctx.precompile_test_contract();
     let mut rng = thread_rng();
 
     let a = G1Affine::rand(&mut rng);
@@ -33,7 +33,7 @@ integration_test_async!(test_ec_add);
 
 /// Test how the contracts call the `ecMul` precompile
 async fn test_ec_mul(ctx: TestContext) -> Result<()> {
-    let contract = PrecompileTestContract::new(ctx.precompiles_contract_address, ctx.client.provider());
+    let contract = ctx.precompile_test_contract();
     let mut rng = thread_rng();
 
     let a = ScalarField::rand(&mut rng);
@@ -58,7 +58,7 @@ integration_test_async!(test_ec_mul);
 
 /// Test how the contracts call the `ecPairing` precompile
 async fn test_ec_pairing(ctx: TestContext) -> Result<()> {
-    let contract = PrecompileTestContract::new(ctx.precompiles_contract_address, ctx.client.provider());
+    let contract = ctx.precompile_test_contract();
     let mut rng = thread_rng();
 
     let a = G1Affine::rand(&mut rng);
@@ -79,7 +79,7 @@ integration_test_async!(test_ec_pairing);
 
 
 async fn test_hash(ctx: TestContext) -> Result<()> {
-    let contract = PrecompileTestContract::new(ctx.precompiles_contract_address, ctx.client.provider());
+    let contract = ctx.precompile_test_contract();
     let mut rng = thread_rng();
 
     let mut msg = [0u8; 32];

@@ -7,7 +7,7 @@ use crate::{
     types::{IntegrationTest, IntegrationTestFn, StylusContract},
     utils::{build_stylus_contract, deploy_stylus_contract, setup_client, LocalWalletHttpClient},
 };
-use abis::{PrecompileTestContract::PrecompileTestContractInstance, Verifier::VerifierInstance};
+use abis::{PrecompileTestContract::PrecompileTestContractInstance, VerifierContract::VerifierContractInstance};
 use alloy::{network::Ethereum, primitives::Address, providers::DynProvider};
 use clap::Parser;
 use cli::Cli;
@@ -25,7 +25,7 @@ mod types;
 mod utils;
 
 /// An instance of the verifier contract
-pub type VerifierTestInstance = VerifierInstance<(), DynProvider, Ethereum>;
+pub type VerifierTestInstance = VerifierContractInstance<(), DynProvider, Ethereum>;
 /// An instance of the precompile test contract
 pub type PrecompileTestInstance = PrecompileTestContractInstance<(), DynProvider, Ethereum>;
 
@@ -49,7 +49,7 @@ impl TestContext {
 
         // build contracts
         build_stylus_contract(&StylusContract::PrecompileTestContract).unwrap();
-        // build_stylus_contract(&StylusContract::Verifier).unwrap();
+        build_stylus_contract(&StylusContract::Verifier).unwrap();
 
         // deploy contracts
         let precompiles_contract_address = deploy_stylus_contract(
@@ -59,18 +59,18 @@ impl TestContext {
             client.clone(),
         )
         .await?;
-        // let verifier_contract_address = deploy_stylus_contract(
-        //     &StylusContract::Verifier,
-        //     &value.rpc_url,
-        //     &value.priv_key,
-        //     client.clone(),
-        // )
-        // .await?;
+        let verifier_contract_address = deploy_stylus_contract(
+            &StylusContract::Verifier,
+            &value.rpc_url,
+            &value.priv_key,
+            client.clone(),
+        )
+        .await?;
 
         Ok(Self {
             client,
             precompiles_contract_address,
-            verifier_contract_address: Address::random(),
+            verifier_contract_address,
         })
     }
 
