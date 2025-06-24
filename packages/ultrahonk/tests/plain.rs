@@ -10,8 +10,7 @@ use sha3::{Digest, Keccak256};
 use ultrahonk::{
     backends::{G1ArithmeticBackend, G1ArithmeticError, HashBackend},
     constants::HASH_OUTPUT_SIZE,
-    crs::parser::CrsParser,
-    keys::verification_key::{VerifyingKey, VerifyingKeyBarretenberg},
+    keys::verification_key::{VerifyingKey},
     serialize::BytesDeserializable,
     types::{G1Affine, G2Affine, ScalarField, HonkProof},
     verifier::UltraHonk,
@@ -79,13 +78,9 @@ fn plain_test(name: &str, proof_file: &str, vk_file: &str, public_inputs_file: &
     let public_inputs_u8 = std::fs::read(public_inputs_file).unwrap();
     let public_inputs = Vec::<ScalarField>::deserialize_from_bytes(&public_inputs_u8).unwrap();
 
-    // parse the crs
-    let verifier_crs = CrsParser::get_crs_g2().unwrap();
-
     // parse verification key file
     let vk_u8 = std::fs::read(vk_file).unwrap();
-    let vk = VerifyingKeyBarretenberg::from_buffer(&vk_u8).unwrap();
-    let vk = VerifyingKey::from_barrettenberg_and_crs(vk, verifier_crs);
+    let vk = VerifyingKey::from_buffer(&vk_u8).unwrap();
 
     let is_valid = UltraHonk::<ArkHonkCurve, ArkKeccak256>::verify_2(
         proof,

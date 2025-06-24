@@ -1,6 +1,7 @@
 use super::{shplemini::ShpleminiVerifierOpeningClaim, types::VerifierMemory};
 use crate::alloc::string::ToString;
 use crate::backends::G1ArithmeticBackend;
+use crate::crs::parser::CrsParser;
 use crate::keys::verification_key::VerifyingKey;
 use crate::types::HonkProofError;
 use crate::{
@@ -49,7 +50,6 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
     pub(crate) fn verify(
         mut self,
         circuit_size: u32,
-        crs: &G2Affine,
         mut transcript: Transcript,
     ) -> HonkVerifyResult<bool> {
         let log_circuit_size = Utils::get_msb32(circuit_size);
@@ -78,7 +78,7 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
         let pcs_verified = P::ec_pairing_check(
             pairing_points.0,
             pairing_points.1,
-            *crs,
+            CrsParser::get_crs_g2().unwrap(),
             G2Affine::generator(),
         )
         .unwrap();
@@ -143,7 +143,7 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
         let pcs_verified = P::ec_pairing_check(
             pairing_points.0,
             pairing_points.1,
-            vk.crs,
+            CrsParser::get_crs_g2().unwrap(),
             G2Affine::generator(),
         )
         .unwrap();

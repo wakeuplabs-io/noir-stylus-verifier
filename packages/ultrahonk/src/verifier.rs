@@ -41,13 +41,12 @@ impl<P: G1ArithmeticBackend, H: HashBackend> UltraHonk<P, H> {
         let oink_result = oink_verifier.build_memory::<H>(verifying_key, &mut transcript)?;
 
         let circuit_size = verifying_key.circuit_size;
-        let crs = verifying_key.crs;
 
         let mut memory = VerifierMemory::from_memory_and_key(oink_result, verifying_key);
         memory.relation_parameters.gate_challenges =
             Self::generate_gate_challenges(&mut transcript);
         let decider_verifier = DeciderVerifier::<P, H>::new(memory);
-        decider_verifier.verify(circuit_size, &crs, transcript)
+        decider_verifier.verify(circuit_size, transcript)
     }
 
     pub fn verify_2(
