@@ -3,7 +3,7 @@
 use std::{env, path::PathBuf};
 
 use crate::{
-    assert_true_result, constants::MANIFEST_DIR_ENV_VAR, integration_test_async, utils::serialize_to_calldata, TestContext
+    assert_true_result, constants::MANIFEST_DIR_ENV_VAR, integration_test_async, TestContext,
 };
 use eyre::Result;
 
@@ -34,11 +34,7 @@ async fn test_verifier(ctx: TestContext) -> Result<()> {
         let vk_u8 = std::fs::read(vk_file).unwrap();
 
         let res = contract
-            .verify(
-                serialize_to_calldata(&proof_u8)?,
-                serialize_to_calldata(&public_inputs_u8)?,
-                serialize_to_calldata(&vk_u8)?,
-            )
+            .verify(proof_u8.into(), public_inputs_u8.into(), vk_u8.into())
             .call()
             .await?
             ._0;

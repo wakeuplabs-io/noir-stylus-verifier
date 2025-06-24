@@ -10,7 +10,7 @@ description = "Stylus noir verifier"
 
 [dependencies]
 alloy-primitives.workspace = true
-# alloy-sol-types.workspace = true
+alloy-sol-types.workspace = true
 stylus-sdk.workspace = true
 ultrahonk = { path = "../ultrahonk" }
 ark-ff.workspace = true
@@ -35,6 +35,8 @@ export-abi = ["stylus-sdk/export-abi"]
 debug = ["stylus-sdk/debug"]
 mini-alloc = ["stylus-sdk/mini-alloc"]
 verifier = []
+sumcheck-verifier = []
+shplemini-verifier = []
 precompile-test-contract = []
 
 [[bin]]

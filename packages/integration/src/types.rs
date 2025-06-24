@@ -11,6 +11,10 @@ use std::{
 pub enum StylusContract {
     /// The verifier contract
     Verifier,
+    /// The shplemini verifier contract
+    ShpleminiVerifier,
+    /// The sumcheck verifier contract
+    SumcheckVerifier,
     /// The precompile test contract
     PrecompileTestContract,
 }
@@ -19,6 +23,8 @@ impl Display for StylusContract {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             StylusContract::Verifier => write!(f, "verifier"),
+            StylusContract::ShpleminiVerifier => write!(f, "shplemini-verifier"),
+            StylusContract::SumcheckVerifier => write!(f, "sumcheck-verifier"),
             StylusContract::PrecompileTestContract => write!(f, "precompile-test-contract"),
         }
     }

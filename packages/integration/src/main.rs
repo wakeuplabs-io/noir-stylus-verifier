@@ -48,10 +48,10 @@ impl TestContext {
         let client = setup_client(&value.priv_key, &value.rpc_url).await.unwrap();
 
         // build contracts
-        build_stylus_contract(&StylusContract::PrecompileTestContract).unwrap();
-        build_stylus_contract(&StylusContract::Verifier).unwrap();
+        // build_stylus_contract(&StylusContract::PrecompileTestContract).unwrap();
+        // build_stylus_contract(&StylusContract::Verifier).unwrap();
 
-        // deploy contracts
+        // deploy precompile test contract
         let precompiles_contract_address = deploy_stylus_contract(
             &StylusContract::PrecompileTestContract,
             &value.rpc_url,
@@ -59,6 +59,24 @@ impl TestContext {
             client.clone(),
         )
         .await?;
+
+        // deploy verifier contract
+        let sumcheck_verifier_address = deploy_stylus_contract(
+            &StylusContract::SumcheckVerifier,
+            &value.rpc_url,
+            &value.priv_key,
+            client.clone(),
+        )
+        .await?;
+
+        let shplemini_verifier_address = deploy_stylus_contract(
+            &StylusContract::ShpleminiVerifier,
+            &value.rpc_url,
+            &value.priv_key,
+            client.clone(),
+        )
+        .await?;
+
         let verifier_contract_address = deploy_stylus_contract(
             &StylusContract::Verifier,
             &value.rpc_url,
@@ -66,6 +84,16 @@ impl TestContext {
             client.clone(),
         )
         .await?;
+
+        println!("precompiles_contract_address: {:?}", precompiles_contract_address);
+        println!("sumcheck_verifier_address: {:?}", sumcheck_verifier_address);
+        println!("shplemini_verifier_address: {:?}", shplemini_verifier_address);
+        println!("verifier_contract_address: {:?}", verifier_contract_address);
+
+        // initialize verifier contract
+        let verifier_contract = VerifierContractInstance::new(verifier_contract_address, client.provider());
+        let tx = verifier_contract.initialize(sumcheck_verifier_address).send().await.unwrap();
+        println!("Initialize verifier with tx: {:?}", tx.tx_hash());
 
         Ok(Self {
             client,

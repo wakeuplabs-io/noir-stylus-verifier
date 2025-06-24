@@ -19,7 +19,7 @@ use std::{
     env,
     path::PathBuf,
     process::{Command, Stdio},
-    str::FromStr,
+    str::FromStr
 };
 
 /// The call builder type used in the scripts
