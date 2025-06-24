@@ -1,6 +1,5 @@
 use crate::{
-    constants::{NUM_BYTES_FELT, NUM_U64S_FELT},
-    types::{G1Affine, G1BaseField, G2Affine, G2BaseField, MontFp256},
+    constants::{NUM_BYTES_FELT, NUM_U64S_FELT}, decider::types::{ClaimedEvaluations, RelationParameters, VerifierCommitments, VerifierMemory}, types::{AllEntities, G1Affine, G1BaseField, G2Affine, G2BaseField, MontFp256, ScalarField, NUM_ALL_ENTITIES}, NUM_ALPHAS
 };
 use alloc::vec::Vec;
 use ark_ec::AffineRepr;
@@ -181,8 +180,13 @@ impl<P: MontConfig<NUM_U64S_FELT>> BytesDeserializable for Vec<MontFp256<P>> {
 
 impl BytesSerializable for G1Affine {
     fn serialize_to_bytes(&self) -> Vec<u8> {
-        let zero = G1BaseField::zero();
-        let (x, y) = self.xy().unwrap_or((zero, zero));
+        // Use 0xFF… as the canonical infinity encoding expected by the
+        // deserialiser elsewhere in the codebase.
+        if self.infinity {
+            return vec![0xFFu8; NUM_BYTES_FELT * 2];
+        }
+
+        let (x, y) = self.xy().expect("non-infinity point must have coordinates");
         let mut bytes = Vec::with_capacity(NUM_BYTES_FELT * 2);
         bytes.extend(x.serialize_to_bytes());
         bytes.extend(y.serialize_to_bytes());
@@ -246,6 +250,191 @@ impl BytesDeserializable for G2Affine {
             x,
             y,
             infinity: x.is_zero() && y.is_zero(),
+        })
+    }
+}
+
+impl BytesSerializable for VerifierCommitments {
+    fn serialize_to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        
+        // Serialize witness commitments
+        bytes.extend(self.witness.iter().flat_map(|x| x.serialize_to_bytes()));
+        // Serialize precomputed commitments
+        bytes.extend(self.precomputed.iter().flat_map(|x| x.serialize_to_bytes()));
+        // Serialize shifted witness commitments
+        bytes.extend(self.shifted_witness.iter().flat_map(|x| x.serialize_to_bytes()));
+
+        bytes
+    }
+}
+
+impl BytesDeserializable for VerifierCommitments {
+    const SER_LEN: usize = 2560;
+    
+    fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
+        let mut offset = 0;
+        let mut commitments = AllEntities::default();
+
+        // panic!("bytes: {:?}", commitments.serialize_to_bytes().len());
+        
+        // Deserialize witness commitments
+        for commitment in commitments.witness.iter_mut() {
+            *commitment = G1Affine::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
+        }
+        // Deserialize precomputed commitments
+        for commitment in commitments.precomputed.iter_mut() {
+            *commitment = G1Affine::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
+        }
+        // Deserialize shifted witness commitments
+        for commitment in commitments.shifted_witness.iter_mut() {
+            *commitment = G1Affine::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
+        }
+
+        // panic!("VerifierCommitments offset: {:?}", offset);
+
+        Ok(AllEntities {
+            witness: commitments.witness,
+            precomputed: commitments.precomputed,
+            shifted_witness: commitments.shifted_witness,
+        })
+    }
+}
+
+impl BytesSerializable for RelationParameters {
+    fn serialize_to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        
+        // Serialize scalar field elements
+        bytes.extend(self.eta_1.serialize_to_bytes());
+        bytes.extend(self.eta_2.serialize_to_bytes());
+        bytes.extend(self.eta_3.serialize_to_bytes());
+        bytes.extend(self.beta.serialize_to_bytes());
+        bytes.extend(self.gamma.serialize_to_bytes());
+        bytes.extend(self.public_input_delta.serialize_to_bytes());
+        
+        // Serialize fixed-size alphas array
+        for alpha in &self.alphas {
+            bytes.extend(alpha.serialize_to_bytes());
+        }
+        
+        // Serialize dynamic-size gate_challenges
+        bytes.extend((self.gate_challenges.len() as u32).serialize_to_bytes());
+        bytes.extend(self.gate_challenges.iter().flat_map(|x| x.serialize_to_bytes()));
+        
+        bytes
+    }
+}
+
+impl BytesDeserializable for RelationParameters {
+    const SER_LEN: usize = 1892;
+    
+    fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
+        let mut offset = 0;
+        
+        // Deserialize scalar field elements
+        let eta_1 = ScalarField::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
+        let eta_2 = ScalarField::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
+        let eta_3 = ScalarField::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
+        let beta = ScalarField::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
+        let gamma = ScalarField::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
+        let public_input_delta = ScalarField::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
+        
+        // Deserialize fixed-size alphas array
+        let mut alphas = [ScalarField::default(); NUM_ALPHAS];
+        for alpha in alphas.iter_mut() {
+            *alpha = ScalarField::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
+        }
+        
+        // Deserialize dynamic-size gate_challenges
+        let challenges_len = u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;
+        let mut gate_challenges = Vec::with_capacity(challenges_len);
+        for _ in 0..challenges_len {
+            gate_challenges.push(ScalarField::deserialize_from_bytes_with_offset(bytes, &mut offset)?);
+        }
+
+        // panic!("RelationParameters offset: {:?}", offset);
+        
+        Ok(RelationParameters {
+            eta_1,
+            eta_2,
+            eta_3,
+            beta,
+            gamma,
+            public_input_delta,
+            alphas,
+            gate_challenges,
+        })
+    }
+}
+
+impl BytesSerializable for ClaimedEvaluations {
+    fn serialize_to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        
+        // Serialize witness evaluations
+        bytes.extend(self.witness.iter().flat_map(|x| x.serialize_to_bytes()));
+        // Serialize precomputed evaluations
+        bytes.extend(self.precomputed.iter().flat_map(|x| x.serialize_to_bytes()));
+        // Serialize shifted witness evaluations
+        bytes.extend(self.shifted_witness.iter().flat_map(|x| x.serialize_to_bytes()));
+        
+        bytes
+    }
+}
+
+impl BytesDeserializable for ClaimedEvaluations {
+    const SER_LEN: usize = 1280;
+    
+    fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
+        let mut offset = 0;
+        let mut evaluations = AllEntities::default();
+        
+        // Deserialize witness evaluations
+        for eval in evaluations.witness.iter_mut() {
+            *eval = ScalarField::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
+        }
+        // Deserialize precomputed evaluations
+        for eval in evaluations.precomputed.iter_mut() {
+            *eval = ScalarField::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
+        }
+        // Deserialize shifted witness evaluations
+        for eval in evaluations.shifted_witness.iter_mut() {
+            *eval = ScalarField::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
+        }
+        
+        Ok(evaluations)
+    }
+}
+
+impl BytesSerializable for VerifierMemory {
+    fn serialize_to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        
+        // Serialize each component using their implementations
+        bytes.extend(self.verifier_commitments.serialize_to_bytes());
+        bytes.extend(self.relation_parameters.serialize_to_bytes());
+        bytes.extend(self.claimed_evaluations.serialize_to_bytes());
+        
+        bytes
+    }
+}
+
+impl BytesDeserializable for VerifierMemory {
+    const SER_LEN: usize = VerifierCommitments::SER_LEN + RelationParameters::SER_LEN + ClaimedEvaluations::SER_LEN;
+    
+    fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
+        let mut offset = 0;
+        
+        // Deserialize each component using their implementations
+        let verifier_commitments = VerifierCommitments::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
+        let relation_parameters = RelationParameters::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
+        let claimed_evaluations = ClaimedEvaluations::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
+        
+        Ok(VerifierMemory {
+            verifier_commitments,
+            relation_parameters,
+            claimed_evaluations,
         })
     }
 }
