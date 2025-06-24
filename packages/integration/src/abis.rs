@@ -5,7 +5,7 @@ sol!(
     #[sol(rpc)]
    contract VerifierContract {
         #[derive(Debug)]
-        function initialize(address sumcheck_verifier_address) external;
+        function initialize(address sumcheck_verifier_address, address shplemini_verifier_address) external;
 
         #[derive(Debug)]
         function verify(bytes proof_bytes, bytes public_inputs_bytes, bytes vk_bytes) internal pure returns (bool);

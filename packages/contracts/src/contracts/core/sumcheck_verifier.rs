@@ -3,9 +3,8 @@ use alloc::vec::Vec;
 use stylus_sdk::{abi::Bytes, prelude::*};
 use ultrahonk::decider::types::VerifierMemory;
 use ultrahonk::decider::verifier::DeciderVerifier;
-use ultrahonk::serialize::BytesDeserializable;
+use ultrahonk::serialize::{BytesDeserializable, BytesSerializable};
 use ultrahonk::transcript::Transcript;
-use ultrahonk::types::{HonkProof, ScalarField};
 
 sol_storage! {
     #[cfg_attr(feature = "sumcheck-verifier", entrypoint)]
@@ -15,8 +14,7 @@ sol_storage! {
 
 #[public]
 impl SumcheckVerifierContract {
-    pub fn verify(&self, memory_bytes: Bytes, transcript_bytes: Bytes, circuit_size: u32) -> bool {
-
+    pub fn verify(&self, memory_bytes: Bytes, transcript_bytes: Bytes, circuit_size: u32) -> (bool, Bytes, Bytes) {
         let memory = VerifierMemory::deserialize_from_bytes(memory_bytes.as_slice()).unwrap();
         let mut transcript = Transcript::deserialize_from_bytes(transcript_bytes.as_slice()).unwrap();
 
@@ -24,6 +22,10 @@ impl SumcheckVerifierContract {
 
         decider_verifier.verify_sumcheck(circuit_size, &mut transcript).unwrap();
 
-        true
+        (
+            true,
+            decider_verifier.memory.serialize_to_bytes().into(),
+            transcript.serialize_to_bytes().into(),
+        )
     }
 }
