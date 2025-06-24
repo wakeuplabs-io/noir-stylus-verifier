@@ -1774,8 +1774,8 @@ checksum = "1c7a8fb8a9fbf66c1f703fe16184d10ca0ee9d23be5b4436400408ba54a95005"
 
 [[package]]
 name = "e2e"
-version = "0.3.0"
-source = "git+https://github.com/OpenZeppelin/rust-contracts-stylus?tag=v0.2.0-rc.0#5ed33dd88c3d74a0d0ec6cc0ff53f55a36a74c48"
+version = "0.3.1"
+source = "git+https://github.com/OpenZeppelin/rust-contracts-stylus?tag=v0.2.0#aa6f290151b91f7e5d1def97e649a4ee48812857"
 dependencies = [
  "alloy",
  "e2e-proc",
@@ -1790,7 +1790,7 @@ dependencies = [
 [[package]]
 name = "e2e-proc"
 version = "0.2.0"
-source = "git+https://github.com/OpenZeppelin/rust-contracts-stylus?tag=v0.2.0-rc.0#5ed33dd88c3d74a0d0ec6cc0ff53f55a36a74c48"
+source = "git+https://github.com/OpenZeppelin/rust-contracts-stylus?tag=v0.2.0#aa6f290151b91f7e5d1def97e649a4ee48812857"
 dependencies = [
  "proc-macro2",
  "quote",
