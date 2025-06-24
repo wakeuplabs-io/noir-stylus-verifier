@@ -1,7 +1,7 @@
 use super::{shplemini::ShpleminiVerifierOpeningClaim, types::VerifierMemory};
 use crate::alloc::string::ToString;
 use crate::backends::G1ArithmeticBackend;
-use crate::crs::parser::CrsParser;
+use crate::constants::get_crs_g2;
 use crate::keys::verification_key::VerifyingKey;
 use crate::types::HonkProofError;
 use crate::{
@@ -78,7 +78,7 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
         let pcs_verified = P::ec_pairing_check(
             pairing_points.0,
             pairing_points.1,
-            CrsParser::get_crs_g2().unwrap(),
+            get_crs_g2(),
             G2Affine::generator(),
         )
         .unwrap();
@@ -143,7 +143,7 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
         let pcs_verified = P::ec_pairing_check(
             pairing_points.0,
             pairing_points.1,
-            CrsParser::get_crs_g2().unwrap(),
+            get_crs_g2(),
             G2Affine::generator(),
         )
         .unwrap();
