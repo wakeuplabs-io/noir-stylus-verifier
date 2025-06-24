@@ -13,12 +13,12 @@ build-contract contract:
   cargo build -p contracts --target wasm32-unknown-unknown --release --features {{contract}} -Z unstable-options -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort && \
   mv ./target/wasm32-unknown-unknown/release/contracts.wasm ./target/wasm32-unknown-unknown/release/{{contract}}.wasm
 
-profile-contracts: 
-  twiggy top target/wasm32-unknown-unknown/release/contracts.wasm > ./profile/top.txt
-  twiggy monos target/wasm32-unknown-unknown/release/contracts.wasm > ./profile/monos.txt
-  twiggy paths target/wasm32-unknown-unknown/release/contracts.wasm > ./profile/path.txt
-  twiggy dominators target/wasm32-unknown-unknown/release/contracts.wasm > ./profile/dominators.txt
-  twiggy garbage target/wasm32-unknown-unknown/release/contracts.wasm > ./profile/garbage.txt
+profile-contract contract: 
+  twiggy top target/wasm32-unknown-unknown/release/{{contract}}.wasm > ./profile/{{contract}}-top.txt
+  twiggy monos target/wasm32-unknown-unknown/release/{{contract}}.wasm > ./profile/{{contract}}-monos.txt
+  twiggy paths target/wasm32-unknown-unknown/release/{{contract}}.wasm > ./profile/{{contract}}-path.txt
+  twiggy dominators target/wasm32-unknown-unknown/release/{{contract}}.wasm > ./profile/{{contract}}-dominators.txt
+  twiggy garbage target/wasm32-unknown-unknown/release/{{contract}}.wasm > ./profile/{{contract}}-garbage.txt
 
 optimize-contract contract:
   wasm-opt --enable-bulk-memory  -Oz -o ./target/wasm32-unknown-unknown/release/{{contract}}-opt.wasm ./target/wasm32-unknown-unknown/release/{{contract}}.wasm

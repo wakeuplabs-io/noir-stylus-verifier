@@ -1,33 +1,11 @@
-use ark_serialize::CanonicalDeserialize;
+use crate::serialize::BytesDeserializable;
+use crate::types::{G2Affine, HonkProofError};
 
-use crate::types::{G2Affine, G2BaseField, HonkProofError};
-
-pub struct CrsParser {
-}
+pub struct CrsParser {}
 
 impl CrsParser {
-    fn convert_endianness_inplace(buffer: &mut [u8]) {
-        for chunk in buffer.chunks_exact_mut(32) {
-            chunk.reverse();
-        }
-    }
-
-    fn read_transcript_g2(g2_x: &mut G2Affine) -> Result<(), HonkProofError> {
-        let g2_size = core::mem::size_of::<G2BaseField>() * 2;
-
-        // assert!(core::mem::size_of::<G2Affine>() >= g2_size);
-        let mut buffer = vec![0; g2_size];
-
-        buffer.copy_from_slice(&include_bytes!("./bn254_g2.dat")[..g2_size]);
-        Self::convert_endianness_inplace(&mut buffer);
-        *g2_x = G2Affine::deserialize_uncompressed(&mut &buffer[..])
-            .map_err(|_| HonkProofError::DeserializationError())?;
-        Ok(())
-    }
-
     pub fn get_crs_g2() -> Result<G2Affine, HonkProofError> {
-        let mut g2_x = G2Affine::default();
-        Self::read_transcript_g2(&mut g2_x)?;
+        let g2_x = G2Affine::deserialize_from_bytes(hex::decode("260e01b251f6f1c7e7ff4e580791dee8ea51d87a358e038b4efe30fac09383c10118c4d5b837bcc2bc89b5b398b5974e9f5944073b32078b7e231fec938883b004fc6369f7110fe3d25156c1bb9a72859cf2a04641f99ba4ee413c80da6a5fe422febda3c0c0632a56475b4214e5615e11e6dd3f96e6cea2854a87d4dacc5e55").unwrap().as_slice()).unwrap();
 
         Ok(g2_x)
     }
