@@ -53,7 +53,7 @@ impl VerifyingKey {
         // Read data
         let mut offset = 0;
         let circuit_size = u64::deserialize_from_bytes_with_offset(&buf, &mut offset).unwrap();
-        let log_circuit_size = u64::deserialize_from_bytes_with_offset(&buf, &mut offset).unwrap();
+        let _log_circuit_size = u64::deserialize_from_bytes_with_offset(&buf, &mut offset).unwrap();
         let num_public_inputs = u64::deserialize_from_bytes_with_offset(&buf, &mut offset).unwrap();
         let pub_inputs_offset = u64::deserialize_from_bytes_with_offset(&buf, &mut offset).unwrap();
         let pairing_inputs_public_input_key = if size == Self::SER_FULL_SIZE {

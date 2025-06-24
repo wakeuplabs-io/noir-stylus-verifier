@@ -1,9 +1,13 @@
 use crate::{
-    constants::{NUM_BYTES_FELT, NUM_U64S_FELT}, decider::types::{ClaimedEvaluations, RelationParameters, VerifierCommitments, VerifierMemory}, types::{AllEntities, G1Affine, G1BaseField, G2Affine, G2BaseField, MontFp256, ScalarField, NUM_ALL_ENTITIES}, NUM_ALPHAS
+    constants::{NUM_BYTES_FELT, NUM_U64S_FELT},
+    decider::types::{ClaimedEvaluations, RelationParameters, VerifierCommitments, VerifierMemory},
+    transcript::{RoundData, Transcript, TranscriptManifest},
+    types::{AllEntities, G1Affine, G1BaseField, G2Affine, G2BaseField, MontFp256, ScalarField},
+    NUM_ALPHAS,
 };
-use alloc::vec::Vec;
+use alloc::{collections::btree_map::BTreeMap, string::String, vec::Vec};
 use ark_ec::AffineRepr;
-use ark_ff::{BigInteger, Field, MontConfig, PrimeField, Zero,};
+use ark_ff::{BigInteger, Field, MontConfig, PrimeField, Zero};
 
 /// An error that occurs during de/serialization
 #[derive(Debug)]
@@ -76,6 +80,20 @@ impl BytesDeserializable for u64 {
         Ok(u64::from_be_bytes(
             bytes.try_into().map_err(|_| SerdeError::InvalidLength)?,
         ))
+    }
+}
+
+impl BytesSerializable for bool {
+    fn serialize_to_bytes(&self) -> Vec<u8> {
+        vec![*self as u8]
+    }
+}
+
+impl BytesDeserializable for bool {
+    const SER_LEN: usize = 1;
+
+    fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
+        Ok(bytes[0] != 0)
     }
 }
 
@@ -257,13 +275,17 @@ impl BytesDeserializable for G2Affine {
 impl BytesSerializable for VerifierCommitments {
     fn serialize_to_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
-        
+
         // Serialize witness commitments
         bytes.extend(self.witness.iter().flat_map(|x| x.serialize_to_bytes()));
         // Serialize precomputed commitments
         bytes.extend(self.precomputed.iter().flat_map(|x| x.serialize_to_bytes()));
         // Serialize shifted witness commitments
-        bytes.extend(self.shifted_witness.iter().flat_map(|x| x.serialize_to_bytes()));
+        bytes.extend(
+            self.shifted_witness
+                .iter()
+                .flat_map(|x| x.serialize_to_bytes()),
+        );
 
         bytes
     }
@@ -271,13 +293,13 @@ impl BytesSerializable for VerifierCommitments {
 
 impl BytesDeserializable for VerifierCommitments {
     const SER_LEN: usize = 2560;
-    
+
     fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
         let mut offset = 0;
         let mut commitments = AllEntities::default();
 
         // panic!("bytes: {:?}", commitments.serialize_to_bytes().len());
-        
+
         // Deserialize witness commitments
         for commitment in commitments.witness.iter_mut() {
             *commitment = G1Affine::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
@@ -304,7 +326,7 @@ impl BytesDeserializable for VerifierCommitments {
 impl BytesSerializable for RelationParameters {
     fn serialize_to_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
-        
+
         // Serialize scalar field elements
         bytes.extend(self.eta_1.serialize_to_bytes());
         bytes.extend(self.eta_2.serialize_to_bytes());
@@ -312,49 +334,57 @@ impl BytesSerializable for RelationParameters {
         bytes.extend(self.beta.serialize_to_bytes());
         bytes.extend(self.gamma.serialize_to_bytes());
         bytes.extend(self.public_input_delta.serialize_to_bytes());
-        
+
         // Serialize fixed-size alphas array
         for alpha in &self.alphas {
             bytes.extend(alpha.serialize_to_bytes());
         }
-        
+
         // Serialize dynamic-size gate_challenges
         bytes.extend((self.gate_challenges.len() as u32).serialize_to_bytes());
-        bytes.extend(self.gate_challenges.iter().flat_map(|x| x.serialize_to_bytes()));
-        
+        bytes.extend(
+            self.gate_challenges
+                .iter()
+                .flat_map(|x| x.serialize_to_bytes()),
+        );
+
         bytes
     }
 }
 
 impl BytesDeserializable for RelationParameters {
     const SER_LEN: usize = 1892;
-    
+
     fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
         let mut offset = 0;
-        
+
         // Deserialize scalar field elements
         let eta_1 = ScalarField::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
         let eta_2 = ScalarField::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
         let eta_3 = ScalarField::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
         let beta = ScalarField::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
         let gamma = ScalarField::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
-        let public_input_delta = ScalarField::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
-        
+        let public_input_delta =
+            ScalarField::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
+
         // Deserialize fixed-size alphas array
         let mut alphas = [ScalarField::default(); NUM_ALPHAS];
         for alpha in alphas.iter_mut() {
             *alpha = ScalarField::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
         }
-        
+
         // Deserialize dynamic-size gate_challenges
         let challenges_len = u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;
         let mut gate_challenges = Vec::with_capacity(challenges_len);
         for _ in 0..challenges_len {
-            gate_challenges.push(ScalarField::deserialize_from_bytes_with_offset(bytes, &mut offset)?);
+            gate_challenges.push(ScalarField::deserialize_from_bytes_with_offset(
+                bytes,
+                &mut offset,
+            )?);
         }
 
         // panic!("RelationParameters offset: {:?}", offset);
-        
+
         Ok(RelationParameters {
             eta_1,
             eta_2,
@@ -371,25 +401,29 @@ impl BytesDeserializable for RelationParameters {
 impl BytesSerializable for ClaimedEvaluations {
     fn serialize_to_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
-        
+
         // Serialize witness evaluations
         bytes.extend(self.witness.iter().flat_map(|x| x.serialize_to_bytes()));
         // Serialize precomputed evaluations
         bytes.extend(self.precomputed.iter().flat_map(|x| x.serialize_to_bytes()));
         // Serialize shifted witness evaluations
-        bytes.extend(self.shifted_witness.iter().flat_map(|x| x.serialize_to_bytes()));
-        
+        bytes.extend(
+            self.shifted_witness
+                .iter()
+                .flat_map(|x| x.serialize_to_bytes()),
+        );
+
         bytes
     }
 }
 
 impl BytesDeserializable for ClaimedEvaluations {
     const SER_LEN: usize = 1280;
-    
+
     fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
         let mut offset = 0;
         let mut evaluations = AllEntities::default();
-        
+
         // Deserialize witness evaluations
         for eval in evaluations.witness.iter_mut() {
             *eval = ScalarField::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
@@ -402,7 +436,7 @@ impl BytesDeserializable for ClaimedEvaluations {
         for eval in evaluations.shifted_witness.iter_mut() {
             *eval = ScalarField::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
         }
-        
+
         Ok(evaluations)
     }
 }
@@ -410,31 +444,267 @@ impl BytesDeserializable for ClaimedEvaluations {
 impl BytesSerializable for VerifierMemory {
     fn serialize_to_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
-        
+
         // Serialize each component using their implementations
         bytes.extend(self.verifier_commitments.serialize_to_bytes());
         bytes.extend(self.relation_parameters.serialize_to_bytes());
         bytes.extend(self.claimed_evaluations.serialize_to_bytes());
-        
+
         bytes
     }
 }
 
 impl BytesDeserializable for VerifierMemory {
-    const SER_LEN: usize = VerifierCommitments::SER_LEN + RelationParameters::SER_LEN + ClaimedEvaluations::SER_LEN;
-    
+    const SER_LEN: usize =
+        VerifierCommitments::SER_LEN + RelationParameters::SER_LEN + ClaimedEvaluations::SER_LEN;
+
     fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
         let mut offset = 0;
-        
+
         // Deserialize each component using their implementations
-        let verifier_commitments = VerifierCommitments::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
-        let relation_parameters = RelationParameters::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
-        let claimed_evaluations = ClaimedEvaluations::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
-        
+        let verifier_commitments =
+            VerifierCommitments::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
+        let relation_parameters =
+            RelationParameters::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
+        let claimed_evaluations =
+            ClaimedEvaluations::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
+
         Ok(VerifierMemory {
             verifier_commitments,
             relation_parameters,
             claimed_evaluations,
+        })
+    }
+}
+
+impl BytesSerializable for RoundData {
+    fn serialize_to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+
+        // Serialize challenge_label vector
+        bytes.extend((self.challenge_label.len() as u32).serialize_to_bytes());
+        for label in &self.challenge_label {
+            let label_bytes = label.as_bytes();
+            bytes.extend((label_bytes.len() as u32).serialize_to_bytes());
+            bytes.extend(label_bytes);
+        }
+
+        // Serialize entries vector
+        bytes.extend((self.entries.len() as u32).serialize_to_bytes());
+        for (label, size) in &self.entries {
+            let label_bytes = label.as_bytes();
+            bytes.extend((label_bytes.len() as u32).serialize_to_bytes());
+            bytes.extend(label_bytes);
+            bytes.extend((*size as u32).serialize_to_bytes());
+        }
+
+        bytes
+    }
+}
+
+impl BytesDeserializable for RoundData {
+    const SER_LEN: usize = 0; // Dynamic size
+
+    fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
+        let mut offset = 0;
+
+        // Deserialize challenge_label vector
+        let challenge_label_len =
+            u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;
+        let mut challenge_label = Vec::with_capacity(challenge_label_len);
+        for _ in 0..challenge_label_len {
+            let label_len = u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;
+            if offset + label_len > bytes.len() {
+                return Err(SerdeError::InvalidLength);
+            }
+            let label_bytes = &bytes[offset..offset + label_len];
+            let label = String::from_utf8(label_bytes.to_vec())
+                .map_err(|_| SerdeError::ScalarConversion)?;
+            challenge_label.push(label);
+            offset += label_len;
+        }
+
+        // Deserialize entries vector
+        let entries_len = u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;
+        let mut entries = Vec::with_capacity(entries_len);
+        for _ in 0..entries_len {
+            let label_len = u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;
+            if offset + label_len > bytes.len() {
+                return Err(SerdeError::InvalidLength);
+            }
+            let label_bytes = &bytes[offset..offset + label_len];
+            let label = String::from_utf8(label_bytes.to_vec())
+                .map_err(|_| SerdeError::ScalarConversion)?;
+            offset += label_len;
+            let size = u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;
+            entries.push((label, size));
+        }
+
+        Ok(RoundData {
+            challenge_label,
+            entries,
+        })
+    }
+
+    fn deserialize_from_bytes_with_offset(
+        bytes: &[u8],
+        offset: &mut usize,
+    ) -> Result<Self, SerdeError> {
+        let start_offset = *offset;
+        let result = Self::deserialize_from_bytes(&bytes[start_offset..])?;
+
+        // Calculate how many bytes were consumed by re-serializing and measuring
+        let consumed_bytes = result.serialize_to_bytes().len();
+        *offset += consumed_bytes;
+
+        Ok(result)
+    }
+}
+
+impl BytesSerializable for TranscriptManifest {
+    fn serialize_to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+
+        // Serialize the number of rounds
+        bytes.extend((self.manifest.len() as u32).serialize_to_bytes());
+
+        // Serialize each round
+        for (&round_number, round_data) in &self.manifest {
+            bytes.extend((round_number as u32).serialize_to_bytes());
+            bytes.extend(round_data.serialize_to_bytes());
+        }
+
+        bytes
+    }
+}
+
+impl BytesDeserializable for TranscriptManifest {
+    const SER_LEN: usize = 0; // Dynamic size
+
+    fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
+        let mut offset = 0;
+        let mut manifest = BTreeMap::new();
+
+        // Deserialize the number of rounds
+        let num_rounds = u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;
+
+        // Deserialize each round
+        for _ in 0..num_rounds {
+            let round_number =
+                u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;
+            let round_data = RoundData::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
+            manifest.insert(round_number, round_data);
+        }
+
+        Ok(TranscriptManifest { manifest })
+    }
+
+    fn deserialize_from_bytes_with_offset(
+        bytes: &[u8],
+        offset: &mut usize,
+    ) -> Result<Self, SerdeError> {
+        let start_offset = *offset;
+        let result = Self::deserialize_from_bytes(&bytes[start_offset..])?;
+
+        // Calculate how many bytes were consumed by re-serializing and measuring
+        let consumed_bytes = result.serialize_to_bytes().len();
+        *offset += consumed_bytes;
+
+        Ok(result)
+    }
+}
+
+impl BytesSerializable for Transcript {
+    fn serialize_to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+
+        // Serialize proof_data with size prefix
+        let proof_data_bytes = self.proof_data.serialize_to_bytes();
+        bytes.extend((proof_data_bytes.len() as u32).serialize_to_bytes());
+        bytes.extend(proof_data_bytes);
+
+        // Serialize manifest with size prefix
+        let manifest_bytes = self.manifest.serialize_to_bytes();
+        bytes.extend((manifest_bytes.len() as u32).serialize_to_bytes());
+        bytes.extend(manifest_bytes);
+
+        // Serialize counters and state (fixed sizes)
+        bytes.extend((self.num_frs_written as u32).serialize_to_bytes());
+        bytes.extend((self.num_frs_read as u32).serialize_to_bytes());
+        bytes.extend((self.round_number as u32).serialize_to_bytes());
+        bytes.push(if self.is_first_challenge { 1u8 } else { 0u8 });
+
+        // Serialize current_round_data with size prefix
+        let current_round_data_bytes = self.current_round_data.serialize_to_bytes();
+        bytes.extend((current_round_data_bytes.len() as u32).serialize_to_bytes());
+        bytes.extend(current_round_data_bytes);
+
+        // Serialize previous_challenge (fixed size)
+        bytes.extend(self.previous_challenge.serialize_to_bytes());
+
+        bytes
+    }
+}
+
+impl BytesDeserializable for Transcript {
+    const SER_LEN: usize = 0; // Dynamic size with prefixes
+
+    fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
+        let mut offset = 0;
+
+        // Deserialize proof_data with size prefix
+        let proof_data_size = u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;
+        if offset + proof_data_size > bytes.len() {
+            return Err(SerdeError::InvalidLength);
+        }
+        let proof_data =
+            Vec::<ScalarField>::deserialize_from_bytes(&bytes[offset..offset + proof_data_size])?;
+        offset += proof_data_size;
+
+        // Deserialize manifest with size prefix
+        let manifest_size = u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;
+        if offset + manifest_size > bytes.len() {
+            return Err(SerdeError::InvalidLength);
+        }
+        let manifest =
+            TranscriptManifest::deserialize_from_bytes(&bytes[offset..offset + manifest_size])?;
+        offset += manifest_size;
+
+        // Deserialize counters and state (fixed sizes)
+        let num_frs_written = u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;
+        let num_frs_read = u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;
+        let round_number = u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;
+        if offset >= bytes.len() {
+            return Err(SerdeError::InvalidLength);
+        }
+        let is_first_challenge_byte = bytes[offset];
+        offset += 1;
+        let is_first_challenge = is_first_challenge_byte != 0;
+
+        // Deserialize current_round_data with size prefix
+        let current_round_data_size =
+            u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;
+        if offset + current_round_data_size > bytes.len() {
+            return Err(SerdeError::InvalidLength);
+        }
+        let current_round_data = Vec::<ScalarField>::deserialize_from_bytes(
+            &bytes[offset..offset + current_round_data_size],
+        )?;
+        offset += current_round_data_size;
+
+        // Deserialize previous_challenge (fixed size)
+        let previous_challenge =
+            ScalarField::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
+
+        Ok(Transcript {
+            proof_data,
+            manifest,
+            num_frs_written,
+            num_frs_read,
+            round_number,
+            is_first_challenge,
+            current_round_data,
+            previous_challenge,
         })
     }
 }

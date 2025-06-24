@@ -2,8 +2,10 @@ use super::{shplemini::ShpleminiVerifierOpeningClaim, types::VerifierMemory};
 use crate::alloc::string::ToString;
 use crate::backends::G1ArithmeticBackend;
 use crate::constants::get_crs_g2;
+use crate::decider::types::RelationParameters;
 use crate::keys::verification_key::VerifyingKey;
-use crate::types::HonkProofError;
+use crate::types::{AllEntities, HonkProofError};
+use crate::NUM_ALPHAS;
 use crate::{
     backends::HashBackend,
     decider::types::BATCHED_RELATION_PARTIAL_LENGTH,
@@ -17,14 +19,14 @@ use ark_ec::AffineRepr;
 use ark_ff::{One, Zero};
 use core::marker::PhantomData;
 
-pub(crate) struct DeciderVerifier<P: G1ArithmeticBackend, H: HashBackend> {
-    pub(super) memory: VerifierMemory,
+pub struct DeciderVerifier<P: G1ArithmeticBackend, H: HashBackend> {
+    pub memory: VerifierMemory,
     phantom_data: PhantomData<P>,
     phantom_hasher: PhantomData<H>,
 }
 
 impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
-    pub(crate) fn new(memory: VerifierMemory) -> Self {
+    pub fn new(memory: VerifierMemory) -> Self {
         Self {
             memory,
             phantom_data: PhantomData,
@@ -85,12 +87,12 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
         Ok(sumcheck_output.verified && pcs_verified)
     }
 
-    pub(crate) fn verify_sumcheck(
+    pub fn verify_sumcheck(
         &mut self,
-        vk: &VerifyingKey,
+        circuit_size: u32,
         transcript: &mut Transcript,
     ) -> HonkVerifyResult<bool> {
-        let log_circuit_size = Utils::get_msb32(vk.circuit_size);
+        let log_circuit_size = Utils::get_msb32(circuit_size);
 
         let mut padding_indicator_array = [ScalarField::zero(); CONST_PROOF_SIZE_LOG_N];
 
@@ -109,12 +111,12 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
         Ok(sumcheck_output.verified)
     }
 
-    pub(crate) fn verify_shplemini(
+    pub fn verify_shplemini(
         &mut self,
-        vk: &VerifyingKey,
+        circuit_size: u32,
         transcript: &mut Transcript,
     ) -> HonkVerifyResult<bool> {
-        let log_circuit_size = Utils::get_msb32(vk.circuit_size);
+        let log_circuit_size = Utils::get_msb32(circuit_size);
 
         let mut padding_indicator_array = [ScalarField::zero(); CONST_PROOF_SIZE_LOG_N];
 

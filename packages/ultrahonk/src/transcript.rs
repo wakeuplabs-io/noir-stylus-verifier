@@ -1,7 +1,7 @@
 use crate::alloc::{borrow::ToOwned, string::String};
 use crate::backends::HashBackend;
 use crate::constants::{NUM_BASEFIELD_ELEMENTS, NUM_SCALARFIELD_ELEMENTS};
-use crate::serialize::{BytesDeserializable, BytesSerializable};
+use crate::serialize::{BytesDeserializable, BytesSerializable, SerdeError};
 use crate::types::{G1Affine, HonkProof, HonkProofError, HonkProofResult, ScalarField};
 use crate::Utils;
 use alloc::collections::BTreeMap;
@@ -12,14 +12,14 @@ use ark_ff::{PrimeField, BigInteger, Zero};
 #[derive(Clone)]
 pub struct Transcript
 {
-    proof_data: Vec<ScalarField>,
-    manifest: TranscriptManifest,
-    num_frs_written: usize, // the number of bb::frs written to proof_data by the prover or the verifier
-    num_frs_read: usize,    // the number of bb::frs read from proof_data by the verifier
-    round_number: usize,
-    is_first_challenge: bool,
-    current_round_data: Vec<ScalarField>,
-    previous_challenge: ScalarField,
+    pub proof_data: Vec<ScalarField>,
+    pub manifest: TranscriptManifest,
+    pub num_frs_written: usize, // the number of bb::frs written to proof_data by the prover or the verifier
+    pub num_frs_read: usize,    // the number of bb::frs read from proof_data by the verifier
+    pub round_number: usize,
+    pub is_first_challenge: bool,
+    pub current_round_data: Vec<ScalarField>,
+    pub previous_challenge: ScalarField,
 }
 
 impl Default for Transcript {
@@ -257,14 +257,14 @@ impl Transcript {
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Default)]
-pub(crate) struct RoundData {
-    challenge_label: Vec<String>,
-    entries: Vec<(String, usize)>,
+pub struct RoundData {
+    pub challenge_label: Vec<String>,
+    pub  entries: Vec<(String, usize)>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct TranscriptManifest {
-    manifest: BTreeMap<usize, RoundData>,
+    pub manifest: BTreeMap<usize, RoundData>,
 }
 
 impl TranscriptManifest {

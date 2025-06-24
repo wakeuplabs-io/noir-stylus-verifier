@@ -8,7 +8,7 @@ use crate::{types::AllEntities, NUM_ALPHAS};
 use alloc::vec::Vec;
 use ark_ff::One;
 
-pub(crate) struct VerifierMemory {
+pub struct VerifierMemory {
     pub(crate) verifier_commitments: VerifierCommitments,
     pub(crate) relation_parameters: RelationParameters,
     pub(crate) claimed_evaluations: ClaimedEvaluations,

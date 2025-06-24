@@ -1,3 +1,4 @@
+use crate::utils::backends::{PrecompileG1ArithmeticBackend, PrecompileHashBackend};
 use crate::utils::helpers::call_helper;
 use crate::utils::solidity::verifyCall;
 use alloc::vec::Vec;
@@ -6,11 +7,11 @@ use core::borrow::Borrow;
 use stylus_sdk::call::Call;
 use stylus_sdk::storage::StorageAddress;
 use stylus_sdk::{abi::Bytes, prelude::*};
-use ultrahonk::crs::parser::CrsParser;
-use ultrahonk::keys::verification_key::{VerifyingKey, VerifyingKeyBarretenberg};
+use ultrahonk::keys::verification_key::{VerifyingKey};
 use ultrahonk::serialize::BytesDeserializable;
 use ultrahonk::transcript::Transcript;
 use ultrahonk::types::{HonkProof, ScalarField};
+use ultrahonk::verifier::UltraHonk;
 
 sol_storage! {
     #[cfg_attr(feature = "verifier", entrypoint)]
@@ -35,7 +36,8 @@ impl VerifierContract {
         // }
 
         // self.initialized.set(true);
-        self.sumcheck_verifier_address.set(sumcheck_verifier_address);
+        self.sumcheck_verifier_address
+            .set(sumcheck_verifier_address);
     }
 
     pub fn get_sumcheck_verifier_address(&self) -> Address {
@@ -48,6 +50,25 @@ impl VerifierContract {
         public_inputs_bytes: Bytes,
         vk_bytes: Bytes,
     ) -> bool {
+        // parse proof file
+        let proof = HonkProof::from_buffer(&proof_bytes).unwrap();
+
+        // parse public_inputs file
+        let public_inputs =
+            Vec::<ScalarField>::deserialize_from_bytes(&public_inputs_bytes).unwrap();
+
+        // parse verification key file
+        let vk = VerifyingKey::from_buffer(&vk_bytes).unwrap();
+
+        let is_valid = UltraHonk::<PrecompileG1ArithmeticBackend, PrecompileHashBackend>::verify(
+            proof,
+            &public_inputs,
+            &vk,
+        )
+        .unwrap();
+
+        is_valid
+
         // let public_inputs =
         //     Vec::<ScalarField>::deserialize_from_bytes(public_inputs_bytes.as_slice()).unwrap();
 
@@ -84,16 +105,16 @@ impl VerifierContract {
         //     ),
         // )
         // .unwrap();
-        let sumcheck_verifier = ISumcheckVerifier::new(self.sumcheck_verifier_address.get());
-        let config = Call::new();
-        let result = sumcheck_verifier.verify(
-            config,
-            proof_bytes.to_vec().into(),
-            public_inputs_bytes.to_vec().into(),
-            vk_bytes.to_vec().into(),
-        );
+        // let sumcheck_verifier = ISumcheckVerifier::new(self.sumcheck_verifier_address.get());
+        // let config = Call::new();
+        // let result = sumcheck_verifier.verify(
+        //     config,
+        //     proof_bytes.to_vec().into(),
+        //     public_inputs_bytes.to_vec().into(),
+        //     vk_bytes.to_vec().into(),
+        // );
 
-        result.unwrap()
+        // result.unwrap()
     }
 }
 
