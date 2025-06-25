@@ -21,10 +21,10 @@ sol_storage! {
 
 sol_interface! {
     interface ISumcheckVerifier {
-        function verify(bytes memory mem, bytes memory transcript, uint32 circuit_size) external returns (bool, bytes memory, bytes memory);
+        function verify(bytes memory mem, bytes memory transcript, uint32 circuit_size) external returns (bytes memory, bytes memory, bytes memory, bool);
     }
     interface IShpleminiVerifier {
-        function verify(bytes memory mem, bytes memory transcript, uint32 circuit_size) external returns (bool, bytes memory, bytes memory);
+        function verify(bytes memory mem, bytes memory transcript, bytes memory multivariate_challenge, uint32 circuit_size) external returns (bytes memory, bytes memory, bool);
     }
 }
 
@@ -69,7 +69,7 @@ impl VerifierContract {
 
         // parse proof file
         let proof = HonkProof::from_buffer(&proof_bytes).unwrap();
-        let proof = proof.insert_public_inputs(public_inputs.to_vec());
+        let proof = proof.insert_public_inputs(public_inputs);
 
         // parse verification key file
         let vk = VerifyingKey::from_buffer(&vk_bytes).unwrap();
@@ -84,14 +84,15 @@ impl VerifierContract {
         // sumcheck verification
 
         let sumcheck_verifier = ISumcheckVerifier::new(self.sumcheck_verifier_address.get());
-        let (sumcheck_ok, memory_bytes, transcript_bytes) = sumcheck_verifier
-            .verify(
-                Call::new(),
-                memory.serialize_to_bytes().into(),
-                transcript.serialize_to_bytes().into(),
-                vk.circuit_size.into(),
-            )
-            .unwrap();
+        let (memory_bytes, transcript_bytes, multivariate_challenge, sumcheck_ok) =
+            sumcheck_verifier
+                .verify(
+                    Call::new(),
+                    memory.serialize_to_bytes().into(),
+                    transcript.serialize_to_bytes().into(),
+                    vk.circuit_size.into(),
+                )
+                .unwrap();
 
         if !sumcheck_ok {
             return false;
@@ -101,15 +102,16 @@ impl VerifierContract {
 
         let shplemini_verifier = IShpleminiVerifier::new(self.shplemini_verifier_address.get());
 
-        let (shplemini_ok, _memory_bytes, _transcript_bytes) = shplemini_verifier
+        let (_memory_bytes, _transcript_bytes, shplemini_ok) = shplemini_verifier
             .verify(
                 Call::new(),
                 memory_bytes.to_vec().into(),
                 transcript_bytes.to_vec().into(),
+                multivariate_challenge.to_vec().into(),
                 vk.circuit_size.into(),
             )
             .unwrap();
 
-        shplemini_ok
+        shplemini_ok && sumcheck_ok
     }
 }

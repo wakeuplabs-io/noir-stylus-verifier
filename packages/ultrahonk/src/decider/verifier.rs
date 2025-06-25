@@ -2,10 +2,8 @@ use super::{shplemini::ShpleminiVerifierOpeningClaim, types::VerifierMemory};
 use crate::alloc::string::ToString;
 use crate::backends::G1ArithmeticBackend;
 use crate::constants::get_crs_g2;
-use crate::decider::types::RelationParameters;
-use crate::keys::verification_key::VerifyingKey;
-use crate::types::{AllEntities, HonkProofError};
-use crate::NUM_ALPHAS;
+use crate::decider::sumcheck::SumcheckVerifierOutput;
+use crate::types::{HonkProofError};
 use crate::{
     backends::HashBackend,
     decider::types::BATCHED_RELATION_PARTIAL_LENGTH,
@@ -84,15 +82,15 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
             G2Affine::generator(),
         )
         .unwrap();
-    
+
         Ok(sumcheck_output.verified && pcs_verified)
     }
 
     pub fn verify_sumcheck(
         &mut self,
-        circuit_size: u32,
         transcript: &mut Transcript,
-    ) -> HonkVerifyResult<bool> {
+        circuit_size: u32,
+    ) -> HonkVerifyResult<SumcheckVerifierOutput> {
         let log_circuit_size = Utils::get_msb32(circuit_size);
 
         let mut padding_indicator_array = [ScalarField::zero(); CONST_PROOF_SIZE_LOG_N];
@@ -104,18 +102,18 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
                 ScalarField::zero()
             };
         }
-        let sumcheck_output = self.sumcheck_verify::<BATCHED_RELATION_PARTIAL_LENGTH>(
+
+        self.sumcheck_verify::<BATCHED_RELATION_PARTIAL_LENGTH>(
             transcript,
             &padding_indicator_array,
-        )?;
-
-        Ok(sumcheck_output.verified)
+        )
     }
 
     pub fn verify_shplemini(
         &mut self,
-        circuit_size: u32,
         transcript: &mut Transcript,
+        multivariate_challenge: Vec<ScalarField>,
+        circuit_size: u32,
     ) -> HonkVerifyResult<bool> {
         let log_circuit_size = Utils::get_msb32(circuit_size);
 
@@ -127,13 +125,6 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
             } else {
                 ScalarField::zero()
             };
-        }
-
-        let mut multivariate_challenge = Vec::with_capacity(CONST_PROOF_SIZE_LOG_N);
-        for (round_idx, _padding_value) in padding_indicator_array.iter().enumerate() {
-            let round_challenge =
-                transcript.get_challenge::<H>(format!("Sumcheck:u_{}", round_idx));
-            multivariate_challenge.push(round_challenge);
         }
 
         let mut opening_claim = self.compute_batch_opening_claim(

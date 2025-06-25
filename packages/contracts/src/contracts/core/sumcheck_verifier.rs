@@ -14,18 +14,28 @@ sol_storage! {
 
 #[public]
 impl SumcheckVerifierContract {
-    pub fn verify(&self, memory_bytes: Bytes, transcript_bytes: Bytes, circuit_size: u32) -> (bool, Bytes, Bytes) {
+    pub fn verify(
+        &self,
+        memory_bytes: Bytes,
+        transcript_bytes: Bytes,
+        circuit_size: u32,
+    ) -> (Bytes, Bytes, Bytes, bool) {
         let memory = VerifierMemory::deserialize_from_bytes(memory_bytes.as_slice()).unwrap();
-        let mut transcript = Transcript::deserialize_from_bytes(transcript_bytes.as_slice()).unwrap();
+        let mut transcript =
+            Transcript::deserialize_from_bytes(transcript_bytes.as_slice()).unwrap();
 
-        let mut decider_verifier = DeciderVerifier::<PrecompileG1ArithmeticBackend, PrecompileHashBackend>::new(memory);
+        let mut decider_verifier =
+            DeciderVerifier::<PrecompileG1ArithmeticBackend, PrecompileHashBackend>::new(memory);
 
-        decider_verifier.verify_sumcheck(circuit_size, &mut transcript).unwrap();
+        let sumcheck_output = decider_verifier
+            .verify_sumcheck(&mut transcript, circuit_size)
+            .unwrap();
 
         (
-            true,
             decider_verifier.memory.serialize_to_bytes().into(),
             transcript.serialize_to_bytes().into(),
+            sumcheck_output.multivariate_challenge.serialize_to_bytes().into(),
+            sumcheck_output.verified,
         )
     }
 }

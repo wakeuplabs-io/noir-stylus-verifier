@@ -5,6 +5,7 @@ use ultrahonk::decider::types::VerifierMemory;
 use ultrahonk::decider::verifier::DeciderVerifier;
 use ultrahonk::serialize::{BytesDeserializable, BytesSerializable};
 use ultrahonk::transcript::Transcript;
+use ultrahonk::types::ScalarField;
 
 sol_storage! {
     #[cfg_attr(feature = "shplemini-verifier", entrypoint)]
@@ -14,21 +15,30 @@ sol_storage! {
 
 #[public]
 impl ShpleminiVerifierContract {
-    pub fn verify(&self, memory_bytes: Bytes, transcript_bytes: Bytes, circuit_size: u32) -> (bool, Bytes, Bytes) {
+    pub fn verify(
+        &self,
+        memory_bytes: Bytes,
+        transcript_bytes: Bytes,
+        multivariate_challenge: Bytes,
+        circuit_size: u32,
+    ) -> (Bytes, Bytes, bool) {
         let memory = VerifierMemory::deserialize_from_bytes(memory_bytes.as_slice()).unwrap();
-        let mut transcript = Transcript::deserialize_from_bytes(transcript_bytes.as_slice()).unwrap();
+        let mut transcript =
+            Transcript::deserialize_from_bytes(transcript_bytes.as_slice()).unwrap();
+        let multivariate_challenge =
+            Vec::<ScalarField>::deserialize_from_bytes(multivariate_challenge.as_slice()).unwrap();
 
         let mut decider_verifier =
             DeciderVerifier::<PrecompileG1ArithmeticBackend, PrecompileHashBackend>::new(memory);
 
-        decider_verifier
-            .verify_shplemini(circuit_size, &mut transcript)
+        let shplemini_output = decider_verifier
+            .verify_shplemini(&mut transcript, multivariate_challenge, circuit_size)
             .unwrap();
 
         (
-            true,
             decider_verifier.memory.serialize_to_bytes().into(),
             transcript.serialize_to_bytes().into(),
+            shplemini_output,
         )
     }
 }
