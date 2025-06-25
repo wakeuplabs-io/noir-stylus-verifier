@@ -84,6 +84,7 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
             G2Affine::generator(),
         )
         .unwrap();
+    
         Ok(sumcheck_output.verified && pcs_verified)
     }
 

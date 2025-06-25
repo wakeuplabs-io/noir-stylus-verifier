@@ -82,7 +82,7 @@ fn plain_test(name: &str, proof_file: &str, vk_file: &str, public_inputs_file: &
     let vk_u8 = std::fs::read(vk_file).unwrap();
     let vk = VerifyingKey::from_buffer(&vk_u8).unwrap();
 
-    let is_valid = UltraHonk::<ArkHonkCurve, ArkKeccak256>::verify_2(
+    let is_valid = UltraHonk::<ArkHonkCurve, ArkKeccak256>::verify(
         proof,
         &public_inputs,
         &vk
