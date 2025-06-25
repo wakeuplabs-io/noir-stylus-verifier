@@ -9,26 +9,26 @@ use alloc::vec::Vec;
 use ark_ff::One;
 
 pub struct VerifierMemory {
-    pub(crate) verifier_commitments: VerifierCommitments,
-    pub(crate) relation_parameters: RelationParameters,
-    pub(crate) claimed_evaluations: ClaimedEvaluations,
+    pub verifier_commitments: VerifierCommitments,
+    pub relation_parameters: RelationParameters,
+    pub claimed_evaluations: ClaimedEvaluations,
 }
 
-pub(crate) const MAX_PARTIAL_RELATION_LENGTH: usize = 7;
-pub(crate) const BATCHED_RELATION_PARTIAL_LENGTH: usize = MAX_PARTIAL_RELATION_LENGTH + 1;
+pub const MAX_PARTIAL_RELATION_LENGTH: usize = 7;
+pub const BATCHED_RELATION_PARTIAL_LENGTH: usize = MAX_PARTIAL_RELATION_LENGTH + 1;
 
-pub(crate) type ClaimedEvaluations = AllEntities<ScalarField>;
-pub(crate) type VerifierCommitments = AllEntities<G1Affine>;
+pub type ClaimedEvaluations = AllEntities<ScalarField>;
+pub type VerifierCommitments = AllEntities<G1Affine>;
 
-pub(crate) struct RelationParameters {
-    pub(crate) eta_1: ScalarField,
-    pub(crate) eta_2: ScalarField,
-    pub(crate) eta_3: ScalarField,
-    pub(crate) beta: ScalarField,
-    pub(crate) gamma: ScalarField,
-    pub(crate) public_input_delta: ScalarField,
-    pub(crate) alphas: [ScalarField; NUM_ALPHAS],
-    pub(crate) gate_challenges: Vec<ScalarField>,
+pub struct RelationParameters {
+    pub eta_1: ScalarField,
+    pub eta_2: ScalarField,
+    pub eta_3: ScalarField,
+    pub beta: ScalarField,
+    pub gamma: ScalarField,
+    pub public_input_delta: ScalarField,
+    pub alphas: [ScalarField; NUM_ALPHAS],
+    pub gate_challenges: Vec<ScalarField>,
 }
 
 pub struct GateSeparatorPolynomial {
@@ -68,7 +68,7 @@ impl GateSeparatorPolynomial {
 }
 
 impl VerifierMemory {
-    pub(crate) fn from_key_and_transcript<P: G1ArithmeticBackend, H: HashBackend>(vk: &VerifyingKey, transcript: &mut Transcript) -> Self {
+    pub fn from_key_and_transcript<P: G1ArithmeticBackend, H: HashBackend>(vk: &VerifyingKey, transcript: &mut Transcript) -> Self {
         let oink_verifier = OinkVerifier::<P>::default();
         let oink_result = oink_verifier.build_memory::<H>(vk, transcript).unwrap();
 

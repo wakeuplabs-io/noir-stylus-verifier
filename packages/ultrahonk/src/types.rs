@@ -111,14 +111,14 @@ pub(crate) const NUM_ALL_ENTITIES: usize =
     WITNESS_ENTITIES_SIZE + PRECOMPUTED_ENTITIES_SIZE + SHIFTED_WITNESS_ENTITIES_SIZE;
 
 #[derive(Default)]
-pub(crate) struct AllEntities<T: Default> {
-    pub(crate) witness: WitnessEntities<T>,
-    pub(crate) precomputed: PrecomputedEntities<T>,
-    pub(crate) shifted_witness: ShiftedWitnessEntities<T>,
+pub struct AllEntities<T: Default> {
+    pub witness: WitnessEntities<T>,
+    pub precomputed: PrecomputedEntities<T>,
+    pub shifted_witness: ShiftedWitnessEntities<T>,
 }
 
 impl<T: Default> AllEntities<T> {
-    pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.precomputed
             .iter_mut()
             .chain(self.witness.iter_mut())
@@ -129,14 +129,14 @@ impl<T: Default> AllEntities<T> {
 const WITNESS_ENTITIES_SIZE: usize = 8;
 #[derive(Default, Clone)]
 pub struct WitnessEntities<T: Default> {
-    pub(crate) elements: [T; WITNESS_ENTITIES_SIZE],
+    pub elements: [T; WITNESS_ENTITIES_SIZE],
 }
 
 const SHIFTED_WITNESS_ENTITIES_SIZE: usize = 5;
 
 #[derive(Default, Clone)]
 pub struct ShiftedWitnessEntities<T: Default> {
-    pub(crate) elements: [T; SHIFTED_WITNESS_ENTITIES_SIZE],
+    pub elements: [T; SHIFTED_WITNESS_ENTITIES_SIZE],
 }
 
 impl<T: Default> IntoIterator for ShiftedWitnessEntities<T> {

@@ -5,10 +5,7 @@ use super::{
 use crate::{alloc::string::ToString, backends::G1ArithmeticBackend};
 use crate::{
     backends::HashBackend,
-    decider::{
-        types::{ClaimedEvaluations, VerifierCommitments},
-        verifier::DeciderVerifier,
-    },
+    decider::verifier::DeciderVerifier,
     transcript::Transcript,
     types::{G1Affine, ScalarField},
     verifier::HonkVerifyResult,
@@ -19,53 +16,6 @@ use ark_ec::AffineRepr;
 use ark_ff::{Field, One, Zero};
 
 impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
-    pub fn get_g_shift_evaluations(
-        evaluations: &ClaimedEvaluations,
-    ) -> PolyGShift<ScalarField> {
-        PolyGShift {
-            wires: &evaluations.shifted_witness,
-        }
-    }
-
-    pub fn get_g_shift_comms(evaluations: &VerifierCommitments) -> PolyG<G1Affine> {
-        PolyG {
-            wires: evaluations.witness.to_be_shifted().try_into().unwrap(),
-        }
-    }
-
-    pub fn get_f_evaluations(evaluations: &ClaimedEvaluations) -> PolyF<ScalarField> {
-        PolyF {
-            precomputed: &evaluations.precomputed,
-            witness: &evaluations.witness,
-        }
-    }
-    pub fn get_f_comms(evaluations: &VerifierCommitments) -> PolyF<G1Affine> {
-        PolyF {
-            precomputed: &evaluations.precomputed,
-            witness: &evaluations.witness,
-        }
-    }
-
-    pub fn get_fold_commitments(
-        virtual_log_n: u32,
-        transcript: &mut Transcript,
-    ) -> HonkVerifyResult<Vec<G1Affine>> {
-        let fold_commitments: Vec<_> = (0..virtual_log_n - 1)
-            .map(|i| transcript.receive_point_from_prover(format!("Gemini:FOLD_{}", i + 1)))
-            .collect::<Result<_, _>>()?;
-        Ok(fold_commitments)
-    }
-
-    pub fn get_gemini_evaluations(
-        virtual_log_n: u32,
-        transcript: &mut Transcript,
-    ) -> HonkVerifyResult<Vec<ScalarField>> {
-        let gemini_evaluations: Vec<_> = (1..=virtual_log_n)
-            .map(|i| transcript.receive_fr_from_prover(format!("Gemini:a_{}", i + 1)))
-            .collect::<Result<_, _>>()?;
-        Ok(gemini_evaluations)
-    }
-
     pub fn powers_of_evaluation_challenge(
         gemini_evaluation_challenge: ScalarField,
         num_squares: usize,
@@ -114,14 +64,17 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
 
         // Process Gemini transcript data:
         // - Get Gemini commitments (com(A₁), com(A₂), … , com(Aₙ₋₁))
-        let fold_commitments = Self::get_fold_commitments(virtual_log_n as u32, transcript)?;
+        let fold_commitments: Vec<_> = (0..virtual_log_n - 1)
+            .map(|i| transcript.receive_point_from_prover(format!("Gemini:FOLD_{}", i + 1)))
+            .collect::<Result<_, _>>()?;
 
         // - Get Gemini evaluation challenge for Aᵢ, i = 0, … , d−1
         let gemini_evaluation_challenge = transcript.get_challenge::<H>("Gemini:r".to_string());
 
         // - Get evaluations (A₀(−r), A₁(−r²), ... , Aₙ₋₁(−r²⁽ⁿ⁻¹⁾))
-        let gemini_fold_neg_evaluations =
-            Self::get_gemini_evaluations(virtual_log_n as u32, transcript)?;
+        let gemini_fold_neg_evaluations: Vec<_> = (1..=virtual_log_n)
+            .map(|i| transcript.receive_fr_from_prover(format!("Gemini:a_{}", i + 1)))
+            .collect::<Result<_, _>>()?;
 
         // Get evaluations of partially evaluated batched interleaved polynomials P₊(rˢ) and P₋((-r)ˢ)
         let p_pos = ScalarField::zero();
@@ -278,10 +231,10 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
         gemini_batching_challenge_power: &ScalarField,
     ) {
         let mut current_batching_challenge = *gemini_batching_challenge_power;
-        let unshifted_evaluations = Self::get_f_evaluations(&self.memory.claimed_evaluations);
-        let shifted_evaluations = Self::get_g_shift_evaluations(&self.memory.claimed_evaluations);
-        let unshifted_commitments = Self::get_f_comms(&self.memory.verifier_commitments);
-        let to_be_shifted_commitments = Self::get_g_shift_comms(&self.memory.verifier_commitments);
+        let unshifted_evaluations = PolyF::from(&self.memory.claimed_evaluations);
+        let shifted_evaluations = PolyGShift::from(&self.memory.claimed_evaluations);
+        let unshifted_commitments = PolyF::from(&self.memory.verifier_commitments);
+        let to_be_shifted_commitments = PolyG::from(&self.memory.verifier_commitments);
         for (unshifted_commitment, unshifted_evaluation) in unshifted_commitments
             .iter()
             .zip(unshifted_evaluations.iter())
@@ -313,6 +266,7 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
             current_batching_challenge *= *multivariate_batching_challenge;
         }
     }
+
     /**
      * @brief Populates the 'commitments' and 'scalars' vectors with the commitments to Gemini fold polynomials \f$
      * A_i \f$.

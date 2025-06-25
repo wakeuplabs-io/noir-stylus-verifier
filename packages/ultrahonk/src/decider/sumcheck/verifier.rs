@@ -45,7 +45,7 @@ impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
             let round_challenge = transcript.get_challenge::<H>(format!("Sumcheck:u_{}", round_idx));
 
             let checked = sum_check_round.check_sum(&round_univariate, padding_value);
-            verified = verified && checked;
+            verified = verified && checked; // TODO: this gets overwritten by the final round
 
             multivariate_challenge.push(round_challenge);
 
