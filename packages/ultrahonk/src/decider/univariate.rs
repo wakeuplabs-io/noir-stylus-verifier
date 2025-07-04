@@ -7,7 +7,7 @@ pub struct Univariate<const SIZE: usize> {
 }
 
 impl<const SIZE: usize> Univariate<SIZE> {
-    pub(crate) fn evaluate(&self, u: ScalarField) -> ScalarField {
+    pub fn evaluate(&self, u: ScalarField) -> ScalarField {
         if u == ScalarField::zero() {
             return self.evaluations[0];
         }

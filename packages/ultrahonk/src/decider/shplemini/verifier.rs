@@ -2,7 +2,7 @@ use super::{
     types::{PolyF, PolyG, PolyGShift},
     ShpleminiVerifierOpeningClaim,
 };
-use crate::{alloc::string::ToString, backends::G1ArithmeticBackend};
+use crate::{alloc::string::ToString, backends::G1ArithmeticBackend, constants::get_crs_g2, types::HonkProofError};
 use crate::{
     backends::HashBackend,
     decider::verifier::DeciderVerifier,
@@ -12,10 +12,64 @@ use crate::{
     CONST_PROOF_SIZE_LOG_N, NUM_INTERLEAVING_CLAIMS,
 };
 use alloc::vec::Vec;
+use ark_bn254::G2Affine;
 use ark_ec::AffineRepr;
 use ark_ff::{Field, One, Zero};
 
 impl<P: G1ArithmeticBackend, H: HashBackend> DeciderVerifier<P, H> {
+    pub fn verify_shplemini(
+        &mut self,
+        transcript: &mut Transcript,
+        multivariate_challenge: Vec<ScalarField>,
+        circuit_size: u32,
+    ) -> HonkVerifyResult<bool> {
+        let log_circuit_size = circuit_size.ilog2() as usize;
+
+        let mut padding_indicator_array = [ScalarField::zero(); CONST_PROOF_SIZE_LOG_N];
+
+        for (idx, value) in padding_indicator_array.iter_mut().enumerate() {
+            *value = if idx < log_circuit_size as usize {
+                ScalarField::one()
+            } else {
+                ScalarField::zero()
+            };
+        }
+
+        let mut opening_claim = self.compute_batch_opening_claim(
+            multivariate_challenge,
+            transcript,
+            &padding_indicator_array,
+        )?;
+
+        let pairing_points = Self::reduce_verify_shplemini(&mut opening_claim, transcript)?;
+        // let pairing_points = (G1Affine::zero(), G1Affine::zero());
+
+        let pcs_verified = P::ec_pairing_check(
+            pairing_points.0,
+            pairing_points.1,
+            get_crs_g2(),
+            G2Affine::generator(),
+        )
+        .unwrap();
+
+        Ok(pcs_verified)
+    }
+
+    fn reduce_verify_shplemini(
+        opening_pair: &mut ShpleminiVerifierOpeningClaim,
+        transcript: &mut Transcript,
+    ) -> HonkVerifyResult<(G1Affine, G1Affine)> {
+        let quotient_commitment = transcript.receive_point_from_prover("KZG:W".to_string())?;
+        opening_pair.commitments.push(quotient_commitment);
+        opening_pair.scalars.push(opening_pair.challenge);
+        let p_1 = -quotient_commitment.into_group();
+
+        let p_0 = P::msm(&opening_pair.scalars, &opening_pair.commitments)
+            .map_err(|_| HonkProofError::MSMError)?;
+
+        Ok((p_0, p_1.into()))
+    }
+
     pub fn powers_of_evaluation_challenge(
         gemini_evaluation_challenge: ScalarField,
         num_squares: usize,

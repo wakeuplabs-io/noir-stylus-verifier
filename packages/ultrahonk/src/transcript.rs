@@ -117,13 +117,13 @@ impl Transcript {
         Ok(elements)
     }
 
-    pub(super) fn receive_fr_from_prover(&mut self, label: String) -> HonkProofResult<ScalarField> {
+    pub fn receive_fr_from_prover(&mut self, label: String) -> HonkProofResult<ScalarField> {
         let elements = self.receive_n_from_prover(label, NUM_SCALARFIELD_ELEMENTS)?;
 
         Ok(Utils::convert_scalarfield_back(&elements))
     }
 
-    pub(super) fn receive_point_from_prover(&mut self, label: String) -> HonkProofResult<G1Affine> {
+    pub fn receive_point_from_prover(&mut self, label: String) -> HonkProofResult<G1Affine> {
         let elements = self.receive_n_from_prover(label, NUM_BASEFIELD_ELEMENTS * 2)?;
 
         let coords = elements
@@ -143,7 +143,7 @@ impl Transcript {
         Ok(res)
     }
 
-    pub(super) fn receive_fr_vec_from_verifier(
+    pub fn receive_fr_vec_from_verifier(
         &mut self,
         label: String,
         n: usize,
@@ -158,7 +158,7 @@ impl Transcript {
         Ok(elements)
     }
 
-    pub(super) fn receive_fr_array_from_verifier<const SIZE: usize>(
+    pub fn receive_fr_array_from_verifier<const SIZE: usize>(
         &mut self,
         label: String,
     ) -> HonkProofResult<[ScalarField; SIZE]> {
