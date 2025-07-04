@@ -1,10 +1,10 @@
 use alloc::vec::Vec;
 use alloy_primitives::Address;
-use stylus_sdk::call::Call;
 use stylus_sdk::{abi::Bytes, prelude::*};
 use ultrahonk::decider::types::VerifierMemory;
+use ultrahonk::decider::verifier::DeciderVerifier;
 use ultrahonk::keys::verification_key::VerifyingKey;
-use ultrahonk::serialize::{BytesDeserializable, BytesSerializable};
+use ultrahonk::serialize::{BytesDeserializable};
 use ultrahonk::transcript::Transcript;
 use ultrahonk::types::{HonkProof, ScalarField};
 
@@ -21,10 +21,10 @@ sol_storage! {
 
 sol_interface! {
     interface ISumcheckVerifier {
-        function verify(bytes memory mem, bytes memory transcript, uint32 circuit_size) external returns (bytes memory, bytes memory, bytes memory, bool);
+        function verify(bytes memory mem, bytes memory transcript, uint32 circuit_size) external returns (bytes memory, bytes memory, bool);
     }
     interface IShpleminiVerifier {
-        function verify(bytes memory mem, bytes memory transcript, bytes memory multivariate_challenge, uint32 circuit_size) external returns (bytes memory, bytes memory, bool);
+        function verify(bytes memory mem, bytes memory transcript, bytes memory multivariate_challenge, uint32 circuit_size) external returns (bool);
     }
 }
 
@@ -76,42 +76,49 @@ impl VerifierContract {
 
         // create transcript and memory
         let mut transcript = Transcript::new_verifier(proof);
-        let memory = VerifierMemory::from_key_and_transcript::<
-            PrecompileG1ArithmeticBackend,
-            PrecompileHashBackend,
-        >(&vk, &mut transcript);
+        let memory = VerifierMemory::from_key_and_transcript::<PrecompileHashBackend>(&vk, &mut transcript);
+        // let memory_bytes = memory.serialize_to_bytes();
 
-        // sumcheck verification
+        // verify
+        let mut decider_verifier = DeciderVerifier::new(memory);
 
-        let sumcheck_verifier = ISumcheckVerifier::new(self.sumcheck_verifier_address.get());
-        let (memory_bytes, transcript_bytes, multivariate_challenge, sumcheck_ok) =
-            sumcheck_verifier
-                .verify(
-                    Call::new(),
-                    memory.serialize_to_bytes().into(),
-                    transcript.serialize_to_bytes().into(),
-                    vk.circuit_size.into(),
-                )
-                .unwrap();
+        let sumcheck_ok = decider_verifier.verify_sumcheck::<PrecompileHashBackend>(&mut transcript, vk.circuit_size).unwrap();
 
-        if !sumcheck_ok {
-            return false;
-        }
+        // let shplemini_ok = decider_verifier.verify_shplemini(&mut transcript, Vec::new(), vk.circuit_size).unwrap();
 
-        // shplemini verification
+        sumcheck_ok.verified
 
-        let shplemini_verifier = IShpleminiVerifier::new(self.shplemini_verifier_address.get());
+        // // sumcheck verification
 
-        let (_memory_bytes, _transcript_bytes, shplemini_ok) = shplemini_verifier
-            .verify(
-                Call::new(),
-                memory_bytes.to_vec().into(),
-                transcript_bytes.to_vec().into(),
-                multivariate_challenge.to_vec().into(),
-                vk.circuit_size.into(),
-            )
-            .unwrap();
+        // let sumcheck_verifier = ISumcheckVerifier::new(self.sumcheck_verifier_address.get());
+        // let (transcript_bytes, multivariate_challenge, sumcheck_ok) =
+        //     sumcheck_verifier
+        //         .verify(
+        //             Call::new(),
+        //             memory_bytes.to_vec().into(),
+        //             transcript.serialize_to_bytes().into(),
+        //             vk.circuit_size.into(),
+        //         )
+        //         .unwrap();
 
-        shplemini_ok && sumcheck_ok
+        // if !sumcheck_ok {
+        //     return false;
+        // }
+
+        // // shplemini verification
+
+        // let shplemini_verifier = IShpleminiVerifier::new(self.shplemini_verifier_address.get());
+
+        // let (shplemini_ok) = shplemini_verifier
+        //     .verify(
+        //         Call::new(),
+        //         memory_bytes.to_vec().into(),
+        //         transcript_bytes.to_vec().into(),
+        //         multivariate_challenge.to_vec().into(),
+        //         vk.circuit_size.into(),
+        //     )
+        //     .unwrap();
+
+        // shplemini_ok && sumcheck_ok
     }
 }

@@ -68,8 +68,8 @@ impl GateSeparatorPolynomial {
 }
 
 impl VerifierMemory {
-    pub fn from_key_and_transcript<P: G1ArithmeticBackend, H: HashBackend>(vk: &VerifyingKey, transcript: &mut Transcript) -> Self {
-        let oink_verifier = OinkVerifier::<P>::default();
+    pub fn from_key_and_transcript<H: HashBackend>(vk: &VerifyingKey, transcript: &mut Transcript) -> Self {
+        let oink_verifier = OinkVerifier::default();
         let oink_result = oink_verifier.build_memory::<H>(vk, transcript).unwrap();
 
         // generate gate challenges

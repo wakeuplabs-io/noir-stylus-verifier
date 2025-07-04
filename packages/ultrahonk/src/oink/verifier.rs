@@ -1,5 +1,4 @@
 use super::types::VerifierMemory;
-use crate::backends::G1ArithmeticBackend;
 use crate::{
     backends::HashBackend, keys::verification_key::VerifyingKey,
     transcript::Transcript, types::ScalarField, verifier::HonkVerifyResult, NUM_ALPHAS,
@@ -7,23 +6,19 @@ use crate::{
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use ark_ff::One;
-use core::{array, marker::PhantomData};
+use core::array;
 
-pub(crate) struct Oink<P: G1ArithmeticBackend> {
-    phantom_data: PhantomData<P>,
-}
+pub(crate) struct Oink;
 
-impl<P: G1ArithmeticBackend> Default for Oink<P> {
+impl Default for Oink {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<P: G1ArithmeticBackend> Oink<P> {
+impl Oink {
     pub(crate) fn new() -> Self {
-        Self {
-            phantom_data: PhantomData,
-        }
+        Self
     }
 
     pub(crate) fn compute_public_input_delta(
@@ -82,24 +77,22 @@ impl<P: G1ArithmeticBackend> Oink<P> {
     }
 }
 
-pub(crate) struct OinkVerifier<P: G1ArithmeticBackend> {
+pub(crate) struct OinkVerifier {
     memory: VerifierMemory,
     pub public_inputs: Vec<ScalarField>,
-    phantom_curve: core::marker::PhantomData<P>,
 }
 
-impl<P: G1ArithmeticBackend> Default for OinkVerifier<P> {
+impl Default for OinkVerifier {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<P: G1ArithmeticBackend> OinkVerifier<P> {
+impl OinkVerifier {
     pub(crate) fn new() -> Self {
         Self {
             memory: VerifierMemory::default(),
             public_inputs: Default::default(),
-            phantom_curve: Default::default(),
         }
     }
 
@@ -186,7 +179,7 @@ impl<P: G1ArithmeticBackend> OinkVerifier<P> {
         verifying_key: &VerifyingKey,
         transcript: &mut Transcript,
     ) -> HonkVerifyResult<()> {
-        self.memory.public_input_delta = Oink::<P>::compute_public_input_delta(
+        self.memory.public_input_delta = Oink::compute_public_input_delta(
             &self.memory.challenges.beta,
             &self.memory.challenges.gamma,
             &self.public_inputs,
@@ -208,7 +201,7 @@ impl<P: G1ArithmeticBackend> OinkVerifier<P> {
         self.execute_sorted_list_accumulator_round::<H>(transcript)?;
         self.execute_log_derivative_inverse_round::<H>(transcript)?;
         self.execute_grand_product_computation_round(verifying_key, transcript)?;
-        Oink::<P>::generate_alphas_round::<H>(&mut self.memory.challenges.alphas, transcript);
+        Oink::generate_alphas_round::<H>(&mut self.memory.challenges.alphas, transcript);
         Ok(self.memory)
     }
 }
