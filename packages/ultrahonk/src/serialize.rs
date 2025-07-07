@@ -603,12 +603,6 @@ impl BytesDeserializable for Transcript {
             Vec::<ScalarField>::deserialize_from_bytes(&bytes[offset..offset + proof_data_size])?;
         offset += proof_data_size;
 
-        // Deserialize manifest with size prefix
-        let manifest_size = u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;
-        if offset + manifest_size > bytes.len() {
-            return Err(SerdeError::InvalidLength);
-        }
-
         // Deserialize counters and state (fixed sizes)
         let num_frs_written = u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;
         let num_frs_read = u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;

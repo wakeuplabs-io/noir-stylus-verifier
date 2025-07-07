@@ -18,7 +18,7 @@ use ark_ff::{One, Zero};
 
 // Keep in mind, the UltraHonk protocol (UltraFlavor) does not per default have ZK
 impl DeciderVerifier {
-    pub fn verify_sumcheck<H: HashBackend, S: SumcheckVerifierRound>(
+    pub fn verify_sumcheck<H: HashBackend>(
         &mut self,
         transcript: &mut Transcript,
         circuit_size: u32,
@@ -97,7 +97,7 @@ impl DeciderVerifier {
         }
 
         // Evaluate the Honk relation at the point (u_0, ..., u_{d-1}) using claimed evaluations of prover polynomials.
-        let full_honk_purported_value = S::compute_full_relation_purported_value(
+        let full_honk_purported_value = SumcheckVerifierRound::compute_full_relation_purported_value(
             &self.memory.claimed_evaluations,
             &self.memory.relation_parameters,
             &gate_separators.partial_evaluation_result,

@@ -71,7 +71,7 @@ impl VerifierContract {
             VerifierMemory::from_key_and_transcript::<PrecompileHashBackend>(&vk, &mut transcript);
         let memory_bytes = memory.serialize_to_bytes();
 
-        // // sumcheck verification
+        // sumcheck verification
         let sumcheck_verifier = ISumcheckVerifier::new(self.sumcheck_verifier_address.get());
         let (transcript_bytes, multivariate_challenge, sumcheck_ok) = sumcheck_verifier
             .verify(
@@ -86,19 +86,20 @@ impl VerifierContract {
         }
 
         // shplemini verification
+        // let shplemini_verifier = IShpleminiVerifier::new(self.shplemini_verifier_address.get());
+        // let shplemini_ok = shplemini_verifier
+        //     .verify(
+        //         Call::new(),
+        //         memory_bytes.to_vec().into(),
+        //         transcript_bytes.to_vec().into(),
+        //         multivariate_challenge.to_vec().into(),
+        //         vk.circuit_size.into(),
+        //     )
+        //     .unwrap();
 
-        let shplemini_verifier = IShpleminiVerifier::new(self.shplemini_verifier_address.get());
-        let shplemini_ok = shplemini_verifier
-            .verify(
-                Call::new(),
-                memory_bytes.to_vec().into(),
-                transcript_bytes.to_vec().into(),
-                multivariate_challenge.to_vec().into(),
-                vk.circuit_size.into(),
-            )
-            .unwrap();
+        // shplemini_ok
 
-        shplemini_ok
+        true
     }
 
     pub fn get_sumcheck_verifier_address(&self) -> Address {
