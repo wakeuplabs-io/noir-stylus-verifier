@@ -19,7 +19,7 @@ use ark_ff::{One, Zero};
 
 // Keep in mind, the UltraHonk protocol (UltraFlavor) does not per default have ZK
 impl DeciderVerifier {
-    pub fn verify_sumcheck<H: HashBackend>(
+    pub fn verify_sumcheck<H: HashBackend, S: SumcheckVerifierRound>(
         &mut self,
         transcript: &mut Transcript,
         circuit_size: u32,
@@ -66,7 +66,12 @@ impl DeciderVerifier {
             let round_challenge =
                 transcript.get_challenge::<H>(format!("Sumcheck:u_{}", round_idx));
 
-            let checked = Self::check_sum(&round_univariate, padding_value, &target_total_sum, &mut sum_check_round_failed);
+            let checked = Self::check_sum(
+                &round_univariate,
+                padding_value,
+                &target_total_sum,
+                &mut sum_check_round_failed,
+            );
             verified = verified && checked; // TODO: this gets overwritten by the final round
 
             multivariate_challenge.push(round_challenge);
@@ -97,15 +102,14 @@ impl DeciderVerifier {
         }
 
         // Evaluate the Honk relation at the point (u_0, ..., u_{d-1}) using claimed evaluations of prover polynomials.
-        // let full_honk_purported_value =
-        //     SumcheckVerifierRound::compute_full_relation_purported_value(
-        //         &self.memory.claimed_evaluations,
-        //         &self.memory.relation_parameters,
-        //         gate_separators.partial_evaluation_result,
-        //     );
+        let full_honk_purported_value = S::compute_full_relation_purported_value(
+            &self.memory.claimed_evaluations,
+            &self.memory.relation_parameters,
+            &gate_separators.partial_evaluation_result,
+        );
 
-        // let checked = full_honk_purported_value == sum_check_round.target_total_sum;
-        // verified = verified && checked;
+        let checked = full_honk_purported_value == target_total_sum;
+        verified = verified && checked;
         Ok(SumcheckVerifierOutput {
             multivariate_challenge,
             verified,

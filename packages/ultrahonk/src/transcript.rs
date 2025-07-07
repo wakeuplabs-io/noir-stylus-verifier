@@ -4,7 +4,7 @@ use crate::constants::{NUM_BASEFIELD_ELEMENTS, NUM_SCALARFIELD_ELEMENTS};
 use crate::serialize::{BytesDeserializable, BytesSerializable, SerdeError};
 use crate::types::{G1Affine, HonkProof, HonkProofError, HonkProofResult, ScalarField};
 use crate::Utils;
-use alloc::collections::BTreeMap;
+// use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
 use ark_ec::AffineRepr;
 use ark_ff::{PrimeField, BigInteger, Zero};
@@ -13,7 +13,7 @@ use ark_ff::{PrimeField, BigInteger, Zero};
 pub struct Transcript
 {
     pub proof_data: Vec<ScalarField>,
-    pub manifest: TranscriptManifest,
+    // pub manifest: TranscriptManifest,
     pub num_frs_written: usize, // the number of bb::frs written to proof_data by the prover or the verifier
     pub num_frs_read: usize,    // the number of bb::frs read from proof_data by the verifier
     pub round_number: usize,
@@ -32,7 +32,7 @@ impl Transcript {
     pub fn new() -> Self {
         Self {
             proof_data: Default::default(),
-            manifest: Default::default(),
+            // manifest: Default::default(),
             num_frs_written: 0,
             num_frs_read: 0,
             round_number: 0,
@@ -45,7 +45,7 @@ impl Transcript {
     pub fn new_verifier(proof: HonkProof) -> Self {
         Self {
             proof_data: proof.inner(),
-            manifest: Default::default(),
+            // manifest: Default::default(),
             num_frs_written: 0,
             num_frs_read: 0,
             round_number: 0,
@@ -62,7 +62,7 @@ impl Transcript {
     fn add_element_frs_to_hash_buffer(&mut self, label: String, elements: &[ScalarField]) {
         // Add an entry to the current round of the manifest
         let len = elements.len();
-        self.manifest.add_entry(self.round_number, label, len);
+        // self.manifest.add_entry(self.round_number, label, len);
         self.current_round_data.extend(elements);
         self.num_frs_written += len;
     }
@@ -229,7 +229,7 @@ impl Transcript {
     }
 
     pub fn get_challenge<H: HashBackend>(&mut self, label: String) -> ScalarField {
-        self.manifest.add_challenge(self.round_number, &[label]);
+        // self.manifest.add_challenge(self.round_number, &[label]);
         let challenge = self.get_next_duplex_challenge_buffer::<H>(1)[0];
         let res = challenge.to_owned();
         self.round_number += 1;
@@ -238,7 +238,7 @@ impl Transcript {
 
     pub fn get_challenges<H: HashBackend>(&mut self, labels: &[String]) -> Vec<ScalarField> {
         let num_challenges = labels.len();
-        self.manifest.add_challenge(self.round_number, labels);
+        // self.manifest.add_challenge(self.round_number, labels);
 
         let mut res = Vec::with_capacity(num_challenges);
         for _ in 0..num_challenges >> 1 {
@@ -262,25 +262,25 @@ pub struct RoundData {
     pub  entries: Vec<(String, usize)>,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub(crate) struct TranscriptManifest {
-    pub manifest: BTreeMap<usize, RoundData>,
-}
+// #[derive(Clone, Debug, Default, PartialEq, Eq)]
+// pub(crate) struct TranscriptManifest {
+//     pub manifest: BTreeMap<usize, RoundData>,
+// }
 
-impl TranscriptManifest {
-    pub(crate) fn add_challenge(&mut self, round: usize, labels: &[String]) {
-        self.manifest
-            .entry(round)
-            .or_default()
-            .challenge_label
-            .extend_from_slice(labels);
-    }
+// impl TranscriptManifest {
+//     pub(crate) fn add_challenge(&mut self, round: usize, labels: &[String]) {
+//         self.manifest
+//             .entry(round)
+//             .or_default()
+//             .challenge_label
+//             .extend_from_slice(labels);
+//     }
 
-    pub(crate) fn add_entry(&mut self, round: usize, element_label: String, element_size: usize) {
-        self.manifest
-            .entry(round)
-            .or_default()
-            .entries
-            .push((element_label, element_size));
-    }
-}
+//     pub(crate) fn add_entry(&mut self, round: usize, element_label: String, element_size: usize) {
+//         self.manifest
+//             .entry(round)
+//             .or_default()
+//             .entries
+//             .push((element_label, element_size));
+//     }
+// }

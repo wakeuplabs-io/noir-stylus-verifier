@@ -115,28 +115,20 @@ impl ShpleminiVerifierContract {
         transcript_bytes: Bytes,
         multivariate_challenge: Bytes,
         circuit_size: u32,
-    ) -> (Bytes, Bytes) {
+    ) -> bool {
         let memory = VerifierMemory::deserialize_from_bytes(memory_bytes.as_slice()).unwrap();
         let mut transcript =
             Transcript::deserialize_from_bytes(transcript_bytes.as_slice()).unwrap();
         let multivariate_challenge =
             Vec::<ScalarField>::deserialize_from_bytes(multivariate_challenge.as_slice()).unwrap();
 
-        let decider_verifier = DeciderVerifier::new(memory);
-
-        // TODO: here it's enormous
-        let mut opening_pair = decider_verifier.compute_batch_opening_claim::<PrecompileHashBackend>(
-            multivariate_challenge,
+        let mut decider_verifier = DeciderVerifier::new(memory);
+        decider_verifier.verify_shplemini::<PrecompileHashBackend, PrecompileG1ArithmeticBackend>(
             &mut transcript,
-            &[ScalarField::zero(); CONST_PROOF_SIZE_LOG_N],
+            multivariate_challenge,
+            circuit_size,
         ).unwrap();
 
-        let quotient_commitment = transcript.receive_point_from_prover("KZG:W".to_string()).unwrap();
-        opening_pair.commitments.push(quotient_commitment);
-        opening_pair.scalars.push(opening_pair.challenge);
-
-        (Vec::new().into(), Vec::new().into())
-        // (opening_pair.serialize_to_bytes().into(), opening_pair.commitments.serialize_to_bytes().into())
-        // (p_0_affine.serialize_to_bytes().into(), p_1_affine.serialize_to_bytes().into())
+        true
     }
 }

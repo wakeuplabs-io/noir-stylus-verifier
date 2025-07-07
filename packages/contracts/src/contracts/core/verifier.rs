@@ -1,14 +1,15 @@
+use crate::utils::backends::{PrecompileG1ArithmeticBackend, PrecompileHashBackend};
 use alloc::vec::Vec;
 use alloy_primitives::Address;
+use stylus_sdk::call::{Call, RawCall};
 use stylus_sdk::{abi::Bytes, prelude::*};
-use ultrahonk::decider::types::VerifierMemory;
+use ultrahonk::decider::sumcheck::round_verifier::{InlineSumcheckVerifier, SumcheckVerifierRound};
+use ultrahonk::decider::types::{ClaimedEvaluations, RelationParameters, VerifierMemory};
 use ultrahonk::decider::verifier::DeciderVerifier;
 use ultrahonk::keys::verification_key::VerifyingKey;
-use ultrahonk::serialize::{BytesDeserializable};
+use ultrahonk::serialize::{BytesDeserializable, BytesSerializable};
 use ultrahonk::transcript::Transcript;
 use ultrahonk::types::{HonkProof, ScalarField};
-
-use crate::utils::backends::{PrecompileG1ArithmeticBackend, PrecompileHashBackend};
 
 sol_storage! {
     #[cfg_attr(feature = "verifier", entrypoint)]
@@ -49,14 +50,6 @@ impl VerifierContract {
         self.initialized.set(true);
     }
 
-    pub fn get_sumcheck_verifier_address(&self) -> Address {
-        self.sumcheck_verifier_address.get()
-    }
-
-    pub fn get_shplemini_verifier_address(&self) -> Address {
-        self.shplemini_verifier_address.get()
-    }
-
     pub fn verify(
         &mut self,
         proof_bytes: Bytes,
@@ -76,30 +69,22 @@ impl VerifierContract {
 
         // create transcript and memory
         let mut transcript = Transcript::new_verifier(proof);
-        let memory = VerifierMemory::from_key_and_transcript::<PrecompileHashBackend>(&vk, &mut transcript);
-        // let memory_bytes = memory.serialize_to_bytes();
+        let memory =
+            VerifierMemory::from_key_and_transcript::<PrecompileHashBackend>(&vk, &mut transcript);
+        let memory_bytes = memory.serialize_to_bytes();
 
-        // verify
-        let mut decider_verifier = DeciderVerifier::new(memory);
-
-        let sumcheck_ok = decider_verifier.verify_sumcheck::<PrecompileHashBackend>(&mut transcript, vk.circuit_size).unwrap();
-
-        // let shplemini_ok = decider_verifier.verify_shplemini(&mut transcript, Vec::new(), vk.circuit_size).unwrap();
-
-        sumcheck_ok.verified
+        
 
         // // sumcheck verification
-
-        // let sumcheck_verifier = ISumcheckVerifier::new(self.sumcheck_verifier_address.get());
-        // let (transcript_bytes, multivariate_challenge, sumcheck_ok) =
-        //     sumcheck_verifier
-        //         .verify(
-        //             Call::new(),
-        //             memory_bytes.to_vec().into(),
-        //             transcript.serialize_to_bytes().into(),
-        //             vk.circuit_size.into(),
-        //         )
-        //         .unwrap();
+        let sumcheck_verifier = ISumcheckVerifier::new(self.sumcheck_verifier_address.get());
+        let (_, _, sumcheck_ok) = sumcheck_verifier
+            .verify(
+                Call::new(),
+                memory_bytes.to_vec().into(),
+                transcript.serialize_to_bytes().into(),
+                vk.circuit_size.into(),
+            )
+            .unwrap();
 
         // if !sumcheck_ok {
         //     return false;
@@ -119,6 +104,23 @@ impl VerifierContract {
         //     )
         //     .unwrap();
 
-        // shplemini_ok && sumcheck_ok
+
+        // let mut decider_verifier = DeciderVerifier::new(memory);
+        // let sumcheck_output = decider_verifier.verify_sumcheck::<PrecompileHashBackend, InlineSumcheckVerifier>(&mut transcript, vk.circuit_size).unwrap();
+        // let shplemini_output = decider_verifier.verify_shplemini::<PrecompileHashBackend, PrecompileG1ArithmeticBackend>(
+        //     &mut transcript,
+        //     sumcheck_output.multivariate_challenge,
+        //     vk.circuit_size,
+        // ).unwrap();
+
+        true
+    }
+
+    pub fn get_sumcheck_verifier_address(&self) -> Address {
+        self.sumcheck_verifier_address.get()
+    }
+
+    pub fn get_shplemini_verifier_address(&self) -> Address {
+        self.shplemini_verifier_address.get()
     }
 }

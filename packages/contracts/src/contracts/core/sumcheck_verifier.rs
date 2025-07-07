@@ -1,4 +1,5 @@
-use crate::utils::backends::{PrecompileHashBackend};
+use crate::contracts::lib::sumcheck_round::SumcheckVerifierRoundContractWrapper;
+use crate::utils::backends::PrecompileHashBackend;
 use alloc::vec::Vec;
 use stylus_sdk::{abi::Bytes, prelude::*};
 use ultrahonk::decider::types::VerifierMemory;
@@ -6,11 +7,9 @@ use ultrahonk::decider::verifier::DeciderVerifier;
 use ultrahonk::serialize::{BytesDeserializable, BytesSerializable};
 use ultrahonk::transcript::Transcript;
 
-sol_storage! {
-    #[cfg_attr(feature = "sumcheck-verifier", entrypoint)]
-    pub struct SumcheckVerifierContract {
-    }
-}
+#[cfg_attr(feature = "sumcheck-verifier", entrypoint)]
+#[storage]
+pub struct SumcheckVerifierContract {}
 
 #[public]
 impl SumcheckVerifierContract {
@@ -27,12 +26,18 @@ impl SumcheckVerifierContract {
         let mut decider_verifier = DeciderVerifier::new(memory);
 
         let sumcheck_output = decider_verifier
-            .verify_sumcheck::<PrecompileHashBackend>(&mut transcript, circuit_size)
+            .verify_sumcheck::<PrecompileHashBackend, SumcheckVerifierRoundContractWrapper>(
+                &mut transcript,
+                circuit_size,
+            )
             .unwrap();
 
         (
             transcript.serialize_to_bytes().into(),
-            sumcheck_output.multivariate_challenge.serialize_to_bytes().into(),
+            sumcheck_output
+                .multivariate_challenge
+                .serialize_to_bytes()
+                .into(),
             sumcheck_output.verified,
         )
     }

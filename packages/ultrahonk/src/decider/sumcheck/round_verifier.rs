@@ -20,11 +20,18 @@ use ark_ff::One;
 
 pub(crate) type SumcheckRoundOutput = Univariate;
 
-pub(crate) struct SumcheckVerifierRound {
+pub trait SumcheckVerifierRound {
+    fn compute_full_relation_purported_value(
+        extended_edges: &ClaimedEvaluations,
+        relation_parameters: &RelationParameters,
+        scaling_factor: &ScalarField,
+    ) -> ScalarField;
 }
 
-impl SumcheckVerifierRound {
-    pub fn compute_full_relation_purported_value(
+pub struct InlineSumcheckVerifier;
+
+impl SumcheckVerifierRound for InlineSumcheckVerifier {
+    fn compute_full_relation_purported_value(
         extended_edges: &ClaimedEvaluations,
         relation_parameters: &RelationParameters,
         scaling_factor: &ScalarField,
@@ -85,7 +92,9 @@ impl SumcheckVerifierRound {
         relation_evaluations
             .scale_and_batch_elements(running_challenge, &relation_parameters.alphas)
     }
+}
 
+impl InlineSumcheckVerifier {
     fn accumulate_one_relation_evaluations<R: Relation>(
         univariate_accumulator: &mut R::VerifyAcc,
         extended_edges: &ClaimedEvaluations,

@@ -1,6 +1,6 @@
 use crate::{
     backends::{G1ArithmeticBackend, HashBackend},
-    decider::{types::VerifierMemory, verifier::DeciderVerifier},
+    decider::{sumcheck::round_verifier::SumcheckVerifierRound, types::VerifierMemory, verifier::DeciderVerifier},
     keys::verification_key::VerifyingKey,
     transcript::Transcript,
     types::{HonkProof, HonkProofError, ScalarField},
@@ -11,7 +11,7 @@ pub struct UltraHonk;
 pub(crate) type HonkVerifyResult<T> = Result<T, HonkProofError>;
 
 impl UltraHonk {
-    pub fn verify<H: HashBackend, P: G1ArithmeticBackend>(
+    pub fn verify<H: HashBackend, P: G1ArithmeticBackend, S: SumcheckVerifierRound>(
         honk_proof: HonkProof,
         public_inputs: &[ScalarField],
         vk: &VerifyingKey,
@@ -22,7 +22,7 @@ impl UltraHonk {
         let memory = VerifierMemory::from_key_and_transcript::<H>(vk, &mut transcript);
 
         let mut decider_verifier = DeciderVerifier::new(memory);
-        let sumcheck_output = decider_verifier.verify_sumcheck::<H>(&mut transcript, vk.circuit_size)?;
+        let sumcheck_output = decider_verifier.verify_sumcheck::<H, S>(&mut transcript, vk.circuit_size)?;
         let shplemini_output = decider_verifier.verify_shplemini::<H, P>(
             &mut transcript,
             sumcheck_output.multivariate_challenge,
