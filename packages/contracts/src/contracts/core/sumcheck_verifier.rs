@@ -1,7 +1,7 @@
-use crate::contracts::lib::sumcheck_round::SumcheckVerifierRoundContractWrapper;
 use crate::utils::backends::PrecompileHashBackend;
 use alloc::vec::Vec;
 use stylus_sdk::{abi::Bytes, prelude::*};
+use ultrahonk::decider::sumcheck::round_verifier::InlineSumcheckVerifier;
 use ultrahonk::decider::types::VerifierMemory;
 use ultrahonk::decider::verifier::DeciderVerifier;
 use ultrahonk::serialize::{BytesDeserializable, BytesSerializable};
@@ -26,7 +26,7 @@ impl SumcheckVerifierContract {
         let mut decider_verifier = DeciderVerifier::new(memory);
 
         let sumcheck_output = decider_verifier
-            .verify_sumcheck::<PrecompileHashBackend, SumcheckVerifierRoundContractWrapper>(
+            .verify_sumcheck::<PrecompileHashBackend, InlineSumcheckVerifier>(
                 &mut transcript,
                 circuit_size,
             )

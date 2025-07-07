@@ -1,7 +1,7 @@
 use super::types::VerifierMemory;
 use crate::{
-    backends::HashBackend, keys::verification_key::VerifyingKey,
-    transcript::Transcript, types::ScalarField, verifier::HonkVerifyResult, NUM_ALPHAS,
+    backends::HashBackend, keys::verification_key::VerifyingKey, transcript::Transcript,
+    types::ScalarField, verifier::HonkVerifyResult, NUM_ALPHAS,
 };
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
@@ -28,7 +28,6 @@ impl Oink {
         circuit_size: u32,
         pub_inputs_offset: u32,
     ) -> ScalarField {
-
         // Let m be the number of public inputs x₀,…, xₘ₋₁.
         // Recall that we broke the permutation σ⁰ by changing the mapping
         //  (i) -> (n+i)   to   (i) -> (-(i+1))   i.e. σ⁰ᵢ = −(i+1)
@@ -105,14 +104,14 @@ impl OinkVerifier {
         let public_input_size = verifying_key.num_public_inputs as u64;
         let pub_inputs_offset = verifying_key.pub_inputs_offset as u64;
 
-        transcript.add_u64_to_hash_buffer("circuit_size".to_string(), circuit_size);
-        transcript.add_u64_to_hash_buffer("public_input_size".to_string(), public_input_size);
-        transcript.add_u64_to_hash_buffer("pub_inputs_offset".to_string(), pub_inputs_offset);
+        transcript.add_u64_to_hash_buffer(circuit_size); // "circuit_size"
+        transcript.add_u64_to_hash_buffer(public_input_size); // "public_input_size"
+        transcript.add_u64_to_hash_buffer(pub_inputs_offset); // "pub_inputs_offset"
 
         self.public_inputs = Vec::with_capacity(public_input_size as usize);
 
         for i in 0..public_input_size {
-            let public_input = transcript.receive_fr_from_prover(format!("public_input_{}", i))?;
+            let public_input = transcript.receive_fr_from_prover()?; // format!("public_input_{}", i)
             self.public_inputs.push(public_input);
         }
 
@@ -123,12 +122,9 @@ impl OinkVerifier {
         &mut self,
         transcript: &mut Transcript,
     ) -> HonkVerifyResult<()> {
-        *self.memory.witness_commitments.w_l_mut() =
-            transcript.receive_point_from_prover("W_L".to_string())?;
-        *self.memory.witness_commitments.w_r_mut() =
-            transcript.receive_point_from_prover("W_R".to_string())?;
-        *self.memory.witness_commitments.w_o_mut() =
-            transcript.receive_point_from_prover("W_O".to_string())?;
+        *self.memory.witness_commitments.w_l_mut() = transcript.receive_point_from_prover()?; // "W_L"
+        *self.memory.witness_commitments.w_r_mut() = transcript.receive_point_from_prover()?; // "W_R"
+        *self.memory.witness_commitments.w_o_mut() = transcript.receive_point_from_prover()?; // "W_O"
 
         // Round is done since ultra_honk is no goblin flavor
         Ok(())
@@ -148,27 +144,26 @@ impl OinkVerifier {
         self.memory.challenges.eta_3 = challs[2];
 
         *self.memory.witness_commitments.lookup_read_counts_mut() =
-            transcript.receive_point_from_prover("lookup_read_counts".to_string())?;
+            transcript.receive_point_from_prover()?; // "lookup_read_counts"
 
         *self.memory.witness_commitments.lookup_read_tags_mut() =
-            transcript.receive_point_from_prover("lookup_read_tags".to_string())?;
+            transcript.receive_point_from_prover()?; // "lookup_read_tags"
 
-        *self.memory.witness_commitments.w_4_mut() =
-            transcript.receive_point_from_prover("w_4".to_string())?;
+        *self.memory.witness_commitments.w_4_mut() = transcript.receive_point_from_prover()?; // "w_4"
 
         Ok(())
     }
 
     fn execute_log_derivative_inverse_round<H: HashBackend>(
         &mut self,
-            transcript: &mut Transcript,
+        transcript: &mut Transcript,
     ) -> HonkVerifyResult<()> {
         let challs = transcript.get_challenges::<H>(&["beta".to_string(), "gamma".to_string()]);
         self.memory.challenges.beta = challs[0];
         self.memory.challenges.gamma = challs[1];
 
         *self.memory.witness_commitments.lookup_inverses_mut() =
-            transcript.receive_point_from_prover("lookup_inverses".to_string())?;
+            transcript.receive_point_from_prover()?; // "lookup_inverses"
 
         // Round is done since ultra_honk is no goblin flavor
         Ok(())
@@ -186,8 +181,7 @@ impl OinkVerifier {
             verifying_key.circuit_size,
             verifying_key.pub_inputs_offset,
         );
-        *self.memory.witness_commitments.z_perm_mut() =
-            transcript.receive_point_from_prover("z_perm".to_string())?;
+        *self.memory.witness_commitments.z_perm_mut() = transcript.receive_point_from_prover()?; // "z_perm"
         Ok(())
     }
 

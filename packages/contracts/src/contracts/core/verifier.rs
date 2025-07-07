@@ -1,12 +1,10 @@
-use crate::utils::backends::{PrecompileG1ArithmeticBackend, PrecompileHashBackend};
 use alloc::vec::Vec;
 use alloy_primitives::Address;
-use stylus_sdk::call::{Call, RawCall};
+use stylus_sdk::call::Call;
 use stylus_sdk::{abi::Bytes, prelude::*};
-use ultrahonk::decider::sumcheck::round_verifier::{InlineSumcheckVerifier, SumcheckVerifierRound};
-use ultrahonk::decider::types::{ClaimedEvaluations, RelationParameters, VerifierMemory};
-use ultrahonk::decider::verifier::DeciderVerifier;
+use ultrahonk::decider::types::VerifierMemory;
 use ultrahonk::keys::verification_key::VerifyingKey;
+use crate::utils::backends::PrecompileHashBackend;
 use ultrahonk::serialize::{BytesDeserializable, BytesSerializable};
 use ultrahonk::transcript::Transcript;
 use ultrahonk::types::{HonkProof, ScalarField};
@@ -73,11 +71,9 @@ impl VerifierContract {
             VerifierMemory::from_key_and_transcript::<PrecompileHashBackend>(&vk, &mut transcript);
         let memory_bytes = memory.serialize_to_bytes();
 
-        
-
         // // sumcheck verification
         let sumcheck_verifier = ISumcheckVerifier::new(self.sumcheck_verifier_address.get());
-        let (_, _, sumcheck_ok) = sumcheck_verifier
+        let (transcript_bytes, multivariate_challenge, sumcheck_ok) = sumcheck_verifier
             .verify(
                 Call::new(),
                 memory_bytes.to_vec().into(),
@@ -85,35 +81,24 @@ impl VerifierContract {
                 vk.circuit_size.into(),
             )
             .unwrap();
+        if !sumcheck_ok {
+            return false;
+        }
 
-        // if !sumcheck_ok {
-        //     return false;
-        // }
+        // shplemini verification
 
-        // // shplemini verification
+        let shplemini_verifier = IShpleminiVerifier::new(self.shplemini_verifier_address.get());
+        let shplemini_ok = shplemini_verifier
+            .verify(
+                Call::new(),
+                memory_bytes.to_vec().into(),
+                transcript_bytes.to_vec().into(),
+                multivariate_challenge.to_vec().into(),
+                vk.circuit_size.into(),
+            )
+            .unwrap();
 
-        // let shplemini_verifier = IShpleminiVerifier::new(self.shplemini_verifier_address.get());
-
-        // let (shplemini_ok) = shplemini_verifier
-        //     .verify(
-        //         Call::new(),
-        //         memory_bytes.to_vec().into(),
-        //         transcript_bytes.to_vec().into(),
-        //         multivariate_challenge.to_vec().into(),
-        //         vk.circuit_size.into(),
-        //     )
-        //     .unwrap();
-
-
-        // let mut decider_verifier = DeciderVerifier::new(memory);
-        // let sumcheck_output = decider_verifier.verify_sumcheck::<PrecompileHashBackend, InlineSumcheckVerifier>(&mut transcript, vk.circuit_size).unwrap();
-        // let shplemini_output = decider_verifier.verify_shplemini::<PrecompileHashBackend, PrecompileG1ArithmeticBackend>(
-        //     &mut transcript,
-        //     sumcheck_output.multivariate_challenge,
-        //     vk.circuit_size,
-        // ).unwrap();
-
-        true
+        shplemini_ok
     }
 
     pub fn get_sumcheck_verifier_address(&self) -> Address {

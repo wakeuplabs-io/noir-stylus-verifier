@@ -1,4 +1,4 @@
-use crate::backends::{G1ArithmeticBackend, HashBackend};
+use crate::backends::{ HashBackend};
 use crate::keys::verification_key::VerifyingKey;
 use crate::oink::verifier::OinkVerifier;
 use crate::transcript::Transcript;
@@ -76,7 +76,7 @@ impl VerifierMemory {
         let mut gate_challenges: Vec<ScalarField> = Vec::with_capacity(CONST_PROOF_SIZE_LOG_N);
 
         for idx in 0..CONST_PROOF_SIZE_LOG_N {
-            let chall = transcript.get_challenge::<H>(format!("Sumcheck:gate_challenge_{}", idx));
+            let chall = transcript.get_challenge::<H>(); // format!("Sumcheck:gate_challenge_{}", idx)
             gate_challenges.push(chall);
         }
 

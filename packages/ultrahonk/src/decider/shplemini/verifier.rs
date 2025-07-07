@@ -3,7 +3,7 @@ use super::{
     ShpleminiVerifierOpeningClaim,
 };
 use crate::{
-    alloc::string::ToString, backends::G1ArithmeticBackend, constants::get_crs_g2,
+    backends::G1ArithmeticBackend, constants::get_crs_g2,
     types::HonkProofError,
 };
 use crate::{
@@ -38,31 +38,30 @@ impl DeciderVerifier {
             };
         }
 
-        // let mut opening_claim = self.compute_batch_opening_claim::<H>(
-        //     multivariate_challenge,
-        //     transcript,
-        //     &padding_indicator_array,
-        // )?;
+        let mut opening_claim = self.compute_batch_opening_claim::<H>(
+            multivariate_challenge,
+            transcript,
+            &padding_indicator_array,
+        )?;
 
-        // let pairing_points = Self::reduce_verify_shplemini::<P>(&mut opening_claim, transcript)?;
-        // let pairing_points = (G1Affine::zero(), G1Affine::zero());
+        let pairing_points = Self::reduce_verify_shplemini::<P>(&mut opening_claim, transcript)?;
 
-        // let pcs_verified = P::ec_pairing_check(
-        //     pairing_points.0,
-        //     pairing_points.1,
-        //     get_crs_g2(),
-        //     G2Affine::generator(),
-        // )
-        // .unwrap();
+        let pcs_verified = P::ec_pairing_check(
+            pairing_points.0,
+            pairing_points.1,
+            get_crs_g2(),
+            G2Affine::generator(),
+        )
+        .unwrap();
 
-        Ok(true)
+        Ok(pcs_verified)
     }
 
     fn reduce_verify_shplemini<P: G1ArithmeticBackend>(
         opening_pair: &mut ShpleminiVerifierOpeningClaim,
         transcript: &mut Transcript,
     ) -> HonkVerifyResult<(G1Affine, G1Affine)> {
-        let quotient_commitment = transcript.receive_point_from_prover("KZG:W".to_string())?;
+        let quotient_commitment = transcript.receive_point_from_prover()?; // "KZG:W"
         opening_pair.commitments.push(quotient_commitment);
         opening_pair.scalars.push(opening_pair.challenge);
         let p_1 = -quotient_commitment.into_group();
@@ -117,20 +116,20 @@ impl DeciderVerifier {
         let mut batched_evaluation = ScalarField::zero();
 
         // Get the challenge ρ to batch commitments to multilinear polynomials and their shifts
-        let gemini_batching_challenge = transcript.get_challenge::<H>("rho".to_string());
+        let gemini_batching_challenge = transcript.get_challenge::<H>(); // "rho"
 
         // Process Gemini transcript data:
         // - Get Gemini commitments (com(A₁), com(A₂), … , com(Aₙ₋₁))
         let fold_commitments: Vec<_> = (0..virtual_log_n - 1)
-            .map(|i| transcript.receive_point_from_prover(format!("Gemini:FOLD_{}", i + 1)))
+            .map(|i| transcript.receive_point_from_prover()) // format!("Gemini:FOLD_{}", i + 1)
             .collect::<Result<_, _>>()?;
 
         // - Get Gemini evaluation challenge for Aᵢ, i = 0, … , d−1
-        let gemini_evaluation_challenge = transcript.get_challenge::<H>("Gemini:r".to_string());
+        let gemini_evaluation_challenge = transcript.get_challenge::<H>(); // "Gemini:r"
 
         // - Get evaluations (A₀(−r), A₁(−r²), ... , Aₙ₋₁(−r²⁽ⁿ⁻¹⁾))
         let gemini_fold_neg_evaluations: Vec<_> = (1..=virtual_log_n)
-            .map(|i| transcript.receive_fr_from_prover(format!("Gemini:a_{}", i + 1)))
+            .map(|i| transcript.receive_fr_from_prover()) // format!("Gemini:a_{}", i + 1)
             .collect::<Result<_, _>>()?;
 
         // Get evaluations of partially evaluated batched interleaved polynomials P₊(rˢ) and P₋((-r)ˢ)
@@ -147,7 +146,7 @@ impl DeciderVerifier {
 
         // Process Shplonk transcript data:
         // - Get Shplonk batching challenge
-        let shplonk_batching_challenge = transcript.get_challenge::<H>("Shplonk:nu".to_string());
+        let shplonk_batching_challenge = transcript.get_challenge::<H>(); // "Shplonk:nu"
 
         // Compute the powers of ν that are required for batching Gemini, SmallSubgroupIPA, and committed sumcheck
         // univariate opening claims.
@@ -157,13 +156,13 @@ impl DeciderVerifier {
         );
 
         // - Get the quotient commitment for the Shplonk batching of Gemini opening claims
-        let q_commitment = transcript.receive_point_from_prover("Shplonk:Q".to_string())?;
+        let q_commitment = transcript.receive_point_from_prover()?; // "Shplonk:Q"
 
         // Start populating the vector (Q, f₀, ... , fₖ₋₁, g₀, ... , gₘ₋₁, com(A₁), ... , com(Aₙ₋₁), [1]₁) where fᵢ are
         // the k commitments to unshifted polynomials and gⱼ are the m commitments to shifted polynomials
 
         // Get Shplonk opening point z
-        let shplonk_evaluation_challenge = transcript.get_challenge::<H>("Shplonk:z".to_string());
+        let shplonk_evaluation_challenge = transcript.get_challenge::<H>(); // "Shplonk:z"
 
         // Start computing the scalar to be multiplied by [1]₁
         let mut constant_term_accumulator = ScalarField::zero();

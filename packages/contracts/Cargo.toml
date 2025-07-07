@@ -38,6 +38,7 @@ verifier = []
 sumcheck-verifier = []
 shplemini-verifier = []
 precompile-test-contract = []
+sumcheck-verifier-round = []
 
 [[bin]]
 name = "stylus-noir-verifier"

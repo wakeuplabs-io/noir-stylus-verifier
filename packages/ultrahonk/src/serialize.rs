@@ -561,59 +561,6 @@ impl BytesDeserializable for RoundData {
     }
 }
 
-// impl BytesSerializable for TranscriptManifest {
-//     fn serialize_to_bytes(&self) -> Vec<u8> {
-//         let mut bytes = Vec::new();
-
-//         // Serialize the number of rounds
-//         bytes.extend((self.manifest.len() as u32).serialize_to_bytes());
-
-//         // Serialize each round
-//         for (&round_number, round_data) in &self.manifest {
-//             bytes.extend((round_number as u32).serialize_to_bytes());
-//             bytes.extend(round_data.serialize_to_bytes());
-//         }
-
-//         bytes
-//     }
-// }
-
-// impl BytesDeserializable for TranscriptManifest {
-//     const SER_LEN: usize = 0; // Dynamic size
-
-//     fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
-//         let mut offset = 0;
-//         let mut manifest = BTreeMap::new();
-
-//         // Deserialize the number of rounds
-//         let num_rounds = u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;
-
-//         // Deserialize each round
-//         for _ in 0..num_rounds {
-//             let round_number =
-//                 u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;
-//             let round_data = RoundData::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
-//             manifest.insert(round_number, round_data);
-//         }
-
-//         Ok(TranscriptManifest { manifest })
-//     }
-
-//     fn deserialize_from_bytes_with_offset(
-//         bytes: &[u8],
-//         offset: &mut usize,
-//     ) -> Result<Self, SerdeError> {
-//         let start_offset = *offset;
-//         let result = Self::deserialize_from_bytes(&bytes[start_offset..])?;
-
-//         // Calculate how many bytes were consumed by re-serializing and measuring
-//         let consumed_bytes = result.serialize_to_bytes().len();
-//         *offset += consumed_bytes;
-
-//         Ok(result)
-//     }
-// }
-
 impl BytesSerializable for Transcript {
     fn serialize_to_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
@@ -622,11 +569,6 @@ impl BytesSerializable for Transcript {
         let proof_data_bytes = self.proof_data.serialize_to_bytes();
         bytes.extend((proof_data_bytes.len() as u32).serialize_to_bytes());
         bytes.extend(proof_data_bytes);
-
-        // // Serialize manifest with size prefix
-        // let manifest_bytes = self.manifest.serialize_to_bytes();
-        // bytes.extend((manifest_bytes.len() as u32).serialize_to_bytes());
-        // bytes.extend(manifest_bytes);
 
         // Serialize counters and state (fixed sizes)
         bytes.extend((self.num_frs_written as u32).serialize_to_bytes());
@@ -666,9 +608,6 @@ impl BytesDeserializable for Transcript {
         if offset + manifest_size > bytes.len() {
             return Err(SerdeError::InvalidLength);
         }
-        // let manifest =
-        //     TranscriptManifest::deserialize_from_bytes(&bytes[offset..offset + manifest_size])?;
-        // offset += manifest_size;
 
         // Deserialize counters and state (fixed sizes)
         let num_frs_written = u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;
@@ -698,7 +637,6 @@ impl BytesDeserializable for Transcript {
 
         Ok(Transcript {
             proof_data,
-            // manifest,
             num_frs_written,
             num_frs_read,
             round_number,

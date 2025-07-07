@@ -1,6 +1,5 @@
 use super::SumcheckVerifierOutput;
-use crate::alloc::{borrow::ToOwned, string::ToString};
-use crate::backends::G1ArithmeticBackend;
+use crate::alloc::borrow::ToOwned;
 use crate::decider::types::BATCHED_RELATION_PARTIAL_LENGTH;
 use crate::{
     backends::HashBackend,
@@ -55,16 +54,12 @@ impl DeciderVerifier {
         let mut multivariate_challenge = Vec::with_capacity(CONST_PROOF_SIZE_LOG_N);
 
         for (round_idx, &padding_value) in padding_indicator_array.iter().enumerate() {
-            let round_univariate_label = format!("Sumcheck:univariate_{}", round_idx);
-
             let evaluations = transcript
-                .receive_fr_array_from_verifier::<BATCHED_RELATION_PARTIAL_LENGTH>(
-                    round_univariate_label,
-                )?;
+                .receive_fr_array_from_verifier::<BATCHED_RELATION_PARTIAL_LENGTH>()?; // format!("Sumcheck:univariate_{}", round_idx);
             let round_univariate = SumcheckRoundOutput { evaluations };
 
             let round_challenge =
-                transcript.get_challenge::<H>(format!("Sumcheck:u_{}", round_idx));
+                transcript.get_challenge::<H>(); // format!("Sumcheck:u_{}", round_idx)
 
             let checked = Self::check_sum(
                 &round_univariate,
@@ -72,7 +67,7 @@ impl DeciderVerifier {
                 &target_total_sum,
                 &mut sum_check_round_failed,
             );
-            verified = verified && checked; // TODO: this gets overwritten by the final round
+            verified = verified && checked; // TODO: this gets overwritten by the final round?
 
             multivariate_challenge.push(round_challenge);
 
@@ -90,7 +85,7 @@ impl DeciderVerifier {
 
         // Final round
         let transcript_evaluations = transcript
-            .receive_fr_vec_from_verifier("Sumcheck:evaluations".to_string(), NUM_ALL_ENTITIES)?;
+            .receive_fr_vec_from_verifier(NUM_ALL_ENTITIES)?; // "Sumcheck:evaluations"
 
         for (eval, &transcript_eval) in self
             .memory
