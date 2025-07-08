@@ -3,10 +3,8 @@ use crate::{
     backends::HashBackend, keys::verification_key::VerifyingKey, transcript::Transcript,
     types::ScalarField, verifier::HonkVerifyResult, NUM_ALPHAS,
 };
-use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use ark_ff::One;
-use core::array;
 
 pub(crate) struct Oink;
 
@@ -71,8 +69,7 @@ impl Oink {
         alphas: &mut [ScalarField; NUM_ALPHAS],
         transcript: &mut Transcript,
     ) {
-        let args: [String; NUM_ALPHAS] = array::from_fn(|i| format!("alpha_{}", i));
-        alphas.copy_from_slice(&transcript.get_challenges::<H>(&args));
+        alphas.copy_from_slice(&transcript.get_challenges::<H>(NUM_ALPHAS)); // alpha_{i from 0 to NUM_ALPHAS-1}
     }
 }
 
@@ -134,11 +131,7 @@ impl OinkVerifier {
         &mut self,
         transcript: &mut Transcript,
     ) -> HonkVerifyResult<()> {
-        let challs = transcript.get_challenges::<H>(&[
-            "eta".to_string(),
-            "eta_two".to_string(),
-            "eta_three".to_string(),
-        ]);
+        let challs = transcript.get_challenges::<H>(3); // eta, eta_two, eta_three
         self.memory.challenges.eta_1 = challs[0];
         self.memory.challenges.eta_2 = challs[1];
         self.memory.challenges.eta_3 = challs[2];
@@ -158,7 +151,7 @@ impl OinkVerifier {
         &mut self,
         transcript: &mut Transcript,
     ) -> HonkVerifyResult<()> {
-        let challs = transcript.get_challenges::<H>(&["beta".to_string(), "gamma".to_string()]);
+        let challs = transcript.get_challenges::<H>(2); // beta, gamma
         self.memory.challenges.beta = challs[0];
         self.memory.challenges.gamma = challs[1];
 

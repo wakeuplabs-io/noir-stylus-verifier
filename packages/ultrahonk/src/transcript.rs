@@ -54,7 +54,6 @@ impl Transcript {
         HonkProof::new(self.proof_data)
     }
 
-    // TODO: remove label
     fn add_element_frs_to_hash_buffer(&mut self, elements: &[ScalarField]) {
         // Add an entry to the current round of the manifest
         let len = elements.len();
@@ -223,10 +222,7 @@ impl Transcript {
         res
     }
 
-    // TODO: remove labels
-    pub fn get_challenges<H: HashBackend>(&mut self, labels: &[String]) -> Vec<ScalarField> {
-        let num_challenges = labels.len();
-
+    pub fn get_challenges<H: HashBackend>(&mut self, num_challenges: usize) -> Vec<ScalarField> {
         let mut res = Vec::with_capacity(num_challenges);
         for _ in 0..num_challenges >> 1 {
             let challenge_buffer = self.get_next_duplex_challenge_buffer::<H>(2);
