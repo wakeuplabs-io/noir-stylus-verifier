@@ -20,8 +20,8 @@ pub struct PrecompileHashBackend;
 impl ultrahonk::backends::HashBackend for PrecompileHashBackend {
     fn hash(bytes: &[u8]) -> [u8; HASH_OUTPUT_SIZE] {
         // Losing 2 bits of this is not an issue -> we can just reduce mod p
-        let res = keccak(&bytes);
-        res.try_into().unwrap()
+        let res = keccak(bytes);
+        res.into()
     }
 }
 

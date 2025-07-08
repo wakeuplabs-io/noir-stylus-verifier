@@ -144,10 +144,7 @@ struct SkipCLI {
 #[tokio::main]
 async fn main() {
     let args = Cli::parse();
-    let print_harness = match args.verbosity {
-        TestVerbosity::Quiet => false,
-        _ => true,
-    };
+    let print_harness = !matches!(args.verbosity, TestVerbosity::Quiet);
 
     let tests_ctx = TestContext::try_new(args.clone()).await.unwrap();
 

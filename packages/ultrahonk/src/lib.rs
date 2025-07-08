@@ -66,9 +66,7 @@ impl Utils {
 
         // Extract upper 118 bits from res1 (15 bytes)
         // Place them at offset 17 (i.e., shifted by 136 bits)
-        for i in 0..15 {
-            value_bytes[17 + i] = res1_bytes[i];
-        }
+        value_bytes[17..(15 + 17)].copy_from_slice(&res1_bytes[..15]);
 
         // Now value_bytes is the 256-bit little-endian representation
         Fq::from_le_bytes_mod_order(&value_bytes)

@@ -1,8 +1,6 @@
 //! Integration tests for precompile functionality
 
-use crate::{
-    assert_true_result, constants::MANIFEST_DIR_ENV_VAR, integration_test_async, TestContext,
-};
+use crate::{assert_true_result, integration_test_async, TestContext};
 use eyre::Result;
 use std::env;
 
@@ -11,7 +9,7 @@ macro_rules! generate_tests {
         $(
             async fn $name(ctx: TestContext) -> Result<()> {
                 // build path to test vector data
-                let workspace_path = std::path::Path::new(&env::var(MANIFEST_DIR_ENV_VAR).unwrap())
+                let workspace_path = std::path::Path::new(&env::var("CARGO_MANIFEST_DIR").unwrap())
                     .ancestors()
                     .nth(2) // Go up 2 levels: integration/ -> packages/ -> workspace root
                     .unwrap()

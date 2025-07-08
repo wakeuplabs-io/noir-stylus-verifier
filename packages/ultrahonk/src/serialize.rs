@@ -5,7 +5,7 @@ use crate::{
     types::{AllEntities, G1Affine, G1BaseField, G2Affine, G2BaseField, MontFp256, ScalarField},
     NUM_ALPHAS,
 };
-use alloc::{collections::btree_map::BTreeMap, string::String, vec::Vec};
+use alloc::{string::String, vec::Vec};
 use ark_ec::AffineRepr;
 use ark_ff::{BigInteger, Field, MontConfig, PrimeField, Zero};
 
@@ -157,7 +157,7 @@ impl<P: MontConfig<NUM_U64S_FELT>> BytesSerializable for Vec<MontFp256<P>> {
         let total_size = self.len() as u32 * field_size as u32;
 
         let mut res = Vec::with_capacity(total_size as usize);
-        for el in self.iter().cloned() {
+        for el in self.iter() {
             res.extend(el.serialize_to_bytes());
         }
         debug_assert_eq!(res.len(), total_size as usize);
@@ -507,6 +507,7 @@ impl BytesDeserializable for RoundData {
     fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
         let mut offset = 0;
 
+        // TODO: should remove?
         // Deserialize challenge_label vector
         let challenge_label_len =
             u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;

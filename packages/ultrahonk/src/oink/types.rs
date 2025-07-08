@@ -3,6 +3,7 @@ use crate::{
     NUM_ALPHAS,
 };
 
+#[derive(Default)]
 pub struct VerifierMemory {
     pub public_input_delta: ScalarField,
     pub witness_commitments: WitnessEntities<G1Affine>,
@@ -27,16 +28,6 @@ impl Default for Challenges {
             beta: Default::default(),
             gamma: Default::default(),
             alphas: [Default::default(); NUM_ALPHAS],
-        }
-    }
-}
-
-impl Default for VerifierMemory {
-    fn default() -> Self {
-        Self {
-            public_input_delta: Default::default(),
-            witness_commitments: Default::default(),
-            challenges: Default::default(),
         }
     }
 }

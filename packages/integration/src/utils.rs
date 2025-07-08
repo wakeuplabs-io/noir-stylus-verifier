@@ -1,15 +1,13 @@
 //! Utilities for the deploy scripts.
 
-use crate::{constants::MANIFEST_DIR_ENV_VAR, errors::ScriptError, types::StylusContract};
+use crate::{errors::ScriptError, types::StylusContract};
 use alloy::{
     network::{Ethereum, EthereumWallet},
     primitives::Address,
     providers::{DynProvider, Provider, ProviderBuilder},
-    rpc::types::{TransactionReceipt, TransactionRequest},
     signers::local::PrivateKeySigner,
     transports::http::reqwest::Url,
 };
-use alloy_contract::{CallBuilder, CallDecoder};
 use colored::Colorize;
 use eyre::Result;
 use std::{
@@ -19,9 +17,6 @@ use std::{
     process::{Command, Stdio},
     str::FromStr,
 };
-
-/// The call builder type used in the scripts
-pub type EthereumCall<'a, C> = CallBuilder<(), &'a DynProvider, C, Ethereum>;
 
 /// An Ethers provider that uses a `LocalWallet` to generate signatures
 /// & interfaces with the RPC endpoint over HTTP
@@ -90,53 +85,6 @@ pub async fn setup_client(
     Ok(LocalWalletHttpClient::new(signer, url))
 }
 
-/// Sends a contract call, waiting for the transaction to go from pending to
-/// executed, and returns the transaction receipt
-pub async fn send_tx<C: CallDecoder + Unpin>(
-    call: EthereumCall<'_, C>,
-) -> Result<TransactionReceipt, ScriptError> {
-    let pending_tx = call
-        .send()
-        .await
-        .map_err(|e| ScriptError::ContractInteraction(e.to_string()))?;
-    let receipt = pending_tx
-        .get_receipt()
-        .await
-        .map_err(|e| ScriptError::ContractInteraction(e.to_string()))?;
-
-    Ok(receipt)
-}
-
-/// Sends a transaction request, waiting for the transaction to go from pending
-/// to executed, and returns the transaction receipt
-pub async fn send_raw_tx(
-    provider: &DynProvider<Ethereum>,
-    tx: TransactionRequest,
-) -> Result<TransactionReceipt, ScriptError> {
-    let pending_tx = provider
-        .send_transaction(tx)
-        .await
-        .map_err(|e| ScriptError::ContractInteraction(e.to_string()))?;
-
-    let receipt = pending_tx
-        .get_receipt()
-        .await
-        .map_err(|e| ScriptError::ContractInteraction(e.to_string()))?;
-
-    Ok(receipt)
-}
-
-/// Send a call and return the result
-pub async fn call_helper<C: CallDecoder + Unpin>(
-    call: EthereumCall<'_, C>,
-) -> Result<C::CallOutput, ScriptError> {
-    let res = call
-        .call()
-        .await
-        .map_err(|e| ScriptError::ContractInteraction(e.to_string()))?;
-    Ok(res)
-}
-
 /// Executes a command, returning an error if the command fails
 fn command_success_or(mut cmd: Command, err_msg: &str) -> Result<(), ScriptError> {
     if !cmd
@@ -157,9 +105,9 @@ fn command_success_or(mut cmd: Command, err_msg: &str) -> Result<(), ScriptError
 /// Assumes that `cargo`, the `nightly` toolchain, and `wasm-opt` are locally
 /// available.
 pub fn build_stylus_contract(contract: &StylusContract) -> Result<PathBuf, ScriptError> {
-    println!("{}", format!("Building contract {:?}...", contract).blue());
+    println!("{}", format!("Building contract {contract}...").blue());
 
-    let current_dir = PathBuf::from(env::var(MANIFEST_DIR_ENV_VAR).unwrap());
+    let current_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
     let workspace_path = current_dir
         .ancestors()
         .nth(2)
@@ -186,8 +134,7 @@ pub fn build_stylus_contract(contract: &StylusContract) -> Result<PathBuf, Scrip
     command_success_or(optimize_cmd, "Failed to optimize contracts")?;
 
     let wasm_file_path = workspace_path.join(format!(
-        "target/wasm32-unknown-unknown/release/{}-opt.wasm",
-        contract
+        "target/wasm32-unknown-unknown/release/{contract}-opt.wasm"
     ));
 
     Ok(wasm_file_path)
@@ -200,9 +147,9 @@ pub async fn deploy_stylus_contract(
     priv_key: &str,
     client: LocalWalletHttpClient,
 ) -> Result<Address, ScriptError> {
-    println!("{}", format!("Deploying contract {:?}...", contract).blue());
+    println!("{}", format!("Deploying contract {contract}...").blue());
 
-    let current_dir = PathBuf::from(env::var(MANIFEST_DIR_ENV_VAR).unwrap());
+    let current_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
     let workspace_path = current_dir
         .ancestors()
         .nth(2)

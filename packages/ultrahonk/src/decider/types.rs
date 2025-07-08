@@ -78,7 +78,7 @@ impl VerifierMemory {
         // generate gate challenges
         let mut gate_challenges: Vec<ScalarField> = Vec::with_capacity(CONST_PROOF_SIZE_LOG_N);
 
-        for idx in 0..CONST_PROOF_SIZE_LOG_N {
+        for _ in 0..CONST_PROOF_SIZE_LOG_N {
             let chall = transcript.get_challenge::<H>(); // format!("Sumcheck:gate_challenge_{}", idx)
             gate_challenges.push(chall);
         }
@@ -96,47 +96,6 @@ impl VerifierMemory {
 
         let mut memory = AllEntities::default();
         memory.witness = oink_result.witness_commitments;
-        memory.precomputed = vk.commitments.clone();
-
-        // These copies are not required
-        // for (des, src) in izip!(
-        //     memory.shifted_witness.iter_mut(),
-        //     memory.witness.to_be_shifted().iter().cloned(),
-        // ) {
-        //     *des = src;
-        // }
-        // for (des, src) in izip!(
-        //     memory.shifted_tables.iter_mut(),
-        //     memory.precomputed.get_table_polynomials().iter().cloned()
-        // ) {
-        //     *des = src;
-        // }
-
-        Self {
-            relation_parameters,
-            verifier_commitments: memory,
-            claimed_evaluations: Default::default(),
-        }
-    }
-
-    #[expect(clippy::field_reassign_with_default)]
-    pub(crate) fn from_memory_and_key(
-        verifier_memory: crate::oink::types::VerifierMemory,
-        vk: &VerifyingKey,
-    ) -> Self {
-        let relation_parameters = RelationParameters {
-            eta_1: verifier_memory.challenges.eta_1,
-            eta_2: verifier_memory.challenges.eta_2,
-            eta_3: verifier_memory.challenges.eta_3,
-            beta: verifier_memory.challenges.beta,
-            gamma: verifier_memory.challenges.gamma,
-            public_input_delta: verifier_memory.public_input_delta,
-            alphas: verifier_memory.challenges.alphas,
-            gate_challenges: Default::default(),
-        };
-
-        let mut memory = AllEntities::default();
-        memory.witness = verifier_memory.witness_commitments;
         memory.precomputed = vk.commitments.clone();
 
         // These copies are not required

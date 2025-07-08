@@ -78,7 +78,7 @@ impl VerifierContract {
                     Call::new(),
                     memory.serialize_to_bytes().into(),
                     transcript.serialize_to_bytes().into(),
-                    vk.circuit_size.into(),
+                    vk.circuit_size,
                 )
                 .unwrap();
         if !sumcheck_ok {
@@ -87,17 +87,15 @@ impl VerifierContract {
 
         // shplemini verification
         let shplemini_verifier = IShpleminiVerifier::new(self.shplemini_verifier_address.get());
-        let shplemini_ok = shplemini_verifier
+        shplemini_verifier
             .verify(
                 Call::new(),
                 memory_bytes.to_vec().into(),
                 transcript_bytes.to_vec().into(),
                 multivariate_challenge.to_vec().into(),
-                vk.circuit_size.into(),
+                vk.circuit_size,
             )
-            .unwrap();
-
-        shplemini_ok
+            .unwrap()
     }
 
     pub fn get_sumcheck_verifier_address(&self) -> Address {

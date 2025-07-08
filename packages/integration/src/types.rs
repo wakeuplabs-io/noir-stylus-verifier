@@ -56,7 +56,7 @@ impl FromStr for TestVerbosity {
             "quiet" => Ok(Self::Quiet),
             "default" => Ok(Self::Default),
             "full" => Ok(Self::Full),
-            _ => Err(format!("invalid verbosity level: {}", s)),
+            _ => Err(format!("invalid verbosity level: {s}")),
         }
     }
 }
@@ -100,9 +100,9 @@ macro_rules! integration_test {
 #[macro_export]
 macro_rules! integration_test_async {
     ($test_fn:ident) => {
-        inventory::submit!(crate::TestWrapper(crate::types::IntegrationTest {
+        inventory::submit!($crate::TestWrapper($crate::types::IntegrationTest {
             name: std::concat! {std::module_path!(), "::", stringify!($test_fn)},
-            test_fn: crate::types::IntegrationTestFn::AsynchronousFn(move |args| {
+            test_fn: $crate::types::IntegrationTestFn::AsynchronousFn(move |args| {
                 std::boxed::Box::pin($test_fn(args))
             }),
         }));

@@ -118,7 +118,7 @@ impl DeciderVerifier {
         // Process Gemini transcript data:
         // - Get Gemini commitments (com(A₁), com(A₂), … , com(Aₙ₋₁))
         let fold_commitments: Vec<_> = (0..virtual_log_n - 1)
-            .map(|i| transcript.receive_point_from_prover()) // format!("Gemini:FOLD_{}", i + 1)
+            .map(|_| transcript.receive_point_from_prover()) // format!("Gemini:FOLD_{}", i + 1)
             .collect::<Result<_, _>>()?;
 
         // - Get Gemini evaluation challenge for Aᵢ, i = 0, … , d−1
@@ -126,7 +126,7 @@ impl DeciderVerifier {
 
         // - Get evaluations (A₀(−r), A₁(−r²), ... , Aₙ₋₁(−r²⁽ⁿ⁻¹⁾))
         let gemini_fold_neg_evaluations: Vec<_> = (1..=virtual_log_n)
-            .map(|i| transcript.receive_fr_from_prover()) // format!("Gemini:a_{}", i + 1)
+            .map(|_| transcript.receive_fr_from_prover()) // format!("Gemini:a_{}", i + 1)
             .collect::<Result<_, _>>()?;
 
         // Get evaluations of partially evaluated batched interleaved polynomials P₊(rˢ) and P₋((-r)ˢ)

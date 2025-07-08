@@ -24,7 +24,7 @@ impl HashBackend for ArkKeccak256 {
         let mut hasher = Keccak256::default();
         hasher.update(buffer);
         let hash_result = hasher.finalize();
-        hash_result.try_into().unwrap()
+        hash_result.into()
     }
 }
 

@@ -107,7 +107,7 @@ impl OinkVerifier {
 
         self.public_inputs = Vec::with_capacity(public_input_size as usize);
 
-        for i in 0..public_input_size {
+        for _ in 0..public_input_size {
             let public_input = transcript.receive_fr_from_prover()?; // format!("public_input_{}", i)
             self.public_inputs.push(public_input);
         }

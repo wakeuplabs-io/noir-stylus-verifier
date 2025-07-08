@@ -77,6 +77,6 @@ async fn hash(ctx: TestContext) -> Result<()> {
 
     let c_bytes = contract.testHash(msg.to_vec().into()).call().await?._0;
 
-    assert_eq_result!(c_bytes, keccak256(&msg).to_vec())
+    assert_eq_result!(c_bytes, keccak256(msg).to_vec())
 }
 integration_test_async!(hash);
