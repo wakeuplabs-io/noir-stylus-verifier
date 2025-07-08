@@ -1,4 +1,4 @@
-name: Rust Build
+name: Build Contracts
 
 on:
   push:
@@ -20,21 +20,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
-      
+
       - name: Install wasm32 target
         run: rustup target add wasm32-unknown-unknown
 
       - uses: Swatinem/rust-cache@v2
-      
+
       - name: Install build tools
         run: sudo apt-get update && sudo apt-get install -y build-essential gcc lld
-      
-      - name: Build ultrahonk 
-        run: cargo build -p ultrahonk --profile ci-dev --all-features
-      
-      - name: Build contracts 
-        run: cargo build -p contracts --target wasm32-unknown-unknown --profile ci-dev
+
+      - name: Install just
+        run: |
+          curl -sSL https://just.systems/install.sh | bash -s -- --to /usr/local/bin
+          just --version
+
+      - name: Build Sumcheck Verifier contract
+        run: just build-contract sumcheck-verifier
+
+      - name: Build Shplemini Verifier contract
+        run: just build-contract shplemini-verifier
+
+      - name: Build Verifier contract
+        run: just build-contract verifier

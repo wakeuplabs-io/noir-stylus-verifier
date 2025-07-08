@@ -26,7 +26,9 @@ jobs:
         with:
           toolchain: stable
           components: rustfmt, clippy
+      
       - name: Rustfmt
         run: cargo fmt --all -- --check
+      
       - name: Clippy
         run: cargo clippy --workspace --all-targets -- 

@@ -1,12 +1,4 @@
-# This workflow runs our end-to-end tests suite.
-#
-# It roughly follows these steps:
-# - Install rust
-# - Install `cargo-stylus`
-# - Spin up `nitro-testnode`
-#
-# Contract deployments and account funding happen on a per-test basis.
-name: e2e
+name: Integration Tests
 permissions:
   contents: read
 on:
@@ -23,7 +15,7 @@ env:
   CARGO_TERM_COLOR: always
 jobs:
   required:
-    name: tests
+    name: Integration Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,8 +33,16 @@ jobs:
       - name: Install cargo-stylus
         run: cargo install cargo-stylus@0.6.0
 
-      - name: Setup nitro node
-        run: ./scripts/nitro-testnode.sh -d -i
+      - name: Install just
+        run: |
+          curl -sSL https://just.systems/install.sh | bash -s -- --to /usr/local/bin
+          just --version
 
-      - name: run integration tests
-        run: ./scripts/e2e-tests.sh
+      - name: Setup nitro node
+        run: just nitro-testnode-up
+
+      - name: Run integration tests
+        run: just test-integration
+
+      - name: Shutdown nitro node
+        run: just nitro-testnode-down
