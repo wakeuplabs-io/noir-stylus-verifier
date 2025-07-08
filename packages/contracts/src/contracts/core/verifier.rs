@@ -20,7 +20,7 @@ sol_storage! {
 
 sol_interface! {
     interface ISumcheckVerifier {
-        function verify(bytes memory mem, bytes memory transcript, uint32 circuit_size) external returns (bytes memory, bytes memory, bool);
+        function verify(bytes memory mem, bytes memory transcript, uint32 circuit_size) external returns (bytes memory, bytes memory, bytes memory, bool);
     }
     interface IShpleminiVerifier {
         function verify(bytes memory mem, bytes memory transcript, bytes memory multivariate_challenge, uint32 circuit_size) external returns (bool);
@@ -69,14 +69,13 @@ impl VerifierContract {
         let mut transcript = Transcript::new_verifier(proof);
         let memory =
             VerifierMemory::from_key_and_transcript::<PrecompileHashBackend>(&vk, &mut transcript);
-        let memory_bytes = memory.serialize_to_bytes();
 
         // sumcheck verification
         let sumcheck_verifier = ISumcheckVerifier::new(self.sumcheck_verifier_address.get());
-        let (transcript_bytes, multivariate_challenge, sumcheck_ok) = sumcheck_verifier
+        let (transcript_bytes, memory_bytes, multivariate_challenge, sumcheck_ok) = sumcheck_verifier
             .verify(
                 Call::new(),
-                memory_bytes.to_vec().into(),
+                memory.serialize_to_bytes().into(),
                 transcript.serialize_to_bytes().into(),
                 vk.circuit_size.into(),
             )
@@ -86,20 +85,18 @@ impl VerifierContract {
         }
 
         // shplemini verification
-        // let shplemini_verifier = IShpleminiVerifier::new(self.shplemini_verifier_address.get());
-        // let shplemini_ok = shplemini_verifier
-        //     .verify(
-        //         Call::new(),
-        //         memory_bytes.to_vec().into(),
-        //         transcript_bytes.to_vec().into(),
-        //         multivariate_challenge.to_vec().into(),
-        //         vk.circuit_size.into(),
-        //     )
-        //     .unwrap();
+        let shplemini_verifier = IShpleminiVerifier::new(self.shplemini_verifier_address.get());
+        let shplemini_ok = shplemini_verifier
+            .verify(
+                Call::new(),
+                memory_bytes.to_vec().into(),
+                transcript_bytes.to_vec().into(),
+                multivariate_challenge.to_vec().into(),
+                vk.circuit_size.into(),
+            )
+            .unwrap();
 
-        // shplemini_ok
-
-        true
+        shplemini_ok
     }
 
     pub fn get_sumcheck_verifier_address(&self) -> Address {

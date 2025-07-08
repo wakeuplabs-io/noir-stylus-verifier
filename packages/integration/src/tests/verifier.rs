@@ -33,11 +33,16 @@ async fn test_verifier(ctx: TestContext) -> Result<()> {
         let public_inputs_u8 = std::fs::read(public_inputs_file).unwrap();
         let vk_u8 = std::fs::read(vk_file).unwrap();
 
-        let res = contract
+        let res = match contract
             .verify(proof_u8.into(), public_inputs_u8.into(), vk_u8.into())
             .call()
-            .await?
-            ._0;
+            .await {
+                Ok(result) => result._0,
+                Err(e) => {
+                    println!("Verification error: {}", e);
+                    false
+                }
+            };
 
         assert_true_result!(res);
     }

@@ -17,7 +17,7 @@ impl SumcheckVerifierContract {
         memory_bytes: Bytes,
         transcript_bytes: Bytes,
         circuit_size: u32,
-    ) -> (Bytes, Bytes, bool) {
+    ) -> (Bytes, Bytes, Bytes, bool) {
         let memory = VerifierMemory::deserialize_from_bytes(memory_bytes.as_slice()).unwrap();
         let mut transcript =
             Transcript::deserialize_from_bytes(transcript_bytes.as_slice()).unwrap();
@@ -33,6 +33,7 @@ impl SumcheckVerifierContract {
 
         (
             transcript.serialize_to_bytes().into(),
+            decider_verifier.memory.serialize_to_bytes().into(),
             sumcheck_output
                 .multivariate_challenge
                 .serialize_to_bytes()

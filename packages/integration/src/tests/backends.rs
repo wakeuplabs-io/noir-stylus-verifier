@@ -1,13 +1,21 @@
 //! Integration tests for precompile functionality
 
+use crate::{
+    assert_eq_result, assert_true_result, integration_test_async, utils::serialize_to_calldata,
+    TestContext,
+};
+use alloy::hex;
 use alloy_primitives::keccak256;
-use ark_ec::AffineRepr;
+use alloy_sol_types::ContractError;
+use ark_bn254::Bn254;
+use ark_ec::VariableBaseMSM;
+use ark_ec::{pairing::Pairing, AffineRepr};
 use ark_ff::UniformRand;
 use contracts::utils::serde_def_types::{SerdeG1Affine, SerdeG2Affine, SerdeScalarField};
 use eyre::Result;
 use rand::{thread_rng, RngCore};
+use ultrahonk::serialize::BytesSerializable;
 use ultrahonk::types::{G1Affine, G2Affine, ScalarField};
-use crate::{abis::PrecompileTestContract, assert_eq_result, assert_true_result, integration_test_async, utils::serialize_to_calldata, TestContext};
 
 /// Test how the contracts call the `ecAdd` precompile
 async fn test_ec_add(ctx: TestContext) -> Result<()> {
@@ -77,7 +85,6 @@ async fn test_ec_pairing(ctx: TestContext) -> Result<()> {
 }
 integration_test_async!(test_ec_pairing);
 
-
 async fn test_hash(ctx: TestContext) -> Result<()> {
     let contract = ctx.precompile_test_contract();
     let mut rng = thread_rng();
@@ -94,3 +101,34 @@ async fn test_hash(ctx: TestContext) -> Result<()> {
     assert_eq_result!(c_bytes, keccak256(&msg).to_vec())
 }
 integration_test_async!(test_hash);
+
+async fn test_msm(ctx: TestContext) -> Result<()> {
+    let contract = ctx.precompile_test_contract();
+    let mut rng = thread_rng();
+
+    let a = ScalarField::from(42u64);
+    let b = G1Affine::generator();
+
+    println!("a: {:?}", hex::encode(a.serialize_to_bytes()));
+    println!("b: {:?}", hex::encode(b.serialize_to_bytes()));
+
+    let expected = <Bn254 as Pairing>::G1::msm_unchecked(&[b], &[a]);
+
+    let err = contract
+        .testMsm(
+            serialize_to_calldata(&[SerdeScalarField(a)])?,
+            serialize_to_calldata(&[SerdeG1Affine(b)])?,
+        )
+        .call()
+        .await.unwrap();
+
+    println!("Decoded as: {:?}", err);
+
+    // let c_bytes = c_bytes.unwrap().await?._0;
+
+    // let c: SerdeG1Affine = postcard::from_bytes(&c_bytes)?;
+
+    // assert_eq_result!(c.0, expected)
+    Ok(())
+}
+integration_test_async!(test_msm);

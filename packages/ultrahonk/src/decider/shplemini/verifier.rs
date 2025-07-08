@@ -69,7 +69,7 @@ impl DeciderVerifier {
         let p_0 = P::msm(&opening_pair.scalars, &opening_pair.commitments)
             .map_err(|_| HonkProofError::MSMError)?;
 
-        Ok((p_0, p_1.into()))
+        Ok((p_0.into(), p_1.into()))
     }
 
     pub fn powers_of_evaluation_challenge(

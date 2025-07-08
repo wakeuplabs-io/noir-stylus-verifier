@@ -89,7 +89,7 @@ impl TestContext {
 
         // initialize verifier contract
         let verifier_contract = VerifierContractInstance::new(verifier_contract_address, client.provider());
-        let tx = verifier_contract.initialize(sumcheck_verifier_address, shplemini_verifier_address).send().await.unwrap();
+        let _ = verifier_contract.initialize(sumcheck_verifier_address, shplemini_verifier_address).send().await.unwrap();
 
         Ok(Self {
             client,

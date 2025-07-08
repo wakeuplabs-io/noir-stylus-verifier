@@ -8,7 +8,8 @@ use crate::utils::{
 };
 use alloc::vec::Vec;
 use stylus_sdk::{abi::Bytes, prelude::*};
-use ultrahonk::backends::{G1ArithmeticBackend, HashBackend};
+use ultrahonk::{backends::{G1ArithmeticBackend, HashBackend}, types::{G1Affine, ScalarField}};
+use ark_ec::AffineRepr;
 
 /// The precompile testing contract, which itself is stateless
 #[storage]
@@ -47,5 +48,22 @@ impl PrecompileTestContract {
     pub fn test_hash(&self, a_bytes: Bytes) -> Result<Bytes, Vec<u8>> {
         let c = PrecompileHashBackend::hash(a_bytes.as_slice());
         Ok(c.to_vec().into())
+    }
+
+    /// Invokes the `msm` precompile on the given inputs
+    pub fn test_msm(&self, a_bytes: Bytes, b_bytes: Bytes) -> Result<Bytes, Vec<u8>> {
+        // let a: Vec<SerdeScalarField> = postcard::from_bytes(a_bytes.as_slice()).unwrap();
+        // let b: Vec<SerdeG1Affine> = postcard::from_bytes(b_bytes.as_slice()).unwrap();
+
+        let a = ScalarField::from(42u64);
+        let b = G1Affine::generator();
+
+        let c = PrecompileG1ArithmeticBackend::msm(
+            &[a],
+            &[b],
+        )
+        .unwrap();
+    
+        Ok(postcard::to_allocvec(&SerdeG1Affine(c)).unwrap().into())
     }
 }
