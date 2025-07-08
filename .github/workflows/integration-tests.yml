@@ -22,7 +22,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: stable
+          toolchain: nightly-2025-06-12
 
       - name: Install wasm32 target
         run: rustup target add wasm32-unknown-unknown

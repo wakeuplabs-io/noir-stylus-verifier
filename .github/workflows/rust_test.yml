@@ -24,7 +24,7 @@ jobs:
       
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: stable
+          toolchain: nightly-2025-06-12
       
       - run: sudo apt-get install lld
       - uses: Swatinem/rust-cache@v2
