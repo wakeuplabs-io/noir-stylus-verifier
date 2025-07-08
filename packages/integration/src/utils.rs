@@ -10,10 +10,8 @@ use alloy::{
     transports::http::reqwest::Url,
 };
 use alloy_contract::{CallBuilder, CallDecoder};
-use alloy_primitives::Bytes;
 use colored::Colorize;
 use eyre::Result;
-use serde::Serialize;
 use std::{
     borrow::Borrow,
     env,
@@ -235,6 +233,3 @@ pub async fn deploy_stylus_contract(
     Ok(deployed_address)
 }
 
-pub fn serialize_to_calldata<T: Serialize>(t: &T) -> Result<Bytes> {
-    Ok(postcard::to_allocvec(t)?.into())
-}
