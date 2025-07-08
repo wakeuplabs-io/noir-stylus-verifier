@@ -107,7 +107,7 @@ impl G1ArithmeticBackend for ArkHonkCurve {
             println!("call_result: {:?}\n", call_result);
 
             let out = hex::decode(call_result).unwrap();
-            let result = deserialize_g1_affine_from_bytes(&out);
+            let result = G1Affine::deserialize_from_bytes(&out).unwrap();
             return Ok(result);
         }
     }
@@ -212,8 +212,8 @@ fn deserialize_g1_affine_from_bytes(bytes: &[u8]) -> G1Affine {
     // since we can assume that precompiles will always correctly return
     // elements contained in the field
     let mut cursor = 0;
-    let x = deserialize_cursor(bytes, &mut cursor);
-    let y = deserialize_cursor(bytes, &mut cursor);
+    let x = G1BaseField::deserialize_from_bytes_with_offset(bytes, &mut cursor).unwrap();
+    let y = G1BaseField::deserialize_from_bytes_with_offset(bytes, &mut cursor).unwrap();
 
     G1Affine { x, y, infinity: x.is_zero() && y.is_zero() }
 }

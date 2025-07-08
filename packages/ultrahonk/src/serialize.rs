@@ -216,16 +216,11 @@ impl BytesDeserializable for G1Affine {
     const SER_LEN: usize = 64;
 
     fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
-        if bytes.iter().all(|&x| x == 255) {
-            return Ok(G1Affine::zero());
-        }
-
-        let mut offset = 0;
-        let first = G1BaseField::deserialize_from_bytes_with_offset(bytes, &mut offset).unwrap();
-        let second = G1BaseField::deserialize_from_bytes_with_offset(bytes, &mut offset).unwrap();
-
-        // read x first every time
-        Ok(G1Affine::new(first, second))
+        let mut cursor = 0;
+        let x = G1BaseField::deserialize_from_bytes_with_offset(bytes, &mut cursor).unwrap();
+        let y = G1BaseField::deserialize_from_bytes_with_offset(bytes, &mut cursor).unwrap();
+    
+        Ok(G1Affine { x, y, infinity: x.is_zero() && y.is_zero() })
     }
 }
 
