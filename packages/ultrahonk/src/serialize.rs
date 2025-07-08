@@ -1,11 +1,11 @@
 use crate::{
     constants::{NUM_BYTES_FELT, NUM_U64S_FELT},
     decider::types::{ClaimedEvaluations, RelationParameters, VerifierCommitments, VerifierMemory},
-    transcript::{RoundData, Transcript},
+    transcript::Transcript,
     types::{AllEntities, G1Affine, G1BaseField, G2Affine, G2BaseField, MontFp256, ScalarField},
     NUM_ALPHAS,
 };
-use alloc::{string::String, vec::Vec};
+use alloc::vec::Vec;
 use ark_ec::AffineRepr;
 use ark_ff::{BigInteger, Field, MontConfig, PrimeField, Zero};
 
@@ -473,91 +473,6 @@ impl BytesDeserializable for VerifierMemory {
             relation_parameters,
             claimed_evaluations,
         })
-    }
-}
-
-impl BytesSerializable for RoundData {
-    fn serialize_to_bytes(&self) -> Vec<u8> {
-        let mut bytes = Vec::new();
-
-        // Serialize challenge_label vector
-        bytes.extend((self.challenge_label.len() as u32).serialize_to_bytes());
-        for label in &self.challenge_label {
-            let label_bytes = label.as_bytes();
-            bytes.extend((label_bytes.len() as u32).serialize_to_bytes());
-            bytes.extend(label_bytes);
-        }
-
-        // Serialize entries vector
-        bytes.extend((self.entries.len() as u32).serialize_to_bytes());
-        for (label, size) in &self.entries {
-            let label_bytes = label.as_bytes();
-            bytes.extend((label_bytes.len() as u32).serialize_to_bytes());
-            bytes.extend(label_bytes);
-            bytes.extend((*size as u32).serialize_to_bytes());
-        }
-
-        bytes
-    }
-}
-
-impl BytesDeserializable for RoundData {
-    const SER_LEN: usize = 0; // Dynamic size
-
-    fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
-        let mut offset = 0;
-
-        // TODO: should remove?
-        // Deserialize challenge_label vector
-        let challenge_label_len =
-            u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;
-        let mut challenge_label = Vec::with_capacity(challenge_label_len);
-        for _ in 0..challenge_label_len {
-            let label_len = u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;
-            if offset + label_len > bytes.len() {
-                return Err(SerdeError::InvalidLength);
-            }
-            let label_bytes = &bytes[offset..offset + label_len];
-            let label = String::from_utf8(label_bytes.to_vec())
-                .map_err(|_| SerdeError::ScalarConversion)?;
-            challenge_label.push(label);
-            offset += label_len;
-        }
-
-        // Deserialize entries vector
-        let entries_len = u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;
-        let mut entries = Vec::with_capacity(entries_len);
-        for _ in 0..entries_len {
-            let label_len = u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;
-            if offset + label_len > bytes.len() {
-                return Err(SerdeError::InvalidLength);
-            }
-            let label_bytes = &bytes[offset..offset + label_len];
-            let label = String::from_utf8(label_bytes.to_vec())
-                .map_err(|_| SerdeError::ScalarConversion)?;
-            offset += label_len;
-            let size = u32::deserialize_from_bytes_with_offset(bytes, &mut offset)? as usize;
-            entries.push((label, size));
-        }
-
-        Ok(RoundData {
-            challenge_label,
-            entries,
-        })
-    }
-
-    fn deserialize_from_bytes_with_offset(
-        bytes: &[u8],
-        offset: &mut usize,
-    ) -> Result<Self, SerdeError> {
-        let start_offset = *offset;
-        let result = Self::deserialize_from_bytes(&bytes[start_offset..])?;
-
-        // Calculate how many bytes were consumed by re-serializing and measuring
-        let consumed_bytes = result.serialize_to_bytes().len();
-        *offset += consumed_bytes;
-
-        Ok(result)
     }
 }
 
