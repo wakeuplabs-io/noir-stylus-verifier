@@ -2,13 +2,14 @@
 //! purposes. This contract is intended to be used in conjunction with a local
 //! devnet
 
-use crate::utils::{
-    backends::{PrecompileG1ArithmeticBackend, PrecompileHashBackend},
-};
+use crate::utils::backends::{PrecompileG1ArithmeticBackend, PrecompileHashBackend};
 use alloc::vec::Vec;
 use stylus_sdk::{abi::Bytes, prelude::*};
-use ultrahonk::{backends::{G1ArithmeticBackend, HashBackend}, types::{G1Affine, G2Affine, ScalarField}};
 use ultrahonk::serialize::{BytesDeserializable, BytesSerializable};
+use ultrahonk::{
+    backends::{G1ArithmeticBackend, HashBackend},
+    types::{G1Affine, G2Affine, ScalarField},
+};
 
 /// The precompile testing contract, which itself is stateless
 #[storage]

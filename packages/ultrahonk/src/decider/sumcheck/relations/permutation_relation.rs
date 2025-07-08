@@ -10,7 +10,11 @@ pub(crate) struct UltraPermutationRelationEvals {
 }
 
 impl UltraPermutationRelationEvals {
-    pub(crate) fn scale_and_batch_elements(&self, running_challenge: &[ScalarField], result: &mut ScalarField) {
+    pub(crate) fn scale_and_batch_elements(
+        &self,
+        running_challenge: &[ScalarField],
+        result: &mut ScalarField,
+    ) {
         assert!(running_challenge.len() == UltraPermutationRelation::NUM_RELATIONS);
 
         *result += self.r0 * running_challenge[0];

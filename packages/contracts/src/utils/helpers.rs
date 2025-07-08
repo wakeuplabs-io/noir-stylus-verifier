@@ -1,11 +1,10 @@
+use crate::utils::constants::CALL_RETDATA_DECODING_ERROR_MESSAGE;
 use alloc::vec::Vec;
 use alloy_sol_types::{SolCall, SolType};
 use stylus_sdk::{alloy_primitives::Address, call::MutatingCallContext};
-use crate::utils::constants::CALL_RETDATA_DECODING_ERROR_MESSAGE;
 
 #[allow(deprecated)]
 use stylus_sdk::call::call;
-
 
 /// Performs a `call` to the given address, calling the function
 /// defined as a `SolCall` with the given arguments.

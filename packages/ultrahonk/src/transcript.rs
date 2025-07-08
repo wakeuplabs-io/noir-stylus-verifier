@@ -6,11 +6,10 @@ use crate::types::{G1Affine, HonkProof, HonkProofError, HonkProofResult, ScalarF
 use crate::Utils;
 use alloc::vec::Vec;
 use ark_ec::AffineRepr;
-use ark_ff::{PrimeField, BigInteger, Zero};
+use ark_ff::{BigInteger, PrimeField, Zero};
 
 #[derive(Clone)]
-pub struct Transcript
-{
+pub struct Transcript {
     pub proof_data: Vec<ScalarField>,
     pub num_frs_written: usize, // the number of bb::frs written to proof_data by the prover or the verifier
     pub num_frs_read: usize,    // the number of bb::frs read from proof_data by the verifier
@@ -97,10 +96,7 @@ impl Transcript {
         self.send_to_verifier(&elements);
     }
 
-    fn receive_n_from_prover(
-        &mut self,
-        n: usize,
-    ) -> HonkProofResult<Vec<ScalarField>> {
+    fn receive_n_from_prover(&mut self, n: usize) -> HonkProofResult<Vec<ScalarField>> {
         if self.num_frs_read + n > self.proof_data.len() {
             return Err(HonkProofError::ProofTooSmall);
         }
@@ -148,7 +144,9 @@ impl Transcript {
         Ok(elements)
     }
 
-    pub fn receive_fr_array_from_verifier<const SIZE: usize>(&mut self) -> HonkProofResult<[ScalarField; SIZE]> {
+    pub fn receive_fr_array_from_verifier<const SIZE: usize>(
+        &mut self,
+    ) -> HonkProofResult<[ScalarField; SIZE]> {
         let mut res: [ScalarField; SIZE] = [ScalarField::zero(); SIZE];
         let elements = self.receive_n_from_prover(NUM_SCALARFIELD_ELEMENTS * SIZE)?;
 
@@ -165,21 +163,24 @@ impl Transcript {
     fn split_challenge(challenge: ScalarField) -> [ScalarField; 2] {
         // Get the 32 bytes (256 bits) in little-endian order
         let bytes = challenge.into_bigint().to_bytes_le();
-    
+
         // Lower 128 bits (first 16 bytes)
         let mut lo_bytes = [0u8; 32];
         lo_bytes[..16].copy_from_slice(&bytes[..16]);
         let lo = ScalarField::from_le_bytes_mod_order(&lo_bytes);
-    
+
         // Upper 128 bits (next 16 bytes)
         let mut hi_bytes = [0u8; 32];
         hi_bytes[..16].copy_from_slice(&bytes[16..32]);
         let hi = ScalarField::from_le_bytes_mod_order(&hi_bytes);
-    
+
         [lo, hi]
     }
 
-    fn get_next_duplex_challenge_buffer<H: HashBackend>(&mut self, num_challenges: usize) -> [ScalarField; 2] {
+    fn get_next_duplex_challenge_buffer<H: HashBackend>(
+        &mut self,
+        num_challenges: usize,
+    ) -> [ScalarField; 2] {
         // challenges need at least 110 bits in them to match the presumed security parameter of the BN254 curve.
         assert!(num_challenges <= 2);
         // Prevent challenge generation if this is the first challenge we're generating,
@@ -245,5 +246,5 @@ impl Transcript {
 #[derive(Clone, Debug, Eq, PartialEq, Default)]
 pub struct RoundData {
     pub challenge_label: Vec<String>,
-    pub  entries: Vec<(String, usize)>,
+    pub entries: Vec<(String, usize)>,
 }

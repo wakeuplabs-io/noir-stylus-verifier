@@ -1,10 +1,10 @@
+use crate::utils::backends::PrecompileHashBackend;
 use alloc::vec::Vec;
 use alloy_primitives::Address;
 use stylus_sdk::call::Call;
 use stylus_sdk::{abi::Bytes, prelude::*};
 use ultrahonk::decider::types::VerifierMemory;
 use ultrahonk::keys::verification_key::VerifyingKey;
-use crate::utils::backends::PrecompileHashBackend;
 use ultrahonk::serialize::{BytesDeserializable, BytesSerializable};
 use ultrahonk::transcript::Transcript;
 use ultrahonk::types::{HonkProof, ScalarField};
@@ -72,14 +72,15 @@ impl VerifierContract {
 
         // sumcheck verification
         let sumcheck_verifier = ISumcheckVerifier::new(self.sumcheck_verifier_address.get());
-        let (transcript_bytes, memory_bytes, multivariate_challenge, sumcheck_ok) = sumcheck_verifier
-            .verify(
-                Call::new(),
-                memory.serialize_to_bytes().into(),
-                transcript.serialize_to_bytes().into(),
-                vk.circuit_size.into(),
-            )
-            .unwrap();
+        let (transcript_bytes, memory_bytes, multivariate_challenge, sumcheck_ok) =
+            sumcheck_verifier
+                .verify(
+                    Call::new(),
+                    memory.serialize_to_bytes().into(),
+                    transcript.serialize_to_bytes().into(),
+                    vk.circuit_size.into(),
+                )
+                .unwrap();
         if !sumcheck_ok {
             return false;
         }

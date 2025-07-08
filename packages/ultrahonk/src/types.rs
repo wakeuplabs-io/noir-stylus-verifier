@@ -1,11 +1,11 @@
-use crate::{alloc::borrow::ToOwned, constants::PRECOMPUTED_ENTITIES_SIZE};
 use crate::constants::NUM_U64S_FELT;
-use serde::{Deserialize, Serialize};
 use crate::serialize::{BytesDeserializable, BytesSerializable};
+use crate::{alloc::borrow::ToOwned, constants::PRECOMPUTED_ENTITIES_SIZE};
 use alloc::vec::Vec;
 use ark_bn254::{g1::Config as G1Config, g2::Config as G2Config, Fq, Fq2, Fr};
 use ark_ec::short_weierstrass::Affine;
 use ark_ff::{Fp256, MontBackend};
+use serde::{Deserialize, Serialize};
 
 /// Type alias for an element of the scalar field of the Bn254 curve
 pub type ScalarField = Fr;
@@ -147,7 +147,6 @@ impl<T: Default> IntoIterator for ShiftedWitnessEntities<T> {
         self.elements.into_iter()
     }
 }
-
 
 impl<T: Default> WitnessEntities<T> {
     /// column 0
@@ -308,7 +307,6 @@ impl<T: Default> ShiftedWitnessEntities<T> {
         &mut self.elements[Self::Z_PERM]
     }
 }
-
 
 #[derive(Default, Clone, Serialize, Deserialize)]
 pub struct PrecomputedEntities<T: Default> {
@@ -486,5 +484,4 @@ impl<T: Default> PrecomputedEntities<T> {
     pub fn lagrange_last(&self) -> &T {
         &self.elements[Self::LAGRANGE_LAST]
     }
-
 }

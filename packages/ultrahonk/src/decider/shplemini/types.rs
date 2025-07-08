@@ -1,6 +1,9 @@
 use ark_bn254::G1Affine;
 
-use crate::{decider::types::{ClaimedEvaluations, VerifierCommitments}, types::{PrecomputedEntities, ScalarField, ShiftedWitnessEntities, WitnessEntities}};
+use crate::{
+    decider::types::{ClaimedEvaluations, VerifierCommitments},
+    types::{PrecomputedEntities, ScalarField, ShiftedWitnessEntities, WitnessEntities},
+};
 
 pub struct PolyF<'a, T: Default> {
     pub precomputed: &'a PrecomputedEntities<T>,
@@ -42,10 +45,13 @@ impl<T: Default> PolyG<'_, T> {
 }
 
 impl<'a> From<&'a VerifierCommitments> for PolyG<'a, G1Affine> {
-
     fn from(verifier_commitments: &'a VerifierCommitments) -> Self {
         Self {
-            wires: verifier_commitments.witness.to_be_shifted().try_into().unwrap(),
+            wires: verifier_commitments
+                .witness
+                .to_be_shifted()
+                .try_into()
+                .unwrap(),
         }
     }
 }

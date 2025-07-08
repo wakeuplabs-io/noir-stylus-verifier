@@ -11,7 +11,11 @@ pub(crate) struct UltraArithmeticRelationEvals {
 }
 
 impl UltraArithmeticRelationEvals {
-    pub(crate) fn scale_and_batch_elements(&self, running_challenge: &[ScalarField], result: &mut ScalarField) {
+    pub(crate) fn scale_and_batch_elements(
+        &self,
+        running_challenge: &[ScalarField],
+        result: &mut ScalarField,
+    ) {
         assert!(running_challenge.len() == UltraArithmeticRelation::NUM_RELATIONS);
 
         *result += self.r0 * running_challenge[0];
@@ -50,8 +54,9 @@ impl Relation for UltraArithmeticRelation {
 
         let neg_half = -ScalarField::from(2u64).inverse().unwrap();
 
-        let mut tmp: ScalarField =
-            (q_arith.to_owned() - ScalarField::from(3_u64)) * (q_m.to_owned() * w_r * w_l) * neg_half;
+        let mut tmp: ScalarField = (q_arith.to_owned() - ScalarField::from(3_u64))
+            * (q_m.to_owned() * w_r * w_l)
+            * neg_half;
         tmp += (q_l.to_owned() * w_l)
             + (q_r.to_owned() * w_r)
             + (q_o.to_owned() * w_o)

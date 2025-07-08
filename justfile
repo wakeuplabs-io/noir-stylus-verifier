@@ -1,3 +1,6 @@
+fmt:
+  cargo fmt --all
+
 lint:
   cargo fmt --all -- --check
   cargo clippy --workspace --all-targets -q 

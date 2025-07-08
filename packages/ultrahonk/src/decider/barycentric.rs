@@ -1,6 +1,6 @@
+use crate::types::ScalarField;
 use alloc::vec::Vec;
 use ark_ff::One;
-use crate::types::ScalarField;
 
 pub struct Barycentric {}
 

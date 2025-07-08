@@ -4,9 +4,9 @@ use crate::{
     backends::{G1ArithmeticBackend, HashBackend},
     decider::{types::VerifierMemory, verifier::DeciderVerifier},
     keys::verification_key::VerifyingKey,
+    serialize::{BytesDeserializable, BytesSerializable},
     transcript::Transcript,
     types::{HonkProof, HonkProofError, ScalarField},
-    serialize::{BytesDeserializable, BytesSerializable},
 };
 
 pub struct UltraHonk;
@@ -26,10 +26,15 @@ impl UltraHonk {
         // let memory_bytes = memory.serialize_to_bytes();
 
         let mut decider_verifier = DeciderVerifier::new(memory);
-        let sumcheck_output = decider_verifier.verify_sumcheck::<H>(&mut transcript, vk.circuit_size)?;
+        let sumcheck_output =
+            decider_verifier.verify_sumcheck::<H>(&mut transcript, vk.circuit_size)?;
 
-        transcript = Transcript::deserialize_from_bytes(transcript.serialize_to_bytes().as_slice()).unwrap();
-        let memory = VerifierMemory::deserialize_from_bytes(decider_verifier.memory.serialize_to_bytes().as_slice()).unwrap();
+        transcript =
+            Transcript::deserialize_from_bytes(transcript.serialize_to_bytes().as_slice()).unwrap();
+        let memory = VerifierMemory::deserialize_from_bytes(
+            decider_verifier.memory.serialize_to_bytes().as_slice(),
+        )
+        .unwrap();
         let mut decider_verifier2 = DeciderVerifier::new(memory);
 
         let shplemini_output = decider_verifier2.verify_shplemini::<H, P>(

@@ -7,7 +7,10 @@ use crate::{
     types::{IntegrationTest, IntegrationTestFn, StylusContract},
     utils::{build_stylus_contract, deploy_stylus_contract, setup_client, LocalWalletHttpClient},
 };
-use abis::{PrecompileTestContract::PrecompileTestContractInstance, VerifierContract::VerifierContractInstance};
+use abis::{
+    PrecompileTestContract::PrecompileTestContractInstance,
+    VerifierContract::VerifierContractInstance,
+};
 use alloy::{network::Ethereum, primitives::Address, providers::DynProvider};
 use clap::Parser;
 use cli::Cli;
@@ -88,8 +91,13 @@ impl TestContext {
         .await?;
 
         // initialize verifier contract
-        let verifier_contract = VerifierContractInstance::new(verifier_contract_address, client.provider());
-        let _ = verifier_contract.initialize(sumcheck_verifier_address, shplemini_verifier_address).send().await.unwrap();
+        let verifier_contract =
+            VerifierContractInstance::new(verifier_contract_address, client.provider());
+        let _ = verifier_contract
+            .initialize(sumcheck_verifier_address, shplemini_verifier_address)
+            .send()
+            .await
+            .unwrap();
 
         Ok(Self {
             client,

@@ -1,5 +1,3 @@
-
-
 // #[storage]
 // pub struct Shplemini {
 

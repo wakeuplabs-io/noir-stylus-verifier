@@ -25,10 +25,7 @@ impl SumcheckVerifierContract {
         let mut decider_verifier = DeciderVerifier::new(memory);
 
         let sumcheck_output = decider_verifier
-            .verify_sumcheck::<PrecompileHashBackend>(
-                &mut transcript,
-                circuit_size,
-            )
+            .verify_sumcheck::<PrecompileHashBackend>(&mut transcript, circuit_size)
             .unwrap();
 
         (

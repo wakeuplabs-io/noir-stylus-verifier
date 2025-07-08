@@ -2,10 +2,7 @@ use super::{
     types::{PolyF, PolyG, PolyGShift},
     ShpleminiVerifierOpeningClaim,
 };
-use crate::{
-    backends::G1ArithmeticBackend, constants::get_crs_g2,
-    types::HonkProofError,
-};
+use crate::{backends::G1ArithmeticBackend, constants::get_crs_g2, types::HonkProofError};
 use crate::{
     backends::HashBackend,
     decider::verifier::DeciderVerifier,

@@ -1,4 +1,4 @@
-use crate::backends::{ HashBackend};
+use crate::backends::HashBackend;
 use crate::keys::verification_key::VerifyingKey;
 use crate::oink::verifier::OinkVerifier;
 use crate::transcript::Transcript;
@@ -68,7 +68,10 @@ impl GateSeparatorPolynomial {
 }
 
 impl VerifierMemory {
-    pub fn from_key_and_transcript<H: HashBackend>(vk: &VerifyingKey, transcript: &mut Transcript) -> Self {
+    pub fn from_key_and_transcript<H: HashBackend>(
+        vk: &VerifyingKey,
+        transcript: &mut Transcript,
+    ) -> Self {
         let oink_verifier = OinkVerifier::default();
         let oink_result = oink_verifier.build_memory::<H>(vk, transcript).unwrap();
 

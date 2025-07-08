@@ -18,7 +18,10 @@ use alloc::borrow::ToOwned;
 use ark_bn254::{Fq, Fr};
 use ark_ff::{BigInteger, PrimeField};
 
-use crate::{constants::{NUM_BASEFIELD_ELEMENTS, NUM_SCALARFIELD_ELEMENTS}, types::ScalarField};
+use crate::{
+    constants::{NUM_BASEFIELD_ELEMENTS, NUM_SCALARFIELD_ELEMENTS},
+    types::ScalarField,
+};
 
 pub const NUM_ALPHAS: usize = decider::sumcheck::relations::NUM_SUBRELATIONS - 1;
 

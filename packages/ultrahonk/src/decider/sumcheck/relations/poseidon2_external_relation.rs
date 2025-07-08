@@ -13,7 +13,11 @@ pub(crate) struct Poseidon2ExternalRelationEvals {
 }
 
 impl Poseidon2ExternalRelationEvals {
-    pub(crate) fn scale_and_batch_elements(&self, running_challenge: &[ScalarField], result: &mut ScalarField) {
+    pub(crate) fn scale_and_batch_elements(
+        &self,
+        running_challenge: &[ScalarField],
+        result: &mut ScalarField,
+    ) {
         assert!(running_challenge.len() == Poseidon2ExternalRelation::NUM_RELATIONS);
 
         *result += self.r0 * running_challenge[0];

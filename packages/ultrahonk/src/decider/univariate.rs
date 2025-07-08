@@ -1,4 +1,7 @@
-use crate::{decider::{barycentric::Barycentric, types::BATCHED_RELATION_PARTIAL_LENGTH}, types::ScalarField};
+use crate::{
+    decider::{barycentric::Barycentric, types::BATCHED_RELATION_PARTIAL_LENGTH},
+    types::ScalarField,
+};
 use ark_ff::{One, Zero};
 
 #[derive(Clone, Debug)]
@@ -17,8 +20,14 @@ impl Univariate {
             full_numerator_value *= u - ScalarField::from(i as u64);
         }
 
-        let big_domain = Barycentric::construct_big_domain(self.evaluations.len(), BATCHED_RELATION_PARTIAL_LENGTH);
-        let lagrange_denominators = Barycentric::construct_lagrange_denominators(BATCHED_RELATION_PARTIAL_LENGTH, &big_domain);
+        let big_domain = Barycentric::construct_big_domain(
+            self.evaluations.len(),
+            BATCHED_RELATION_PARTIAL_LENGTH,
+        );
+        let lagrange_denominators = Barycentric::construct_lagrange_denominators(
+            BATCHED_RELATION_PARTIAL_LENGTH,
+            &big_domain,
+        );
 
         let mut denominator_inverses = [ScalarField::zero(); BATCHED_RELATION_PARTIAL_LENGTH];
         for i in 0..BATCHED_RELATION_PARTIAL_LENGTH {
@@ -41,5 +50,4 @@ impl Univariate {
         result *= full_numerator_value;
         result
     }
-
 }

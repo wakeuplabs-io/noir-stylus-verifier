@@ -219,8 +219,12 @@ impl BytesDeserializable for G1Affine {
         let mut cursor = 0;
         let x = G1BaseField::deserialize_from_bytes_with_offset(bytes, &mut cursor).unwrap();
         let y = G1BaseField::deserialize_from_bytes_with_offset(bytes, &mut cursor).unwrap();
-    
-        Ok(G1Affine { x, y, infinity: x.is_zero() && y.is_zero() })
+
+        Ok(G1Affine {
+            x,
+            y,
+            infinity: x.is_zero() && y.is_zero(),
+        })
     }
 }
 

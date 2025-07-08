@@ -7,9 +7,9 @@ pub mod poseidon2_external_relation;
 pub mod poseidon2_internal_relation;
 pub mod ultra_arithmetic_relation;
 
-use ark_ff::Zero;
-use crate::types::ScalarField;
 use super::super::types::{ClaimedEvaluations, RelationParameters};
+use crate::types::ScalarField;
+use ark_ff::Zero;
 use auxiliary_relation::{AuxiliaryRelation, AuxiliaryRelationEvals};
 use delta_range_constraint_relation::{
     DeltaRangeConstraintRelation, DeltaRangeConstraintRelationEvals,
@@ -54,7 +54,11 @@ pub(crate) struct AllRelationEvaluations {
 }
 
 impl AllRelationEvaluations {
-    pub(crate) fn scale_and_batch_elements(&self, first_scalar: ScalarField, elements: &[ScalarField]) -> ScalarField {
+    pub(crate) fn scale_and_batch_elements(
+        &self,
+        first_scalar: ScalarField,
+        elements: &[ScalarField],
+    ) -> ScalarField {
         assert!(elements.len() == NUM_SUBRELATIONS - 1);
         let mut output = ScalarField::zero();
         self.r_arith

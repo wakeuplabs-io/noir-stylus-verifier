@@ -15,7 +15,11 @@ pub(crate) struct AuxiliaryRelationEvals {
 }
 
 impl AuxiliaryRelationEvals {
-    pub(crate) fn scale_and_batch_elements(&self, running_challenge: &[ScalarField], result: &mut ScalarField) {
+    pub(crate) fn scale_and_batch_elements(
+        &self,
+        running_challenge: &[ScalarField],
+        result: &mut ScalarField,
+    ) {
         assert!(running_challenge.len() == AuxiliaryRelation::NUM_RELATIONS);
 
         *result += self.r0 * running_challenge[0];
@@ -277,7 +281,9 @@ impl Relation for AuxiliaryRelation {
 
         let value_delta = w_3_shift.to_owned() - w_3;
         let adjacent_values_match_if_adjacent_indices_match_and_next_access_is_a_read_operation =
-            value_delta * index_delta_one * (-next_gate_access_type.to_owned() + ScalarField::one()); // deg 3 or 4
+            value_delta
+                * index_delta_one
+                * (-next_gate_access_type.to_owned() + ScalarField::one()); // deg 3 or 4
 
         // We can't apply the RAM consistency check identity on the final entry in the sorted list (the wires in the
         // next gate would make the identity fail).  We need to validate that its 'access type' bool is correct. Can't
