@@ -54,12 +54,11 @@ impl DeciderVerifier {
         let mut multivariate_challenge = Vec::with_capacity(CONST_PROOF_SIZE_LOG_N);
 
         for (round_idx, &padding_value) in padding_indicator_array.iter().enumerate() {
-            let evaluations = transcript
-                .receive_fr_array_from_verifier::<BATCHED_RELATION_PARTIAL_LENGTH>()?; // format!("Sumcheck:univariate_{}", round_idx);
+            let evaluations =
+                transcript.receive_fr_array_from_verifier::<BATCHED_RELATION_PARTIAL_LENGTH>()?; // format!("Sumcheck:univariate_{}", round_idx);
             let round_univariate = SumcheckRoundOutput { evaluations };
 
-            let round_challenge =
-                transcript.get_challenge::<H>(); // format!("Sumcheck:u_{}", round_idx)
+            let round_challenge = transcript.get_challenge::<H>(); // format!("Sumcheck:u_{}", round_idx)
 
             let checked = Self::check_sum(
                 &round_univariate,
@@ -84,8 +83,7 @@ impl DeciderVerifier {
         }
 
         // Final round
-        let transcript_evaluations = transcript
-            .receive_fr_vec_from_verifier(NUM_ALL_ENTITIES)?; // "Sumcheck:evaluations"
+        let transcript_evaluations = transcript.receive_fr_vec_from_verifier(NUM_ALL_ENTITIES)?; // "Sumcheck:evaluations"
 
         for (eval, &transcript_eval) in self
             .memory
@@ -96,15 +94,16 @@ impl DeciderVerifier {
             *eval = transcript_eval;
         }
 
-        // // Evaluate the Honk relation at the point (u_0, ..., u_{d-1}) using claimed evaluations of prover polynomials.
-        // let full_honk_purported_value = SumcheckVerifierRound::compute_full_relation_purported_value(
-        //     &self.memory.claimed_evaluations,
-        //     &self.memory.relation_parameters,
-        //     &gate_separators.partial_evaluation_result,
-        // );
+        // Evaluate the Honk relation at the point (u_0, ..., u_{d-1}) using claimed evaluations of prover polynomials.
+        let full_honk_purported_value =
+            SumcheckVerifierRound::compute_full_relation_purported_value(
+                &self.memory.claimed_evaluations,
+                &self.memory.relation_parameters,
+                &gate_separators.partial_evaluation_result,
+            );
 
-        // let checked = full_honk_purported_value == target_total_sum;
-        // verified = verified && checked;
+        let checked = full_honk_purported_value == target_total_sum;
+        verified = verified && checked;
         Ok(SumcheckVerifierOutput {
             multivariate_challenge,
             verified,

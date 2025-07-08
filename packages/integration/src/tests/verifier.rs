@@ -17,6 +17,7 @@ async fn test_verifier(ctx: TestContext) -> Result<()> {
     let test_vectors_dir = workspace_path.join("test_vectors");
     let test_vectors = std::fs::read_dir(test_vectors_dir).unwrap();
 
+    // TODO: also use macros to divide into test_vectors into multiple test cases
     for entry in test_vectors {
         let entry = entry.unwrap();
         let path = entry.path();
@@ -36,13 +37,14 @@ async fn test_verifier(ctx: TestContext) -> Result<()> {
         let res = match contract
             .verify(proof_u8.into(), public_inputs_u8.into(), vk_u8.into())
             .call()
-            .await {
-                Ok(result) => result._0,
-                Err(e) => {
-                    println!("Verification error: {}", e);
-                    false
-                }
-            };
+            .await
+        {
+            Ok(result) => result._0,
+            Err(e) => {
+                println!("Verification error: {}", e);
+                false
+            }
+        };
 
         assert_true_result!(res);
     }
