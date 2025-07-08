@@ -38,8 +38,8 @@ test-ultrahonk:
   #  ark-ec/only-arithmetic-backend panics if we attempt to do arithmetic outside of the G1ArithmeticBackend
   cargo test -p ultrahonk --features ark-ec/only-arithmetic-backend -- --test-threads=1 --nocapture
 
-test-contracts:
-  cargo test -p contracts -- --test-threads=1
+test-integration:
+  cargo run -p integration
 
 test-e2e:
   ./scripts/e2e-tests.sh

@@ -1,10 +1,7 @@
-use alloc::vec::Vec;
-
 use crate::{
     backends::{G1ArithmeticBackend, HashBackend},
     decider::{types::VerifierMemory, verifier::DeciderVerifier},
     keys::verification_key::VerifyingKey,
-    serialize::{BytesDeserializable, BytesSerializable},
     transcript::Transcript,
     types::{HonkProof, HonkProofError, ScalarField},
 };

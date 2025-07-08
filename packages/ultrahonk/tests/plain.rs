@@ -73,48 +73,59 @@ impl G1ArithmeticBackend for ArkHonkCurve {
     }
 }
 
-fn plain_test(name: &str, proof_file: &str, vk_file: &str, public_inputs_file: &str) {
-    // parse proof file
-    let proof_u8 = std::fs::read(proof_file).unwrap();
-    let proof = HonkProof::from_buffer(&proof_u8).unwrap();
+macro_rules! generate_tests {
+    ($(($name:ident, $path:expr)),* $(,)?) => {
+        $(
+            #[test]
+            fn $name() {
+                let path = std::path::Path::new($path);
+                let proof_file = format!("{}/kat/proof", path.display());
+                let vk_file = format!("{}/kat/vk", path.display());
+                let public_inputs_file = format!("{}/kat/public_inputs", path.display());
 
-    // parse public_inputs file
-    let public_inputs_u8 = std::fs::read(public_inputs_file).unwrap();
-    let public_inputs = Vec::<ScalarField>::deserialize_from_bytes(&public_inputs_u8).unwrap();
+                // parse proof file
+                let proof_u8 = std::fs::read(proof_file).unwrap();
+                let proof = HonkProof::from_buffer(&proof_u8).unwrap();
 
-    // parse verification key file
-    let vk_u8 = std::fs::read(vk_file).unwrap();
-    let vk = VerifyingKey::from_buffer(&vk_u8).unwrap();
+                // parse public_inputs file
+                let public_inputs_u8 = std::fs::read(public_inputs_file).unwrap();
+                let public_inputs = Vec::<ScalarField>::deserialize_from_bytes(&public_inputs_u8).unwrap();
 
-    let is_valid =
-        UltraHonk::verify::<ArkKeccak256, ArkHonkCurve>(proof, &public_inputs, &vk).unwrap();
+                // parse verification key file
+                let vk_u8 = std::fs::read(vk_file).unwrap();
+                let vk = VerifyingKey::from_buffer(&vk_u8).unwrap();
 
-    assert!(is_valid, "Failed for: {}", name);
+                let is_valid =
+                    UltraHonk::verify::<ArkKeccak256, ArkHonkCurve>(proof, &public_inputs, &vk).unwrap();
+
+                assert!(is_valid);
+            }
+        )*
+    };
 }
 
-// TODO: use macro to divide into multiple tests
 
-#[test]
-fn test_iterating_test_vectors() {
-    let test_vectors_dir = "../../test_vectors";
-    let test_vectors = std::fs::read_dir(test_vectors_dir).unwrap();
-
-    for entry in test_vectors {
-        let entry = entry.unwrap();
-        let path = entry.path();
-        if !path.is_dir() {
-            // Skip if not a directory
-            continue;
-        }
-        let proof_file = format!("{}/kat/proof", path.display());
-        let vk_file = format!("{}/kat/vk", path.display());
-        let public_inputs_file = format!("{}/kat/public_inputs", path.display());
-
-        plain_test(
-            &path.display().to_string(),
-            &proof_file,
-            &vk_file,
-            &public_inputs_file,
-        );
-    }
-}
+// Run this to generate the tests:
+// echo "generate_tests!(" && for d in ../../test_vectors/*; do [ -d "$d" ] && name=$(basename "$d" | tr -c '[:alnum:]' '_' | sed 's/__*/_/g') && echo "    ($name, \"$d\")," ; done && echo ");"
+generate_tests!(
+    (add3u64_, "../../test_vectors/add3u64"),
+    (addition_multiplication_, "../../test_vectors/addition_multiplication"),
+    (approx_sigmoid_, "../../test_vectors/approx_sigmoid"),
+    (assert_, "../../test_vectors/assert"),
+    (bb_sha256_compression_, "../../test_vectors/bb_sha256_compression"),
+    (get_bytes_, "../../test_vectors/get_bytes"),
+    (if_then_, "../../test_vectors/if_then"),
+    (negative_, "../../test_vectors/negative"),
+    (poseidon_, "../../test_vectors/poseidon"),
+    (poseidon_assert_, "../../test_vectors/poseidon_assert"),
+    (poseidon_input2_, "../../test_vectors/poseidon_input2"),
+    (poseidon_stdlib_, "../../test_vectors/poseidon_stdlib"),
+    (poseidon2_, "../../test_vectors/poseidon2"),
+    (quantized_, "../../test_vectors/quantized"),
+    (random_access_, "../../test_vectors/random_access"),
+    (slice_, "../../test_vectors/slice"),
+    (to_radix32_, "../../test_vectors/to_radix32"),
+    (unconstrained_fn_, "../../test_vectors/unconstrained_fn"),
+    (unconstrained_fn_field_, "../../test_vectors/unconstrained_fn_field"),
+    (write_access_, "../../test_vectors/write_access"),
+);
