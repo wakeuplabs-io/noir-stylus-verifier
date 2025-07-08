@@ -94,9 +94,11 @@ impl VerifierMemory {
             gate_challenges,
         };
 
-        let mut memory = AllEntities::default();
-        memory.witness = oink_result.witness_commitments;
-        memory.precomputed = vk.commitments.clone();
+        let memory = AllEntities {
+            witness: oink_result.witness_commitments,
+            precomputed: vk.commitments.clone(),
+            ..Default::default()
+        };
 
         // These copies are not required
         // for (des, src) in izip!(

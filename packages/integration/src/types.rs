@@ -79,8 +79,6 @@ pub struct IntegrationTest<FnArgs> {
 /// within a single test harness
 #[allow(clippy::type_complexity)]
 pub enum IntegrationTestFn<FnArgs> {
-    /// A synchronous test, i.e. not `async`
-    SynchronousFn(fn(FnArgs) -> Result<()>),
     /// An asynchronous test
     AsynchronousFn(fn(FnArgs) -> Pin<Box<dyn Future<Output = Result<()>>>>),
 }
@@ -89,9 +87,9 @@ pub enum IntegrationTestFn<FnArgs> {
 #[macro_export]
 macro_rules! integration_test {
     ($test_fn:ident) => {
-        inventory::submit!(crate::TestWrapper(crate::types::IntegrationTest {
+        inventory::submit!($crate::TestWrapper($crate::types::IntegrationTest {
             name: std::concat! {std::module_path!(), "::", stringify!($test_fn)},
-            test_fn: crate::types::IntegrationTestFn::SynchronousFn($test_fn),
+            test_fn: $crate::types::IntegrationTestFn::SynchronousFn($test_fn),
         }));
     };
 }

@@ -74,7 +74,6 @@ impl Relation for AuxiliaryRelation {
      * @param parameters contains beta, gamma, and public_input_delta, ....
      * @param scaling_factor optional term to scale the evaluation before adding to evals.
      */
-
     fn verify_accumulate(
         univariate_accumulator: &mut Self::VerifyAcc,
         input: &ClaimedEvaluations,

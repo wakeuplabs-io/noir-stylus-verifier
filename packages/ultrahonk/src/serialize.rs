@@ -237,7 +237,7 @@ impl BytesSerializable for G2Affine {
     /// concatenation of a and b in big-endian order.
     ///
     /// This matches the format expected by the EVM `ecPairing` precompile, as
-    /// specified here: https://eips.ethereum.org/EIPS/eip-197#encoding
+    /// specified here: <https://eips.ethereum.org/EIPS/eip-197#encoding>
     fn serialize_to_bytes(&self) -> Vec<u8> {
         let zero = G2BaseField::zero();
         let (x, y) = self.xy().unwrap_or((zero, zero));

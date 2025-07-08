@@ -97,7 +97,7 @@ impl TestContext {
             .initialize(sumcheck_verifier_address, shplemini_verifier_address)
             .send()
             .await
-            .unwrap();
+            .map_err(|e| ScriptError::ContractInteraction(e.to_string()))?;
 
         Ok(Self {
             client,
@@ -180,7 +180,6 @@ async fn main() {
             stdout().flush().unwrap();
         }
         let res: eyre::Result<()> = match test.test_fn {
-            IntegrationTestFn::SynchronousFn(f) => f(tests_ctx.clone()),
             IntegrationTestFn::AsynchronousFn(f) => f(tests_ctx.clone()).await,
         };
 

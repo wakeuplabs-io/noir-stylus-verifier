@@ -1,13 +1,15 @@
 use crate::utils::backends::PrecompileHashBackend;
 use alloc::vec::Vec;
 use alloy_primitives::Address;
-use stylus_sdk::call::Call;
 use stylus_sdk::{abi::Bytes, prelude::*};
 use ultrahonk::decider::types::VerifierMemory;
 use ultrahonk::keys::verification_key::VerifyingKey;
 use ultrahonk::serialize::{BytesDeserializable, BytesSerializable};
 use ultrahonk::transcript::Transcript;
 use ultrahonk::types::{HonkProof, ScalarField};
+
+#[allow(deprecated)]
+use stylus_sdk::call::Call as InterfaceCall;
 
 sol_storage! {
     #[cfg_attr(feature = "verifier", entrypoint)]
@@ -75,7 +77,8 @@ impl VerifierContract {
         let (transcript_bytes, memory_bytes, multivariate_challenge, sumcheck_ok) =
             sumcheck_verifier
                 .verify(
-                    Call::new(),
+                    #[allow(deprecated)]
+                    InterfaceCall::new(),
                     memory.serialize_to_bytes().into(),
                     transcript.serialize_to_bytes().into(),
                     vk.circuit_size,
@@ -89,7 +92,8 @@ impl VerifierContract {
         let shplemini_verifier = IShpleminiVerifier::new(self.shplemini_verifier_address.get());
         shplemini_verifier
             .verify(
-                Call::new(),
+                #[allow(deprecated)]
+                InterfaceCall::new(),
                 memory_bytes.to_vec().into(),
                 transcript_bytes.to_vec().into(),
                 multivariate_challenge.to_vec().into(),
