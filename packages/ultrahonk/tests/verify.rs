@@ -6,6 +6,7 @@ use ark_bn254::Bn254;
 use ark_ec::{pairing::Pairing, AffineRepr, CurveGroup};
 use ark_ff::One;
 use sha3::{Digest, Keccak256};
+use std::env;
 use ultrahonk::{
     backends::{G1ArithmeticBackend, G1ArithmeticError, HashBackend},
     constants::HASH_OUTPUT_SIZE,
@@ -74,14 +75,20 @@ impl G1ArithmeticBackend for ArkHonkCurve {
 }
 
 macro_rules! generate_tests {
-    ($(($name:ident, $path:expr)),* $(,)?) => {
+    ($($name:ident),* $(,)?) => {
         $(
             #[test]
             fn $name() {
-                let path = std::path::Path::new($path);
-                let proof_file = format!("{}/kat/proof", path.display());
-                let vk_file = format!("{}/kat/vk", path.display());
-                let public_inputs_file = format!("{}/kat/public_inputs", path.display());
+                // build path to test vector data
+                let workspace_path = std::path::Path::new(&env::var("CARGO_MANIFEST_DIR").unwrap())
+                    .ancestors()
+                    .nth(2) // Go up 2 levels: ultrahonk/ -> packages/ -> workspace root
+                    .unwrap()
+                    .to_path_buf();
+                let test_vector_path = workspace_path.join("test_vectors").join(stringify!($name));
+                let proof_file = test_vector_path.join("kat/proof");
+                let vk_file = test_vector_path.join("kat/vk");
+                let public_inputs_file = test_vector_path.join("kat/public_inputs");
 
                 // parse proof file
                 let proof_u8 = std::fs::read(proof_file).unwrap();
@@ -104,28 +111,27 @@ macro_rules! generate_tests {
     };
 }
 
-
 // Run this to generate the tests:
-// echo "generate_tests!(" && for d in ../../test_vectors/*; do [ -d "$d" ] && name=$(basename "$d" | tr -c '[:alnum:]' '_' | sed 's/__*/_/g') && echo "    ($name, \"$d\")," ; done && echo ");"
+// echo "generate_tests!(" && for d in ./test_vectors/*; do [ -d "$d" ] && name=$(basename "$d" | sed 's/__*/_/g') && echo "    $name," ; done && echo ");"
 generate_tests!(
-    (add3u64_, "../../test_vectors/add3u64"),
-    (addition_multiplication_, "../../test_vectors/addition_multiplication"),
-    (approx_sigmoid_, "../../test_vectors/approx_sigmoid"),
-    (assert_, "../../test_vectors/assert"),
-    (bb_sha256_compression_, "../../test_vectors/bb_sha256_compression"),
-    (get_bytes_, "../../test_vectors/get_bytes"),
-    (if_then_, "../../test_vectors/if_then"),
-    (negative_, "../../test_vectors/negative"),
-    (poseidon_, "../../test_vectors/poseidon"),
-    (poseidon_assert_, "../../test_vectors/poseidon_assert"),
-    (poseidon_input2_, "../../test_vectors/poseidon_input2"),
-    (poseidon_stdlib_, "../../test_vectors/poseidon_stdlib"),
-    (poseidon2_, "../../test_vectors/poseidon2"),
-    (quantized_, "../../test_vectors/quantized"),
-    (random_access_, "../../test_vectors/random_access"),
-    (slice_, "../../test_vectors/slice"),
-    (to_radix32_, "../../test_vectors/to_radix32"),
-    (unconstrained_fn_, "../../test_vectors/unconstrained_fn"),
-    (unconstrained_fn_field_, "../../test_vectors/unconstrained_fn_field"),
-    (write_access_, "../../test_vectors/write_access"),
+    add3u64,
+    addition_multiplication,
+    approx_sigmoid,
+    assert,
+    bb_sha256_compression,
+    get_bytes,
+    if_then,
+    negative,
+    poseidon,
+    poseidon_assert,
+    poseidon_input2,
+    poseidon_stdlib,
+    poseidon2,
+    quantized,
+    random_access,
+    slice,
+    to_radix32,
+    unconstrained_fn,
+    unconstrained_fn_field,
+    write_access,
 );

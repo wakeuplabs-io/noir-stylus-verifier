@@ -10,7 +10,7 @@ use ultrahonk::serialize::{BytesDeserializable, BytesSerializable};
 use ultrahonk::types::{G1Affine, G2Affine, ScalarField};
 
 /// Test how the contracts call the `ecAdd` precompile
-async fn test_ec_add(ctx: TestContext) -> Result<()> {
+async fn ec_add(ctx: TestContext) -> Result<()> {
     let contract = ctx.precompile_test_contract();
     let mut rng = thread_rng();
 
@@ -26,10 +26,10 @@ async fn test_ec_add(ctx: TestContext) -> Result<()> {
 
     assert_eq_result!(c, a + b)
 }
-integration_test_async!(test_ec_add);
+integration_test_async!(ec_add);
 
 /// Test how the contracts call the `ecMul` precompile
-async fn test_ec_mul(ctx: TestContext) -> Result<()> {
+async fn ec_mul(ctx: TestContext) -> Result<()> {
     let contract = ctx.precompile_test_contract();
     let mut rng = thread_rng();
 
@@ -48,10 +48,10 @@ async fn test_ec_mul(ctx: TestContext) -> Result<()> {
 
     assert_eq_result!(c, expected)
 }
-integration_test_async!(test_ec_mul);
+integration_test_async!(ec_mul);
 
 /// Test how the contracts call the `ecPairing` precompile
-async fn test_ec_pairing(ctx: TestContext) -> Result<()> {
+async fn ec_pairing(ctx: TestContext) -> Result<()> {
     let contract = ctx.precompile_test_contract();
     let mut rng = thread_rng();
 
@@ -66,9 +66,9 @@ async fn test_ec_pairing(ctx: TestContext) -> Result<()> {
 
     assert_true_result!(res)
 }
-integration_test_async!(test_ec_pairing);
+integration_test_async!(ec_pairing);
 
-async fn test_hash(ctx: TestContext) -> Result<()> {
+async fn hash(ctx: TestContext) -> Result<()> {
     let contract = ctx.precompile_test_contract();
     let mut rng = thread_rng();
 
@@ -79,4 +79,4 @@ async fn test_hash(ctx: TestContext) -> Result<()> {
 
     assert_eq_result!(c_bytes, keccak256(&msg).to_vec())
 }
-integration_test_async!(test_hash);
+integration_test_async!(hash);
