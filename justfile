@@ -48,7 +48,7 @@ test-integration:
 check-contract contract: 
   just build-contract {{contract}} && \
   just optimize-contract {{contract}} && \
-  cargo stylus check -e {{rpc_url}} --wasm-file ./target/wasm32-unknown-unknown/release/{{contract}}-opt.wasm --verbose
+  cargo stylus check -e https://sepolia-rollup.arbitrum.io/rpc --wasm-file ./target/wasm32-unknown-unknown/release/{{contract}}-opt.wasm --verbose
 
 verify-proof verifier_address test_vector_name:
   #!/usr/bin/env bash
