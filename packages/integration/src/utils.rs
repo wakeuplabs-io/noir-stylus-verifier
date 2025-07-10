@@ -10,6 +10,7 @@ use alloy::{
 };
 use colored::Colorize;
 use eyre::Result;
+use regex::Regex;
 use std::{
     borrow::Borrow,
     env,
@@ -17,7 +18,6 @@ use std::{
     process::{Command, Stdio},
     str::FromStr,
 };
-use regex::Regex;
 
 /// An Ethers provider that uses a `LocalWallet` to generate signatures
 /// & interfaces with the RPC endpoint over HTTP
@@ -91,11 +91,14 @@ fn command_success_or(mut cmd: Command, err_msg: &str) -> Result<String, ScriptE
     let output = cmd
         .output()
         .map_err(|e| ScriptError::ContractCompilation(e.to_string()))?;
-    
+
     if !output.status.success() {
         Err(ScriptError::ContractCompilation(String::from(err_msg)))
     } else {
-        println!("Output: {}", String::from_utf8(output.stdout.clone()).unwrap());
+        println!(
+            "Output: {}",
+            String::from_utf8(output.stdout.clone()).unwrap()
+        );
         String::from_utf8(output.stdout)
             .map_err(|e| ScriptError::ContractCompilation(e.to_string()))
     }
@@ -143,7 +146,6 @@ pub fn build_stylus_contract(contract: &StylusContract) -> Result<PathBuf, Scrip
     Ok(wasm_file_path)
 }
 
-
 /// Deploys the given compiled Stylus contract, saving its deployment address
 pub async fn deploy_stylus_contract(
     contract: &StylusContract,
@@ -188,7 +190,6 @@ pub async fn deploy_stylus_contract(
     Address::from_str(deployed_address).map_err(|e| ScriptError::ContractDeployment(e.to_string()))
 }
 
-
 fn strip_color(s: &str) -> String {
     let re = Regex::new(r"\x1b\[[0-9;]*[ABCDHJKSTfGmsu]").unwrap();
     re.replace_all(s, "").into_owned()
@@ -201,5 +202,7 @@ fn extract_deployed_address(s: &str) -> Result<&str, ScriptError> {
         }
     }
 
-    Err(ScriptError::ContractDeployment("deployment address not found".to_string()))
+    Err(ScriptError::ContractDeployment(
+        "deployment address not found".to_string(),
+    ))
 }

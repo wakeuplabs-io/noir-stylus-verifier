@@ -84,7 +84,10 @@ impl TestContext {
             &value.rpc_url,
             &value.priv_key,
             "constructor(address,address)",
-            &[sumcheck_verifier_address.to_string(), shplemini_verifier_address.to_string()],
+            &[
+                sumcheck_verifier_address.to_string(),
+                shplemini_verifier_address.to_string(),
+            ],
         )
         .await?;
 

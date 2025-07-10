@@ -20,7 +20,7 @@ pub(crate) struct Cli {
     /// Devnet RPC URL, defaults to default Nitro devnet private key
     #[arg(short, long, env = "RPC_URL", default_value = DEFAULT_DEVNET_HOSTPORT)]
     pub(crate) rpc_url: String,
-    
+
     /// The verbosity level of the test harness
     #[arg(short, long, default_value = "default")]
     pub(crate) verbosity: TestVerbosity,
