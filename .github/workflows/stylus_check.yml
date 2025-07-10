@@ -35,16 +35,15 @@ jobs:
       - name: Install cargo-stylus
         run: cargo install cargo-stylus@0.6.0
 
-      - name: Install just
-        run: |
-          curl -sSL https://just.systems/install.sh | bash -s -- --to /usr/local/bin
-          just --version
+      - uses: extractions/setup-just@v3
+        with:
+          just-version: 1.38.0 
 
       - name: Check Verifier contract
-        run: just check-contract verifier
+        run: just --set rpc_url https://sepolia-rollup.arbitrum.io/rpc check-contract verifier
 
       - name: Check Sumcheck Verifier contract
-        run: just check-contract sumcheck-verifier
+        run: just --set rpc_url https://sepolia-rollup.arbitrum.io/rpc check-contract sumcheck-verifier
 
       - name: Check Shplemini Verifier contract
-        run: just check-contract shplemini-verifier
+        run: just --set rpc_url https://sepolia-rollup.arbitrum.io/rpc check-contract shplemini-verifier
