@@ -28,8 +28,8 @@ profile-contract contract:
 # Deployments
 
 deploy-contract contract constructor_signature="" *constructor_args="":
-  @just build-contract {{contract}} && \
-  @just optimize-contract {{contract}} && \
+  just build-contract {{contract}} && \
+  just optimize-contract {{contract}} && \
   if [ "{{constructor_args}}" = "" ]; then \
     cargo stylus deploy -e {{rpc_url}} --wasm-file ./target/wasm32-unknown-unknown/release/{{contract}}-opt.wasm --private-key {{private_key}} --verbose --no-verify; \
   else \
@@ -46,8 +46,8 @@ test-integration:
   cargo run -p integration -- --rpc-url {{rpc_url}} --priv-key {{private_key}}
 
 check-contract contract: 
-  @just build-contract {{contract}} && \
-  @just optimize-contract {{contract}} && \
+  just build-contract {{contract}} && \
+  just optimize-contract {{contract}} && \
   cargo stylus check -e {{rpc_url}} --wasm-file ./target/wasm32-unknown-unknown/release/{{contract}}-opt.wasm --verbose
 
 verify-proof verifier_address test_vector_name:
