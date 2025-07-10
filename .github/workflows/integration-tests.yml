@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: ./.github/workflows/rust-setup.yml
+      - uses: ./rust-setup.yml
       
       - name: Install cargo-stylus
         run: cargo install cargo-stylus@0.6.0
