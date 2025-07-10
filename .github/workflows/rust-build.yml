@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: ./rust-setup.yml
+      - uses: .github/workflows/rust-setup.yml
 
       - uses: extractions/setup-just@v3
         with:
