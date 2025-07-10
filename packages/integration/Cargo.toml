@@ -31,3 +31,5 @@ contracts = { path = "../contracts", features = [
 sha3.workspace = true
 ark-bn254.workspace = true
 ark-serialize.workspace = true
+hex = { workspace = true }
+regex = { workspace = true }

@@ -64,6 +64,7 @@ inventory = { version = "0.3.20" }
 itertools = "0.12"
 colored = "2.0.0"
 futures = "0.3.31"
+regex = "1.11.1"
 
 [patch.crates-io]
 ark-ec = { path = "./packages/ark-ec" }

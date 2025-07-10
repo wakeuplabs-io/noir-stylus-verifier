@@ -14,7 +14,6 @@ use stylus_sdk::call::Call as InterfaceCall;
 sol_storage! {
     #[cfg_attr(feature = "verifier", entrypoint)]
     pub struct VerifierContract {
-        bool initialized;
         address sumcheck_verifier_address;
         address shplemini_verifier_address;
     }
@@ -31,23 +30,16 @@ sol_interface! {
 
 #[public]
 impl VerifierContract {
-    /// The constructor sets the owner as the EOA that deployed the contract.
-    pub fn initialize(
+    #[constructor]
+    pub fn constructor(
         &mut self,
         sumcheck_verifier_address: Address,
         shplemini_verifier_address: Address,
     ) {
-        if self.initialized.get() {
-            return;
-        }
-
         self.sumcheck_verifier_address
             .set(sumcheck_verifier_address);
         self.shplemini_verifier_address
             .set(shplemini_verifier_address);
-
-        // mark as initialized
-        self.initialized.set(true);
     }
 
     pub fn verify(

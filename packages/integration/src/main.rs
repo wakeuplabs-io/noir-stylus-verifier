@@ -5,7 +5,7 @@ use crate::{
     cli::TestVerbosity,
     errors::ScriptError,
     types::{IntegrationTest, IntegrationTestFn, StylusContract},
-    utils::{build_stylus_contract, deploy_stylus_contract, setup_client, LocalWalletHttpClient},
+    utils::{deploy_stylus_contract, setup_client, LocalWalletHttpClient},
 };
 use abis::{
     PrecompileTestContract::PrecompileTestContractInstance,
@@ -50,18 +50,13 @@ impl TestContext {
     async fn try_new(value: Cli) -> Result<Self, ScriptError> {
         let client = setup_client(&value.priv_key, &value.rpc_url).await.unwrap();
 
-        // build contracts
-        build_stylus_contract(&StylusContract::PrecompileTestContract).unwrap();
-        build_stylus_contract(&StylusContract::SumcheckVerifier).unwrap();
-        build_stylus_contract(&StylusContract::ShpleminiVerifier).unwrap();
-        build_stylus_contract(&StylusContract::Verifier).unwrap();
-
         // deploy precompile test contract
         let precompiles_contract_address = deploy_stylus_contract(
             &StylusContract::PrecompileTestContract,
             &value.rpc_url,
             &value.priv_key,
-            client.clone(),
+            "",
+            &[],
         )
         .await?;
 
@@ -70,7 +65,8 @@ impl TestContext {
             &StylusContract::SumcheckVerifier,
             &value.rpc_url,
             &value.priv_key,
-            client.clone(),
+            "",
+            &[],
         )
         .await?;
 
@@ -78,7 +74,8 @@ impl TestContext {
             &StylusContract::ShpleminiVerifier,
             &value.rpc_url,
             &value.priv_key,
-            client.clone(),
+            "",
+            &[],
         )
         .await?;
 
@@ -86,18 +83,10 @@ impl TestContext {
             &StylusContract::Verifier,
             &value.rpc_url,
             &value.priv_key,
-            client.clone(),
+            "constructor(address,address)",
+            &[sumcheck_verifier_address.to_string(), shplemini_verifier_address.to_string()],
         )
         .await?;
-
-        // initialize verifier contract
-        let verifier_contract =
-            VerifierContractInstance::new(verifier_contract_address, client.provider());
-        let _ = verifier_contract
-            .initialize(sumcheck_verifier_address, shplemini_verifier_address)
-            .send()
-            .await
-            .map_err(|e| ScriptError::ContractInteraction(e.to_string()))?;
 
         Ok(Self {
             client,

@@ -4,7 +4,7 @@ use crate::{errors::ScriptError, types::StylusContract};
 use alloy::{
     network::{Ethereum, EthereumWallet},
     primitives::Address,
-    providers::{DynProvider, Provider, ProviderBuilder},
+    providers::{DynProvider, ProviderBuilder},
     signers::local::PrivateKeySigner,
     transports::http::reqwest::Url,
 };
@@ -17,6 +17,7 @@ use std::{
     process::{Command, Stdio},
     str::FromStr,
 };
+use regex::Regex;
 
 /// An Ethers provider that uses a `LocalWallet` to generate signatures
 /// & interfaces with the RPC endpoint over HTTP
@@ -86,16 +87,17 @@ pub async fn setup_client(
 }
 
 /// Executes a command, returning an error if the command fails
-fn command_success_or(mut cmd: Command, err_msg: &str) -> Result<(), ScriptError> {
-    if !cmd
+fn command_success_or(mut cmd: Command, err_msg: &str) -> Result<String, ScriptError> {
+    let output = cmd
         .output()
-        .map_err(|e| ScriptError::ContractCompilation(e.to_string()))?
-        .status
-        .success()
-    {
+        .map_err(|e| ScriptError::ContractCompilation(e.to_string()))?;
+    
+    if !output.status.success() {
         Err(ScriptError::ContractCompilation(String::from(err_msg)))
     } else {
-        Ok(())
+        println!("Output: {}", String::from_utf8(output.stdout.clone()).unwrap());
+        String::from_utf8(output.stdout)
+            .map_err(|e| ScriptError::ContractCompilation(e.to_string()))
     }
 }
 
@@ -104,6 +106,7 @@ fn command_success_or(mut cmd: Command, err_msg: &str) -> Result<(), ScriptError
 ///
 /// Assumes that `cargo`, the `nightly` toolchain, and `wasm-opt` are locally
 /// available.
+#[allow(dead_code)]
 pub fn build_stylus_contract(contract: &StylusContract) -> Result<PathBuf, ScriptError> {
     println!("{}", format!("Building contract {contract}...").blue());
 
@@ -140,12 +143,14 @@ pub fn build_stylus_contract(contract: &StylusContract) -> Result<PathBuf, Scrip
     Ok(wasm_file_path)
 }
 
+
 /// Deploys the given compiled Stylus contract, saving its deployment address
 pub async fn deploy_stylus_contract(
     contract: &StylusContract,
     rpc_url: &str,
     priv_key: &str,
-    client: LocalWalletHttpClient,
+    constructor_signature: &str,
+    constructor_args: &[String],
 ) -> Result<Address, ScriptError> {
     println!("{}", format!("Deploying contract {contract}...").blue());
 
@@ -157,25 +162,44 @@ pub async fn deploy_stylus_contract(
             "Could not find root directory",
         )))?;
 
-    // Compute the expected deployment address
-    let deployer_address = client.address();
-    let deployer_nonce = client
-        .provider()
-        .get_transaction_count(deployer_address)
-        .await
-        .map_err(|e| ScriptError::NonceFetching(e.to_string()))?;
-    let deployed_address = deployer_address.create(deployer_nonce);
-
     let mut deploy_cmd = Command::new("just");
-    deploy_cmd.stdout(Stdio::null()).stderr(Stdio::null());
+    deploy_cmd.arg("--set");
+    deploy_cmd.arg("rpc_url");
+    deploy_cmd.arg(rpc_url);
+    deploy_cmd.arg("--set");
+    deploy_cmd.arg("private_key");
+    deploy_cmd.arg(priv_key);
     deploy_cmd.arg("deploy-contract");
     deploy_cmd.arg(contract.to_string());
-    deploy_cmd.arg(rpc_url);
-    deploy_cmd.arg(priv_key);
+
+    if !constructor_signature.is_empty() {
+        deploy_cmd.arg(constructor_signature);
+        deploy_cmd.args(constructor_args);
+    }
+
     deploy_cmd.current_dir(workspace_path);
 
-    command_success_or(deploy_cmd, "Failed to deploy contract")
+    let out = command_success_or(deploy_cmd, "Failed to deploy contract")
         .map_err(|e| ScriptError::ContractDeployment(e.to_string()))?;
 
-    Ok(deployed_address)
+    let out_stripped = strip_color(&out);
+    let deployed_address = extract_deployed_address(&out_stripped)?;
+
+    Address::from_str(deployed_address).map_err(|e| ScriptError::ContractDeployment(e.to_string()))
+}
+
+
+fn strip_color(s: &str) -> String {
+    let re = Regex::new(r"\x1b\[[0-9;]*[ABCDHJKSTfGmsu]").unwrap();
+    re.replace_all(s, "").into_owned()
+}
+
+fn extract_deployed_address(s: &str) -> Result<&str, ScriptError> {
+    for line in s.lines() {
+        if let Some(rest) = line.strip_prefix("deployed code at address: ") {
+            return Ok(rest.split(" ").next().unwrap());
+        }
+    }
+
+    Err(ScriptError::ContractDeployment("deployment address not found".to_string()))
 }
