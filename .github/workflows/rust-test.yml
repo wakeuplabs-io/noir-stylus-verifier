@@ -22,12 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: nightly-2025-06-12
-      
-      - run: sudo apt-get install lld
-      - uses: Swatinem/rust-cache@v2
+      - uses: ./.github/workflows/rust-setup.yml
 
       - name: Test ultrahonk
         run: cargo test -p ultrahonk --profile ci-dev --features ark-ec/only-arithmetic-backend  # ark-ec/only-arithmetic-backend panics if we attempt to do arithmetic outside of the G1ArithmeticBackend
