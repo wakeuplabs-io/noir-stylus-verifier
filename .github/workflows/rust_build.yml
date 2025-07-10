@@ -25,6 +25,9 @@ jobs:
         with:
           toolchain: nightly-2025-06-12
 
+      - name: Add rust-src component
+        run: rustup component add rust-src --toolchain nightly-2025-06-12
+
       - name: Install wasm32 target
         run: rustup target add wasm32-unknown-unknown
 
