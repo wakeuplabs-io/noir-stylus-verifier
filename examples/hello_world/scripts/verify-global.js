@@ -3,7 +3,7 @@ import { UltraHonkBackend } from "@aztec/bb.js";
 import { Noir } from "@noir-lang/noir_js";
 import { createPublicClient, http } from "viem";
 
-const VERIFIER_ADDRESS = "0x79693edb49473dc3522de16fbd047977c4999d5c";
+const GLOBAL_VERIFIER_ADDRESS = "0x2f9f4741ab606632718f7bda0bf5c79e1dd03ac3";
 const RPC_ADDRESS = "http://127.0.0.1:8547";
 
 const client = createPublicClient({
@@ -19,6 +19,10 @@ function encodeProof(proof) {
 
 function encodePublicInputs(publicInputs) {
   return "0x" + publicInputs.map((i) => i.slice(2)).join("");
+}
+
+function encodeVk(vk) {
+  return "0x" + vk;
 }
 
 try {
@@ -40,7 +44,7 @@ try {
 
   console.log("Verifying proof with contract...");
   const result = await client.readContract({
-    address: VERIFIER_ADDRESS,
+    address: GLOBAL_VERIFIER_ADDRESS,
     abi: [
       {
         inputs: [
@@ -53,7 +57,12 @@ try {
             internalType: "bytes",
             name: "public_inputs",
             type: "bytes",
-          }
+          },
+          {
+            internalType: "bytes",
+            name: "vk",
+            type: "bytes",
+          },
         ],
         outputs: [
           {
@@ -68,7 +77,7 @@ try {
       },
     ],
     functionName: "verify",
-    args: [encodeProof(proof), encodePublicInputs(publicInputs)],
+    args: [encodeProof(proof), encodePublicInputs(publicInputs), encodeVk(vk)],
   });
 
   console.log("Result:", result);

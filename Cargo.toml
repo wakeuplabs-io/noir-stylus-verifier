@@ -1,5 +1,11 @@
 [workspace]
-members = ["packages/ultrahonk", "packages/contracts", "packages/ark-ec", "packages/integration"]
+members = [
+  "packages/ultrahonk",
+  "packages/contracts",
+  "packages/ark-ec",
+  "packages/integration"
+]
+exclude = ["examples/hello_world/contracts"]
 resolver = "2"
 
 [workspace.package]
@@ -30,8 +36,8 @@ thiserror = "2"
 tracing = { version = "0.1.40" }
 tracing-subscriber = { version = "0.3.0" }
 serde_with = { version = "3.4", default-features = false, features = [
-    "macros",
-    "alloc",
+  "macros",
+  "alloc",
 ] }
 postcard = { version = "1.0.0", default-features = false, features = ["alloc"] }
 alloy-contract = { version = "0.11", default-features = false }
@@ -70,7 +76,7 @@ regex = "1.11.1"
 ark-ec = { path = "./packages/ark-ec" }
 
 [profile.release]
-strip = "none"           # keep debug info for profiling
+strip = "none" # keep debug info for profiling
 # strip = true           # remove debug info
 debug = false            # no debug data
 codegen-units = 1        # prefer efficiency to compile time
