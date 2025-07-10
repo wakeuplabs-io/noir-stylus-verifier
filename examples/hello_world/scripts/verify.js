@@ -1,7 +1,7 @@
 import fs from "fs";
 import { UltraHonkBackend } from "@aztec/bb.js";
 import { Noir } from "@noir-lang/noir_js";
-import { createPublicClient, http } from "viem";
+import { createPublicClient, http, parseAbi } from "viem";
 
 const VERIFIER_ADDRESS = "0x79693edb49473dc3522de16fbd047977c4999d5c";
 const RPC_ADDRESS = "http://127.0.0.1:8547";
@@ -10,16 +10,12 @@ const client = createPublicClient({
   transport: http(RPC_ADDRESS),
 });
 
-function encodeProof(proof) {
-  return (
-    "0x" +
-    Array.from(proof, (byte) => byte.toString(16).padStart(2, "0")).join("")
-  );
-}
+const encodeProof = (proof) =>
+  "0x" +
+  Array.from(proof, (byte) => byte.toString(16).padStart(2, "0")).join("");
 
-function encodePublicInputs(publicInputs) {
-  return "0x" + publicInputs.map((i) => i.slice(2)).join("");
-}
+const encodePublicInputs = (publicInputs) =>
+  "0x" + publicInputs.map((i) => i.slice(2)).join("");
 
 try {
   const vk = fs.readFileSync("./circuit/target/vk", "hex");
@@ -41,32 +37,9 @@ try {
   console.log("Verifying proof with contract...");
   const result = await client.readContract({
     address: VERIFIER_ADDRESS,
-    abi: [
-      {
-        inputs: [
-          {
-            internalType: "bytes",
-            name: "proof",
-            type: "bytes",
-          },
-          {
-            internalType: "bytes",
-            name: "public_inputs",
-            type: "bytes",
-          }
-        ],
-        outputs: [
-          {
-            internalType: "bool",
-            name: "result",
-            type: "bool",
-          },
-        ],
-        stateMutability: "view",
-        type: "function",
-        name: "verify",
-      },
-    ],
+    abi: parseAbi([
+      "function verify(bytes proof, bytes public_inputs) view returns (bool)",
+    ]),
     functionName: "verify",
     args: [encodeProof(proof), encodePublicInputs(publicInputs)],
   });

@@ -1,7 +1,7 @@
 import fs from "fs";
 import { UltraHonkBackend } from "@aztec/bb.js";
 import { Noir } from "@noir-lang/noir_js";
-import { createPublicClient, http } from "viem";
+import { createPublicClient, http, parseAbi } from "viem";
 
 const GLOBAL_VERIFIER_ADDRESS = "0x2f9f4741ab606632718f7bda0bf5c79e1dd03ac3";
 const RPC_ADDRESS = "http://127.0.0.1:8547";
@@ -10,23 +10,15 @@ const client = createPublicClient({
   transport: http(RPC_ADDRESS),
 });
 
-function encodeProof(proof) {
-  return (
-    "0x" +
-    Array.from(proof, (byte) => byte.toString(16).padStart(2, "0")).join("")
-  );
-}
+const encodeProof = (proof) =>
+  "0x" +
+  Array.from(proof, (byte) => byte.toString(16).padStart(2, "0")).join("");
 
-function encodePublicInputs(publicInputs) {
-  return "0x" + publicInputs.map((i) => i.slice(2)).join("");
-}
-
-function encodeVk(vk) {
-  return "0x" + vk;
-}
+const encodePublicInputs = (publicInputs) =>
+  "0x" + publicInputs.map((i) => i.slice(2)).join("");
 
 try {
-  const vk = fs.readFileSync("./circuit/target/vk", "hex");
+  const vk = "0x" + fs.readFileSync("./circuit/target/vk", "hex");
   const circuit = JSON.parse(
     fs.readFileSync("./circuit/target/hello_world.json", "utf8")
   );
@@ -45,37 +37,9 @@ try {
   console.log("Verifying proof with contract...");
   const result = await client.readContract({
     address: GLOBAL_VERIFIER_ADDRESS,
-    abi: [
-      {
-        inputs: [
-          {
-            internalType: "bytes",
-            name: "proof",
-            type: "bytes",
-          },
-          {
-            internalType: "bytes",
-            name: "public_inputs",
-            type: "bytes",
-          },
-          {
-            internalType: "bytes",
-            name: "vk",
-            type: "bytes",
-          },
-        ],
-        outputs: [
-          {
-            internalType: "bool",
-            name: "result",
-            type: "bool",
-          },
-        ],
-        stateMutability: "view",
-        type: "function",
-        name: "verify",
-      },
-    ],
+    abi: parseAbi([
+      "function verify(bytes proof, bytes public_inputs, bytes vk) view returns (bool)",
+    ]),
     functionName: "verify",
     args: [encodeProof(proof), encodePublicInputs(publicInputs), encodeVk(vk)],
   });
