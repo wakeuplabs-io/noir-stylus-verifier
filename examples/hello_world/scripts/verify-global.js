@@ -16,9 +16,9 @@ const client = createPublicClient({
 });
 
 try {
-  const vk = "0x" + fs.readFileSync("./circuit/target/vk", "hex");
+  const vk = "0x" + fs.readFileSync("./contracts/assets/vk", "hex");
   const circuit = JSON.parse(
-    fs.readFileSync("./circuit/target/hello_world.json", "utf8")
+    fs.readFileSync("./contracts/assets/hello_world.json", "utf8")
   );
 
   const noir = new Noir(circuit);
