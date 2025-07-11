@@ -13,9 +13,6 @@ build-contract contract:
   cargo build -p contracts --target wasm32-unknown-unknown --release --features {{contract}} -Z unstable-options -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort && \
   mv ./target/wasm32-unknown-unknown/release/contracts.wasm ./target/wasm32-unknown-unknown/release/{{contract}}.wasm
 
-optimize-contract contract:
-  wasm-opt --enable-bulk-memory  -Oz -o ./target/wasm32-unknown-unknown/release/{{contract}}-opt.wasm ./target/wasm32-unknown-unknown/release/{{contract}}.wasm
-
 # Profiling
 
 profile-contract contract: 
@@ -29,11 +26,10 @@ profile-contract contract:
 
 deploy-contract contract constructor_signature="" *constructor_args="":
   just build-contract {{contract}} && \
-  just optimize-contract {{contract}} && \
   if [ "{{constructor_args}}" = "" ]; then \
-    cargo stylus deploy -e {{rpc_url}} --wasm-file ./target/wasm32-unknown-unknown/release/{{contract}}-opt.wasm --private-key {{private_key}} --verbose --no-verify; \
+    cargo stylus deploy -e {{rpc_url}} --wasm-file ./target/wasm32-unknown-unknown/release/{{contract}}.wasm --private-key {{private_key}} --verbose --no-verify; \
   else \
-    cargo stylus deploy -e {{rpc_url}} --wasm-file ./target/wasm32-unknown-unknown/release/{{contract}}-opt.wasm --private-key {{private_key}} --verbose --no-verify --constructor-signature '{{constructor_signature}}' --constructor-args {{constructor_args}}; \
+    cargo stylus deploy -e {{rpc_url}} --wasm-file ./target/wasm32-unknown-unknown/release/{{contract}}.wasm --private-key {{private_key}} --verbose --no-verify --constructor-signature '{{constructor_signature}}' --constructor-args {{constructor_args}}; \
   fi
 
 # Tests

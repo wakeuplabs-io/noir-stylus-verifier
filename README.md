@@ -28,7 +28,6 @@ Sepolia
 
 ```bash
 just --set rpc_url https://sepolia-rollup.arbitrum.io/rpc --set private_key ... deploy-contract sumcheck-verifier
-
 # reading wasm file at ./target/wasm32-unknown-unknown/release/sumcheck-verifier-opt.wasm
 # stripped custom section from user wasm to remove any sensitive data
 # stripped custom section from user wasm to remove any sensitive data
@@ -109,6 +108,19 @@ bb prove -b ./target/{}.json -w ./target/{}.gz -o ./target --scheme ultra_honk -
 
 ## Project requirements
 
+Rust 1.89.0-nightly:
+
+```bash
+rustup toolchain install nightly-2025-06-12 --component rust-src
+rustup target add wasm32-unknown-unknown --toolchain nightly-2025-06-12
+```
+
+Cargo stylus 0.6.0: 
+
+```bash
+cargo install cargo-stylus@0.6.0
+```
+
 Noir:
 
 ```bash
@@ -122,11 +134,3 @@ Barretenberg 0.86.0:
 curl -L curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/heads/master/barretenberg/bbup/install | bash
 bbup -v 0.86.0
 ```
-
-Cargo stylus: 
-
-<!-- TODO: Docs -->
-
-Wasm-op:
-
-<!-- TODO: Docs -->

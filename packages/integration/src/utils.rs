@@ -107,8 +107,7 @@ fn command_success_or(mut cmd: Command, err_msg: &str) -> Result<String, ScriptE
 /// Compiles the given Stylus contract to WASM and optimizes the resulting
 /// binary, returning the path to the optimized WASM file.
 ///
-/// Assumes that `cargo`, the `nightly` toolchain, and `wasm-opt` are locally
-/// available.
+/// Assumes that `cargo`, the `nightly` toolchain available.
 #[allow(dead_code)]
 pub fn build_stylus_contract(contract: &StylusContract) -> Result<PathBuf, ScriptError> {
     println!("{}", format!("Building contract {contract}...").blue());
