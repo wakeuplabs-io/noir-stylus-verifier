@@ -1,14 +1,29 @@
 use crate::utils::backends::PrecompileHashBackend;
 use alloc::vec::Vec;
+use alloy_sol_types::sol;
 use stylus_sdk::{abi::Bytes, prelude::*};
 use ultrahonk::decider::types::VerifierMemory;
 use ultrahonk::decider::verifier::DeciderVerifier;
 use ultrahonk::serialize::{BytesDeserializable, BytesSerializable};
 use ultrahonk::transcript::Transcript;
 
-#[cfg_attr(feature = "sumcheck-verifier", entrypoint)]
-#[storage]
-pub struct SumcheckVerifierContract {}
+sol_storage! {
+    #[cfg_attr(feature = "sumcheck-verifier", entrypoint)]
+    pub struct SumcheckVerifierContract {}
+}
+
+sol! {
+    error TranscriptDeserializationFailed();
+    error MemoryDeserializationFailed();
+    error SumcheckVerificationFailed();
+}
+
+#[derive(SolidityError)]
+pub enum VerifierErrors {
+    SumcheckVerificationFailed(SumcheckVerificationFailed),
+    TranscriptDeserializationFailed(TranscriptDeserializationFailed),
+    MemoryDeserializationFailed(MemoryDeserializationFailed),
+}
 
 #[public]
 impl SumcheckVerifierContract {
@@ -17,18 +32,28 @@ impl SumcheckVerifierContract {
         memory_bytes: Bytes,
         transcript_bytes: Bytes,
         circuit_size: u32,
-    ) -> (Bytes, Bytes, Bytes, bool) {
-        let memory = VerifierMemory::deserialize_from_bytes(memory_bytes.as_slice()).unwrap();
-        let mut transcript =
-            Transcript::deserialize_from_bytes(transcript_bytes.as_slice()).unwrap();
+    ) -> Result<(Bytes, Bytes, Bytes, bool), VerifierErrors> {
+        // deserialize transcript
+        let mut transcript = Transcript::deserialize_from_bytes(transcript_bytes.as_slice())
+            .map_err(|_| {
+                VerifierErrors::TranscriptDeserializationFailed(TranscriptDeserializationFailed {})
+            })?;
 
+        // deserialize memory and create decider verifier
+        let memory =
+            VerifierMemory::deserialize_from_bytes(memory_bytes.as_slice()).map_err(|_| {
+                VerifierErrors::MemoryDeserializationFailed(MemoryDeserializationFailed {})
+            })?;
         let mut decider_verifier = DeciderVerifier::new(memory);
 
+        // verify sumcheck
         let sumcheck_output = decider_verifier
             .verify_sumcheck::<PrecompileHashBackend>(&mut transcript, circuit_size)
-            .unwrap();
+            .map_err(|_| {
+                VerifierErrors::SumcheckVerificationFailed(SumcheckVerificationFailed {})
+            })?;
 
-        (
+        Ok((
             transcript.serialize_to_bytes().into(),
             decider_verifier.memory.serialize_to_bytes().into(),
             sumcheck_output
@@ -36,6 +61,6 @@ impl SumcheckVerifierContract {
                 .serialize_to_bytes()
                 .into(),
             sumcheck_output.verified,
-        )
+        ))
     }
 }

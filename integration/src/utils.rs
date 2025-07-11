@@ -90,17 +90,12 @@ pub async fn setup_client(
 fn command_success_or(mut cmd: Command, err_msg: &str) -> Result<String, ScriptError> {
     let output = cmd
         .output()
-        .map_err(|e| ScriptError::ContractCompilation(e.to_string()))?;
+        .map_err(|e| ScriptError::Generic(e.to_string()))?;
 
     if !output.status.success() {
-        Err(ScriptError::ContractCompilation(String::from(err_msg)))
+        Err(ScriptError::Generic(String::from(err_msg)))
     } else {
-        println!(
-            "Output: {}",
-            String::from_utf8(output.stdout.clone()).unwrap()
-        );
-        String::from_utf8(output.stdout)
-            .map_err(|e| ScriptError::ContractCompilation(e.to_string()))
+        String::from_utf8(output.stdout).map_err(|e| ScriptError::CommandOutput(e.to_string()))
     }
 }
 
@@ -115,7 +110,7 @@ pub fn build_stylus_contract(contract: &StylusContract) -> Result<PathBuf, Scrip
     let current_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
     let workspace_path = current_dir
         .ancestors()
-        .nth(2)
+        .nth(1)
         .ok_or(ScriptError::ContractCompilation(String::from(
             "Could not find root directory",
         )))?;
@@ -157,7 +152,7 @@ pub async fn deploy_stylus_contract(
     let current_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
     let workspace_path = current_dir
         .ancestors()
-        .nth(2)
+        .nth(1)
         .ok_or(ScriptError::ContractCompilation(String::from(
             "Could not find root directory",
         )))?;

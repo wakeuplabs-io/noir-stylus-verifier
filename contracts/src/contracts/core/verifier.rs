@@ -1,6 +1,7 @@
 use crate::utils::backends::PrecompileHashBackend;
 use alloc::vec::Vec;
 use alloy_primitives::Address;
+use alloy_sol_types::sol;
 use stylus_sdk::{abi::Bytes, prelude::*};
 use ultrahonk::decider::types::VerifierMemory;
 use ultrahonk::keys::verification_key::VerifyingKey;
@@ -17,6 +18,17 @@ sol_storage! {
         address sumcheck_verifier_address;
         address shplemini_verifier_address;
     }
+}
+
+sol! {
+    error SumcheckVerificationFailed();
+    error ShpleminiVerificationFailed();
+}
+
+#[derive(SolidityError)]
+pub enum VerifierErrors {
+    SumcheckVerificationFailed(SumcheckVerificationFailed),
+    ShpleminiVerificationFailed(ShpleminiVerificationFailed),
 }
 
 sol_interface! {
@@ -47,7 +59,7 @@ impl VerifierContract {
         proof_bytes: Bytes,
         public_inputs_bytes: Bytes,
         vk_bytes: Bytes,
-    ) -> bool {
+    ) -> Result<bool, VerifierErrors> {
         // parse public_inputs file
         let public_inputs =
             Vec::<ScalarField>::deserialize_from_bytes(&public_inputs_bytes).unwrap();
@@ -75,14 +87,13 @@ impl VerifierContract {
                     transcript.serialize_to_bytes().into(),
                     vk.circuit_size,
                 )
-                .unwrap();
-        if !sumcheck_ok {
-            return false;
-        }
+                .map_err(|_| {
+                    VerifierErrors::SumcheckVerificationFailed(SumcheckVerificationFailed {})
+                })?;
 
         // shplemini verification
         let shplemini_verifier = IShpleminiVerifier::new(self.shplemini_verifier_address.get());
-        shplemini_verifier
+        let shplemini_ok = shplemini_verifier
             .verify(
                 #[allow(deprecated)]
                 InterfaceCall::new(),
@@ -91,7 +102,11 @@ impl VerifierContract {
                 multivariate_challenge.to_vec().into(),
                 vk.circuit_size,
             )
-            .unwrap()
+            .map_err(|_| {
+                VerifierErrors::ShpleminiVerificationFailed(ShpleminiVerificationFailed {})
+            })?;
+
+        Ok(sumcheck_ok && shplemini_ok)
     }
 
     pub fn get_sumcheck_verifier_address(&self) -> Address {

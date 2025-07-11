@@ -11,7 +11,7 @@ macro_rules! generate_tests {
                 // build path to test vector data
                 let workspace_path = std::path::Path::new(&env::var("CARGO_MANIFEST_DIR").unwrap())
                     .ancestors()
-                    .nth(2) // Go up 2 levels: integration/ -> packages/ -> workspace root
+                    .nth(1) // Go up 1 level: integration/ -> workspace root
                     .unwrap()
                     .to_path_buf();
                 let test_vector_path = workspace_path.join("test_vectors").join(stringify!($name));
