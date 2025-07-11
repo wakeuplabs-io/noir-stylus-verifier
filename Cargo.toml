@@ -76,7 +76,7 @@ regex = "1.11.1"
 ark-ec = { path = "./packages/ark-ec" }
 
 [profile.release]
-strip = "none" # keep debug info for profiling
+strip = "none"           # keep debug info for profiling
 # strip = true           # remove debug info
 debug = false            # no debug data
 codegen-units = 1        # prefer efficiency to compile time
