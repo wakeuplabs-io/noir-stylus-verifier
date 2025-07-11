@@ -3,19 +3,12 @@ import { UltraHonkBackend } from "@aztec/bb.js";
 import { Noir } from "@noir-lang/noir_js";
 import { createPublicClient, http, parseAbi } from "viem";
 
-const VERIFIER_ADDRESS = "0x79693edb49473dc3522de16fbd047977c4999d5c";
+const VERIFIER_ADDRESS = "0x951d400a88f98c2d3f6f8af7b502a59bf418ab76";
 const RPC_ADDRESS = "http://127.0.0.1:8547";
 
 const client = createPublicClient({
   transport: http(RPC_ADDRESS),
 });
-
-const encodeProof = (proof) =>
-  "0x" +
-  Array.from(proof, (byte) => byte.toString(16).padStart(2, "0")).join("");
-
-const encodePublicInputs = (publicInputs) =>
-  "0x" + publicInputs.map((i) => i.slice(2)).join("");
 
 try {
   const vk = fs.readFileSync("./circuit/target/vk", "hex");
@@ -27,21 +20,26 @@ try {
   const backend = new UltraHonkBackend(circuit.bytecode);
 
   console.log("Executing circuit...");
-  const { witness } = await noir.execute({ x: 1, y: 2 });
+  const { witness } = await noir.execute({ x: 1, y: 2, z: 3 });
 
   console.log("Generating proof...");
   const { proof, publicInputs } = await backend.generateProof(witness, {
     keccak: true,
   });
+  console.log("Public inputs:", publicInputs);
 
   console.log("Verifying proof with contract...");
   const result = await client.readContract({
     address: VERIFIER_ADDRESS,
     abi: parseAbi([
-      "function verify(bytes proof, bytes public_inputs) view returns (bool)",
+      "function verify(bytes proof, bytes y, bytes z) view returns (bool)",
     ]),
     functionName: "verify",
-    args: [encodeProof(proof), encodePublicInputs(publicInputs)],
+    args: [
+      "0x" + Array.from(proof, (byte) => byte.toString(16).padStart(2, "0")).join(""),
+      publicInputs[0],
+      publicInputs[1],
+    ],
   });
 
   console.log("Result:", result);

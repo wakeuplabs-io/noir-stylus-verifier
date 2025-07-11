@@ -10,13 +10,6 @@ const client = createPublicClient({
   transport: http(RPC_ADDRESS),
 });
 
-const encodeProof = (proof) =>
-  "0x" +
-  Array.from(proof, (byte) => byte.toString(16).padStart(2, "0")).join("");
-
-const encodePublicInputs = (publicInputs) =>
-  "0x" + publicInputs.map((i) => i.slice(2)).join("");
-
 try {
   const vk = "0x" + fs.readFileSync("./circuit/target/vk", "hex");
   const circuit = JSON.parse(
@@ -27,7 +20,7 @@ try {
   const backend = new UltraHonkBackend(circuit.bytecode);
 
   console.log("Executing circuit...");
-  const { witness } = await noir.execute({ x: 1, y: 2 });
+  const { witness } = await noir.execute({ x: 1, y: 2, z: 3 });
 
   console.log("Generating proof...");
   const { proof, publicInputs } = await backend.generateProof(witness, {
@@ -36,12 +29,16 @@ try {
 
   console.log("Verifying proof with contract...");
   const result = await client.readContract({
+    functionName: "verify",
     address: GLOBAL_VERIFIER_ADDRESS,
     abi: parseAbi([
       "function verify(bytes proof, bytes public_inputs, bytes vk) view returns (bool)",
     ]),
-    functionName: "verify",
-    args: [encodeProof(proof), encodePublicInputs(publicInputs), encodeVk(vk)],
+    args: [
+      "0x" + Array.from(proof, (byte) => byte.toString(16).padStart(2, "0")).join(""),
+      "0x" + publicInputs.map((i) => i.slice(2)).join(""),
+      vk,
+    ],
   });
 
   console.log("Result:", result);
