@@ -1,9 +1,9 @@
 [workspace]
 members = [
+  "contracts",
+  "integration",
   "packages/ultrahonk",
-  "packages/contracts",
-  "packages/ark-ec",
-  "packages/integration"
+  "packages/ark-ec"
 ]
 exclude = ["examples/hello_world/contracts"]
 resolver = "2"

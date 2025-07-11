@@ -12,7 +12,7 @@ description = "Stylus noir verifier"
 alloy-primitives.workspace = true
 alloy-sol-types.workspace = true
 stylus-sdk.workspace = true
-ultrahonk = { path = "../ultrahonk" }
+ultrahonk = { path = "../packages/ultrahonk" }
 ark-ff.workspace = true
 ark-ec.workspace = true
 ark-bn254.workspace = true
