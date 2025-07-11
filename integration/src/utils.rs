@@ -132,7 +132,6 @@ pub fn build_stylus_contract(contract: &StylusContract) -> Result<PathBuf, Scrip
     // Optimize the WASM file
     let mut optimize_cmd = Command::new("just");
     optimize_cmd.stdout(Stdio::null()).stderr(Stdio::null());
-    optimize_cmd.arg("optimize-contract");
     optimize_cmd.arg(contract.to_string());
     optimize_cmd.current_dir(workspace_path);
 

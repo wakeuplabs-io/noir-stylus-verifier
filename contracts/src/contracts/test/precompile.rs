@@ -1,6 +1,5 @@
 //! Testing contract which wraps EVM precompile functionality for testing
-//! purposes. This contract is intended to be used in conjunction with a local
-//! devnet
+//! purposes.
 
 use crate::utils::backends::{PrecompileG1ArithmeticBackend, PrecompileHashBackend};
 use alloc::vec::Vec;
