@@ -3,8 +3,13 @@ import { UltraHonkBackend } from "@aztec/bb.js";
 import { Noir } from "@noir-lang/noir_js";
 import { createPublicClient, http, parseAbi } from "viem";
 
-const GLOBAL_VERIFIER_ADDRESS = "0x2f9f4741ab606632718f7bda0bf5c79e1dd03ac3";
-const RPC_ADDRESS = "http://127.0.0.1:8547";
+const GLOBAL_VERIFIER_ADDRESS = process.env.GLOBAL_VERIFIER_ADDRESS;
+const RPC_ADDRESS = process.env.RPC_ADDRESS;
+
+if (!GLOBAL_VERIFIER_ADDRESS || !RPC_ADDRESS) {
+  console.error("GLOBAL_VERIFIER_ADDRESS and RPC_ADDRESS must be set");
+  process.exit(1);
+}
 
 const client = createPublicClient({
   transport: http(RPC_ADDRESS),

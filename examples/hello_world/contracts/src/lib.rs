@@ -33,7 +33,7 @@ impl VerifierContract {
             InterfaceCall::new(),
             proof_bytes.to_vec().into(),
             [y.to_vec(), z.to_vec()].concat().into(),
-            include_bytes!("../../circuit/target/vk").to_vec().into(),
+            include_bytes!("../assets/vk").to_vec().into(),
         ).unwrap_or(false)
     }
 
