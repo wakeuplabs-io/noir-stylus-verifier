@@ -1,101 +1,66 @@
-use super::univariate::Univariate;
+use crate::backends::HashBackend;
 use crate::keys::verification_key::VerifyingKey;
+use crate::oink::verifier::OinkVerifier;
+use crate::transcript::Transcript;
 use crate::types::{G1Affine, ScalarField};
+use crate::CONST_PROOF_SIZE_LOG_N;
 use crate::{types::AllEntities, NUM_ALPHAS};
-use alloc::{vec, vec::Vec};
-use ark_ff::PrimeField;
+use alloc::vec::Vec;
+use ark_ff::One;
 
-pub(crate) struct VerifierMemory {
-    pub(crate) verifier_commitments: VerifierCommitments<G1Affine>,
-    pub(crate) relation_parameters: RelationParameters<ScalarField>,
-    pub(crate) claimed_evaluations: ClaimedEvaluations<ScalarField>,
+pub struct VerifierMemory {
+    pub verifier_commitments: VerifierCommitments,
+    pub relation_parameters: RelationParameters,
+    pub claimed_evaluations: ClaimedEvaluations,
 }
 
-pub(crate) const MAX_PARTIAL_RELATION_LENGTH: usize = 7;
-pub(crate) const BATCHED_RELATION_PARTIAL_LENGTH: usize = MAX_PARTIAL_RELATION_LENGTH + 1;
-pub(crate) const BATCHED_RELATION_PARTIAL_LENGTH_ZK: usize = BATCHED_RELATION_PARTIAL_LENGTH + 1;
+pub const MAX_PARTIAL_RELATION_LENGTH: usize = 7;
+pub const BATCHED_RELATION_PARTIAL_LENGTH: usize = MAX_PARTIAL_RELATION_LENGTH + 1;
 
-pub(crate) type ProverUnivariates<F> = AllEntities<Univariate<F, MAX_PARTIAL_RELATION_LENGTH>>;
-pub(crate) type PartiallyEvaluatePolys<F> = AllEntities<Vec<F>>;
-pub(crate) type ClaimedEvaluations<F> = AllEntities<F>;
-pub(crate) type VerifierCommitments<P> = AllEntities<P>;
+pub type ClaimedEvaluations = AllEntities<ScalarField>;
+pub type VerifierCommitments = AllEntities<G1Affine>;
 
-pub(crate) struct RelationParameters<F: PrimeField> {
-    pub(crate) eta_1: F,
-    pub(crate) eta_2: F,
-    pub(crate) eta_3: F,
-    pub(crate) beta: F,
-    pub(crate) gamma: F,
-    pub(crate) public_input_delta: F,
-    pub(crate) alphas: [F; NUM_ALPHAS],
-    pub(crate) gate_challenges: Vec<F>,
+pub struct RelationParameters {
+    pub eta_1: ScalarField,
+    pub eta_2: ScalarField,
+    pub eta_3: ScalarField,
+    pub beta: ScalarField,
+    pub gamma: ScalarField,
+    pub public_input_delta: ScalarField,
+    pub alphas: [ScalarField; NUM_ALPHAS],
+    pub gate_challenges: Vec<ScalarField>,
 }
 
-pub struct GateSeparatorPolynomial<F: PrimeField> {
-    betas: Vec<F>,
-    pub beta_products: Vec<F>,
-    pub partial_evaluation_result: F,
+pub struct GateSeparatorPolynomial {
+    betas: Vec<ScalarField>,
+    pub partial_evaluation_result: ScalarField,
     current_element_idx: usize,
     pub periodicity: usize,
 }
 
-impl<F: PrimeField> GateSeparatorPolynomial<F> {
-    pub fn new(betas: Vec<F>, log_num_mononmials: usize) -> Self {
-        let pow_size = 1 << log_num_mononmials;
+impl GateSeparatorPolynomial {
+    pub fn new_without_products(betas: Vec<ScalarField>) -> Self {
         let current_element_idx = 0;
         let periodicity = 2;
-        let partial_evaluation_result = F::ONE;
-
-        // Barretenberg uses multithreading here and a simpler algorithm with worse complexity
-        let mut beta_products = vec![F::ONE; pow_size];
-        for (i, beta) in betas.iter().take(log_num_mononmials).enumerate() {
-            let index = 1 << i;
-            beta_products[index] = *beta;
-            for j in 1..index {
-                beta_products[index + j] = beta_products[j] * beta;
-            }
-        }
+        let partial_evaluation_result = ScalarField::one();
 
         Self {
             betas,
-            beta_products,
             partial_evaluation_result,
             current_element_idx,
             periodicity,
         }
     }
-
-    pub fn new_without_products(betas: Vec<F>) -> Self {
-        let current_element_idx = 0;
-        let periodicity = 2;
-        let partial_evaluation_result = F::ONE;
-
-        Self {
-            betas,
-            beta_products: Vec::new(),
-            partial_evaluation_result,
-            current_element_idx,
-            periodicity,
-        }
-    }
-
-    pub fn current_element(&self) -> F {
-        self.betas[self.current_element_idx]
-    }
-
-    pub fn partially_evaluate(&mut self, round_challenge: F) {
-        let current_univariate_eval =
-            F::ONE + (round_challenge * (self.betas[self.current_element_idx] - F::ONE));
-        self.partial_evaluation_result *= current_univariate_eval;
-        self.current_element_idx += 1;
-        self.periodicity *= 2;
-    }
-
-    pub fn partially_evaluate_with_padding(&mut self, round_challenge: F, indicator: F) {
-        let current_univariate_eval =
-            F::ONE + (round_challenge * (self.betas[self.current_element_idx] - F::ONE));
+    pub fn partially_evaluate_with_padding(
+        &mut self,
+        round_challenge: ScalarField,
+        indicator: ScalarField,
+    ) {
+        let current_univariate_eval = ScalarField::one()
+            + (round_challenge * (self.betas[self.current_element_idx] - ScalarField::one()));
         // If dummy round, make no update to the partial_evaluation_result
-        self.partial_evaluation_result = (F::ONE - indicator) * self.partial_evaluation_result
+        self.partial_evaluation_result = (ScalarField::one() - indicator)
+            * self.partial_evaluation_result
             + indicator * self.partial_evaluation_result * current_univariate_eval;
         self.current_element_idx += 1;
         self.periodicity *= 2;
@@ -103,25 +68,37 @@ impl<F: PrimeField> GateSeparatorPolynomial<F> {
 }
 
 impl VerifierMemory {
-    #[expect(clippy::field_reassign_with_default)]
-    pub(crate) fn from_memory_and_key(
-        verifier_memory: crate::oink::types::VerifierMemory,
+    pub fn from_key_and_transcript<H: HashBackend>(
         vk: &VerifyingKey,
+        transcript: &mut Transcript,
     ) -> Self {
+        let oink_verifier = OinkVerifier::default();
+        let oink_result = oink_verifier.build_memory::<H>(vk, transcript).unwrap();
+
+        // generate gate challenges
+        let mut gate_challenges: Vec<ScalarField> = Vec::with_capacity(CONST_PROOF_SIZE_LOG_N);
+
+        for _ in 0..CONST_PROOF_SIZE_LOG_N {
+            let chall = transcript.get_challenge::<H>(); // format!("Sumcheck:gate_challenge_{}", idx)
+            gate_challenges.push(chall);
+        }
+
         let relation_parameters = RelationParameters {
-            eta_1: verifier_memory.challenges.eta_1,
-            eta_2: verifier_memory.challenges.eta_2,
-            eta_3: verifier_memory.challenges.eta_3,
-            beta: verifier_memory.challenges.beta,
-            gamma: verifier_memory.challenges.gamma,
-            public_input_delta: verifier_memory.public_input_delta,
-            alphas: verifier_memory.challenges.alphas,
-            gate_challenges: Default::default(),
+            eta_1: oink_result.challenges.eta_1,
+            eta_2: oink_result.challenges.eta_2,
+            eta_3: oink_result.challenges.eta_3,
+            beta: oink_result.challenges.beta,
+            gamma: oink_result.challenges.gamma,
+            public_input_delta: oink_result.public_input_delta,
+            alphas: oink_result.challenges.alphas,
+            gate_challenges,
         };
 
-        let mut memory = AllEntities::default();
-        memory.witness = verifier_memory.witness_commitments;
-        memory.precomputed = vk.commitments.clone();
+        let memory = AllEntities {
+            witness: oink_result.witness_commitments,
+            precomputed: vk.commitments.clone(),
+            ..Default::default()
+        };
 
         // These copies are not required
         // for (des, src) in izip!(

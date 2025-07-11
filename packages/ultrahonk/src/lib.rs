@@ -7,13 +7,8 @@ extern crate alloc;
 pub mod backends;
 pub mod constants;
 pub mod decider;
-pub mod gadgets;
-pub mod honk_curve;
 pub mod keys;
 pub mod oink;
-pub mod polynomials;
-pub mod prelude;
-pub mod serde_compat;
 pub mod serialize;
 pub mod transcript;
 pub mod types;
@@ -21,23 +16,18 @@ pub mod verifier;
 
 use alloc::borrow::ToOwned;
 use ark_bn254::{Fq, Fr};
-use ark_ff::{One, PrimeField};
-use num_bigint::BigUint;
+use ark_ff::{BigInteger, PrimeField};
 
 use crate::{
-    honk_curve::{NUM_BASEFIELD_ELEMENTS, NUM_SCALARFIELD_ELEMENTS},
+    constants::{NUM_BASEFIELD_ELEMENTS, NUM_SCALARFIELD_ELEMENTS},
     types::ScalarField,
 };
 
-pub const NUM_ALPHAS: usize = decider::relations::NUM_SUBRELATIONS - 1;
+pub const NUM_ALPHAS: usize = decider::sumcheck::relations::NUM_SUBRELATIONS - 1;
 
 /// The log of the max circuit size assumed in order to achieve constant sized Honk proofs
 /// AZTEC TODO(<https://github.com/AztecProtocol/barretenberg/issues/1046>): Remove the need for const sized proofs
 pub const CONST_PROOF_SIZE_LOG_N: usize = 28;
-
-// For ZK Flavors: the number of the commitments required by Libra and SmallSubgroupIPA.
-pub const NUM_LIBRA_COMMITMENTS: usize = 3;
-pub const NUM_SMALL_IPA_EVALUATIONS: usize = 4;
 
 // The interleaving trick needed for Translator adds 2 extra claims to Gemini fold claims
 // TODO(https://github.com/AztecProtocol/barretenberg/issues/1293): Decouple Gemini from Interleaving
@@ -54,7 +44,7 @@ impl Utils {
         inp.ilog2()
     }
 
-    fn batch_invert<F: PrimeField>(coeffs: &mut [F]) {
+    fn batch_invert(coeffs: &mut [ScalarField]) {
         ark_ff::batch_inversion(coeffs);
     }
 
@@ -65,22 +55,27 @@ impl Utils {
 
     fn convert_basefield_back(src: &[Fr]) -> Fq {
         debug_assert_eq!(src.len(), NUM_BASEFIELD_ELEMENTS);
-        bn254_fq_to_fr_rev(&src[0], &src[1])
+
+        // Get the raw field element as little-endian bytes
+        let res0_bytes = src[0].into_bigint().to_bytes_le();
+        let res1_bytes = src[1].into_bigint().to_bytes_le();
+
+        // Extract lower 136 bits from res0 (17 bytes)
+        let mut value_bytes = [0u8; 32];
+        value_bytes[..17].copy_from_slice(&res0_bytes[..17]);
+
+        // Extract upper 118 bits from res1 (15 bytes)
+        // Place them at offset 17 (i.e., shifted by 136 bits)
+        value_bytes[17..(15 + 17)].copy_from_slice(&res1_bytes[..15]);
+
+        // Now value_bytes is the 256-bit little-endian representation
+        Fq::from_le_bytes_mod_order(&value_bytes)
     }
-}
 
-const NUM_LIMB_BITS: u32 = 68;
-const TOTAL_BITS: u32 = 254;
-
-fn bn254_fq_to_fr_rev(res0: &Fr, res1: &Fr) -> Fq {
-    // Combines the two elements into one uint256_t, and then convert that to a grumpkin::fr
-
-    let res0 = BigUint::from(*res0);
-    let res1 = BigUint::from(*res1);
-
-    debug_assert!(res0 < (BigUint::one() << (NUM_LIMB_BITS * 2))); // lower 136 bits
-    debug_assert!(res1 < (BigUint::one() << (TOTAL_BITS - NUM_LIMB_BITS * 2))); // upper 254-136=118 bits
-
-    let value = res0 + (res1 << (NUM_LIMB_BITS * 2));
-    ark_bn254::Fq::from(value)
+    /// Reads a field elemnent from a hexadecimal string. Therebey, the format can or can not include the 0x prefix, i.e., "0x2" and "2" give the same result.
+    fn field_from_hex_string(str: &str) -> Result<ScalarField, &'static str> {
+        let s = str.strip_prefix("0x").unwrap_or(str);
+        let bytes = hex::decode(s).unwrap();
+        Ok(ScalarField::from_be_bytes_mod_order(&bytes))
+    }
 }

@@ -1,10 +1,10 @@
+use crate::types::ScalarField;
 use alloc::vec::Vec;
-pub(crate) mod round_verifier;
-pub(crate) mod verifier;
-use ark_ff::PrimeField;
+pub mod relations;
+pub mod round_verifier;
+pub mod verifier;
 
-pub struct SumcheckVerifierOutput<F: PrimeField> {
-    pub multivariate_challenge: Vec<F>,
+pub struct SumcheckVerifierOutput {
+    pub multivariate_challenge: Vec<ScalarField>,
     pub verified: bool,
-    pub claimed_libra_evaluation: Option<F>,
 }

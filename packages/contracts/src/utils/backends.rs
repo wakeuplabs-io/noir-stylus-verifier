@@ -3,7 +3,7 @@ use crate::utils::constants::{
     PAIRING_CHECK_RESULT_LAST_BYTE_INDEX,
 };
 use alloc::vec::Vec;
-use num_traits::identities::One;
+use ark_ff::One;
 use stylus_sdk::prelude::*;
 use stylus_sdk::{alloy_primitives::Address, call::RawCall, crypto::keccak};
 use ultrahonk::{
@@ -15,13 +15,13 @@ use ultrahonk::{
 
 /// The hashing backend used in the Stylus VM,
 /// which uses the VM-accelerated Keccak-256 implementation
-pub struct PrecompileHasher;
+pub struct PrecompileHashBackend;
 
-impl ultrahonk::backends::HashBackend for PrecompileHasher {
+impl ultrahonk::backends::HashBackend for PrecompileHashBackend {
     fn hash(bytes: &[u8]) -> [u8; HASH_OUTPUT_SIZE] {
         // Losing 2 bits of this is not an issue -> we can just reduce mod p
-        let res = keccak(&bytes);
-        res.try_into().unwrap()
+        let res = keccak(bytes);
+        res.into()
     }
 }
 
@@ -112,5 +112,19 @@ impl ultrahonk::backends::G1ArithmeticBackend for PrecompileG1ArithmeticBackend 
 
         // Return the result of the pairing check, which is either a 0 or 1.
         Ok(res[0] == 1)
+    }
+
+    fn msm(scalars: &[ScalarField], points: &[G1Affine]) -> Result<G1Affine, G1ArithmeticError> {
+        if scalars.len() != points.len() {
+            return Err(G1ArithmeticError);
+        }
+
+        scalars
+            .iter()
+            .zip(points.iter())
+            .try_fold(G1Affine::identity(), |acc, (scalar, point)| {
+                let scaled_point = Self::ec_scalar_mul(*scalar, *point)?;
+                Self::ec_add(acc, scaled_point)
+            })
     }
 }

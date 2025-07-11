@@ -12,3 +12,7 @@ target/
 .vscode
 
 nitro-testnode/
+
+.DS_Store
+
+profile/

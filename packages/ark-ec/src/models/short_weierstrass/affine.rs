@@ -101,7 +101,6 @@ impl<P: SWCurveConfig> Affine<P> {
     ///
     /// If and only if `greatest` is set will the lexicographically
     /// largest y-coordinate be selected.
-    #[allow(dead_code)]
     pub fn get_point_from_x_unchecked(x: P::BaseField, greatest: bool) -> Option<Self> {
         Self::get_ys_from_x_unchecked(x).map(|(smaller, larger)| {
             if greatest {

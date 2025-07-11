@@ -1,0 +1,103 @@
+use super::Relation;
+use crate::alloc::borrow::ToOwned;
+use crate::decider::types::{ClaimedEvaluations, RelationParameters};
+use crate::types::ScalarField;
+
+#[derive(Clone, Debug, Default)]
+pub(crate) struct UltraPermutationRelationEvals {
+    pub(crate) r0: ScalarField,
+    pub(crate) r1: ScalarField,
+}
+
+impl UltraPermutationRelationEvals {
+    pub(crate) fn scale_and_batch_elements(
+        &self,
+        running_challenge: &[ScalarField],
+        result: &mut ScalarField,
+    ) {
+        assert!(running_challenge.len() == UltraPermutationRelation::NUM_RELATIONS);
+
+        *result += self.r0 * running_challenge[0];
+        *result += self.r1 * running_challenge[1];
+    }
+}
+
+pub(crate) struct UltraPermutationRelation {}
+
+impl UltraPermutationRelation {
+    pub(crate) const NUM_RELATIONS: usize = 2;
+}
+
+impl Relation for UltraPermutationRelation {
+    type VerifyAcc = UltraPermutationRelationEvals;
+
+    fn verify_accumulate(
+        univariate_accumulator: &mut Self::VerifyAcc,
+        input: &ClaimedEvaluations,
+        relation_parameters: &RelationParameters,
+        scaling_factor: &ScalarField,
+    ) {
+        let w_1 = input.witness.w_l();
+        let w_2 = input.witness.w_r();
+        let w_3 = input.witness.w_o();
+        let w_4 = input.witness.w_4();
+        let id_1 = input.precomputed.id_1();
+        let id_2 = input.precomputed.id_2();
+        let id_3 = input.precomputed.id_3();
+        let id_4 = input.precomputed.id_4();
+        let sigma_1 = input.precomputed.sigma_1();
+        let sigma_2 = input.precomputed.sigma_2();
+        let sigma_3 = input.precomputed.sigma_3();
+        let sigma_4 = input.precomputed.sigma_4();
+
+        let beta = &relation_parameters.beta;
+        let gamma = &relation_parameters.gamma;
+
+        let public_input_delta = &relation_parameters.public_input_delta;
+        let z_perm = input.witness.z_perm();
+        let z_perm_shift = input.shifted_witness.z_perm();
+        let lagrange_first = input.precomputed.lagrange_first();
+        let lagrange_last = input.precomputed.lagrange_last();
+
+        let w_1_plus_gamma = w_1.to_owned() + gamma;
+        let w_2_plus_gamma = w_2.to_owned() + gamma;
+        let w_3_plus_gamma = w_3.to_owned() + gamma;
+        let w_4_plus_gamma = w_4.to_owned() + gamma;
+
+        let mut t1 = id_1.to_owned() * beta + w_1_plus_gamma;
+        t1 *= scaling_factor;
+        let t2 = id_2.to_owned() * beta + w_2_plus_gamma;
+        let t3 = id_3.to_owned() * beta + w_3_plus_gamma;
+        let t4 = id_4.to_owned() * beta + w_4_plus_gamma;
+        t1 *= t2;
+        t1 *= t3;
+        t1 *= t4;
+        let numerator = t1;
+
+        let mut t5 = sigma_1.to_owned() * beta + w_1_plus_gamma;
+        t5 *= scaling_factor;
+        let t6 = sigma_2.to_owned() * beta + w_2_plus_gamma;
+        let t7 = sigma_3.to_owned() * beta + w_3_plus_gamma;
+        let t8 = sigma_4.to_owned() * beta + w_4_plus_gamma;
+        t5 *= t6;
+        t5 *= t7;
+        t5 *= t8;
+        let denominator = t5;
+
+        let public_input_term = lagrange_last.to_owned() * public_input_delta + z_perm_shift;
+
+        // witness degree: deg 5 - deg 5 = deg 5
+        // total degree: deg 9 - deg 10 = deg 10
+
+        let tmp =
+            ((z_perm.to_owned() + lagrange_first) * numerator) - (public_input_term * denominator);
+
+        univariate_accumulator.r0 += tmp;
+
+        ///////////////////////////////////////////////////////////////////////
+
+        let tmp = (lagrange_last.to_owned() * z_perm_shift) * scaling_factor;
+
+        univariate_accumulator.r1 += tmp;
+    }
+}

@@ -1,69 +1,52 @@
 use crate::alloc::{borrow::ToOwned, string::String};
 use crate::backends::HashBackend;
-use crate::honk_curve::{NUM_BASEFIELD_ELEMENTS, NUM_SCALARFIELD_ELEMENTS};
+use crate::constants::{NUM_BASEFIELD_ELEMENTS, NUM_SCALARFIELD_ELEMENTS};
 use crate::serialize::{BytesDeserializable, BytesSerializable};
 use crate::types::{G1Affine, HonkProof, HonkProofError, HonkProofResult, ScalarField};
 use crate::Utils;
-use alloc::collections::BTreeMap;
 use alloc::vec::Vec;
 use ark_ec::AffineRepr;
-use ark_ff::{One, Zero};
-use core::ops::Index;
-use num_bigint::BigUint;
+use ark_ff::{BigInteger, PrimeField, Zero};
 
-pub struct Transcript<H>
-where
-    H: HashBackend,
-{
-    proof_data: Vec<ScalarField>,
-    manifest: TranscriptManifest,
-    num_frs_written: usize, // the number of bb::frs written to proof_data by the prover or the verifier
-    num_frs_read: usize,    // the number of bb::frs read from proof_data by the verifier
-    round_number: usize,
-    is_first_challenge: bool,
-    current_round_data: Vec<ScalarField>,
-    previous_challenge: ScalarField,
-    phantom_data: core::marker::PhantomData<H>,
+#[derive(Clone)]
+pub struct Transcript {
+    pub proof_data: Vec<ScalarField>,
+    pub num_frs_written: usize, // the number of bb::frs written to proof_data by the prover or the verifier
+    pub num_frs_read: usize,    // the number of bb::frs read from proof_data by the verifier
+    pub round_number: usize,
+    pub is_first_challenge: bool,
+    pub current_round_data: Vec<ScalarField>,
+    pub previous_challenge: ScalarField,
 }
 
-impl<H> Default for Transcript<H>
-where
-    H: HashBackend,
-{
+impl Default for Transcript {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<H> Transcript<H>
-where
-    H: HashBackend,
-{
+impl Transcript {
     pub fn new() -> Self {
         Self {
             proof_data: Default::default(),
-            manifest: Default::default(),
             num_frs_written: 0,
             num_frs_read: 0,
             round_number: 0,
             is_first_challenge: true,
             current_round_data: Default::default(),
             previous_challenge: Default::default(),
-            phantom_data: Default::default(),
         }
     }
 
     pub fn new_verifier(proof: HonkProof) -> Self {
         Self {
             proof_data: proof.inner(),
-            manifest: Default::default(),
             num_frs_written: 0,
             num_frs_read: 0,
             round_number: 0,
             is_first_challenge: true,
             current_round_data: Default::default(),
             previous_challenge: Default::default(),
-            phantom_data: Default::default(),
         }
     }
 
@@ -71,77 +54,66 @@ where
         HonkProof::new(self.proof_data)
     }
 
-    #[expect(dead_code)]
-    pub(crate) fn get_manifest(&self) -> &TranscriptManifest {
-        &self.manifest
-    }
-
-    fn add_element_frs_to_hash_buffer(&mut self, label: String, elements: &[ScalarField]) {
+    fn add_element_frs_to_hash_buffer(&mut self, elements: &[ScalarField]) {
         // Add an entry to the current round of the manifest
         let len = elements.len();
-        self.manifest.add_entry(self.round_number, label, len);
         self.current_round_data.extend(elements);
         self.num_frs_written += len;
     }
 
     // Adds an element to the transcript.
     // Serializes the element to frs and adds it to the current_round_data buffer. Does NOT add the element to the proof. This is used for elements which should be part of the transcript but are not in the final proof (e.g. circuit size)
-    fn add_to_hash_buffer(&mut self, label: String, elements: &[ScalarField]) {
-        self.add_element_frs_to_hash_buffer(label, elements);
+    fn add_to_hash_buffer(&mut self, elements: &[ScalarField]) {
+        self.add_element_frs_to_hash_buffer(elements);
     }
 
-    fn send_to_verifier(&mut self, label: String, elements: &[ScalarField]) {
+    fn send_to_verifier(&mut self, elements: &[ScalarField]) {
         self.proof_data.extend(elements);
-        self.add_element_frs_to_hash_buffer(label, elements);
+        self.add_element_frs_to_hash_buffer(elements);
     }
 
-    pub fn send_fr_to_verifier(&mut self, label: String, element: ScalarField) {
+    pub fn send_fr_to_verifier(&mut self, element: ScalarField) {
         let elements: Vec<ScalarField> = vec![element.to_owned()];
-        self.send_to_verifier(label, &elements);
+        self.send_to_verifier(&elements);
     }
 
-    pub fn send_u64_to_verifier(&mut self, label: String, element: u64) {
+    pub fn send_u64_to_verifier(&mut self, element: u64) {
         let el = ScalarField::from(element);
-        self.send_to_verifier(label, &[el]);
+        self.send_to_verifier(&[el]);
     }
 
-    pub fn add_u64_to_hash_buffer(&mut self, label: String, element: u64) {
+    pub fn add_u64_to_hash_buffer(&mut self, element: u64) {
         let el = ScalarField::from(element);
-        self.add_to_hash_buffer(label, &[el]);
+        self.add_to_hash_buffer(&[el]);
     }
 
     pub fn send_fr_iter_to_verifier<'a, I: IntoIterator<Item = &'a ScalarField>>(
         &mut self,
-        label: String,
         element: I,
     ) {
         let elements: Vec<ScalarField> = element.into_iter().map(|src| src.to_owned()).collect();
-        self.send_to_verifier(label, &elements);
+        self.send_to_verifier(&elements);
     }
 
-    fn receive_n_from_prover(
-        &mut self,
-        label: String,
-        n: usize,
-    ) -> HonkProofResult<Vec<ScalarField>> {
+    fn receive_n_from_prover(&mut self, n: usize) -> HonkProofResult<Vec<ScalarField>> {
         if self.num_frs_read + n > self.proof_data.len() {
             return Err(HonkProofError::ProofTooSmall);
         }
         let elements = self.proof_data[self.num_frs_read..self.num_frs_read + n].to_owned();
         self.num_frs_read += n;
 
-        self.add_element_frs_to_hash_buffer(label, &elements);
+        self.add_element_frs_to_hash_buffer(&elements);
         Ok(elements)
     }
 
-    pub(super) fn receive_fr_from_prover(&mut self, label: String) -> HonkProofResult<ScalarField> {
-        let elements = self.receive_n_from_prover(label, NUM_SCALARFIELD_ELEMENTS)?;
+    pub fn receive_fr_from_prover(&mut self) -> HonkProofResult<ScalarField> {
+        let elements = self.receive_n_from_prover(NUM_SCALARFIELD_ELEMENTS)?;
 
         Ok(Utils::convert_scalarfield_back(&elements))
     }
 
-    pub(super) fn receive_point_from_prover(&mut self, label: String) -> HonkProofResult<G1Affine> {
-        let elements = self.receive_n_from_prover(label, NUM_BASEFIELD_ELEMENTS * 2)?;
+    pub fn receive_point_from_prover(&mut self) -> HonkProofResult<G1Affine> {
+        let elements = self.receive_n_from_prover(NUM_BASEFIELD_ELEMENTS * 2)?;
 
         let coords = elements
             .chunks_exact(NUM_BASEFIELD_ELEMENTS)
@@ -160,12 +132,8 @@ where
         Ok(res)
     }
 
-    pub(super) fn receive_fr_vec_from_verifier(
-        &mut self,
-        label: String,
-        n: usize,
-    ) -> HonkProofResult<Vec<ScalarField>> {
-        let elements = self.receive_n_from_prover(label, NUM_SCALARFIELD_ELEMENTS * n)?;
+    pub fn receive_fr_vec_from_verifier(&mut self, n: usize) -> HonkProofResult<Vec<ScalarField>> {
+        let elements = self.receive_n_from_prover(NUM_SCALARFIELD_ELEMENTS * n)?;
 
         let elements = elements
             .chunks_exact(NUM_SCALARFIELD_ELEMENTS)
@@ -175,12 +143,11 @@ where
         Ok(elements)
     }
 
-    pub(super) fn receive_fr_array_from_verifier<const SIZE: usize>(
+    pub fn receive_fr_array_from_verifier<const SIZE: usize>(
         &mut self,
-        label: String,
     ) -> HonkProofResult<[ScalarField; SIZE]> {
         let mut res: [ScalarField; SIZE] = [ScalarField::zero(); SIZE];
-        let elements = self.receive_n_from_prover(label, NUM_SCALARFIELD_ELEMENTS * SIZE)?;
+        let elements = self.receive_n_from_prover(NUM_SCALARFIELD_ELEMENTS * SIZE)?;
 
         for (src, des) in elements
             .chunks_exact(NUM_SCALARFIELD_ELEMENTS)
@@ -193,21 +160,26 @@ where
     }
 
     fn split_challenge(challenge: ScalarField) -> [ScalarField; 2] {
-        // match the parameter used in stdlib, which is derived from cycle_scalar (is 128)
-        const LO_BITS: usize = 128;
-        let biguint: BigUint = challenge.into();
+        // Get the 32 bytes (256 bits) in little-endian order
+        let bytes = challenge.into_bigint().to_bytes_le();
 
-        let lower_mask = (BigUint::one() << LO_BITS) - BigUint::one();
-        let lo = &biguint & lower_mask;
-        let hi = biguint >> LO_BITS;
+        // Lower 128 bits (first 16 bytes)
+        let mut lo_bytes = [0u8; 32];
+        lo_bytes[..16].copy_from_slice(&bytes[..16]);
+        let lo = ScalarField::from_le_bytes_mod_order(&lo_bytes);
 
-        let lo = ScalarField::from(lo);
-        let hi = ScalarField::from(hi);
+        // Upper 128 bits (next 16 bytes)
+        let mut hi_bytes = [0u8; 32];
+        hi_bytes[..16].copy_from_slice(&bytes[16..32]);
+        let hi = ScalarField::from_le_bytes_mod_order(&hi_bytes);
 
         [lo, hi]
     }
 
-    fn get_next_duplex_challenge_buffer(&mut self, num_challenges: usize) -> [ScalarField; 2] {
+    fn get_next_duplex_challenge_buffer<H: HashBackend>(
+        &mut self,
+        num_challenges: usize,
+    ) -> [ScalarField; 2] {
         // challenges need at least 110 bits in them to match the presumed security parameter of the BN254 curve.
         assert!(num_challenges <= 2);
         // Prevent challenge generation if this is the first challenge we're generating,
@@ -243,26 +215,22 @@ where
         new_challenges
     }
 
-    pub fn get_challenge(&mut self, label: String) -> ScalarField {
-        self.manifest.add_challenge(self.round_number, &[label]);
-        let challenge = self.get_next_duplex_challenge_buffer(1)[0];
+    pub fn get_challenge<H: HashBackend>(&mut self) -> ScalarField {
+        let challenge = self.get_next_duplex_challenge_buffer::<H>(1)[0];
         let res = challenge.to_owned();
         self.round_number += 1;
         res
     }
 
-    pub fn get_challenges(&mut self, labels: &[String]) -> Vec<ScalarField> {
-        let num_challenges = labels.len();
-        self.manifest.add_challenge(self.round_number, labels);
-
+    pub fn get_challenges<H: HashBackend>(&mut self, num_challenges: usize) -> Vec<ScalarField> {
         let mut res = Vec::with_capacity(num_challenges);
         for _ in 0..num_challenges >> 1 {
-            let challenge_buffer = self.get_next_duplex_challenge_buffer(2);
+            let challenge_buffer = self.get_next_duplex_challenge_buffer::<H>(2);
             res.push(challenge_buffer[0].to_owned());
             res.push(challenge_buffer[1].to_owned());
         }
         if num_challenges & 1 == 1 {
-            let challenge_buffer = self.get_next_duplex_challenge_buffer(1);
+            let challenge_buffer = self.get_next_duplex_challenge_buffer::<H>(1);
             res.push(challenge_buffer[0].to_owned());
         }
 
@@ -272,43 +240,7 @@ where
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Default)]
-pub(crate) struct RoundData {
-    challenge_label: Vec<String>,
-    entries: Vec<(String, usize)>,
-}
-
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub(crate) struct TranscriptManifest {
-    manifest: BTreeMap<usize, RoundData>,
-}
-
-impl TranscriptManifest {
-    pub(crate) fn add_challenge(&mut self, round: usize, labels: &[String]) {
-        self.manifest
-            .entry(round)
-            .or_default()
-            .challenge_label
-            .extend_from_slice(labels);
-    }
-
-    pub(crate) fn add_entry(&mut self, round: usize, element_label: String, element_size: usize) {
-        self.manifest
-            .entry(round)
-            .or_default()
-            .entries
-            .push((element_label, element_size));
-    }
-
-    #[expect(dead_code)]
-    pub(crate) fn size(&self) -> usize {
-        self.manifest.len()
-    }
-}
-
-impl Index<usize> for TranscriptManifest {
-    type Output = RoundData;
-
-    fn index(&self, index: usize) -> &Self::Output {
-        &self.manifest[&index]
-    }
+pub struct RoundData {
+    pub challenge_label: Vec<String>,
+    pub entries: Vec<(String, usize)>,
 }

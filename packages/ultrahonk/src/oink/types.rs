@@ -2,24 +2,24 @@ use crate::{
     types::{G1Affine, ScalarField, WitnessEntities},
     NUM_ALPHAS,
 };
-use ark_ff::PrimeField;
 
-pub(crate) struct VerifierMemory {
-    pub(crate) public_input_delta: ScalarField,
-    pub(crate) witness_commitments: WitnessEntities<G1Affine>,
-    pub(crate) challenges: Challenges<ScalarField>,
+#[derive(Default)]
+pub struct VerifierMemory {
+    pub public_input_delta: ScalarField,
+    pub witness_commitments: WitnessEntities<G1Affine>,
+    pub challenges: Challenges,
 }
 
-pub(crate) struct Challenges<F: PrimeField> {
-    pub(crate) eta_1: F,
-    pub(crate) eta_2: F,
-    pub(crate) eta_3: F,
-    pub(crate) beta: F,
-    pub(crate) gamma: F,
-    pub(crate) alphas: [F; NUM_ALPHAS],
+pub struct Challenges {
+    pub eta_1: ScalarField,
+    pub eta_2: ScalarField,
+    pub eta_3: ScalarField,
+    pub beta: ScalarField,
+    pub gamma: ScalarField,
+    pub alphas: [ScalarField; NUM_ALPHAS],
 }
 
-impl<F: PrimeField> Default for Challenges<F> {
+impl Default for Challenges {
     fn default() -> Self {
         Self {
             eta_1: Default::default(),
@@ -28,16 +28,6 @@ impl<F: PrimeField> Default for Challenges<F> {
             beta: Default::default(),
             gamma: Default::default(),
             alphas: [Default::default(); NUM_ALPHAS],
-        }
-    }
-}
-
-impl Default for VerifierMemory {
-    fn default() -> Self {
-        Self {
-            public_input_delta: Default::default(),
-            witness_commitments: Default::default(),
-            challenges: Default::default(),
         }
     }
 }

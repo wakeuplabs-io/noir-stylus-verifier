@@ -1,10 +1,10 @@
 use alloc::vec::Vec;
-pub(crate) mod types;
-pub(crate) mod verifier;
+pub mod types;
+pub mod verifier;
 use crate::types::{G1Affine, ScalarField};
 
-pub(crate) struct ShpleminiVerifierOpeningClaim {
-    pub(crate) challenge: ScalarField,
-    pub(crate) scalars: Vec<ScalarField>,
-    pub(crate) commitments: Vec<G1Affine>,
+pub struct ShpleminiVerifierOpeningClaim {
+    pub challenge: ScalarField,
+    pub scalars: Vec<ScalarField>,
+    pub commitments: Vec<G1Affine>,
 }

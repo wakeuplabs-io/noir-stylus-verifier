@@ -1,12 +1,11 @@
-use crate::alloc::borrow::ToOwned;
 use crate::constants::NUM_U64S_FELT;
-pub use crate::polynomials::polynomial_types::{PrecomputedEntities, PRECOMPUTED_ENTITIES_SIZE};
-use crate::serialize::BytesDeserializable;
-use crate::serialize::BytesSerializable;
+use crate::serialize::{BytesDeserializable, BytesSerializable};
+use crate::{alloc::borrow::ToOwned, constants::PRECOMPUTED_ENTITIES_SIZE};
 use alloc::vec::Vec;
 use ark_bn254::{g1::Config as G1Config, g2::Config as G2Config, Fq, Fq2, Fr};
 use ark_ec::short_weierstrass::Affine;
 use ark_ff::{Fp256, MontBackend};
+use serde::{Deserialize, Serialize};
 
 /// Type alias for an element of the scalar field of the Bn254 curve
 pub type ScalarField = Fr;
@@ -66,6 +65,12 @@ pub enum HonkProofError {
     /// The Subgroup for the FFT domain is too large
     #[error("Too large Subgroup")]
     LargeSubgroup,
+    /// Failed to deserialize G2Affine from transcript file
+    #[error("Failed to deserialize G2Affine from file")]
+    DeserializationError(),
+    /// MSM error
+    #[error("MSM error")]
+    MSMError,
 }
 
 impl HonkProof {
@@ -104,15 +109,16 @@ impl HonkProof {
 
 pub(crate) const NUM_ALL_ENTITIES: usize =
     WITNESS_ENTITIES_SIZE + PRECOMPUTED_ENTITIES_SIZE + SHIFTED_WITNESS_ENTITIES_SIZE;
+
 #[derive(Default)]
-pub(crate) struct AllEntities<T: Default> {
-    pub(crate) witness: WitnessEntities<T>,
-    pub(crate) precomputed: PrecomputedEntities<T>,
-    pub(crate) shifted_witness: ShiftedWitnessEntities<T>,
+pub struct AllEntities<T: Default> {
+    pub witness: WitnessEntities<T>,
+    pub precomputed: PrecomputedEntities<T>,
+    pub shifted_witness: ShiftedWitnessEntities<T>,
 }
 
 impl<T: Default> AllEntities<T> {
-    pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.precomputed
             .iter_mut()
             .chain(self.witness.iter_mut())
@@ -123,36 +129,14 @@ impl<T: Default> AllEntities<T> {
 const WITNESS_ENTITIES_SIZE: usize = 8;
 #[derive(Default, Clone)]
 pub struct WitnessEntities<T: Default> {
-    pub(crate) elements: [T; WITNESS_ENTITIES_SIZE],
+    pub elements: [T; WITNESS_ENTITIES_SIZE],
 }
 
 const SHIFTED_WITNESS_ENTITIES_SIZE: usize = 5;
+
 #[derive(Default, Clone)]
 pub struct ShiftedWitnessEntities<T: Default> {
-    pub(crate) elements: [T; SHIFTED_WITNESS_ENTITIES_SIZE],
-}
-
-impl<T: Default> IntoIterator for WitnessEntities<T> {
-    type Item = T;
-    type IntoIter = core::array::IntoIter<T, WITNESS_ENTITIES_SIZE>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.elements.into_iter()
-    }
-}
-
-impl<T: Default> WitnessEntities<Vec<T>> {
-    pub fn new() -> Self {
-        Self {
-            elements: core::array::from_fn(|_| Vec::new()),
-        }
-    }
-
-    pub fn add(&mut self, witness_entity: WitnessEntities<T>) {
-        for (src, dst) in witness_entity.into_iter().zip(self.iter_mut()) {
-            dst.push(src);
-        }
-    }
+    pub elements: [T; SHIFTED_WITNESS_ENTITIES_SIZE],
 }
 
 impl<T: Default> IntoIterator for ShiftedWitnessEntities<T> {
@@ -161,38 +145,6 @@ impl<T: Default> IntoIterator for ShiftedWitnessEntities<T> {
 
     fn into_iter(self) -> Self::IntoIter {
         self.elements.into_iter()
-    }
-}
-
-impl<T: Default> ShiftedWitnessEntities<Vec<T>> {
-    pub fn new() -> Self {
-        Self {
-            elements: core::array::from_fn(|_| Vec::new()),
-        }
-    }
-
-    pub fn add(&mut self, shifted_witness_entities: ShiftedWitnessEntities<T>) {
-        for (src, dst) in shifted_witness_entities.into_iter().zip(self.iter_mut()) {
-            dst.push(src);
-        }
-    }
-}
-
-impl<T: Default> IntoIterator for AllEntities<T> {
-    type Item = T;
-    type IntoIter = core::iter::Chain<
-        core::iter::Chain<
-            core::array::IntoIter<T, PRECOMPUTED_ENTITIES_SIZE>,
-            core::array::IntoIter<T, WITNESS_ENTITIES_SIZE>,
-        >,
-        core::array::IntoIter<T, SHIFTED_WITNESS_ENTITIES_SIZE>,
-    >;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.precomputed
-            .into_iter()
-            .chain(self.witness)
-            .chain(self.shifted_witness)
     }
 }
 
@@ -356,18 +308,180 @@ impl<T: Default> ShiftedWitnessEntities<T> {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum ZeroKnowledge {
-    No,
-    Yes,
+#[derive(Default, Clone, Serialize, Deserialize)]
+pub struct PrecomputedEntities<T: Default> {
+    pub elements: [T; PRECOMPUTED_ENTITIES_SIZE],
 }
 
-impl From<bool> for ZeroKnowledge {
-    fn from(value: bool) -> Self {
-        if value {
-            ZeroKnowledge::Yes
-        } else {
-            ZeroKnowledge::No
-        }
+impl<T: Default> PrecomputedEntities<T> {
+    /// column 0
+    pub(crate) const Q_M: usize = 0;
+    /// column 1
+    pub(crate) const Q_C: usize = 1;
+    /// column 2
+    pub(crate) const Q_L: usize = 2;
+    /// column 3
+    pub(crate) const Q_R: usize = 3;
+    /// column 4
+    pub(crate) const Q_O: usize = 4;
+    /// column 5
+    pub(crate) const Q_4: usize = 5;
+    /// column 6
+    pub(crate) const Q_LOOKUP: usize = 6;
+    /// column 7
+    pub(crate) const Q_ARITH: usize = 7;
+    /// column 8
+    pub(crate) const Q_DELTA_RANGE: usize = 8;
+    /// column 9
+    pub(crate) const Q_ELLIPTIC: usize = 9;
+    /// column 10
+    pub(crate) const Q_AUX: usize = 10;
+    /// column 11
+    pub(crate) const Q_POSEIDON2_EXTERNAL: usize = 11;
+    /// column 12
+    pub(crate) const Q_POSEIDON2_INTERNAL: usize = 12;
+    /// column 13
+    const SIGMA_1: usize = 13;
+    /// column 14
+    const SIGMA_2: usize = 14;
+    /// column 15
+    const SIGMA_3: usize = 15;
+    /// column 16
+    const SIGMA_4: usize = 16;
+    /// column 17
+    const ID_1: usize = 17;
+    /// column 18
+    const ID_2: usize = 18;
+    /// column 19
+    const ID_3: usize = 19;
+    /// column 20
+    const ID_4: usize = 20;
+    /// column 21
+    const TABLE_1: usize = 21;
+    /// column 22
+    const TABLE_2: usize = 22;
+    /// column 23
+    const TABLE_3: usize = 23;
+    /// column 24
+    const TABLE_4: usize = 24;
+    /// column 25
+    const LAGRANGE_FIRST: usize = 25;
+    /// column 26
+    const LAGRANGE_LAST: usize = 26;
+
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        self.elements.iter()
+    }
+
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        self.elements.iter_mut()
+    }
+
+    pub fn q_m(&self) -> &T {
+        &self.elements[Self::Q_M]
+    }
+
+    pub fn q_c(&self) -> &T {
+        &self.elements[Self::Q_C]
+    }
+
+    pub fn q_l(&self) -> &T {
+        &self.elements[Self::Q_L]
+    }
+
+    pub fn q_r(&self) -> &T {
+        &self.elements[Self::Q_R]
+    }
+
+    pub fn q_o(&self) -> &T {
+        &self.elements[Self::Q_O]
+    }
+
+    pub fn q_4(&self) -> &T {
+        &self.elements[Self::Q_4]
+    }
+
+    pub fn q_arith(&self) -> &T {
+        &self.elements[Self::Q_ARITH]
+    }
+
+    pub fn q_delta_range(&self) -> &T {
+        &self.elements[Self::Q_DELTA_RANGE]
+    }
+
+    pub fn q_elliptic(&self) -> &T {
+        &self.elements[Self::Q_ELLIPTIC]
+    }
+
+    pub fn q_aux(&self) -> &T {
+        &self.elements[Self::Q_AUX]
+    }
+
+    pub fn q_lookup(&self) -> &T {
+        &self.elements[Self::Q_LOOKUP]
+    }
+
+    pub fn q_poseidon2_external(&self) -> &T {
+        &self.elements[Self::Q_POSEIDON2_EXTERNAL]
+    }
+
+    pub fn q_poseidon2_internal(&self) -> &T {
+        &self.elements[Self::Q_POSEIDON2_INTERNAL]
+    }
+
+    pub fn sigma_1(&self) -> &T {
+        &self.elements[Self::SIGMA_1]
+    }
+
+    pub fn sigma_2(&self) -> &T {
+        &self.elements[Self::SIGMA_2]
+    }
+
+    pub fn sigma_3(&self) -> &T {
+        &self.elements[Self::SIGMA_3]
+    }
+
+    pub fn sigma_4(&self) -> &T {
+        &self.elements[Self::SIGMA_4]
+    }
+
+    pub fn id_1(&self) -> &T {
+        &self.elements[Self::ID_1]
+    }
+
+    pub fn id_2(&self) -> &T {
+        &self.elements[Self::ID_2]
+    }
+
+    pub fn id_3(&self) -> &T {
+        &self.elements[Self::ID_3]
+    }
+
+    pub fn id_4(&self) -> &T {
+        &self.elements[Self::ID_4]
+    }
+
+    pub fn table_1(&self) -> &T {
+        &self.elements[Self::TABLE_1]
+    }
+
+    pub fn table_2(&self) -> &T {
+        &self.elements[Self::TABLE_2]
+    }
+
+    pub fn table_3(&self) -> &T {
+        &self.elements[Self::TABLE_3]
+    }
+
+    pub fn table_4(&self) -> &T {
+        &self.elements[Self::TABLE_4]
+    }
+
+    pub fn lagrange_first(&self) -> &T {
+        &self.elements[Self::LAGRANGE_FIRST]
+    }
+
+    pub fn lagrange_last(&self) -> &T {
+        &self.elements[Self::LAGRANGE_LAST]
     }
 }

@@ -12,14 +12,12 @@ description = "Stylus noir verifier"
 alloy-primitives.workspace = true
 alloy-sol-types.workspace = true
 stylus-sdk.workspace = true
-hex = { version = "0.4", default-features = false }
 ultrahonk = { path = "../ultrahonk" }
-num-traits.workspace = true
 ark-ff.workspace = true
-ark-serialize.workspace = true
 ark-ec.workspace = true
-serde.workspace = true
 ark-bn254.workspace = true
+
+serde.workspace = true
 serde_with.workspace = true
 postcard.workspace = true
 
@@ -27,10 +25,9 @@ postcard.workspace = true
 alloy.workspace = true
 alloy-primitives.workspace = true
 tokio = { version = "1.12.0", features = ["full"] }
-eyre = "0.6.8"
-e2e.workspace = true
 stylus-sdk = { workspace = true, features = ["stylus-test"] }
 rand.workspace = true
+eyre.workspace = true
 
 [features]
 default = ["mini-alloc"]
@@ -38,7 +35,10 @@ export-abi = ["stylus-sdk/export-abi"]
 debug = ["stylus-sdk/debug"]
 mini-alloc = ["stylus-sdk/mini-alloc"]
 verifier = []
-e2e-backends = []
+sumcheck-verifier = []
+shplemini-verifier = []
+precompile-test-contract = []
+sumcheck-verifier-round = []
 
 [[bin]]
 name = "stylus-noir-verifier"
@@ -46,13 +46,3 @@ path = "src/main.rs"
 
 [lib]
 crate-type = ["lib", "cdylib"]
-
-[profile.release]
-codegen-units = 1
-strip = true
-lto = true
-panic = "abort"
-
-# If you need to reduce the binary size, it is advisable to try other
-# optimization levels, such as "s" and "z"
-opt-level = 3

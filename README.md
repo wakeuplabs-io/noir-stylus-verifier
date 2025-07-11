@@ -9,6 +9,27 @@ A Stylus-compatible UltraHonk verifier that bridges Noir's zero-knowledge capabi
 
 This project provides a production-ready verifier for Noir proofs on Arbitrum Stylus, addressing the current gap in native verification support. By leveraging Stylus's WebAssembly environment and Ethereum precompiles, we enable efficient and secure verification of zero-knowledge proofs.
 
+## Deployments
+
+Deploy with:
+
+```bash 
+# deploy
+just deploy-contract sumcheck-verifier
+just deploy-contract shplemini-verifier
+just deploy-contract verifier "constructor(address,address)" "{sumcheck-verifier}" "{shplemini-verifier}"
+
+# And verify with
+just get-verifier-addresses "{verifier}"
+just verify-proof "{verifier}" "{test_vector_name}"
+```
+
+Sepolia
+
+```bash
+TODO:
+```
+
 ## Usage
 
 Create your noir circuit as usual and then do:
@@ -16,9 +37,7 @@ Create your noir circuit as usual and then do:
 ```bash
 nargo execute
 bb write_vk --oracle_hash keccak -o target -b target/{}.json
-# TODO: generate and deploy verifier
 bb prove -b ./target/{}.json -w ./target/{}.gz -o ./target --scheme ultra_honk --oracle_hash keccak
-# call verifier with proof
 ```
 
 ## Project requirements

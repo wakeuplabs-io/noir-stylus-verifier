@@ -1,7 +1,6 @@
-pub(crate) mod barycentric;
-pub(crate) mod relations;
-pub(crate) mod shplemini;
-pub(crate) mod sumcheck;
-pub(crate) mod types;
-pub(crate) mod univariate;
-pub(crate) mod verifier;
+pub mod barycentric;
+pub mod shplemini;
+pub mod sumcheck;
+pub mod types;
+pub mod univariate;
+pub mod verifier;

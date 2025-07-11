@@ -1,57 +1,35 @@
 use crate::{
-    backends::HashBackend,
+    backends::{G1ArithmeticBackend, HashBackend},
     decider::{types::VerifierMemory, verifier::DeciderVerifier},
-    honk_curve::HonkCurve,
     keys::verification_key::VerifyingKey,
-    oink::verifier::OinkVerifier,
     transcript::Transcript,
-    types::{HonkProof, ScalarField, ZeroKnowledge},
-    CONST_PROOF_SIZE_LOG_N,
+    types::{HonkProof, HonkProofError, ScalarField},
 };
-use alloc::vec::Vec;
-use core::marker::PhantomData;
 
-pub struct UltraHonk<P: HonkCurve, H: HashBackend> {
-    phantom_data: PhantomData<P>,
-    phantom_hasher: PhantomData<H>,
-}
+pub struct UltraHonk;
 
-pub(crate) type HonkVerifyResult<T> = Result<T, eyre::Report>;
+pub(crate) type HonkVerifyResult<T> = Result<T, HonkProofError>;
 
-impl<P: HonkCurve, H: HashBackend> UltraHonk<P, H> {
-    pub(crate) fn generate_gate_challenges(transcript: &mut Transcript<H>) -> Vec<ScalarField> {
-        tracing::trace!("generate gate challenges");
-
-        let mut gate_challenges: Vec<ScalarField> = Vec::with_capacity(CONST_PROOF_SIZE_LOG_N);
-
-        for idx in 0..CONST_PROOF_SIZE_LOG_N {
-            let chall = transcript.get_challenge(format!("Sumcheck:gate_challenge_{}", idx));
-            gate_challenges.push(chall);
-        }
-        gate_challenges
-    }
-
-    pub fn verify(
+impl UltraHonk {
+    pub fn verify<H: HashBackend, P: G1ArithmeticBackend>(
         honk_proof: HonkProof,
         public_inputs: &[ScalarField],
-        verifying_key: &VerifyingKey,
-        has_zk: ZeroKnowledge,
+        vk: &VerifyingKey,
     ) -> HonkVerifyResult<bool> {
-        tracing::trace!("UltraHonk verification");
         let honk_proof = honk_proof.insert_public_inputs(public_inputs.to_vec());
 
-        let mut transcript = Transcript::<H>::new_verifier(honk_proof);
+        let mut transcript = Transcript::new_verifier(honk_proof);
+        let memory = VerifierMemory::from_key_and_transcript::<H>(vk, &mut transcript);
 
-        let oink_verifier = OinkVerifier::<P, H>::default();
-        let oink_result = oink_verifier.verify(verifying_key, &mut transcript)?;
+        let mut decider_verifier = DeciderVerifier::new(memory);
+        let sumcheck_output =
+            decider_verifier.verify_sumcheck::<H>(&mut transcript, vk.circuit_size)?;
+        let shplemini_output = decider_verifier.verify_shplemini::<H, P>(
+            &mut transcript,
+            sumcheck_output.multivariate_challenge,
+            vk.circuit_size,
+        )?;
 
-        let circuit_size = verifying_key.circuit_size;
-        let crs = verifying_key.crs;
-
-        let mut memory = VerifierMemory::from_memory_and_key(oink_result, verifying_key);
-        memory.relation_parameters.gate_challenges =
-            Self::generate_gate_challenges(&mut transcript);
-        let decider_verifier = DeciderVerifier::<P, H>::new(memory);
-        decider_verifier.verify(circuit_size, &crs, transcript, has_zk)
+        Ok(sumcheck_output.verified && shplemini_output)
     }
 }

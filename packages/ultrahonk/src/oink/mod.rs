@@ -1,2 +1,2 @@
-pub(crate) mod types;
-pub(crate) mod verifier;
+pub mod types;
+pub mod verifier;

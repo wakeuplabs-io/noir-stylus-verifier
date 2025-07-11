@@ -1,5 +1,5 @@
 [workspace]
-members = ["packages/ultrahonk", "packages/contracts", "packages/ark-ec"]
+members = ["packages/ultrahonk", "packages/contracts", "packages/ark-ec", "packages/integration"]
 resolver = "2"
 
 [workspace.package]
@@ -20,7 +20,6 @@ ark-ec = "^0.5.0"
 ark-grumpkin = "^0.5.0"
 ark-poly = { version = "^0.5.0", default-features = false }
 ark-serialize = { version = "^0.5.0", features = ["derive", "std"] }
-eyre = "0.6"
 getrandom = { version = "0.2", features = ["js"] }
 num-bigint = { version = "0.4.5", default-features = false }
 num-traits = { version = "0.2.18", default-features = false }
@@ -29,13 +28,14 @@ serde = { version = "1.0.193", features = ["derive", "rc"] }
 sha3 = "0.10.8"
 thiserror = "2"
 tracing = { version = "0.1.40" }
+tracing-subscriber = { version = "0.3.0" }
 serde_with = { version = "3.4", default-features = false, features = [
     "macros",
     "alloc",
 ] }
 postcard = { version = "1.0.0", default-features = false, features = ["alloc"] }
-
-alloy = { version = "=0.7.3", features = [
+alloy-contract = { version = "0.11", default-features = false }
+alloy = { version = "=0.11", features = [
   "contract",
   "network",
   "providers",
@@ -55,12 +55,36 @@ alloy-sol-types = { version = "=0.8.20", default-features = false }
 alloy-sol-macro = { version = "=0.8.20", default-features = false }
 alloy-sol-macro-expander = { version = "=0.8.20", default-features = false }
 alloy-sol-macro-input = { version = "=0.8.20", default-features = false }
-once_cell = { version = "1.21.3" }
 
-e2e = { git = "https://github.com/OpenZeppelin/rust-contracts-stylus", tag = "v0.2.0-rc.0" }
+hex = { version = "0.4.3" }
+clap = { version = "4.4.7", features = ["derive"] }
+eyre = { version = "0.6.10" }
+tokio = { version = "1.12.0", features = ["full"] }
+inventory = { version = "0.3.20" }
+itertools = "0.12"
+colored = "2.0.0"
+futures = "0.3.31"
+regex = "1.11.1"
 
 [patch.crates-io]
 ark-ec = { path = "./packages/ark-ec" }
+
+[profile.release]
+strip = "none"           # keep debug info for profiling
+# strip = true           # remove debug info
+debug = false            # no debug data
+codegen-units = 1        # prefer efficiency to compile time
+panic = "abort"          # use simple panics
+lto = true               # link time optimization
+rpath = false            # no run-time search path
+debug-assertions = false # prune debug assertions
+incremental = false      # no incremental builds
+opt-level = 'z'          # optimize for size
+
+# but do optimize all the other dependencies
+[profile.release.package."*"]
+codegen-units = 1 # better optimizations
+opt-level = "z"
 
 # This profile can be used for CI in pull requests.
 [profile.ci-dev]
@@ -69,5 +93,3 @@ inherits = "dev"
 incremental = false
 debug = true
 overflow-checks = false
-# [profile.ci-dev.build-override]
-# opt-level = 3

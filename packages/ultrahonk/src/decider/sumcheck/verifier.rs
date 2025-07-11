@@ -1,19 +1,15 @@
 use super::SumcheckVerifierOutput;
-use crate::alloc::{
-    borrow::ToOwned,
-    string::{String, ToString},
-};
-pub use crate::polynomials::polynomial::RowDisablingPolynomial;
+use crate::alloc::borrow::ToOwned;
+use crate::decider::types::BATCHED_RELATION_PARTIAL_LENGTH;
 use crate::{
     backends::HashBackend,
     decider::{
         sumcheck::round_verifier::{SumcheckRoundOutput, SumcheckVerifierRound},
+        types::GateSeparatorPolynomial,
         verifier::DeciderVerifier,
     },
-    honk_curve::HonkCurve,
-    prelude::GateSeparatorPolynomial,
     transcript::Transcript,
-    types::{ScalarField, ZeroKnowledge, NUM_ALL_ENTITIES},
+    types::{ScalarField, NUM_ALL_ENTITIES},
     verifier::HonkVerifyResult,
     CONST_PROOF_SIZE_LOG_N,
 };
@@ -21,56 +17,64 @@ use alloc::vec::Vec;
 use ark_ff::{One, Zero};
 
 // Keep in mind, the UltraHonk protocol (UltraFlavor) does not per default have ZK
-impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
-    pub(crate) fn sumcheck_verify<const SIZE: usize>(
+impl DeciderVerifier {
+    pub fn verify_sumcheck<H: HashBackend>(
         &mut self,
-        transcript: &mut Transcript<H>,
-        has_zk: ZeroKnowledge,
-        padding_indicator_array: &[ScalarField; CONST_PROOF_SIZE_LOG_N],
-    ) -> HonkVerifyResult<SumcheckVerifierOutput<ScalarField>> {
-        tracing::trace!("Sumcheck verify");
+        transcript: &mut Transcript,
+        circuit_size: u32,
+    ) -> HonkVerifyResult<SumcheckVerifierOutput> {
+        let log_circuit_size = circuit_size.ilog2();
+
+        // determine padding indicator array
+        let mut padding_indicator_array = [ScalarField::zero(); CONST_PROOF_SIZE_LOG_N];
+        for (idx, value) in padding_indicator_array.iter_mut().enumerate() {
+            *value = if idx < log_circuit_size as usize {
+                ScalarField::one()
+            } else {
+                ScalarField::zero()
+            };
+        }
 
         let mut verified: bool = true;
 
         // Pad gate challenges for Protogalaxy DeciderVerifier and AVM
-        self.pad_gate_challenges();
+        if self.memory.relation_parameters.gate_challenges.len() < CONST_PROOF_SIZE_LOG_N {
+            let zero = ScalarField::zero();
+            for _ in self.memory.relation_parameters.gate_challenges.len()..CONST_PROOF_SIZE_LOG_N {
+                self.memory.relation_parameters.gate_challenges.push(zero);
+            }
+        }
 
         let mut gate_separators = GateSeparatorPolynomial::new_without_products(
             self.memory.relation_parameters.gate_challenges.to_owned(),
         );
 
-        let mut sum_check_round = SumcheckVerifierRound::<P>::default();
-        let mut libra_challenge = ScalarField::one();
-        if has_zk == ZeroKnowledge::Yes {
-            // If running zero-knowledge sumcheck the target total sum is corrected by the claimed sum of libra masking
-            // multivariate over the hypercube
-
-            let libra_total_sum = transcript.receive_fr_from_prover("Libra:Sum".to_string())?;
-            libra_challenge = transcript.get_challenge("Libra:Challenge".to_string());
-            sum_check_round.target_total_sum += libra_total_sum * libra_challenge;
-        }
-
+        // sumcheck round state
+        let (mut sum_check_round_failed, mut target_total_sum) = (false, ScalarField::zero());
         let mut multivariate_challenge = Vec::with_capacity(CONST_PROOF_SIZE_LOG_N);
 
         for (round_idx, &padding_value) in padding_indicator_array.iter().enumerate() {
-            tracing::trace!("Sumcheck verify round {}", round_idx);
-            let round_univariate_label = format!("Sumcheck:univariate_{}", round_idx);
-
             let evaluations =
-                transcript.receive_fr_array_from_verifier::<SIZE>(round_univariate_label)?;
+                transcript.receive_fr_array_from_verifier::<BATCHED_RELATION_PARTIAL_LENGTH>()?; // format!("Sumcheck:univariate_{}", round_idx);
             let round_univariate = SumcheckRoundOutput { evaluations };
 
-            let round_challenge = transcript.get_challenge(format!("Sumcheck:u_{}", round_idx));
+            let round_challenge = transcript.get_challenge::<H>(); // format!("Sumcheck:u_{}", round_idx)
 
-            let checked = sum_check_round.check_sum(&round_univariate, padding_value);
-            verified = verified && checked;
+            let checked = Self::check_sum(
+                &round_univariate,
+                padding_value,
+                &target_total_sum,
+                &mut sum_check_round_failed,
+            );
+            verified = verified && checked; // TODO: this gets overwritten by the final round?
 
             multivariate_challenge.push(round_challenge);
 
-            sum_check_round.compute_next_target_sum(
+            Self::compute_next_target_sum(
                 &round_univariate,
                 round_challenge,
                 padding_value,
+                &mut target_total_sum,
             );
             gate_separators.partially_evaluate_with_padding(
                 round_challenge,
@@ -79,8 +83,7 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         }
 
         // Final round
-        let transcript_evaluations = transcript
-            .receive_fr_vec_from_verifier("Sumcheck:evaluations".to_string(), NUM_ALL_ENTITIES)?;
+        let transcript_evaluations = transcript.receive_fr_vec_from_verifier(NUM_ALL_ENTITIES)?; // "Sumcheck:evaluations"
 
         for (eval, &transcript_eval) in self
             .memory
@@ -92,47 +95,45 @@ impl<P: HonkCurve, H: HashBackend> DeciderVerifier<P, H> {
         }
 
         // Evaluate the Honk relation at the point (u_0, ..., u_{d-1}) using claimed evaluations of prover polynomials.
-
-        let mut full_honk_purported_value =
-            SumcheckVerifierRound::<P>::compute_full_relation_purported_value(
+        let full_honk_purported_value =
+            SumcheckVerifierRound::compute_full_relation_purported_value(
                 &self.memory.claimed_evaluations,
                 &self.memory.relation_parameters,
-                gate_separators,
+                &gate_separators.partial_evaluation_result,
             );
 
-        // For ZK Flavors: the evaluation of the Row Disabling Polynomial at the sumcheck challenge
-        let claimed_libra_evaluation = if has_zk == ZeroKnowledge::Yes {
-            let libra_evaluation =
-                transcript.receive_fr_from_prover("Libra:claimed_evaluation".to_string())?;
-            // No recursive flavor, otherwise we need to make some modifications to the following
-
-            let correcting_factor = RowDisablingPolynomial::evaluate_at_challenge_with_padding(
-                &multivariate_challenge,
-                padding_indicator_array,
-            );
-
-            full_honk_purported_value =
-                full_honk_purported_value * correcting_factor + libra_evaluation * libra_challenge;
-            Some(libra_evaluation)
-        } else {
-            None
-        };
-
-        let checked = full_honk_purported_value == sum_check_round.target_total_sum;
+        let checked = full_honk_purported_value == target_total_sum;
         verified = verified && checked;
         Ok(SumcheckVerifierOutput {
             multivariate_challenge,
             verified,
-            claimed_libra_evaluation,
         })
     }
 
-    fn pad_gate_challenges(&mut self) {
-        if self.memory.relation_parameters.gate_challenges.len() < CONST_PROOF_SIZE_LOG_N {
-            let zero = ScalarField::zero();
-            for _ in self.memory.relation_parameters.gate_challenges.len()..CONST_PROOF_SIZE_LOG_N {
-                self.memory.relation_parameters.gate_challenges.push(zero);
-            }
-        }
+    // round state update functions
+    pub fn compute_next_target_sum(
+        univariate: &SumcheckRoundOutput,
+        round_challenge: ScalarField,
+        indicator: ScalarField,
+        target_total_sum: &mut ScalarField,
+    ) {
+        *target_total_sum = (ScalarField::one() - indicator) * *target_total_sum
+            + indicator * univariate.evaluate(round_challenge);
+    }
+
+    // sumcheck round check functions
+    pub fn check_sum(
+        univariate: &SumcheckRoundOutput,
+        indicator: ScalarField,
+        target_total_sum: &ScalarField,
+        round_failed: &mut bool,
+    ) -> bool {
+        let total_sum = (ScalarField::one() - indicator) * *target_total_sum
+            + indicator * univariate.evaluations[0]
+            + univariate.evaluations[1];
+        let sumcheck_round_failed = *target_total_sum != total_sum;
+
+        *round_failed = *round_failed || sumcheck_round_failed;
+        !sumcheck_round_failed
     }
 }
