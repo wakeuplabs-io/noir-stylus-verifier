@@ -13,6 +13,7 @@ sol_storage! {
     pub struct ShpleminiVerifierContract {}
 }
 
+// Define errors that can occur during the execution of the contract
 sol! {
     error TranscriptDeserializationFailed();
     error MemoryDeserializationFailed();

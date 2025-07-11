@@ -12,6 +12,7 @@ sol_storage! {
     pub struct SumcheckVerifierContract {}
 }
 
+// Define errors that can occur during the execution of the contract
 sol! {
     error TranscriptDeserializationFailed();
     error MemoryDeserializationFailed();

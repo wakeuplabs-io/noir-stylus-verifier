@@ -20,6 +20,7 @@ sol_storage! {
     }
 }
 
+// Define errors that can occur during the execution of the contract
 sol! {
     error SumcheckVerificationFailed();
     error ShpleminiVerificationFailed();
@@ -31,6 +32,7 @@ pub enum VerifierErrors {
     ShpleminiVerificationFailed(ShpleminiVerificationFailed),
 }
 
+// Define interfaces for the verifiers
 sol_interface! {
     interface ISumcheckVerifier {
         function verify(bytes memory mem, bytes memory transcript, uint32 circuit_size) external returns (bytes memory, bytes memory, bytes memory, bool);
