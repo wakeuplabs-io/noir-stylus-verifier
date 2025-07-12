@@ -55,8 +55,8 @@ impl SumcheckVerifierContract {
             })?;
 
         Ok((
-            transcript.serialize_to_bytes().into(),
             decider_verifier.memory.serialize_to_bytes().into(),
+            transcript.serialize_to_bytes().into(),
             sumcheck_output
                 .multivariate_challenge
                 .serialize_to_bytes()

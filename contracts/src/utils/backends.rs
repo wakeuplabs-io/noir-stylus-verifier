@@ -90,9 +90,9 @@ impl ultrahonk::backends::G1ArithmeticBackend for PrecompileG1ArithmeticBackend 
         // Serialize the points
         let mut calldata = [0_u8; NUM_BYTES_FELT * 12];
         calldata[..NUM_BYTES_FELT * 2].copy_from_slice(&a_1.serialize_to_bytes());
-        calldata[NUM_BYTES_FELT * 2..NUM_BYTES_FELT * 6].copy_from_slice(&b_1.serialize_to_bytes());
+        calldata[NUM_BYTES_FELT * 2..NUM_BYTES_FELT * 6].copy_from_slice(&b_2.serialize_to_bytes());
         calldata[NUM_BYTES_FELT * 6..NUM_BYTES_FELT * 8].copy_from_slice(&a_2.serialize_to_bytes());
-        calldata[NUM_BYTES_FELT * 8..].copy_from_slice(&b_2.serialize_to_bytes());
+        calldata[NUM_BYTES_FELT * 8..].copy_from_slice(&b_1.serialize_to_bytes());
 
         // Call the `ecPairing` precompile
         let res = unsafe {

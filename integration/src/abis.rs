@@ -8,7 +8,14 @@ sol!(
         function constructor(address sumcheck_verifier_address, address shplemini_verifier_address) external;
 
         #[derive(Debug)]
-        function verify(bytes proof_bytes, bytes public_inputs_bytes, bytes vk_bytes) internal pure returns (bool);
+        function verify(bytes proof_bytes, bytes public_inputs_bytes, bytes vk_bytes) external pure returns (bool);
+
+        #[derive(Debug)]
+        function getSumcheckVerifierAddress() external view returns (address);
+
+        #[derive(Debug)]
+        function getShpleminiVerifierAddress() external view returns (address);
+
     }
 
     #[sol(rpc)]

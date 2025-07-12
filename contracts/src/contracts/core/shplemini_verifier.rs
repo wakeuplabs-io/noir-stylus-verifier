@@ -54,15 +54,14 @@ impl ShpleminiVerifierContract {
             )
         })?;
 
-        // deserialize memory and create decider verifier
+        // deserialize memory
         let memory =
             VerifierMemory::deserialize_from_bytes(memory_bytes.as_slice()).map_err(|_| {
                 VerifierErrors::MemoryDeserializationFailed(MemoryDeserializationFailed {})
             })?;
-        let mut decider_verifier = DeciderVerifier::new(memory);
 
         // verify shplemini
-        let shplemini_ok = decider_verifier
+        let shplemini_ok = DeciderVerifier::new(memory)
             .verify_shplemini::<PrecompileHashBackend, PrecompileG1ArithmeticBackend>(
                 &mut transcript,
                 multivariate_challenge,
