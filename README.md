@@ -8,6 +8,12 @@ This project surges as a [proposal](https://github.com/orgs/noir-lang/discussion
 
 Find out everything about the project at the [docs folder](/docs/)
 
+## Cloning the repo
+
+```bash
+git clone --recurse-submodules https://github.com/wakeuplabs-io/noir-stylus-verifier.git
+```
+
 ## Licenses and Attribution
 
 This project includes third-party code licensed under:

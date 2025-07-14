@@ -74,4 +74,5 @@ fmt:
 
 lint:
   cargo fmt --all -- --check
-  cargo clippy --workspace --all-targets -q 
+  cargo clippy --workspace --all-targets -q --fix
+  
