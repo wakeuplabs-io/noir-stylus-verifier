@@ -11,9 +11,9 @@ resolver = "2"
 [workspace.package]
 edition = "2021"
 rust-version = "1.85"
-authors = ["Wakeuplabs <hello@wakeuplabs.io>"]
+authors = ["WakeUp <contact@wakeuplabs.io>"]
 homepage = "https://www.wakeuplabs.io"
-repository = "https:://github.com/wakeuplabs/noir-stylus-verifier"
+repository = "https:://github.com/wakeuplabs-io/noir-stylus-verifier"
 license = "MIT OR Apache-2.0"
 publish = false
 readme = "./README.md"

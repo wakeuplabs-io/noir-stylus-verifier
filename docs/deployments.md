@@ -1,9 +1,12 @@
 
 # Deployments
 
-Deploy with:
+Locally
 
 ```bash 
+# Start the local devnet node
+just nitro-testnode-up
+
 # deploy
 just deploy-contract sumcheck-verifier
 just deploy-contract shplemini-verifier
@@ -12,6 +15,9 @@ just deploy-contract verifier "constructor(address,address)" "{sumcheck-verifier
 # And verify with
 just get-verifier-addresses "{verifier}"
 just verify-proof "{verifier}" "{test_vector_name}"
+
+# Once done, shut down the devnet node
+just nitro-testnode-down
 ```
 
 Sepolia

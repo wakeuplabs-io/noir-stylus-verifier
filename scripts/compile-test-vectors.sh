@@ -1,6 +1,6 @@
 ## script to compile all circuits and witnesses with the specified nargo and bb version below
 
-script_dir="$(dirname "$(realpath "$0")")"
+TEST_VECTORS_DIR="$(dirname "$(realpath "$0")")/../test_vectors"
 
 NARGO_VERSION=1.0.0-beta.6
 BB_VERSION=0.86.0
@@ -16,7 +16,7 @@ fi
 # install bbup: curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/heads/master/barretenberg/bbup/install | bash
 bash -c "bbup -v ${BB_VERSION}"
 
-for folder in "$script_dir"/*; do
+for folder in "$TEST_VECTORS_DIR"/*; do
     # To get just the directory name (e.g., "add3u64" from "/path/to/add3u64")
     dir_name=$(basename "$folder")
 

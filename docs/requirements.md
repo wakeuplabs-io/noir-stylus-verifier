@@ -33,3 +33,5 @@ Barretenberg 0.86.0:
 curl -L curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/heads/master/barretenberg/bbup/install | bash
 bbup -v 0.86.0
 ```
+
+[Docker](https://docs.docker.com/engine/install/): Mostly for running tests.

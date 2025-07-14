@@ -24,6 +24,11 @@ profile-contract contract:
 
 # Deployments
 
+check-contract contract: 
+  just build-contract {{contract}} && \
+  cargo stylus check -e https://sepolia-rollup.arbitrum.io/rpc --wasm-file ./target/wasm32-unknown-unknown/release/{{contract}}.wasm --verbose
+
+
 deploy-contract contract constructor_signature="" *constructor_args="":
   just build-contract {{contract}} && \
   if [ "{{constructor_args}}" = "" ]; then \
@@ -41,10 +46,6 @@ test-ultrahonk:
 test-integration:
   cargo run -p integration -- --rpc-url {{rpc_url}} --priv-key {{private_key}}
 
-check-contract contract: 
-  just build-contract {{contract}} && \
-  cargo stylus check -e https://sepolia-rollup.arbitrum.io/rpc --wasm-file ./target/wasm32-unknown-unknown/release/{{contract}}.wasm --verbose
-
 verify-proof verifier_address test_vector_name:
   #!/usr/bin/env bash
   proof_hex=$(xxd -p -c 1000000 "test_vectors/{{test_vector_name}}/kat/proof" | tr -d '\n')
@@ -59,6 +60,8 @@ get-verifier-addresses verifier_address:
 
 
 # Miscellaneous
+
+check-pr: fmt lint test-ultrahonk test-integration
 
 nitro-testnode-up:
   ./scripts/nitro-testnode.sh --detach
