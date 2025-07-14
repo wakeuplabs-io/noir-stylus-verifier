@@ -1,0 +1,4 @@
+[submodule "vendor/algebra"]
+	path = vendor/algebra
+	url = https://github.com/wakeuplabs-io/algebra
+	branch = v0.5.0-wakeuplabs-stylus-verifier
