@@ -1,0 +1,36 @@
+rpc_url := "http://localhost:8547"
+private_key := "0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659"
+
+nargo-execute:
+  cd circuit && nargo execute
+
+bb-write-vk:
+  cd circuit && bb write_vk --oracle_hash keccak -o target -b target/hello_world.json
+
+bb-prove:
+  cd circuit && bb prove -b ./target/hello_world.json -w ./target/hello_world.gz -o ./target --scheme ultra_honk --oracle_hash keccak
+
+cp-vk:
+  cp circuit/target/vk contracts/assets/vk 
+
+cp-circuit:
+  cp circuit/target/hello_world.json contracts/assets/hello_world.json
+
+# build and deploy the contract
+
+build-contract: nargo-execute bb-write-vk cp-vk cp-circuit
+  cd contracts && cargo build --release --target wasm32-unknown-unknown
+
+deploy-contract global_verifier_address:
+  cd contracts && cargo stylus deploy -e {{rpc_url}} --private-key {{private_key}} --verbose --no-verify --constructor-args {{global_verifier_address}}
+
+verify-contract deployment_tx:
+  cd contracts && cargo stylus verify --endpoint {{rpc_url}} --deployment-tx {{deployment_tx}} --no-verify
+
+# run example scripts
+
+verify-global global_verifier_address:
+  GLOBAL_VERIFIER_ADDRESS={{global_verifier_address}} RPC_ADDRESS={{rpc_url}} node scripts/verify-global.js
+
+verify verifier_address:
+  VERIFIER_ADDRESS={{verifier_address}} RPC_ADDRESS={{rpc_url}} node scripts/verify.js
