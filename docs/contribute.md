@@ -7,9 +7,9 @@ Global variables you can override:
 - `rpc_url`
 - `private_key`
 
-By default these point to a local devnode started with `just nitro-testnode-up`. To overwrite them use: `just --set rpc_url {...} --set private_key {...} {command as usual}`
+By default these point to a local testnode started with `just nitro-testnode-up`. To overwrite them use: `just --set rpc_url {...} --set private_key {...} {command as usual}`
 
-Down below we'll specify all scripts available for development and management of the project. Remember these variables are global, most commands that need them will pull the global config that by default is local devnode. 
+Down below we'll specify all scripts available for development and management of the project. Remember these variables are global, most commands that need them will pull the global config that by default is local testnode. 
 
 Also, stylus allows just one contract per wasm file, to keep them all together in the same contracts package we split them in different feature branches: `verifier`, `sumcheck-verifier` and `shplemini-verifier`. These are the available options for `contract` everywhere you see that as a variable.
 
