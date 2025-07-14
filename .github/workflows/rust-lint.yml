@@ -26,9 +26,14 @@ jobs:
         with:
           toolchain: nightly-2025-06-12
           components: rustfmt, clippy
+
+      - uses: extractions/setup-just@v3
+        with:
+          just-version: 1.38.0 
+
+      - name: Check fmt issues
+        run: just fmt
+
+      - name: Check lint issues
+        run: just lint
       
-      - name: Rustfmt
-        run: cargo fmt --all -- --check
-      
-      - name: Clippy
-        run: cargo clippy --workspace --all-targets -- 

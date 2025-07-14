@@ -40,8 +40,10 @@ Some build scripts for the project.
 
 - `just nitro-testnode-up`: Spin up testnet node
 - `just nitro-testnode-down`: Shut down the nitro testnode
-- `fmt`: Format all with cargo (write mode)
-- `lint`: Check fmt issues and run clippy for other recommendations.
+- `fmt`: Check format issues
+- `lint`: Check for clippy recommendations and issues.
+- `fmt-fix`: Apply fmt fixes
+- `lint-fix`: Apply linting fixes
 
 ## How Can I Contribute?
 

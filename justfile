@@ -70,9 +70,13 @@ nitro-testnode-down:
   ./scripts/nitro-testnode.sh --quit
 
 fmt:
-  cargo fmt --all
+  cargo fmt --package ultrahonk --package contracts --package integration -- --check
+
+fmt-fix:
+  cargo fmt --package ultrahonk --package contracts --package integration
 
 lint:
-  cargo fmt --all -- --check
-  cargo clippy --workspace --all-targets -q --fix
-  
+  cargo clippy --package ultrahonk --package contracts --package integration --no-deps
+
+lint-fix:
+  cargo clippy --package ultrahonk --package contracts --package integration --fix
