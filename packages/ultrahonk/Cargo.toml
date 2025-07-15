@@ -10,7 +10,6 @@ license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-hex.workspace = true
 ark-bn254.workspace = true
 ark-ec.workspace = true
 ark-ff.workspace = true

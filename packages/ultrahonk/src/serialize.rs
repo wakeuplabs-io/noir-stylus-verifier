@@ -1,8 +1,12 @@
 use crate::{
     constants::{NUM_BYTES_FELT, NUM_U64S_FELT},
     decider::types::{ClaimedEvaluations, RelationParameters, VerifierCommitments, VerifierMemory},
+    keys::verification_key::VerifyingKey,
     transcript::Transcript,
-    types::{AllEntities, G1Affine, G1BaseField, G2Affine, G2BaseField, MontFp256, ScalarField},
+    types::{
+        AllEntities, G1Affine, G1BaseField, G2Affine, G2BaseField, HonkProof, MontFp256,
+        PrecomputedEntities, ScalarField,
+    },
     NUM_ALPHAS,
 };
 use alloc::vec::Vec;
@@ -118,14 +122,12 @@ impl<P: MontConfig<NUM_U64S_FELT>> BytesSerializable for Vec<MontFp256<P>> {
         let num_64_limbs: u32 = <MontFp256<P> as PrimeField>::MODULUS_BIT_SIZE.div_ceil(64);
         let fieldsize_bytes: u32 = num_64_limbs * 8;
         let field_size = fieldsize_bytes as usize * MontFp256::<P>::extension_degree() as usize;
-
         let total_size = self.len() as u32 * field_size as u32;
 
         let mut res = Vec::with_capacity(total_size as usize);
         for el in self.iter() {
             res.extend(el.serialize_to_bytes());
         }
-        debug_assert_eq!(res.len(), total_size as usize);
 
         res
     }
@@ -137,16 +139,14 @@ impl<P: MontConfig<NUM_U64S_FELT>> BytesDeserializable for Vec<MontFp256<P>> {
             <MontFp256<P> as PrimeField>::MODULUS_BIT_SIZE.div_ceil(64) as usize;
         let fieldsize_bytes: usize = num_64_limbs * 8;
 
-        let size = bytes.len();
-        let mut offset: usize = 0;
-
         // Check sizes
-        let num_elements = size / fieldsize_bytes as usize;
-        if num_elements * fieldsize_bytes as usize != size {
+        let num_elements = bytes.len() / fieldsize_bytes;
+        if num_elements * fieldsize_bytes != bytes.len() {
             return Err(SerdeError::InvalidLength);
         }
 
         // Read data
+        let mut offset: usize = 0;
         let mut res = Vec::with_capacity(num_elements);
         for _ in 0..num_elements {
             let (val, size) =
@@ -156,7 +156,7 @@ impl<P: MontConfig<NUM_U64S_FELT>> BytesDeserializable for Vec<MontFp256<P>> {
             res.push(val);
         }
 
-        Ok((res, size))
+        Ok((res, bytes.len()))
     }
 }
 
@@ -185,11 +185,8 @@ impl BytesDeserializable for G1Affine {
     fn deserialize_from_bytes(bytes: &[u8]) -> Result<(Self, usize), SerdeError> {
         let mut cursor = 0;
 
-        let (x, x_size) = G1BaseField::deserialize_from_bytes(&bytes[cursor..])?;
-        cursor += x_size;
-
-        let (y, y_size) = G1BaseField::deserialize_from_bytes(&bytes[cursor..])?;
-        cursor += y_size;
+        let x = deserialize_cursor::<G1BaseField>(bytes, &mut cursor)?;
+        let y = deserialize_cursor::<G1BaseField>(bytes, &mut cursor)?;
 
         Ok((
             G1Affine {
@@ -236,17 +233,10 @@ impl BytesDeserializable for G2Affine {
     /// specified here: https://eips.ethereum.org/EIPS/eip-197#encoding
     fn deserialize_from_bytes(bytes: &[u8]) -> Result<(Self, usize), SerdeError> {
         let mut cursor = 0;
-        let (x_c1, x_c1_size) = G1BaseField::deserialize_from_bytes(bytes).unwrap();
-        cursor += x_c1_size;
-
-        let (x_c0, x_c0_size) = G1BaseField::deserialize_from_bytes(&bytes[cursor..]).unwrap();
-        cursor += x_c0_size;
-
-        let (y_c1, y_c1_size) = G1BaseField::deserialize_from_bytes(&bytes[cursor..]).unwrap();
-        cursor += y_c1_size;
-
-        let (y_c0, y_c0_size) = G1BaseField::deserialize_from_bytes(&bytes[cursor..]).unwrap();
-        cursor += y_c0_size;
+        let x_c1 = deserialize_cursor::<G1BaseField>(bytes, &mut cursor)?;
+        let x_c0 = deserialize_cursor::<G1BaseField>(bytes, &mut cursor)?;
+        let y_c1 = deserialize_cursor::<G1BaseField>(bytes, &mut cursor)?;
+        let y_c0 = deserialize_cursor::<G1BaseField>(bytes, &mut cursor)?;
 
         let x = G2BaseField { c0: x_c0, c1: x_c1 };
         let y = G2BaseField { c0: y_c0, c1: y_c1 };
@@ -285,23 +275,17 @@ impl BytesDeserializable for VerifierCommitments {
 
         // Deserialize witness commitments
         for commitment in commitments.witness.iter_mut() {
-            let (val, size) = G1Affine::deserialize_from_bytes(&bytes[cursor..]).unwrap();
-            *commitment = val;
-            cursor += size;
+            *commitment = deserialize_cursor::<G1Affine>(bytes, &mut cursor)?;
         }
 
         // Deserialize precomputed commitments
         for commitment in commitments.precomputed.iter_mut() {
-            let (val, size) = G1Affine::deserialize_from_bytes(&bytes[cursor..]).unwrap();
-            *commitment = val;
-            cursor += size;
+            *commitment = deserialize_cursor::<G1Affine>(bytes, &mut cursor)?;
         }
 
         // Deserialize shifted witness commitments
         for commitment in commitments.shifted_witness.iter_mut() {
-            let (val, size) = G1Affine::deserialize_from_bytes(&bytes[cursor..]).unwrap();
-            *commitment = val;
-            cursor += size;
+            *commitment = deserialize_cursor::<G1Affine>(bytes, &mut cursor)?;
         }
 
         Ok((
@@ -349,37 +333,25 @@ impl BytesDeserializable for RelationParameters {
         let mut offset = 0;
 
         // Deserialize scalar field elements
-        let (eta_1, eta_1_size) = ScalarField::deserialize_from_bytes(&bytes[offset..]).unwrap();
-        offset += eta_1_size;
-        let (eta_2, eta_2_size) = ScalarField::deserialize_from_bytes(&bytes[offset..]).unwrap();
-        offset += eta_2_size;
-        let (eta_3, eta_3_size) = ScalarField::deserialize_from_bytes(&bytes[offset..]).unwrap();
-        offset += eta_3_size;
-        let (beta, beta_size) = ScalarField::deserialize_from_bytes(&bytes[offset..]).unwrap();
-        offset += beta_size;
-        let (gamma, gamma_size) = ScalarField::deserialize_from_bytes(&bytes[offset..]).unwrap();
-        offset += gamma_size;
-        let (public_input_delta, public_input_delta_size) =
-            ScalarField::deserialize_from_bytes(&bytes[offset..]).unwrap();
-        offset += public_input_delta_size;
+        let eta_1 = deserialize_cursor::<ScalarField>(bytes, &mut offset)?;
+        let eta_2 = deserialize_cursor::<ScalarField>(bytes, &mut offset)?;
+        let eta_3 = deserialize_cursor::<ScalarField>(bytes, &mut offset)?;
+        let beta = deserialize_cursor::<ScalarField>(bytes, &mut offset)?;
+        let gamma = deserialize_cursor::<ScalarField>(bytes, &mut offset)?;
+        let public_input_delta = deserialize_cursor::<ScalarField>(bytes, &mut offset)?;
 
         // Deserialize fixed-size alphas array
         let mut alphas = [ScalarField::default(); NUM_ALPHAS];
         for alpha in alphas.iter_mut() {
-            let (val, size) = ScalarField::deserialize_from_bytes(&bytes[offset..]).unwrap();
-            offset += size;
-            *alpha = val;
+            *alpha = deserialize_cursor::<ScalarField>(bytes, &mut offset)?;
         }
 
         // Deserialize dynamic-size gate_challenges
-        let (challenges_len, u32_size) = u32::deserialize_from_bytes(&bytes[offset..]).unwrap();
-        offset += u32_size;
+        let challenges_len = deserialize_cursor::<u32>(bytes, &mut offset)?;
 
         let mut gate_challenges = Vec::with_capacity(challenges_len as usize);
         for _ in 0..challenges_len {
-            let (val, size) = ScalarField::deserialize_from_bytes(&bytes[offset..]).unwrap();
-            offset += size;
-            gate_challenges.push(val);
+            gate_challenges.push(deserialize_cursor::<ScalarField>(bytes, &mut offset)?);
         }
 
         Ok((
@@ -420,21 +392,15 @@ impl BytesDeserializable for ClaimedEvaluations {
         let mut evaluations = AllEntities::default();
 
         for eval in evaluations.witness.iter_mut() {
-            let (val, size) = ScalarField::deserialize_from_bytes(&bytes[offset..]).unwrap();
-            offset += size;
-            *eval = val;
+            *eval = deserialize_cursor::<ScalarField>(bytes, &mut offset)?;
         }
 
         for eval in evaluations.precomputed.iter_mut() {
-            let (val, size) = ScalarField::deserialize_from_bytes(&bytes[offset..]).unwrap();
-            offset += size;
-            *eval = val;
+            *eval = deserialize_cursor::<ScalarField>(bytes, &mut offset)?;
         }
 
         for eval in evaluations.shifted_witness.iter_mut() {
-            let (val, size) = ScalarField::deserialize_from_bytes(&bytes[offset..]).unwrap();
-            offset += size;
-            *eval = val;
+            *eval = deserialize_cursor::<ScalarField>(bytes, &mut offset)?;
         }
 
         Ok((evaluations, offset))
@@ -457,15 +423,9 @@ impl BytesDeserializable for VerifierMemory {
     fn deserialize_from_bytes(bytes: &[u8]) -> Result<(Self, usize), SerdeError> {
         let mut offset = 0;
 
-        let (verifier_commitments, size) =
-            VerifierCommitments::deserialize_from_bytes(&bytes[offset..]).unwrap();
-        offset += size;
-        let (relation_parameters, size) =
-            RelationParameters::deserialize_from_bytes(&bytes[offset..]).unwrap();
-        offset += size;
-        let (claimed_evaluations, size) =
-            ClaimedEvaluations::deserialize_from_bytes(&bytes[offset..]).unwrap();
-        offset += size;
+        let verifier_commitments = deserialize_cursor::<VerifierCommitments>(bytes, &mut offset)?;
+        let relation_parameters = deserialize_cursor::<RelationParameters>(bytes, &mut offset)?;
+        let claimed_evaluations = deserialize_cursor::<ClaimedEvaluations>(bytes, &mut offset)?;
 
         Ok((
             VerifierMemory {
@@ -510,8 +470,7 @@ impl BytesDeserializable for Transcript {
         let mut offset = 0;
 
         // Deserialize proof_data with size prefix
-        let (proof_data_size, size) = u32::deserialize_from_bytes(&bytes[offset..])?;
-        offset += size;
+        let proof_data_size = deserialize_cursor::<u32>(bytes, &mut offset)?;
         if offset + proof_data_size as usize > bytes.len() {
             return Err(SerdeError::InvalidLength);
         }
@@ -521,22 +480,16 @@ impl BytesDeserializable for Transcript {
         offset += proof_data_size as usize;
 
         // Deserialize counters and state (fixed sizes)
-        let (num_frs_written, size) = u32::deserialize_from_bytes(&bytes[offset..])?;
-        offset += size;
-        let (num_frs_read, size) = u32::deserialize_from_bytes(&bytes[offset..])?;
-        offset += size;
-        let (round_number, size) = u32::deserialize_from_bytes(&bytes[offset..])?;
-        offset += size;
+        let num_frs_written = deserialize_cursor::<u32>(bytes, &mut offset)?;
+        let num_frs_read = deserialize_cursor::<u32>(bytes, &mut offset)?;
+        let round_number = deserialize_cursor::<u32>(bytes, &mut offset)?;
         if offset >= bytes.len() {
             return Err(SerdeError::InvalidLength);
         }
-        let is_first_challenge_byte = bytes[offset];
-        offset += 1;
-        let is_first_challenge = is_first_challenge_byte != 0;
+        let is_first_challenge = deserialize_cursor::<bool>(bytes, &mut offset)?;
 
         // Deserialize current_round_data with size prefix
-        let (current_round_data_size, size) = u32::deserialize_from_bytes(&bytes[offset..])?;
-        offset += size;
+        let current_round_data_size = deserialize_cursor::<u32>(bytes, &mut offset)?;
         if offset + current_round_data_size as usize > bytes.len() {
             return Err(SerdeError::InvalidLength);
         }
@@ -546,8 +499,7 @@ impl BytesDeserializable for Transcript {
         offset += current_round_data_size as usize;
 
         // Deserialize previous_challenge (fixed size)
-        let (previous_challenge, size) = ScalarField::deserialize_from_bytes(&bytes[offset..])?;
-        offset += size;
+        let previous_challenge = deserialize_cursor::<ScalarField>(bytes, &mut offset)?;
 
         Ok((
             Transcript {
@@ -561,6 +513,40 @@ impl BytesDeserializable for Transcript {
             },
             offset,
         ))
+    }
+}
+
+impl BytesDeserializable for VerifyingKey {
+    fn deserialize_from_bytes(buf: &[u8]) -> Result<(Self, usize), SerdeError> {
+        let mut offset = 0;
+        let circuit_size = deserialize_cursor::<u64>(buf, &mut offset)?;
+        let _log_circuit_size = deserialize_cursor::<u64>(buf, &mut offset)?;
+        let num_public_inputs = deserialize_cursor::<u64>(buf, &mut offset)?;
+        let pub_inputs_offset = deserialize_cursor::<u64>(buf, &mut offset)?;
+
+        let mut commitments = PrecomputedEntities::default();
+
+        for el in commitments.iter_mut() {
+            *el = deserialize_cursor::<G1Affine>(buf, &mut offset)?;
+        }
+
+        Ok((
+            Self {
+                circuit_size: circuit_size as u32,
+                num_public_inputs: num_public_inputs as u32,
+                pub_inputs_offset: pub_inputs_offset as u32,
+                commitments,
+            },
+            offset,
+        ))
+    }
+}
+
+impl BytesDeserializable for HonkProof {
+    fn deserialize_from_bytes(buf: &[u8]) -> Result<(Self, usize), SerdeError> {
+        let mut offset = 0;
+        let proof = deserialize_cursor::<Vec<ScalarField>>(buf, &mut offset)?;
+        Ok((Self::new(proof), offset))
     }
 }
 
@@ -711,6 +697,28 @@ mod tests {
         for test_case in test_cases {
             let serialized = test_case.serialize_to_bytes();
             let deserialized = RelationParameters::deserialize_from_bytes(&serialized).unwrap();
+            assert_eq!(test_case, deserialized.0);
+        }
+    }
+
+    #[test]
+    fn test_verifier_memory_serialization() {
+        let test_cases = vec![VerifierMemory::default()];
+
+        for test_case in test_cases {
+            let serialized = test_case.serialize_to_bytes();
+            let deserialized = VerifierMemory::deserialize_from_bytes(&serialized).unwrap();
+            assert_eq!(test_case, deserialized.0);
+        }
+    }
+
+    #[test]
+    fn test_transcript_serialization() {
+        let test_cases = vec![Transcript::default()];
+
+        for test_case in test_cases {
+            let serialized = test_case.serialize_to_bytes();
+            let deserialized = Transcript::deserialize_from_bytes(&serialized).unwrap();
             assert_eq!(test_case, deserialized.0);
         }
     }

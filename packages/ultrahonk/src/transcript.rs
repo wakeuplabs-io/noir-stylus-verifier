@@ -9,6 +9,7 @@ use ark_ec::AffineRepr;
 use ark_ff::{BigInteger, PrimeField, Zero};
 
 #[derive(Clone)]
+#[cfg_attr(test, derive(Debug, PartialEq, Eq))]
 pub struct Transcript {
     pub(crate) proof_data: Vec<ScalarField>,
     pub(crate) num_frs_written: usize, // the number of bb::frs written to proof_data by the prover or the verifier

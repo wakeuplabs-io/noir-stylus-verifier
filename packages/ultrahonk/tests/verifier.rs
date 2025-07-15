@@ -92,7 +92,7 @@ macro_rules! generate_tests {
 
                 // parse proof file
                 let proof_u8 = std::fs::read(proof_file).unwrap();
-                let proof = HonkProof::from_buffer(&proof_u8).unwrap();
+                let proof = HonkProof::deserialize_from_bytes(&proof_u8).unwrap().0;
 
                 // parse public_inputs file
                 let public_inputs_u8 = std::fs::read(public_inputs_file).unwrap();
@@ -100,7 +100,7 @@ macro_rules! generate_tests {
 
                 // parse verification key file
                 let vk_u8 = std::fs::read(vk_file).unwrap();
-                let vk = VerifyingKey::from_buffer(&vk_u8).unwrap();
+                let vk = VerifyingKey::deserialize_from_bytes(&vk_u8).unwrap().0;
 
                 let is_valid =
                     UltraHonk::verify::<ArkKeccak256, ArkHonkCurve>(proof, &public_inputs, &vk).unwrap();

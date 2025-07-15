@@ -68,11 +68,11 @@ impl VerifierContract {
             .0;
 
         // parse proof file
-        let proof = HonkProof::from_buffer(&proof_bytes).unwrap();
+        let proof = HonkProof::deserialize_from_bytes(&proof_bytes).unwrap().0;
         let proof = proof.insert_public_inputs(public_inputs);
 
         // parse verification key file
-        let vk = VerifyingKey::from_buffer(&vk_bytes).unwrap();
+        let vk = VerifyingKey::deserialize_from_bytes(&vk_bytes).unwrap().0;
 
         // create transcript and memory
         let mut transcript = Transcript::new_verifier(proof);

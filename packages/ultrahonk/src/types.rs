@@ -1,6 +1,5 @@
 use crate::alloc::borrow::ToOwned;
 use crate::constants::NUM_U64S_FELT;
-use crate::serialize::{BytesDeserializable, BytesSerializable};
 use alloc::vec::Vec;
 use ark_bn254::{g1::Config as G1Config, g2::Config as G2Config, Fq, Fq2, Fr};
 use ark_ec::short_weierstrass::Affine;
@@ -79,16 +78,6 @@ impl HonkProof {
 
     pub fn inner(self) -> Vec<ScalarField> {
         self.proof
-    }
-
-    pub fn to_buffer(&self) -> Vec<u8> {
-        self.proof.serialize_to_bytes()
-    }
-
-    pub fn from_buffer(buf: &[u8]) -> HonkProofResult<Self> {
-        let (res, _) = Vec::<ScalarField>::deserialize_from_bytes(buf)
-            .map_err(|_| HonkProofError::InvalidProofLength)?;
-        Ok(Self::new(res))
     }
 
     pub fn separate_proof_and_public_inputs(
