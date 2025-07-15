@@ -86,7 +86,7 @@ impl HonkProof {
     }
 
     pub fn from_buffer(buf: &[u8]) -> HonkProofResult<Self> {
-        let res = Vec::<ScalarField>::deserialize_from_bytes(buf)
+        let (res, _) = Vec::<ScalarField>::deserialize_from_bytes(buf)
             .map_err(|_| HonkProofError::InvalidProofLength)?;
         Ok(Self::new(res))
     }
@@ -110,6 +110,7 @@ pub(crate) const NUM_ALL_ENTITIES: usize =
     WITNESS_ENTITIES_SIZE + PRECOMPUTED_ENTITIES_SIZE + SHIFTED_WITNESS_ENTITIES_SIZE;
 
 #[derive(Default)]
+#[cfg_attr(test, derive(Debug, PartialEq, Eq))]
 pub(crate) struct AllEntities<T: Default> {
     pub(crate) witness: WitnessEntities<T>,
     pub(crate) precomputed: PrecomputedEntities<T>,
@@ -128,6 +129,7 @@ impl<T: Default> AllEntities<T> {
 pub(crate) const WITNESS_ENTITIES_SIZE: usize = 8;
 
 #[derive(Default)]
+#[cfg_attr(test, derive(Debug, PartialEq, Eq))]
 pub(crate) struct WitnessEntities<T: Default> {
     pub(crate) elements: [T; WITNESS_ENTITIES_SIZE],
 }
@@ -135,6 +137,7 @@ pub(crate) struct WitnessEntities<T: Default> {
 pub(crate) const SHIFTED_WITNESS_ENTITIES_SIZE: usize = 5;
 
 #[derive(Default)]
+#[cfg_attr(test, derive(Debug, PartialEq, Eq))]
 pub(crate) struct ShiftedWitnessEntities<T: Default> {
     pub(crate) elements: [T; SHIFTED_WITNESS_ENTITIES_SIZE],
 }
@@ -288,6 +291,7 @@ impl<T: Default> ShiftedWitnessEntities<T> {
 pub(crate) const PRECOMPUTED_ENTITIES_SIZE: usize = 27;
 
 #[derive(Default, Clone)]
+#[cfg_attr(test, derive(Debug, PartialEq, Eq))]
 pub(crate) struct PrecomputedEntities<T: Default> {
     pub(crate) elements: [T; PRECOMPUTED_ENTITIES_SIZE],
 }

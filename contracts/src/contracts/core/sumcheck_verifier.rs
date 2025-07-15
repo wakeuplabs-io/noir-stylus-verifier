@@ -38,13 +38,15 @@ impl SumcheckVerifierContract {
         let mut transcript = Transcript::deserialize_from_bytes(transcript_bytes.as_slice())
             .map_err(|_| {
                 VerifierErrors::TranscriptDeserializationFailed(TranscriptDeserializationFailed {})
-            })?;
+            })?
+            .0;
 
         // deserialize memory and create decider verifier
-        let memory =
-            VerifierMemory::deserialize_from_bytes(memory_bytes.as_slice()).map_err(|_| {
+        let memory = VerifierMemory::deserialize_from_bytes(memory_bytes.as_slice())
+            .map_err(|_| {
                 VerifierErrors::MemoryDeserializationFailed(MemoryDeserializationFailed {})
-            })?;
+            })?
+            .0;
         let mut decider_verifier = DeciderVerifier::new(memory);
 
         // verify sumcheck

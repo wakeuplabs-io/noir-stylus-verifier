@@ -20,6 +20,7 @@ pub(crate) const BATCHED_RELATION_PARTIAL_LENGTH: usize = MAX_PARTIAL_RELATION_L
 pub(crate) type ClaimedEvaluations = AllEntities<ScalarField>;
 pub(crate) type VerifierCommitments = AllEntities<G1Affine>;
 
+#[cfg_attr(test, derive(Debug, Default, PartialEq, Eq))]
 pub(crate) struct RelationParameters {
     pub(crate) eta_1: ScalarField,
     pub(crate) eta_2: ScalarField,

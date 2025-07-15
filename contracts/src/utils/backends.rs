@@ -53,7 +53,9 @@ impl ultrahonk::backends::G1ArithmeticBackend for PrecompileG1ArithmeticBackend 
         };
 
         // Deserialize the affine coordinates returned from the precompile
-        G1Affine::deserialize_from_bytes(&res_xy_bytes).map_err(|_| G1ArithmeticError)
+        let (res, _) =
+            G1Affine::deserialize_from_bytes(&res_xy_bytes).map_err(|_| G1ArithmeticError)?;
+        Ok(res)
     }
 
     /// Calls the `ecMul` precompile with the given scalar and point, handling
@@ -76,7 +78,9 @@ impl ultrahonk::backends::G1ArithmeticBackend for PrecompileG1ArithmeticBackend 
         };
 
         // Deserialize the affine coordinates returned from the precompile
-        Ok(G1Affine::deserialize_from_bytes(res_xy_bytes.as_ref()).unwrap())
+        let (res, _) = G1Affine::deserialize_from_bytes(res_xy_bytes.as_ref())
+            .map_err(|_| G1ArithmeticError)?;
+        Ok(res)
     }
 
     /// Calls the `ecPairing` precompile with the given points, handling

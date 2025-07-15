@@ -42,23 +42,25 @@ impl ShpleminiVerifierContract {
         let mut transcript = Transcript::deserialize_from_bytes(transcript_bytes.as_slice())
             .map_err(|_| {
                 VerifierErrors::TranscriptDeserializationFailed(TranscriptDeserializationFailed {})
-            })?;
+            })?
+            .0;
 
         // deserialize multivariate challenge
-        let multivariate_challenge = Vec::<ScalarField>::deserialize_from_bytes(
-            multivariate_challenge.as_slice(),
-        )
-        .map_err(|_| {
-            VerifierErrors::MultivariateChallengeDeserializationFailed(
-                MultivariateChallengeDeserializationFailed {},
-            )
-        })?;
+        let multivariate_challenge =
+            Vec::<ScalarField>::deserialize_from_bytes(multivariate_challenge.as_slice())
+                .map_err(|_| {
+                    VerifierErrors::MultivariateChallengeDeserializationFailed(
+                        MultivariateChallengeDeserializationFailed {},
+                    )
+                })?
+                .0;
 
         // deserialize memory
-        let memory =
-            VerifierMemory::deserialize_from_bytes(memory_bytes.as_slice()).map_err(|_| {
+        let memory = VerifierMemory::deserialize_from_bytes(memory_bytes.as_slice())
+            .map_err(|_| {
                 VerifierErrors::MemoryDeserializationFailed(MemoryDeserializationFailed {})
-            })?;
+            })?
+            .0;
 
         // verify shplemini
         let shplemini_ok = DeciderVerifier::new(memory)

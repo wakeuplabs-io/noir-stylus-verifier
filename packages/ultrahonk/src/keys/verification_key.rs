@@ -28,15 +28,21 @@ impl VerifyingKey {
 
         // Read data
         let mut offset = 0;
-        let circuit_size = u64::deserialize_from_bytes_with_offset(buf, &mut offset).unwrap();
-        let _log_circuit_size = u64::deserialize_from_bytes_with_offset(buf, &mut offset).unwrap();
-        let num_public_inputs = u64::deserialize_from_bytes_with_offset(buf, &mut offset).unwrap();
-        let pub_inputs_offset = u64::deserialize_from_bytes_with_offset(buf, &mut offset).unwrap();
+        let (circuit_size, size) = u64::deserialize_from_bytes(&buf[offset..]).unwrap();
+        offset += size;
+        let (_log_circuit_size, size) = u64::deserialize_from_bytes(&buf[offset..]).unwrap();
+        offset += size;
+        let (num_public_inputs, size) = u64::deserialize_from_bytes(&buf[offset..]).unwrap();
+        offset += size;
+        let (pub_inputs_offset, size) = u64::deserialize_from_bytes(&buf[offset..]).unwrap();
+        offset += size;
 
         let mut commitments = PrecomputedEntities::default();
 
         for el in commitments.iter_mut() {
-            *el = G1Affine::deserialize_from_bytes_with_offset(buf, &mut offset).unwrap();
+            let (val, size) = G1Affine::deserialize_from_bytes(&buf[offset..]).unwrap();
+            *el = val;
+            offset += size;
         }
 
         debug_assert!(offset == Self::SER_FULL_SIZE || offset == Self::SER_COMPRESSED_SIZE);

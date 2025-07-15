@@ -63,8 +63,9 @@ impl VerifierContract {
         vk_bytes: Bytes,
     ) -> Result<bool, VerifierErrors> {
         // parse public_inputs file
-        let public_inputs =
-            Vec::<ScalarField>::deserialize_from_bytes(&public_inputs_bytes).unwrap();
+        let public_inputs = Vec::<ScalarField>::deserialize_from_bytes(&public_inputs_bytes)
+            .unwrap()
+            .0;
 
         // parse proof file
         let proof = HonkProof::from_buffer(&proof_bytes).unwrap();

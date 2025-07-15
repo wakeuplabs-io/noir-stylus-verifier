@@ -22,7 +22,7 @@ async fn ec_add(ctx: TestContext) -> Result<()> {
         .call()
         .await?
         ._0;
-    let c: G1Affine = G1Affine::deserialize_from_bytes(&c_bytes).unwrap();
+    let (c, _) = G1Affine::deserialize_from_bytes(&c_bytes).unwrap();
 
     assert_eq_result!(c, a + b)
 }
@@ -41,7 +41,7 @@ async fn ec_mul(ctx: TestContext) -> Result<()> {
         .call()
         .await?
         ._0;
-    let c: G1Affine = G1Affine::deserialize_from_bytes(&c_bytes).unwrap();
+    let (c, _) = G1Affine::deserialize_from_bytes(&c_bytes).unwrap();
 
     let mut expected = b.into_group();
     expected *= a;

@@ -19,8 +19,12 @@ struct PrecompileTestContract;
 impl PrecompileTestContract {
     /// Invokes the `ecAdd` precompile on the given inputs
     pub fn test_ec_add(&self, a_bytes: Bytes, b_bytes: Bytes) -> Result<Bytes, Vec<u8>> {
-        let a: G1Affine = G1Affine::deserialize_from_bytes(a_bytes.as_slice()).unwrap();
-        let b: G1Affine = G1Affine::deserialize_from_bytes(b_bytes.as_slice()).unwrap();
+        let a: G1Affine = G1Affine::deserialize_from_bytes(a_bytes.as_slice())
+            .unwrap()
+            .0;
+        let b: G1Affine = G1Affine::deserialize_from_bytes(b_bytes.as_slice())
+            .unwrap()
+            .0;
 
         let c = PrecompileG1ArithmeticBackend::ec_add(a, b).unwrap();
         Ok(c.serialize_to_bytes().into())
@@ -28,8 +32,12 @@ impl PrecompileTestContract {
 
     /// Invokes the `ecMul` precompile on the given inputs
     pub fn test_ec_mul(&self, a_bytes: Bytes, b_bytes: Bytes) -> Result<Bytes, Vec<u8>> {
-        let a: ScalarField = ScalarField::deserialize_from_bytes(a_bytes.as_slice()).unwrap();
-        let b: G1Affine = G1Affine::deserialize_from_bytes(b_bytes.as_slice()).unwrap();
+        let a: ScalarField = ScalarField::deserialize_from_bytes(a_bytes.as_slice())
+            .unwrap()
+            .0;
+        let b: G1Affine = G1Affine::deserialize_from_bytes(b_bytes.as_slice())
+            .unwrap()
+            .0;
         let c = PrecompileG1ArithmeticBackend::ec_scalar_mul(a, b).unwrap();
 
         Ok(c.serialize_to_bytes().into())
@@ -37,8 +45,12 @@ impl PrecompileTestContract {
 
     /// Invokes the `ecPairing` precompile on the given inputs
     pub fn test_ec_pairing(&self, a_bytes: Bytes, b_bytes: Bytes) -> Result<bool, Vec<u8>> {
-        let a: G1Affine = G1Affine::deserialize_from_bytes(a_bytes.as_slice()).unwrap();
-        let b: G2Affine = G2Affine::deserialize_from_bytes(b_bytes.as_slice()).unwrap();
+        let a: G1Affine = G1Affine::deserialize_from_bytes(a_bytes.as_slice())
+            .unwrap()
+            .0;
+        let b: G2Affine = G2Affine::deserialize_from_bytes(b_bytes.as_slice())
+            .unwrap()
+            .0;
 
         Ok(PrecompileG1ArithmeticBackend::ec_pairing_check(a, -a, b, b).unwrap())
     }

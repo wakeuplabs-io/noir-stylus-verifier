@@ -187,7 +187,7 @@ impl Transcript {
         // oracle, removing the need to pre-hash to compress and then hash with a random oracle, as we previously did
         // with Pedersen and Blake3s.
         let new_challenge_bytes = H::hash(full_buffer.serialize_to_bytes().as_slice());
-        let new_challenge = ScalarField::deserialize_from_bytes(&new_challenge_bytes).unwrap();
+        let (new_challenge, _) = ScalarField::deserialize_from_bytes(&new_challenge_bytes).unwrap();
         let new_challenges = Self::split_challenge(new_challenge);
 
         // update previous challenge buffer for next time we call this function

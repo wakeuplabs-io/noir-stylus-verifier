@@ -96,7 +96,7 @@ macro_rules! generate_tests {
 
                 // parse public_inputs file
                 let public_inputs_u8 = std::fs::read(public_inputs_file).unwrap();
-                let public_inputs = Vec::<ScalarField>::deserialize_from_bytes(&public_inputs_u8).unwrap();
+                let public_inputs = Vec::<ScalarField>::deserialize_from_bytes(&public_inputs_u8).unwrap().0;
 
                 // parse verification key file
                 let vk_u8 = std::fs::read(vk_file).unwrap();
