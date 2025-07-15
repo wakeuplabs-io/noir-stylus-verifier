@@ -1,5 +1,8 @@
 use crate::serialize::BytesDeserializable;
-use crate::types::{G1Affine, G1BaseField, HonkProofError, HonkProofResult, PrecomputedEntities, PRECOMPUTED_ENTITIES_SIZE};
+use crate::types::{
+    G1Affine, G1BaseField, HonkProofError, HonkProofResult, PrecomputedEntities,
+    PRECOMPUTED_ENTITIES_SIZE,
+};
 use ark_ff::PrimeField;
 use serde::{Deserialize, Serialize};
 
@@ -8,7 +11,6 @@ pub struct VerifyingKey {
     pub circuit_size: u32,
     pub(crate) num_public_inputs: u32,
     pub(crate) pub_inputs_offset: u32,
-    pub(crate) pairing_inputs_public_input_key: PublicComponentKey,
     pub(crate) commitments: PrecomputedEntities<G1Affine>,
 }
 
@@ -22,17 +24,6 @@ impl Default for PublicComponentKey {
         Self {
             start_idx: u32::MAX,
         }
-    }
-}
-impl PublicComponentKey {
-    pub(crate) fn new(start_idx: u32) -> Self {
-        Self { start_idx }
-    }
-    pub(crate) fn set(&mut self, start_idx: u32) {
-        self.start_idx = start_idx;
-    }
-    pub(crate) fn is_set(&self) -> bool {
-        self.start_idx != u32::MAX
     }
 }
 
@@ -55,13 +46,6 @@ impl VerifyingKey {
         let _log_circuit_size = u64::deserialize_from_bytes_with_offset(buf, &mut offset).unwrap();
         let num_public_inputs = u64::deserialize_from_bytes_with_offset(buf, &mut offset).unwrap();
         let pub_inputs_offset = u64::deserialize_from_bytes_with_offset(buf, &mut offset).unwrap();
-        let pairing_inputs_public_input_key = if size == Self::SER_FULL_SIZE {
-            PublicComponentKey {
-                start_idx: u32::deserialize_from_bytes_with_offset(buf, &mut offset).unwrap(),
-            }
-        } else {
-            Default::default()
-        };
 
         let mut commitments = PrecomputedEntities::default();
 
@@ -76,7 +60,6 @@ impl VerifyingKey {
             num_public_inputs: num_public_inputs as u32,
             pub_inputs_offset: pub_inputs_offset as u32,
             commitments,
-            pairing_inputs_public_input_key,
         })
     }
 }

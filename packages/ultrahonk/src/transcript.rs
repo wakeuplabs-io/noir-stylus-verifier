@@ -1,4 +1,4 @@
-use crate::alloc::{borrow::ToOwned, string::String};
+use crate::alloc::borrow::ToOwned;
 use crate::backends::HashBackend;
 use crate::constants::{NUM_BASEFIELD_ELEMENTS, NUM_SCALARFIELD_ELEMENTS};
 use crate::serialize::{BytesDeserializable, BytesSerializable};
@@ -109,7 +109,10 @@ impl Transcript {
         Ok(res)
     }
 
-    pub(crate) fn receive_fr_vec_from_verifier(&mut self, n: usize) -> HonkProofResult<Vec<ScalarField>> {
+    pub(crate) fn receive_fr_vec_from_verifier(
+        &mut self,
+        n: usize,
+    ) -> HonkProofResult<Vec<ScalarField>> {
         let elements = self.receive_n_from_prover(NUM_SCALARFIELD_ELEMENTS * n)?;
 
         let elements = elements
@@ -199,7 +202,10 @@ impl Transcript {
         res
     }
 
-    pub(crate) fn get_challenges<H: HashBackend>(&mut self, num_challenges: usize) -> Vec<ScalarField> {
+    pub(crate) fn get_challenges<H: HashBackend>(
+        &mut self,
+        num_challenges: usize,
+    ) -> Vec<ScalarField> {
         let mut res = Vec::with_capacity(num_challenges);
         for _ in 0..num_challenges >> 1 {
             let challenge_buffer = self.get_next_duplex_challenge_buffer::<H>(2);
@@ -215,4 +221,3 @@ impl Transcript {
         res
     }
 }
-

@@ -2,7 +2,10 @@ use crate::{
     constants::{NUM_BYTES_FELT, NUM_U64S_FELT},
     decider::types::{ClaimedEvaluations, RelationParameters, VerifierCommitments, VerifierMemory},
     transcript::Transcript,
-    types::{AllEntities, G1Affine, G1BaseField, G2Affine, G2BaseField, MontFp256, ScalarField, PRECOMPUTED_ENTITIES_SIZE, SHIFTED_WITNESS_ENTITIES_SIZE, WITNESS_ENTITIES_SIZE},
+    types::{
+        AllEntities, G1Affine, G1BaseField, G2Affine, G2BaseField, MontFp256, ScalarField,
+        PRECOMPUTED_ENTITIES_SIZE, SHIFTED_WITNESS_ENTITIES_SIZE, WITNESS_ENTITIES_SIZE,
+    },
     NUM_ALPHAS,
 };
 use alloc::vec::Vec;
@@ -291,7 +294,9 @@ impl BytesSerializable for VerifierCommitments {
 }
 
 impl BytesDeserializable for VerifierCommitments {
-    const SER_LEN: usize = WITNESS_ENTITIES_SIZE * G1Affine::SER_LEN + PRECOMPUTED_ENTITIES_SIZE * G1Affine::SER_LEN + SHIFTED_WITNESS_ENTITIES_SIZE * G1Affine::SER_LEN;
+    const SER_LEN: usize = WITNESS_ENTITIES_SIZE * G1Affine::SER_LEN
+        + PRECOMPUTED_ENTITIES_SIZE * G1Affine::SER_LEN
+        + SHIFTED_WITNESS_ENTITIES_SIZE * G1Affine::SER_LEN;
 
     fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
         let mut offset = 0;
@@ -411,8 +416,9 @@ impl BytesSerializable for ClaimedEvaluations {
 }
 
 impl BytesDeserializable for ClaimedEvaluations {
-    const SER_LEN: usize = WITNESS_ENTITIES_SIZE * ScalarField::SER_LEN + PRECOMPUTED_ENTITIES_SIZE * ScalarField::SER_LEN + SHIFTED_WITNESS_ENTITIES_SIZE * ScalarField::SER_LEN;
-
+    const SER_LEN: usize = WITNESS_ENTITIES_SIZE * ScalarField::SER_LEN
+        + PRECOMPUTED_ENTITIES_SIZE * ScalarField::SER_LEN
+        + SHIFTED_WITNESS_ENTITIES_SIZE * ScalarField::SER_LEN;
 
     fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
         let mut offset = 0;

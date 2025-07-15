@@ -1,6 +1,6 @@
+use crate::alloc::borrow::ToOwned;
 use crate::constants::NUM_U64S_FELT;
 use crate::serialize::{BytesDeserializable, BytesSerializable};
-use crate::{alloc::borrow::ToOwned};
 use alloc::vec::Vec;
 use ark_bn254::{g1::Config as G1Config, g2::Config as G2Config, Fq, Fq2, Fr};
 use ark_ec::short_weierstrass::Affine;
@@ -284,7 +284,6 @@ impl<T: Default> ShiftedWitnessEntities<T> {
         &self.elements[Self::Z_PERM]
     }
 }
-
 
 /// The number of elements in the precomputed entities array
 pub(crate) const PRECOMPUTED_ENTITIES_SIZE: usize = 27;
