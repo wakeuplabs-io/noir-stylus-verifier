@@ -30,7 +30,7 @@ pub(crate) const NUM_ALPHAS: usize = decider::sumcheck::relations::NUM_SUBRELATI
 pub(crate) const CONST_PROOF_SIZE_LOG_N: usize = 28;
 
 // The interleaving trick needed for Translator adds 2 extra claims to Gemini fold claims
-// TODO(https://github.com/AztecProtocol/barretenberg/issues/1293): Decouple Gemini from Interleaving
+// AZTEC TODO(https://github.com/AztecProtocol/barretenberg/issues/1293): Decouple Gemini from Interleaving
 pub(crate) const NUM_INTERLEAVING_CLAIMS: u32 = 2;
 
 pub(crate) struct Utils {}

@@ -169,9 +169,6 @@ impl Transcript {
             assert!(!self.current_round_data.is_empty());
         }
         // concatenate the previous challenge (if this is not the first challenge) with the current round data.
-        // AZTEC TODO(Adrian): Do we want to use a domain separator as the initial challenge buffer?
-        // We could be cheeky and use the hash of the manifest as domain separator, which would prevent us from having
-        // to domain separate all the data. (See https://safe-hash.dev)
 
         let mut full_buffer = Vec::new();
         core::mem::swap(&mut full_buffer, &mut self.current_round_data);

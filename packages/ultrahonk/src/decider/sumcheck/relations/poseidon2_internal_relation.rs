@@ -70,7 +70,7 @@ impl Relation for Poseidon2InternalRelation {
 
         let q_pos_by_scaling = q_poseidon2_internal.to_owned() * scaling_factor;
 
-        // TACEO TODO this poseidon instance is very hardcoded to the bn254 curve
+        // This poseidon instance is hardcoded to the bn254 curve
         let internal_matrix_diag_0 = ScalarField::deserialize_from_bytes(
             // hex::decode("10dc6e9c006ea38b04b1e03b4bd9490c0d03f98929ca1d7fb56821fd19d3b6e7")
             &[

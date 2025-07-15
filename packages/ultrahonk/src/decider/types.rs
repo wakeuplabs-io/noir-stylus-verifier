@@ -53,7 +53,7 @@ impl GateSeparatorPolynomial {
             periodicity,
         }
     }
-    pub(crate) fn partially_evaluate_with_padding(
+    pub(crate) fn partially_evaluate(
         &mut self,
         round_challenge: ScalarField,
         indicator: ScalarField,

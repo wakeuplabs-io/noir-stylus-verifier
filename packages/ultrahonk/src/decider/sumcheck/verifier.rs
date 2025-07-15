@@ -50,41 +50,37 @@ impl DeciderVerifier {
         );
 
         // sumcheck round state
-        let (mut sum_check_round_failed, mut target_total_sum) = (false, ScalarField::zero());
+        let (mut sum_check_round_failed, mut round_target_total_sum) = (false, ScalarField::zero());
         let mut multivariate_challenge = Vec::with_capacity(CONST_PROOF_SIZE_LOG_N);
 
         for (round_idx, &padding_value) in padding_indicator_array.iter().enumerate() {
+            // Obtain the round univariate from the transcript
             let evaluations =
                 transcript.receive_fr_array_from_verifier::<BATCHED_RELATION_PARTIAL_LENGTH>()?; // format!("Sumcheck:univariate_{}", round_idx);
             let round_univariate = SumcheckRoundOutput { evaluations };
-
             let round_challenge = transcript.get_challenge::<H>(); // format!("Sumcheck:u_{}", round_idx)
-
-            let checked = Self::check_sum(
-                &round_univariate,
-                padding_value,
-                &target_total_sum,
-                &mut sum_check_round_failed,
-            );
-            verified = verified && checked; // TODO: this gets overwritten by the final round?
-
             multivariate_challenge.push(round_challenge);
 
-            Self::compute_next_target_sum(
+            let checked = Self::round_check_sum(
+                &round_univariate,
+                padding_value,
+                &round_target_total_sum,
+                &mut sum_check_round_failed,
+            );
+            Self::round_compute_next_target_sum(
                 &round_univariate,
                 round_challenge,
                 padding_value,
-                &mut target_total_sum,
+                &mut round_target_total_sum,
             );
-            gate_separators.partially_evaluate_with_padding(
-                round_challenge,
-                padding_indicator_array[round_idx],
-            );
+            gate_separators.partially_evaluate(round_challenge, padding_indicator_array[round_idx]);
+
+            verified = verified && checked;
         }
 
+        // Extract claimed evaluations of Libra univariates and compute their sum multiplied by the Libra challenge
         // Final round
         let transcript_evaluations = transcript.receive_fr_vec_from_verifier(NUM_ALL_ENTITIES)?; // "Sumcheck:evaluations"
-
         for (eval, &transcript_eval) in self
             .memory
             .claimed_evaluations
@@ -102,8 +98,8 @@ impl DeciderVerifier {
                 &gate_separators.partial_evaluation_result,
             );
 
-        let checked = full_honk_purported_value == target_total_sum;
-        verified = verified && checked;
+        let final_check = full_honk_purported_value == round_target_total_sum;
+        verified = verified && final_check;
         Ok(SumcheckVerifierOutput {
             multivariate_challenge,
             verified,
@@ -111,7 +107,7 @@ impl DeciderVerifier {
     }
 
     // round state update functions
-    pub(crate) fn compute_next_target_sum(
+    pub(crate) fn round_compute_next_target_sum(
         univariate: &SumcheckRoundOutput,
         round_challenge: ScalarField,
         indicator: ScalarField,
@@ -122,7 +118,7 @@ impl DeciderVerifier {
     }
 
     // sumcheck round check functions
-    pub(crate) fn check_sum(
+    pub(crate) fn round_check_sum(
         univariate: &SumcheckRoundOutput,
         indicator: ScalarField,
         target_total_sum: &ScalarField,
