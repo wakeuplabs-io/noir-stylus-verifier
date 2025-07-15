@@ -111,7 +111,7 @@ impl DeciderVerifier {
     }
 
     // round state update functions
-    pub fn compute_next_target_sum(
+    pub(crate) fn compute_next_target_sum(
         univariate: &SumcheckRoundOutput,
         round_challenge: ScalarField,
         indicator: ScalarField,
@@ -122,7 +122,7 @@ impl DeciderVerifier {
     }
 
     // sumcheck round check functions
-    pub fn check_sum(
+    pub(crate) fn check_sum(
         univariate: &SumcheckRoundOutput,
         indicator: ScalarField,
         target_total_sum: &ScalarField,

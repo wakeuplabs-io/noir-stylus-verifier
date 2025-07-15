@@ -23,31 +23,19 @@ use crate::{
     types::ScalarField,
 };
 
-pub const NUM_ALPHAS: usize = decider::sumcheck::relations::NUM_SUBRELATIONS - 1;
+pub(crate) const NUM_ALPHAS: usize = decider::sumcheck::relations::NUM_SUBRELATIONS - 1;
 
 /// The log of the max circuit size assumed in order to achieve constant sized Honk proofs
 /// AZTEC TODO(<https://github.com/AztecProtocol/barretenberg/issues/1046>): Remove the need for const sized proofs
-pub const CONST_PROOF_SIZE_LOG_N: usize = 28;
+pub(crate) const CONST_PROOF_SIZE_LOG_N: usize = 28;
 
 // The interleaving trick needed for Translator adds 2 extra claims to Gemini fold claims
 // TODO(https://github.com/AztecProtocol/barretenberg/issues/1293): Decouple Gemini from Interleaving
-pub const NUM_INTERLEAVING_CLAIMS: u32 = 2;
+pub(crate) const NUM_INTERLEAVING_CLAIMS: u32 = 2;
 
-pub struct Utils {}
+pub(crate) struct Utils {}
 
 impl Utils {
-    pub fn get_msb32(inp: u32) -> u32 {
-        inp.ilog2()
-    }
-
-    pub fn get_msb64(inp: u64) -> u32 {
-        inp.ilog2()
-    }
-
-    fn batch_invert(coeffs: &mut [ScalarField]) {
-        ark_ff::batch_inversion(coeffs);
-    }
-
     fn convert_scalarfield_back(src: &[ScalarField]) -> ScalarField {
         debug_assert_eq!(src.len(), NUM_SCALARFIELD_ELEMENTS);
         src[0].to_owned()

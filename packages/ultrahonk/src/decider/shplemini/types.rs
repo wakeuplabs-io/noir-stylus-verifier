@@ -5,9 +5,9 @@ use crate::{
     types::{PrecomputedEntities, ScalarField, ShiftedWitnessEntities, WitnessEntities},
 };
 
-pub struct PolyF<'a, T: Default> {
-    pub precomputed: &'a PrecomputedEntities<T>,
-    pub witness: &'a WitnessEntities<T>,
+pub(crate) struct PolyF<'a, T: Default> {
+    pub(crate) precomputed: &'a PrecomputedEntities<T>,
+    pub(crate) witness: &'a WitnessEntities<T>,
 }
 
 impl<'a> From<&'a VerifierCommitments> for PolyF<'a, G1Affine> {
@@ -20,7 +20,7 @@ impl<'a> From<&'a VerifierCommitments> for PolyF<'a, G1Affine> {
 }
 
 impl<T: Default> PolyF<'_, T> {
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
+    pub(crate) fn iter(&self) -> impl Iterator<Item = &T> {
         self.precomputed.iter().chain(self.witness.iter())
     }
 }
@@ -34,12 +34,12 @@ impl<'a> From<&'a ClaimedEvaluations> for PolyF<'a, ScalarField> {
     }
 }
 
-pub struct PolyG<'a, T: Default> {
-    pub wires: &'a [T; 5],
+pub(crate) struct PolyG<'a, T: Default> {
+    pub(crate) wires: &'a [T; 5],
 }
 
 impl<T: Default> PolyG<'_, T> {
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
+    pub(crate) fn iter(&self) -> impl Iterator<Item = &T> {
         self.wires.iter()
     }
 }
@@ -56,8 +56,8 @@ impl<'a> From<&'a VerifierCommitments> for PolyG<'a, G1Affine> {
     }
 }
 
-pub struct PolyGShift<'a, T: Default> {
-    pub wires: &'a ShiftedWitnessEntities<T>,
+pub(crate) struct PolyGShift<'a, T: Default> {
+    pub(crate) wires: &'a ShiftedWitnessEntities<T>,
 }
 
 impl<'a> From<&'a ClaimedEvaluations> for PolyGShift<'a, ScalarField> {
@@ -69,7 +69,7 @@ impl<'a> From<&'a ClaimedEvaluations> for PolyGShift<'a, ScalarField> {
 }
 
 impl<T: Default> PolyGShift<'_, T> {
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
+    pub(crate) fn iter(&self) -> impl Iterator<Item = &T> {
         self.wires.iter()
     }
 }

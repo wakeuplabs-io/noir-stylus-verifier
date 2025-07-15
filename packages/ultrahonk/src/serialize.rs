@@ -2,7 +2,7 @@ use crate::{
     constants::{NUM_BYTES_FELT, NUM_U64S_FELT},
     decider::types::{ClaimedEvaluations, RelationParameters, VerifierCommitments, VerifierMemory},
     transcript::Transcript,
-    types::{AllEntities, G1Affine, G1BaseField, G2Affine, G2BaseField, MontFp256, ScalarField},
+    types::{AllEntities, G1Affine, G1BaseField, G2Affine, G2BaseField, MontFp256, ScalarField, PRECOMPUTED_ENTITIES_SIZE, SHIFTED_WITNESS_ENTITIES_SIZE, WITNESS_ENTITIES_SIZE},
     NUM_ALPHAS,
 };
 use alloc::vec::Vec;
@@ -291,13 +291,11 @@ impl BytesSerializable for VerifierCommitments {
 }
 
 impl BytesDeserializable for VerifierCommitments {
-    const SER_LEN: usize = 2560;
+    const SER_LEN: usize = WITNESS_ENTITIES_SIZE * G1Affine::SER_LEN + PRECOMPUTED_ENTITIES_SIZE * G1Affine::SER_LEN + SHIFTED_WITNESS_ENTITIES_SIZE * G1Affine::SER_LEN;
 
     fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
         let mut offset = 0;
         let mut commitments = AllEntities::default();
-
-        // panic!("bytes: {:?}", commitments.serialize_to_bytes().len());
 
         // Deserialize witness commitments
         for commitment in commitments.witness.iter_mut() {
@@ -311,8 +309,6 @@ impl BytesDeserializable for VerifierCommitments {
         for commitment in commitments.shifted_witness.iter_mut() {
             *commitment = G1Affine::deserialize_from_bytes_with_offset(bytes, &mut offset)?;
         }
-
-        // panic!("VerifierCommitments offset: {:?}", offset);
 
         Ok(AllEntities {
             witness: commitments.witness,
@@ -352,7 +348,7 @@ impl BytesSerializable for RelationParameters {
 }
 
 impl BytesDeserializable for RelationParameters {
-    const SER_LEN: usize = 1892;
+    const SER_LEN: usize = 1892; // TODO: dynamic?
 
     fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
         let mut offset = 0;
@@ -381,8 +377,6 @@ impl BytesDeserializable for RelationParameters {
                 &mut offset,
             )?);
         }
-
-        // panic!("RelationParameters offset: {:?}", offset);
 
         Ok(RelationParameters {
             eta_1,
@@ -417,7 +411,8 @@ impl BytesSerializable for ClaimedEvaluations {
 }
 
 impl BytesDeserializable for ClaimedEvaluations {
-    const SER_LEN: usize = 1280;
+    const SER_LEN: usize = WITNESS_ENTITIES_SIZE * ScalarField::SER_LEN + PRECOMPUTED_ENTITIES_SIZE * ScalarField::SER_LEN + SHIFTED_WITNESS_ENTITIES_SIZE * ScalarField::SER_LEN;
+
 
     fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
         let mut offset = 0;
@@ -553,5 +548,13 @@ impl BytesDeserializable for Transcript {
             current_round_data,
             previous_challenge,
         })
+    }
+
+    fn deserialize_from_bytes_with_offset(
+        _bytes: &[u8],
+        _offset: &mut usize,
+    ) -> Result<Self, SerdeError> {
+        // Not implemented
+        Err(SerdeError::InvalidLength)
     }
 }

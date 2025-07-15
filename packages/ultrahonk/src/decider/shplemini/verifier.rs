@@ -69,7 +69,7 @@ impl DeciderVerifier {
         Ok((p_0, p_1.into()))
     }
 
-    pub fn powers_of_evaluation_challenge(
+    pub(crate) fn powers_of_evaluation_challenge(
         gemini_evaluation_challenge: ScalarField,
         num_squares: usize,
     ) -> Vec<ScalarField> {
@@ -95,12 +95,12 @@ impl DeciderVerifier {
             denominators.push(*shplonk_eval_challenge + *gemini_eval_challenge_power);
         }
 
-        crate::Utils::batch_invert(&mut denominators);
+        ark_ff::batch_inversion(&mut denominators);
 
         denominators
     }
 
-    pub fn compute_batch_opening_claim<H: HashBackend>(
+    pub(crate) fn compute_batch_opening_claim<H: HashBackend>(
         &self,
         multivariate_challenge: Vec<ScalarField>,
         transcript: &mut Transcript,
@@ -419,7 +419,7 @@ impl DeciderVerifier {
      * @param fold_neg_evals  Evaluations \f$ A_{i-1}(-r^{2^{i-1}}) \f$.
      * @return Evaluation \f$ A_0(r) \f$.
      */
-    pub fn compute_fold_pos_evaluations(
+    pub(crate) fn compute_fold_pos_evaluations(
         padding_indicator_array: &[ScalarField; CONST_PROOF_SIZE_LOG_N],
         batched_evaluation: &ScalarField,
         evaluation_point: &[ScalarField], // CONST_PROOF_SIZE

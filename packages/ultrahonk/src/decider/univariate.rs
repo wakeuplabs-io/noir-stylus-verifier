@@ -5,12 +5,12 @@ use crate::{
 use ark_ff::{One, Zero};
 
 #[derive(Clone, Debug)]
-pub struct Univariate {
-    pub evaluations: [ScalarField; BATCHED_RELATION_PARTIAL_LENGTH],
+pub(crate) struct Univariate {
+    pub(crate) evaluations: [ScalarField; BATCHED_RELATION_PARTIAL_LENGTH],
 }
 
 impl Univariate {
-    pub fn evaluate(&self, u: ScalarField) -> ScalarField {
+    pub(crate) fn evaluate(&self, u: ScalarField) -> ScalarField {
         if u == ScalarField::zero() {
             return self.evaluations[0];
         }

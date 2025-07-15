@@ -1,20 +1,19 @@
-use crate::constants::PRECOMPUTED_ENTITIES_SIZE;
 use crate::serialize::BytesDeserializable;
-use crate::types::{G1Affine, G1BaseField, HonkProofError, HonkProofResult, PrecomputedEntities};
+use crate::types::{G1Affine, G1BaseField, HonkProofError, HonkProofResult, PrecomputedEntities, PRECOMPUTED_ENTITIES_SIZE};
 use ark_ff::PrimeField;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone)]
 pub struct VerifyingKey {
     pub circuit_size: u32,
-    pub num_public_inputs: u32,
-    pub pub_inputs_offset: u32,
-    pub pairing_inputs_public_input_key: PublicComponentKey,
-    pub commitments: PrecomputedEntities<G1Affine>,
+    pub(crate) num_public_inputs: u32,
+    pub(crate) pub_inputs_offset: u32,
+    pub(crate) pairing_inputs_public_input_key: PublicComponentKey,
+    pub(crate) commitments: PrecomputedEntities<G1Affine>,
 }
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
-pub struct PublicComponentKey {
+pub(crate) struct PublicComponentKey {
     start_idx: u32,
 }
 
@@ -26,13 +25,13 @@ impl Default for PublicComponentKey {
     }
 }
 impl PublicComponentKey {
-    pub fn new(start_idx: u32) -> Self {
+    pub(crate) fn new(start_idx: u32) -> Self {
         Self { start_idx }
     }
-    pub fn set(&mut self, start_idx: u32) {
+    pub(crate) fn set(&mut self, start_idx: u32) {
         self.start_idx = start_idx;
     }
-    pub fn is_set(&self) -> bool {
+    pub(crate) fn is_set(&self) -> bool {
         self.start_idx != u32::MAX
     }
 }

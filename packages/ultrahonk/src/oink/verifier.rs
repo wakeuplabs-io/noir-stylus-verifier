@@ -75,7 +75,7 @@ impl Oink {
 
 pub(crate) struct OinkVerifier {
     memory: VerifierMemory,
-    pub public_inputs: Vec<ScalarField>,
+    pub(crate) public_inputs: Vec<ScalarField>,
 }
 
 impl Default for OinkVerifier {
