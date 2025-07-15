@@ -5,7 +5,6 @@ use alloc::vec::Vec;
 use ark_bn254::{g1::Config as G1Config, g2::Config as G2Config, Fq, Fq2, Fr};
 use ark_ec::short_weierstrass::Affine;
 use ark_ff::{Fp256, MontBackend};
-use serde::{Deserialize, Serialize};
 
 /// Type alias for an element of the scalar field of the Bn254 curve
 pub type ScalarField = Fr;
@@ -28,7 +27,7 @@ pub type G1Projective = ark_bn254::G1Projective;
 /// Type alias for a 256-bit prime field element in Montgomery form
 pub type MontFp256<P> = Fp256<MontBackend<P, NUM_U64S_FELT>>;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Debug)]
 pub struct HonkProof {
     proof: Vec<ScalarField>,
 }
@@ -128,14 +127,14 @@ impl<T: Default> AllEntities<T> {
 
 pub(crate) const WITNESS_ENTITIES_SIZE: usize = 8;
 
-#[derive(Default, Clone)]
+#[derive(Default)]
 pub(crate) struct WitnessEntities<T: Default> {
     pub(crate) elements: [T; WITNESS_ENTITIES_SIZE],
 }
 
 pub(crate) const SHIFTED_WITNESS_ENTITIES_SIZE: usize = 5;
 
-#[derive(Default, Clone)]
+#[derive(Default)]
 pub(crate) struct ShiftedWitnessEntities<T: Default> {
     pub(crate) elements: [T; SHIFTED_WITNESS_ENTITIES_SIZE],
 }
@@ -288,7 +287,7 @@ impl<T: Default> ShiftedWitnessEntities<T> {
 /// The number of elements in the precomputed entities array
 pub(crate) const PRECOMPUTED_ENTITIES_SIZE: usize = 27;
 
-#[derive(Default, Clone, Serialize, Deserialize)]
+#[derive(Default, Clone)]
 pub(crate) struct PrecomputedEntities<T: Default> {
     pub(crate) elements: [T; PRECOMPUTED_ENTITIES_SIZE],
 }

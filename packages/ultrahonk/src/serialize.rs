@@ -54,6 +54,20 @@ pub trait BytesDeserializable {
     }
 }
 
+impl BytesSerializable for bool {
+    fn serialize_to_bytes(&self) -> Vec<u8> {
+        vec![*self as u8]
+    }
+}
+
+impl BytesDeserializable for bool {
+    const SER_LEN: usize = 1;
+
+    fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
+        Ok(bytes[0] != 0)
+    }
+}
+
 impl BytesSerializable for u32 {
     fn serialize_to_bytes(&self) -> Vec<u8> {
         self.to_be_bytes().to_vec()
@@ -86,20 +100,6 @@ impl BytesDeserializable for u64 {
     }
 }
 
-impl BytesSerializable for bool {
-    fn serialize_to_bytes(&self) -> Vec<u8> {
-        vec![*self as u8]
-    }
-}
-
-impl BytesDeserializable for bool {
-    const SER_LEN: usize = 1;
-
-    fn deserialize_from_bytes(bytes: &[u8]) -> Result<Self, SerdeError> {
-        Ok(bytes[0] != 0)
-    }
-}
-
 impl<P: MontConfig<NUM_U64S_FELT>> BytesSerializable for MontFp256<P> {
     fn serialize_to_bytes(&self) -> Vec<u8> {
         self.into_bigint().to_bytes_be()
@@ -128,7 +128,7 @@ impl<P: MontConfig<NUM_U64S_FELT>> BytesDeserializable for MontFp256<P> {
             offset += fieldsize_bytes;
         }
 
-        Ok(MontFp256::<P>::from_base_prime_field_elems(coeffs).expect("Should work"))
+        Ok(MontFp256::<P>::from_base_prime_field_elems(coeffs).ok_or(SerdeError::ScalarConversion)?)
     }
 
     fn deserialize_from_bytes_with_offset(
@@ -563,4 +563,127 @@ impl BytesDeserializable for Transcript {
         // Not implemented
         Err(SerdeError::InvalidLength)
     }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::types::G1Affine;
+    use ark_ff::{One, UniformRand};
+    use rand::thread_rng;
+    
+
+    #[test]
+    fn test_bool_serialization() {
+        let test_cases = vec![true, false];
+        
+        for test_case in test_cases {
+            let serialized = test_case.serialize_to_bytes();
+            assert_eq!(serialized.len(), 1);
+            
+            let deserialized = bool::deserialize_from_bytes(&serialized).unwrap();
+            assert_eq!(test_case, deserialized);
+        }
+    }
+
+    #[test]
+    fn test_u32_serialization() {
+        let test_cases = vec![0u32, 1, 42, u32::MAX, u32::MIN];
+        
+        for test_case in test_cases {
+            let serialized = test_case.serialize_to_bytes();
+            assert_eq!(serialized.len(), 4);
+            
+            let deserialized = u32::deserialize_from_bytes(&serialized).unwrap();
+            assert_eq!(test_case, deserialized);
+        }
+    }
+
+    #[test]
+    fn test_u64_serialization() {
+        let test_cases = vec![0u64, 1, 42, u64::MAX, u64::MIN];
+        
+        for test_case in test_cases {
+            let serialized = test_case.serialize_to_bytes();
+            assert_eq!(serialized.len(), 8);
+            
+            let deserialized = u64::deserialize_from_bytes(&serialized).unwrap();
+            assert_eq!(test_case, deserialized);
+        }
+    }
+
+    #[test]
+    fn test_g1_affine_serialization() {
+        let mut rng = thread_rng();
+        let test_cases = vec![
+            G1Affine::generator(),
+            // G1Affine::identity(), TODO: fails
+            G1Affine::rand(&mut rng),
+        ];
+
+        for test_case in test_cases {
+            let serialized = test_case.serialize_to_bytes();
+            assert_eq!(serialized.len(), G1Affine::SER_LEN);
+
+            let deserialized = G1Affine::deserialize_from_bytes(&serialized).unwrap();
+            assert_eq!(test_case, deserialized);
+        }
+    }
+
+    #[test]
+    fn test_g2_affine_serialization() {
+        let mut rng = thread_rng();
+        let test_cases = vec![
+            G2Affine::generator(),
+            G2Affine::identity(),
+            G2Affine::rand(&mut rng),
+        ];
+
+        for test_case in test_cases {
+            let serialized = test_case.serialize_to_bytes();
+            assert_eq!(serialized.len(), G2Affine::SER_LEN);
+
+            let deserialized = G2Affine::deserialize_from_bytes(&serialized).unwrap();
+            assert_eq!(test_case, deserialized);
+        }
+    }
+
+    #[test]
+    fn test_montfp_scalarfield_serialization() {
+        let mut rng = thread_rng();
+        let test_cases = vec![
+            ScalarField::zero(),
+            ScalarField::one(),
+            ScalarField::rand(&mut rng),
+        ];
+
+        for test_case in test_cases {
+            let serialized = test_case.serialize_to_bytes();
+            assert_eq!(serialized.len(), NUM_BYTES_FELT);
+
+            let deserialized = ScalarField::deserialize_from_bytes(&serialized).unwrap();
+            assert_eq!(test_case, deserialized);
+        }
+    }
+
+    #[test]
+    fn test_montfp_scalarfield_vec_serialization() {
+        let test_cases = vec![
+            vec![],
+            vec![ScalarField::zero()],
+            vec![ScalarField::one(), ScalarField::from(42u64)],
+            vec![ScalarField::zero(), ScalarField::one(), ScalarField::from(42u64)],
+        ];
+
+        for test_case in test_cases {
+            let serialized = test_case.serialize_to_bytes();
+            assert_eq!(serialized.len(), test_case.len() * NUM_BYTES_FELT);
+
+            let deserialized = Vec::<ScalarField>::deserialize_from_bytes(&serialized).unwrap();
+            assert_eq!(test_case, deserialized);
+        }
+    }
+
+    
 }

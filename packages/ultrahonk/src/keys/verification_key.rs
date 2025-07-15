@@ -4,9 +4,7 @@ use crate::types::{
     PRECOMPUTED_ENTITIES_SIZE,
 };
 use ark_ff::PrimeField;
-use serde::{Deserialize, Serialize};
 
-#[derive(Clone)]
 pub struct VerifyingKey {
     pub circuit_size: u32,
     pub(crate) num_public_inputs: u32,
@@ -14,19 +12,7 @@ pub struct VerifyingKey {
     pub(crate) commitments: PrecomputedEntities<G1Affine>,
 }
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
-pub(crate) struct PublicComponentKey {
-    start_idx: u32,
-}
-
-impl Default for PublicComponentKey {
-    fn default() -> Self {
-        Self {
-            start_idx: u32::MAX,
-        }
-    }
-}
-
+// TODO: move to serialize.rs?
 impl VerifyingKey {
     const NUM_64_LIMBS: u32 = <G1BaseField as PrimeField>::MODULUS_BIT_SIZE.div_ceil(64);
     const FIELDSIZE_BYTES: u32 = Self::NUM_64_LIMBS * 8;

@@ -4,7 +4,7 @@ use crate::{
 };
 use ark_ff::{One, Zero};
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub(crate) struct Univariate {
     pub(crate) evaluations: [ScalarField; BATCHED_RELATION_PARTIAL_LENGTH],
 }
