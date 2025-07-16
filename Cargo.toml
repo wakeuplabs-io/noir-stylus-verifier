@@ -1,31 +1,36 @@
 [workspace]
-members = [
-  "packages/ultrahonk",
-  "packages/contracts",
-  "packages/ark-ec",
-  "packages/integration"
-]
+members = ["contracts", "integration", "packages/ultrahonk"]
 exclude = ["examples/hello_world/contracts"]
 resolver = "2"
 
 [workspace.package]
 edition = "2021"
+version = "0.1.0"
 rust-version = "1.85"
-authors = ["Wakeuplabs <hello@wakeuplabs.io>"]
+authors = ["WakeUp <contact@wakeuplabs.io>"]
 homepage = "https://www.wakeuplabs.io"
-repository = "https:://github.com/wakeuplabs/noir-stylus-verifier"
+repository = "https:://github.com/wakeuplabs-io/noir-stylus-verifier"
 license = "MIT OR Apache-2.0"
 publish = false
 readme = "./README.md"
+include = ["Cargo.toml", "src", "README.md", "LICENSE-APACHE", "LICENSE-MIT", "LICENSE-GPL"]
+categories = ["cryptography"]
 
 [workspace.dependencies]
-stylus-sdk = { version = "=0.9.0" }
-ark-bn254 = "^0.5.0"
-ark-ff = "^0.5.0"
-ark-ec = "^0.5.0"
-ark-grumpkin = "^0.5.0"
-ark-poly = { version = "^0.5.0", default-features = false }
-ark-serialize = { version = "^0.5.0", features = ["derive", "std"] }
+stylus-sdk = "=0.9.0"
+ark-bn254 = "0.5.0"
+ark-std = "0.5.0"
+ark-ff-asm = { path = "vendor/algebra/ff-asm", package = "ark-ff-asm", version = "0.5.0" }
+ark-ff-macros = { path = "vendor/algebra/ff-macros", package = "ark-ff-macros", version = "0.5.0" }
+ark-ff = { path = "vendor/algebra/ff", package = "ark-ff", version = "0.5.0" }
+ark-ec = { path = "vendor/algebra/ec", package = "ark-ec", version = "0.5.0" }
+ark-poly = { path = "vendor/algebra/poly", package = "ark-poly", version = "0.5.0" }
+ark-serialize = { path = "vendor/algebra/serialize", package = "ark-serialize", version = "0.5.0" }
+ark-serialize-derive = { version = "0.5.0", path = "vendor/algebra/serialize-derive", package = "ark-serialize-derive" }
+ark-algebra-bench-templates = { version = "0.5.0", path = "vendor/algebra/bench-templates", default-features = false }
+ark-algebra-test-templates = { version = "0.5.0", path = "vendor/algebra/test-templates", default-features = false }
+ark-test-curves = { version = "0.5.0", path = "vendor/algebra/test-curves", default-features = false }
+
 getrandom = { version = "0.2", features = ["js"] }
 num-bigint = { version = "0.4.5", default-features = false }
 num-traits = { version = "0.2.18", default-features = false }
@@ -61,8 +66,7 @@ alloy-sol-types = { version = "=0.8.20", default-features = false }
 alloy-sol-macro = { version = "=0.8.20", default-features = false }
 alloy-sol-macro-expander = { version = "=0.8.20", default-features = false }
 alloy-sol-macro-input = { version = "=0.8.20", default-features = false }
-
-hex = { version = "0.4.3" }
+hex =  "0.4.3"
 clap = { version = "4.4.7", features = ["derive"] }
 eyre = { version = "0.6.10" }
 tokio = { version = "1.12.0", features = ["full"] }
@@ -71,17 +75,40 @@ itertools = "0.12"
 colored = "2.0.0"
 futures = "0.3.31"
 regex = "1.11.1"
+num-integer = { version = "0.1", default-features = false }
+arrayvec = { version = "0.7", default-features = false }
+criterion = "0.5.0"
+educe = "0.6.0"
+digest = { version = "0.10", default-features = false }
+hashbrown = { version = "0.15", default-features = false, features = [
+  "inline-more",
+  "allocator-api2",
+] }
+libtest-mimic = "0.8.1"
+paste = "1.0"
+rayon = "1"
+serde_derive = "1.0"
+serde_json = "1.0"
+sha2 = { version = "0.10", default-features = false }
+blake2 = { version = "0.10", default-features = false }
+zeroize = { version = "1", default-features = false }
+proc-macro2 = "1.0"
+quote = "1.0"
+syn = "2.0.104"
 
 [patch.crates-io]
-ark-ec = { path = "./packages/ark-ec" }
+ark-ec = { path = "vendor/algebra/ec", package = "ark-ec", version = "0.5.0" }
+ark-ff = { path = "vendor/algebra/ff", package = "ark-ff", version = "0.5.0" }
+ark-ff-asm = { path = "vendor/algebra/ff-asm", package = "ark-ff-asm", version = "0.5.0" }
+ark-poly = { path = "vendor/algebra/poly", package = "ark-poly", version = "0.5.0" }
 
 [profile.release]
-strip = "none"           # keep debug info for profiling
+strip = "none" # keep debug info for profiling
 # strip = true           # remove debug info
 debug = false            # no debug data
 codegen-units = 1        # prefer efficiency to compile time
 panic = "abort"          # use simple panics
-lto = true               # link time optimization
+lto = "fat"
 rpath = false            # no run-time search path
 debug-assertions = false # prune debug assertions
 incremental = false      # no incremental builds

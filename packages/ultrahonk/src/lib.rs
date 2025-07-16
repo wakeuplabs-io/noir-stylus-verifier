@@ -1,4 +1,4 @@
-#![no_std]
+// #![no_std]
 #![warn(clippy::iter_over_hash_type)]
 
 #[macro_use]
@@ -9,6 +9,7 @@ pub mod constants;
 pub mod decider;
 pub mod keys;
 pub mod oink;
+pub mod polynomials;
 pub mod serialize;
 pub mod transcript;
 pub mod types;
@@ -23,31 +24,19 @@ use crate::{
     types::ScalarField,
 };
 
-pub const NUM_ALPHAS: usize = decider::sumcheck::relations::NUM_SUBRELATIONS - 1;
+pub(crate) const NUM_ALPHAS: usize = decider::sumcheck::relations::NUM_SUBRELATIONS - 1;
 
 /// The log of the max circuit size assumed in order to achieve constant sized Honk proofs
 /// AZTEC TODO(<https://github.com/AztecProtocol/barretenberg/issues/1046>): Remove the need for const sized proofs
 pub const CONST_PROOF_SIZE_LOG_N: usize = 28;
 
 // The interleaving trick needed for Translator adds 2 extra claims to Gemini fold claims
-// TODO(https://github.com/AztecProtocol/barretenberg/issues/1293): Decouple Gemini from Interleaving
-pub const NUM_INTERLEAVING_CLAIMS: u32 = 2;
+// AZTEC TODO(https://github.com/AztecProtocol/barretenberg/issues/1293): Decouple Gemini from Interleaving
+pub(crate) const NUM_INTERLEAVING_CLAIMS: u32 = 2;
 
-pub struct Utils {}
+pub(crate) struct Utils {}
 
 impl Utils {
-    pub fn get_msb32(inp: u32) -> u32 {
-        inp.ilog2()
-    }
-
-    pub fn get_msb64(inp: u64) -> u32 {
-        inp.ilog2()
-    }
-
-    fn batch_invert(coeffs: &mut [ScalarField]) {
-        ark_ff::batch_inversion(coeffs);
-    }
-
     fn convert_scalarfield_back(src: &[ScalarField]) -> ScalarField {
         debug_assert_eq!(src.len(), NUM_SCALARFIELD_ELEMENTS);
         src[0].to_owned()
@@ -70,12 +59,5 @@ impl Utils {
 
         // Now value_bytes is the 256-bit little-endian representation
         Fq::from_le_bytes_mod_order(&value_bytes)
-    }
-
-    /// Reads a field elemnent from a hexadecimal string. Therebey, the format can or can not include the 0x prefix, i.e., "0x2" and "2" give the same result.
-    fn field_from_hex_string(str: &str) -> Result<ScalarField, &'static str> {
-        let s = str.strip_prefix("0x").unwrap_or(str);
-        let bytes = hex::decode(s).unwrap();
-        Ok(ScalarField::from_be_bytes_mod_order(&bytes))
     }
 }

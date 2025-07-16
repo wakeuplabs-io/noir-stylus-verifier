@@ -1,22 +1,23 @@
-use crate::alloc::{borrow::ToOwned, string::String};
+use crate::alloc::borrow::ToOwned;
 use crate::backends::HashBackend;
 use crate::constants::{NUM_BASEFIELD_ELEMENTS, NUM_SCALARFIELD_ELEMENTS};
 use crate::serialize::{BytesDeserializable, BytesSerializable};
-use crate::types::{G1Affine, HonkProof, HonkProofError, HonkProofResult, ScalarField};
+use crate::types::{G1Affine, HonkProof, HonkProofError, HonkVerifyResult, ScalarField};
 use crate::Utils;
 use alloc::vec::Vec;
 use ark_ec::AffineRepr;
 use ark_ff::{BigInteger, PrimeField, Zero};
 
 #[derive(Clone)]
+#[cfg_attr(test, derive(Debug, PartialEq, Eq))]
 pub struct Transcript {
-    pub proof_data: Vec<ScalarField>,
-    pub num_frs_written: usize, // the number of bb::frs written to proof_data by the prover or the verifier
-    pub num_frs_read: usize,    // the number of bb::frs read from proof_data by the verifier
-    pub round_number: usize,
-    pub is_first_challenge: bool,
-    pub current_round_data: Vec<ScalarField>,
-    pub previous_challenge: ScalarField,
+    pub(crate) proof_data: Vec<ScalarField>,
+    pub(crate) num_frs_written: usize, // the number of bb::frs written to proof_data by the prover or the verifier
+    pub(crate) num_frs_read: usize,    // the number of bb::frs read from proof_data by the verifier
+    pub(crate) round_number: usize,
+    pub(crate) is_first_challenge: bool,
+    pub(crate) current_round_data: Vec<ScalarField>,
+    pub(crate) previous_challenge: ScalarField,
 }
 
 impl Default for Transcript {
@@ -67,35 +68,12 @@ impl Transcript {
         self.add_element_frs_to_hash_buffer(elements);
     }
 
-    fn send_to_verifier(&mut self, elements: &[ScalarField]) {
-        self.proof_data.extend(elements);
-        self.add_element_frs_to_hash_buffer(elements);
-    }
-
-    pub fn send_fr_to_verifier(&mut self, element: ScalarField) {
-        let elements: Vec<ScalarField> = vec![element.to_owned()];
-        self.send_to_verifier(&elements);
-    }
-
-    pub fn send_u64_to_verifier(&mut self, element: u64) {
-        let el = ScalarField::from(element);
-        self.send_to_verifier(&[el]);
-    }
-
-    pub fn add_u64_to_hash_buffer(&mut self, element: u64) {
+    pub(crate) fn add_u64_to_hash_buffer(&mut self, element: u64) {
         let el = ScalarField::from(element);
         self.add_to_hash_buffer(&[el]);
     }
 
-    pub fn send_fr_iter_to_verifier<'a, I: IntoIterator<Item = &'a ScalarField>>(
-        &mut self,
-        element: I,
-    ) {
-        let elements: Vec<ScalarField> = element.into_iter().map(|src| src.to_owned()).collect();
-        self.send_to_verifier(&elements);
-    }
-
-    fn receive_n_from_prover(&mut self, n: usize) -> HonkProofResult<Vec<ScalarField>> {
+    fn receive_n_from_prover(&mut self, n: usize) -> HonkVerifyResult<Vec<ScalarField>> {
         if self.num_frs_read + n > self.proof_data.len() {
             return Err(HonkProofError::ProofTooSmall);
         }
@@ -106,13 +84,13 @@ impl Transcript {
         Ok(elements)
     }
 
-    pub fn receive_fr_from_prover(&mut self) -> HonkProofResult<ScalarField> {
+    pub(crate) fn receive_fr_from_prover(&mut self) -> HonkVerifyResult<ScalarField> {
         let elements = self.receive_n_from_prover(NUM_SCALARFIELD_ELEMENTS)?;
 
         Ok(Utils::convert_scalarfield_back(&elements))
     }
 
-    pub fn receive_point_from_prover(&mut self) -> HonkProofResult<G1Affine> {
+    pub(crate) fn receive_point_from_prover(&mut self) -> HonkVerifyResult<G1Affine> {
         let elements = self.receive_n_from_prover(NUM_BASEFIELD_ELEMENTS * 2)?;
 
         let coords = elements
@@ -132,7 +110,10 @@ impl Transcript {
         Ok(res)
     }
 
-    pub fn receive_fr_vec_from_verifier(&mut self, n: usize) -> HonkProofResult<Vec<ScalarField>> {
+    pub(crate) fn receive_fr_vec_from_verifier(
+        &mut self,
+        n: usize,
+    ) -> HonkVerifyResult<Vec<ScalarField>> {
         let elements = self.receive_n_from_prover(NUM_SCALARFIELD_ELEMENTS * n)?;
 
         let elements = elements
@@ -143,9 +124,9 @@ impl Transcript {
         Ok(elements)
     }
 
-    pub fn receive_fr_array_from_verifier<const SIZE: usize>(
+    pub(crate) fn receive_fr_array_from_verifier<const SIZE: usize>(
         &mut self,
-    ) -> HonkProofResult<[ScalarField; SIZE]> {
+    ) -> HonkVerifyResult<[ScalarField; SIZE]> {
         let mut res: [ScalarField; SIZE] = [ScalarField::zero(); SIZE];
         let elements = self.receive_n_from_prover(NUM_SCALARFIELD_ELEMENTS * SIZE)?;
 
@@ -188,9 +169,6 @@ impl Transcript {
             assert!(!self.current_round_data.is_empty());
         }
         // concatenate the previous challenge (if this is not the first challenge) with the current round data.
-        // AZTEC TODO(Adrian): Do we want to use a domain separator as the initial challenge buffer?
-        // We could be cheeky and use the hash of the manifest as domain separator, which would prevent us from having
-        // to domain separate all the data. (See https://safe-hash.dev)
 
         let mut full_buffer = Vec::new();
         core::mem::swap(&mut full_buffer, &mut self.current_round_data);
@@ -207,7 +185,7 @@ impl Transcript {
         // oracle, removing the need to pre-hash to compress and then hash with a random oracle, as we previously did
         // with Pedersen and Blake3s.
         let new_challenge_bytes = H::hash(full_buffer.serialize_to_bytes().as_slice());
-        let new_challenge = ScalarField::deserialize_from_bytes(&new_challenge_bytes).unwrap();
+        let (new_challenge, _) = ScalarField::deserialize_from_bytes(&new_challenge_bytes).unwrap();
         let new_challenges = Self::split_challenge(new_challenge);
 
         // update previous challenge buffer for next time we call this function
@@ -222,7 +200,10 @@ impl Transcript {
         res
     }
 
-    pub fn get_challenges<H: HashBackend>(&mut self, num_challenges: usize) -> Vec<ScalarField> {
+    pub(crate) fn get_challenges<H: HashBackend>(
+        &mut self,
+        num_challenges: usize,
+    ) -> Vec<ScalarField> {
         let mut res = Vec::with_capacity(num_challenges);
         for _ in 0..num_challenges >> 1 {
             let challenge_buffer = self.get_next_duplex_challenge_buffer::<H>(2);
@@ -237,10 +218,4 @@ impl Transcript {
         self.round_number += 1;
         res
     }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq, Default)]
-pub struct RoundData {
-    pub challenge_label: Vec<String>,
-    pub entries: Vec<(String, usize)>,
 }

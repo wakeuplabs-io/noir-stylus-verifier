@@ -1,36 +1,27 @@
-use crate::{
-    decider::{barycentric::Barycentric, types::BATCHED_RELATION_PARTIAL_LENGTH},
-    types::ScalarField,
-};
+use crate::{decider::barycentric::Barycentric, types::ScalarField};
 use ark_ff::{One, Zero};
 
-#[derive(Clone, Debug)]
-pub struct Univariate {
-    pub evaluations: [ScalarField; BATCHED_RELATION_PARTIAL_LENGTH],
+#[derive(Debug)]
+pub(crate) struct Univariate<const SIZE: usize> {
+    pub(crate) evaluations: [ScalarField; SIZE],
 }
 
-impl Univariate {
-    pub fn evaluate(&self, u: ScalarField) -> ScalarField {
+impl<const SIZE: usize> Univariate<SIZE> {
+    pub(crate) fn evaluate(&self, u: ScalarField) -> ScalarField {
         if u == ScalarField::zero() {
             return self.evaluations[0];
         }
 
         let mut full_numerator_value = ScalarField::one();
-        for i in 0..BATCHED_RELATION_PARTIAL_LENGTH {
+        for i in 0..SIZE {
             full_numerator_value *= u - ScalarField::from(i as u64);
         }
 
-        let big_domain = Barycentric::construct_big_domain(
-            self.evaluations.len(),
-            BATCHED_RELATION_PARTIAL_LENGTH,
-        );
-        let lagrange_denominators = Barycentric::construct_lagrange_denominators(
-            BATCHED_RELATION_PARTIAL_LENGTH,
-            &big_domain,
-        );
+        let big_domain = Barycentric::construct_big_domain(self.evaluations.len(), SIZE);
+        let lagrange_denominators = Barycentric::construct_lagrange_denominators(SIZE, &big_domain);
 
-        let mut denominator_inverses = [ScalarField::zero(); BATCHED_RELATION_PARTIAL_LENGTH];
-        for i in 0..BATCHED_RELATION_PARTIAL_LENGTH {
+        let mut denominator_inverses = [ScalarField::zero(); SIZE];
+        for i in 0..SIZE {
             let mut inv = lagrange_denominators[i];
 
             inv *= u - big_domain[i];

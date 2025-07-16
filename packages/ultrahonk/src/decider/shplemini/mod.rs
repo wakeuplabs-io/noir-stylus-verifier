@@ -3,8 +3,8 @@ pub mod types;
 pub mod verifier;
 use crate::types::{G1Affine, ScalarField};
 
-pub struct ShpleminiVerifierOpeningClaim {
-    pub challenge: ScalarField,
-    pub scalars: Vec<ScalarField>,
-    pub commitments: Vec<G1Affine>,
+pub(crate) struct ShpleminiVerifierOpeningClaim {
+    pub(crate) challenge: ScalarField,
+    pub(crate) scalars: Vec<ScalarField>,
+    pub(crate) commitments: Vec<G1Affine>,
 }

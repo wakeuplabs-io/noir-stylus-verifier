@@ -1,11 +1,9 @@
+use crate::alloc::borrow::ToOwned;
 use crate::constants::NUM_U64S_FELT;
-use crate::serialize::{BytesDeserializable, BytesSerializable};
-use crate::{alloc::borrow::ToOwned, constants::PRECOMPUTED_ENTITIES_SIZE};
 use alloc::vec::Vec;
 use ark_bn254::{g1::Config as G1Config, g2::Config as G2Config, Fq, Fq2, Fr};
 use ark_ec::short_weierstrass::Affine;
 use ark_ff::{Fp256, MontBackend};
-use serde::{Deserialize, Serialize};
 
 /// Type alias for an element of the scalar field of the Bn254 curve
 pub type ScalarField = Fr;
@@ -28,12 +26,12 @@ pub type G1Projective = ark_bn254::G1Projective;
 /// Type alias for a 256-bit prime field element in Montgomery form
 pub type MontFp256<P> = Fp256<MontBackend<P, NUM_U64S_FELT>>;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Debug)]
 pub struct HonkProof {
     proof: Vec<ScalarField>,
 }
 
-pub type HonkProofResult<T> = Result<T, HonkProofError>;
+pub(crate) type HonkVerifyResult<T> = Result<T, HonkProofError>;
 
 /// The errors that may arise during the computation of a HONK proof.
 #[derive(Debug, thiserror::Error)]
@@ -41,9 +39,6 @@ pub enum HonkProofError {
     /// Indicates that the witness is too small for the provided circuit.
     #[error("Cannot index into witness {0}")]
     CorruptedWitness(usize),
-    /// Indicates that the crs is too small
-    #[error("CRS too small")]
-    CrsTooSmall,
     /// The proof has too few elements
     #[error("Proof too small")]
     ProofTooSmall,
@@ -82,16 +77,6 @@ impl HonkProof {
         self.proof
     }
 
-    pub fn to_buffer(&self) -> Vec<u8> {
-        self.proof.serialize_to_bytes()
-    }
-
-    pub fn from_buffer(buf: &[u8]) -> HonkProofResult<Self> {
-        let res = Vec::<ScalarField>::deserialize_from_bytes(buf)
-            .map_err(|_| HonkProofError::InvalidProofLength)?;
-        Ok(Self::new(res))
-    }
-
     pub fn separate_proof_and_public_inputs(
         self,
         num_public_inputs: usize,
@@ -110,7 +95,8 @@ impl HonkProof {
 pub(crate) const NUM_ALL_ENTITIES: usize =
     WITNESS_ENTITIES_SIZE + PRECOMPUTED_ENTITIES_SIZE + SHIFTED_WITNESS_ENTITIES_SIZE;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
+#[cfg_attr(test, derive(Debug, PartialEq, Eq))]
 pub struct AllEntities<T: Default> {
     pub witness: WitnessEntities<T>,
     pub precomputed: PrecomputedEntities<T>,
@@ -118,7 +104,7 @@ pub struct AllEntities<T: Default> {
 }
 
 impl<T: Default> AllEntities<T> {
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+    pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.precomputed
             .iter_mut()
             .chain(self.witness.iter_mut())
@@ -126,15 +112,18 @@ impl<T: Default> AllEntities<T> {
     }
 }
 
-const WITNESS_ENTITIES_SIZE: usize = 8;
+pub(crate) const WITNESS_ENTITIES_SIZE: usize = 8;
+
 #[derive(Default, Clone)]
+#[cfg_attr(test, derive(Debug, PartialEq, Eq))]
 pub struct WitnessEntities<T: Default> {
     pub elements: [T; WITNESS_ENTITIES_SIZE],
 }
 
-const SHIFTED_WITNESS_ENTITIES_SIZE: usize = 5;
+pub(crate) const SHIFTED_WITNESS_ENTITIES_SIZE: usize = 5;
 
 #[derive(Default, Clone)]
+#[cfg_attr(test, derive(Debug, PartialEq, Eq))]
 pub struct ShiftedWitnessEntities<T: Default> {
     pub elements: [T; SHIFTED_WITNESS_ENTITIES_SIZE],
 }
@@ -166,83 +155,79 @@ impl<T: Default> WitnessEntities<T> {
     /// column 7
     pub(crate) const LOOKUP_READ_TAGS: usize = 7;
 
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
+    pub(crate) fn iter(&self) -> impl Iterator<Item = &T> {
         self.elements.iter()
     }
 
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+    pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.elements.iter_mut()
     }
 
-    pub fn to_be_shifted(&self) -> &[T] {
+    pub(crate) fn to_be_shifted(&self) -> &[T] {
         &self.elements[Self::W_L..=Self::Z_PERM]
     }
 
-    pub fn to_be_shifted_mut(&mut self) -> &mut [T] {
-        &mut self.elements[Self::W_L..=Self::Z_PERM]
-    }
-
-    pub fn w_l(&self) -> &T {
+    pub(crate) fn w_l(&self) -> &T {
         &self.elements[Self::W_L]
     }
 
-    pub fn w_r(&self) -> &T {
+    pub(crate) fn w_r(&self) -> &T {
         &self.elements[Self::W_R]
     }
 
-    pub fn w_o(&self) -> &T {
+    pub(crate) fn w_o(&self) -> &T {
         &self.elements[Self::W_O]
     }
 
-    pub fn w_4(&self) -> &T {
+    pub(crate) fn w_4(&self) -> &T {
         &self.elements[Self::W_4]
     }
 
-    pub fn z_perm(&self) -> &T {
+    pub(crate) fn z_perm(&self) -> &T {
         &self.elements[Self::Z_PERM]
     }
 
-    pub fn lookup_inverses(&self) -> &T {
+    pub(crate) fn lookup_inverses(&self) -> &T {
         &self.elements[Self::LOOKUP_INVERSES]
     }
 
-    pub fn lookup_read_counts(&self) -> &T {
+    pub(crate) fn lookup_read_counts(&self) -> &T {
         &self.elements[Self::LOOKUP_READ_COUNTS]
     }
 
-    pub fn lookup_read_tags(&self) -> &T {
+    pub(crate) fn lookup_read_tags(&self) -> &T {
         &self.elements[Self::LOOKUP_READ_TAGS]
     }
 
-    pub fn w_l_mut(&mut self) -> &mut T {
+    pub(crate) fn w_l_mut(&mut self) -> &mut T {
         &mut self.elements[Self::W_L]
     }
 
-    pub fn w_r_mut(&mut self) -> &mut T {
+    pub(crate) fn w_r_mut(&mut self) -> &mut T {
         &mut self.elements[Self::W_R]
     }
 
-    pub fn w_o_mut(&mut self) -> &mut T {
+    pub(crate) fn w_o_mut(&mut self) -> &mut T {
         &mut self.elements[Self::W_O]
     }
 
-    pub fn w_4_mut(&mut self) -> &mut T {
+    pub(crate) fn w_4_mut(&mut self) -> &mut T {
         &mut self.elements[Self::W_4]
     }
 
-    pub fn z_perm_mut(&mut self) -> &mut T {
+    pub(crate) fn z_perm_mut(&mut self) -> &mut T {
         &mut self.elements[Self::Z_PERM]
     }
 
-    pub fn lookup_inverses_mut(&mut self) -> &mut T {
+    pub(crate) fn lookup_inverses_mut(&mut self) -> &mut T {
         &mut self.elements[Self::LOOKUP_INVERSES]
     }
 
-    pub fn lookup_read_counts_mut(&mut self) -> &mut T {
+    pub(crate) fn lookup_read_counts_mut(&mut self) -> &mut T {
         &mut self.elements[Self::LOOKUP_READ_COUNTS]
     }
 
-    pub fn lookup_read_tags_mut(&mut self) -> &mut T {
+    pub(crate) fn lookup_read_tags_mut(&mut self) -> &mut T {
         &mut self.elements[Self::LOOKUP_READ_TAGS]
     }
 }
@@ -259,56 +244,40 @@ impl<T: Default> ShiftedWitnessEntities<T> {
     /// column 4
     const Z_PERM: usize = 4;
 
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
+    pub(crate) fn iter(&self) -> impl Iterator<Item = &T> {
         self.elements.iter()
     }
 
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+    pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.elements.iter_mut()
     }
 
-    pub fn w_l(&self) -> &T {
+    pub(crate) fn w_l(&self) -> &T {
         &self.elements[Self::W_L]
     }
 
-    pub fn w_r(&self) -> &T {
+    pub(crate) fn w_r(&self) -> &T {
         &self.elements[Self::W_R]
     }
 
-    pub fn w_o(&self) -> &T {
+    pub(crate) fn w_o(&self) -> &T {
         &self.elements[Self::W_O]
     }
 
-    pub fn w_4(&self) -> &T {
+    pub(crate) fn w_4(&self) -> &T {
         &self.elements[Self::W_4]
     }
 
-    pub fn z_perm(&self) -> &T {
+    pub(crate) fn z_perm(&self) -> &T {
         &self.elements[Self::Z_PERM]
-    }
-
-    pub fn w_l_mut(&mut self) -> &mut T {
-        &mut self.elements[Self::W_L]
-    }
-
-    pub fn w_r_mut(&mut self) -> &mut T {
-        &mut self.elements[Self::W_R]
-    }
-
-    pub fn w_o_mut(&mut self) -> &mut T {
-        &mut self.elements[Self::W_O]
-    }
-
-    pub fn w_4_mut(&mut self) -> &mut T {
-        &mut self.elements[Self::W_4]
-    }
-
-    pub fn z_perm_mut(&mut self) -> &mut T {
-        &mut self.elements[Self::Z_PERM]
     }
 }
 
-#[derive(Default, Clone, Serialize, Deserialize)]
+/// The number of elements in the precomputed entities array
+pub(crate) const PRECOMPUTED_ENTITIES_SIZE: usize = 27;
+
+#[derive(Default, Clone)]
+#[cfg_attr(test, derive(Debug, PartialEq, Eq))]
 pub struct PrecomputedEntities<T: Default> {
     pub elements: [T; PRECOMPUTED_ENTITIES_SIZE],
 }
@@ -369,119 +338,119 @@ impl<T: Default> PrecomputedEntities<T> {
     /// column 26
     const LAGRANGE_LAST: usize = 26;
 
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
+    pub(crate) fn iter(&self) -> impl Iterator<Item = &T> {
         self.elements.iter()
     }
 
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+    pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.elements.iter_mut()
     }
 
-    pub fn q_m(&self) -> &T {
+    pub(crate) fn q_m(&self) -> &T {
         &self.elements[Self::Q_M]
     }
 
-    pub fn q_c(&self) -> &T {
+    pub(crate) fn q_c(&self) -> &T {
         &self.elements[Self::Q_C]
     }
 
-    pub fn q_l(&self) -> &T {
+    pub(crate) fn q_l(&self) -> &T {
         &self.elements[Self::Q_L]
     }
 
-    pub fn q_r(&self) -> &T {
+    pub(crate) fn q_r(&self) -> &T {
         &self.elements[Self::Q_R]
     }
 
-    pub fn q_o(&self) -> &T {
+    pub(crate) fn q_o(&self) -> &T {
         &self.elements[Self::Q_O]
     }
 
-    pub fn q_4(&self) -> &T {
+    pub(crate) fn q_4(&self) -> &T {
         &self.elements[Self::Q_4]
     }
 
-    pub fn q_arith(&self) -> &T {
+    pub(crate) fn q_arith(&self) -> &T {
         &self.elements[Self::Q_ARITH]
     }
 
-    pub fn q_delta_range(&self) -> &T {
+    pub(crate) fn q_delta_range(&self) -> &T {
         &self.elements[Self::Q_DELTA_RANGE]
     }
 
-    pub fn q_elliptic(&self) -> &T {
+    pub(crate) fn q_elliptic(&self) -> &T {
         &self.elements[Self::Q_ELLIPTIC]
     }
 
-    pub fn q_aux(&self) -> &T {
+    pub(crate) fn q_aux(&self) -> &T {
         &self.elements[Self::Q_AUX]
     }
 
-    pub fn q_lookup(&self) -> &T {
+    pub(crate) fn q_lookup(&self) -> &T {
         &self.elements[Self::Q_LOOKUP]
     }
 
-    pub fn q_poseidon2_external(&self) -> &T {
+    pub(crate) fn q_poseidon2_external(&self) -> &T {
         &self.elements[Self::Q_POSEIDON2_EXTERNAL]
     }
 
-    pub fn q_poseidon2_internal(&self) -> &T {
+    pub(crate) fn q_poseidon2_internal(&self) -> &T {
         &self.elements[Self::Q_POSEIDON2_INTERNAL]
     }
 
-    pub fn sigma_1(&self) -> &T {
+    pub(crate) fn sigma_1(&self) -> &T {
         &self.elements[Self::SIGMA_1]
     }
 
-    pub fn sigma_2(&self) -> &T {
+    pub(crate) fn sigma_2(&self) -> &T {
         &self.elements[Self::SIGMA_2]
     }
 
-    pub fn sigma_3(&self) -> &T {
+    pub(crate) fn sigma_3(&self) -> &T {
         &self.elements[Self::SIGMA_3]
     }
 
-    pub fn sigma_4(&self) -> &T {
+    pub(crate) fn sigma_4(&self) -> &T {
         &self.elements[Self::SIGMA_4]
     }
 
-    pub fn id_1(&self) -> &T {
+    pub(crate) fn id_1(&self) -> &T {
         &self.elements[Self::ID_1]
     }
 
-    pub fn id_2(&self) -> &T {
+    pub(crate) fn id_2(&self) -> &T {
         &self.elements[Self::ID_2]
     }
 
-    pub fn id_3(&self) -> &T {
+    pub(crate) fn id_3(&self) -> &T {
         &self.elements[Self::ID_3]
     }
 
-    pub fn id_4(&self) -> &T {
+    pub(crate) fn id_4(&self) -> &T {
         &self.elements[Self::ID_4]
     }
 
-    pub fn table_1(&self) -> &T {
+    pub(crate) fn table_1(&self) -> &T {
         &self.elements[Self::TABLE_1]
     }
 
-    pub fn table_2(&self) -> &T {
+    pub(crate) fn table_2(&self) -> &T {
         &self.elements[Self::TABLE_2]
     }
 
-    pub fn table_3(&self) -> &T {
+    pub(crate) fn table_3(&self) -> &T {
         &self.elements[Self::TABLE_3]
     }
 
-    pub fn table_4(&self) -> &T {
+    pub(crate) fn table_4(&self) -> &T {
         &self.elements[Self::TABLE_4]
     }
 
-    pub fn lagrange_first(&self) -> &T {
+    pub(crate) fn lagrange_first(&self) -> &T {
         &self.elements[Self::LAGRANGE_FIRST]
     }
 
-    pub fn lagrange_last(&self) -> &T {
+    pub(crate) fn lagrange_last(&self) -> &T {
         &self.elements[Self::LAGRANGE_LAST]
     }
 }

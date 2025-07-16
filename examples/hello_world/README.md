@@ -8,11 +8,11 @@ Note: `@aztec/bb.js` specific version of `0.86.0` is important.
 
 Locally
 
-First ensure to have deployed the global verifier as per README.md instructions. Then  do:
+First ensure to have deployed the global verifier as per ./docs/deployments.md instructions. Then  do:
 
 ```bash
 just build-contract
-just --set rpc_url https://sepolia-rollup.arbitrum.io/rpc --set private_key ... deploy-contract "{{local verifier address}}"
+just deploy-contract "{{local verifier address}}"
 ```
 
 Sepolia deployment

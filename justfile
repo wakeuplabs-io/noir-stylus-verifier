@@ -13,9 +13,6 @@ build-contract contract:
   cargo build -p contracts --target wasm32-unknown-unknown --release --features {{contract}} -Z unstable-options -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort && \
   mv ./target/wasm32-unknown-unknown/release/contracts.wasm ./target/wasm32-unknown-unknown/release/{{contract}}.wasm
 
-optimize-contract contract:
-  wasm-opt --enable-bulk-memory  -Oz -o ./target/wasm32-unknown-unknown/release/{{contract}}-opt.wasm ./target/wasm32-unknown-unknown/release/{{contract}}.wasm
-
 # Profiling
 
 profile-contract contract: 
@@ -27,13 +24,17 @@ profile-contract contract:
 
 # Deployments
 
+check-contract contract: 
+  just build-contract {{contract}} && \
+  cargo stylus check -e https://sepolia-rollup.arbitrum.io/rpc --wasm-file ./target/wasm32-unknown-unknown/release/{{contract}}.wasm --verbose
+
+
 deploy-contract contract constructor_signature="" *constructor_args="":
   just build-contract {{contract}} && \
-  just optimize-contract {{contract}} && \
   if [ "{{constructor_args}}" = "" ]; then \
-    cargo stylus deploy -e {{rpc_url}} --wasm-file ./target/wasm32-unknown-unknown/release/{{contract}}-opt.wasm --private-key {{private_key}} --verbose --no-verify; \
+    cargo stylus deploy -e {{rpc_url}} --wasm-file ./target/wasm32-unknown-unknown/release/{{contract}}.wasm --private-key {{private_key}} --verbose --no-verify; \
   else \
-    cargo stylus deploy -e {{rpc_url}} --wasm-file ./target/wasm32-unknown-unknown/release/{{contract}}-opt.wasm --private-key {{private_key}} --verbose --no-verify --constructor-signature '{{constructor_signature}}' --constructor-args {{constructor_args}}; \
+    cargo stylus deploy -e {{rpc_url}} --wasm-file ./target/wasm32-unknown-unknown/release/{{contract}}.wasm --private-key {{private_key}} --verbose --no-verify --constructor-signature '{{constructor_signature}}' --constructor-args {{constructor_args}}; \
   fi
 
 # Tests
@@ -45,14 +46,16 @@ test-ultrahonk:
 test-integration:
   cargo run -p integration -- --rpc-url {{rpc_url}} --priv-key {{private_key}}
 
-check-contract contract: 
-  just build-contract {{contract}} && \
-  just optimize-contract {{contract}} && \
-  cargo stylus check -e https://sepolia-rollup.arbitrum.io/rpc --wasm-file ./target/wasm32-unknown-unknown/release/{{contract}}-opt.wasm --verbose
-
-verify-proof verifier_address test_vector_name:
+verify-proof verifier_address test_vector_name zk="false":
   #!/usr/bin/env bash
-  proof_hex=$(xxd -p -c 1000000 "test_vectors/{{test_vector_name}}/kat/proof" | tr -d '\n')
+
+  if [ "{{zk}}" = "true" ]; then
+    echo "Verifying zk-flavored proof"
+    proof_hex=$(xxd -p -c 1000000 "test_vectors/{{test_vector_name}}/kat/zk-proof" | tr -d '\n')
+  else
+    proof_hex=$(xxd -p -c 1000000 "test_vectors/{{test_vector_name}}/kat/proof" | tr -d '\n')
+  fi
+
   inputs_hex=$(xxd -p -c 1000000 "test_vectors/{{test_vector_name}}/kat/public_inputs" | tr -d '\n')
   vk_hex=$(xxd -p -c 1000000 "test_vectors/{{test_vector_name}}/kat/vk" | tr -d '\n')
 
@@ -65,6 +68,8 @@ get-verifier-addresses verifier_address:
 
 # Miscellaneous
 
+check-pr: fmt lint test-ultrahonk test-integration
+
 nitro-testnode-up:
   ./scripts/nitro-testnode.sh --detach
 
@@ -72,8 +77,13 @@ nitro-testnode-down:
   ./scripts/nitro-testnode.sh --quit
 
 fmt:
-  cargo fmt --all
+  cargo fmt --package ultrahonk --package contracts --package integration -- --check
+
+fmt-fix:
+  cargo fmt --package ultrahonk --package contracts --package integration
 
 lint:
-  cargo fmt --all -- --check
-  cargo clippy --workspace --all-targets -q 
+  cargo clippy --package ultrahonk --package contracts --package integration --no-deps
+
+lint-fix:
+  cargo clippy --package ultrahonk --package contracts --package integration --fix

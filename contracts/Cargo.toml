@@ -1,0 +1,45 @@
+[package]
+name = "contracts"
+version = "0.1.11"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+homepage = "https://www.wakeuplabs.io"
+repository = "https://github.com/wakeuplabs-io/noir-stylus-verifier"
+keywords = ["arbitrum", "ethereum", "stylus", "alloy"]
+description = "Stylus noir verifier"
+
+[dependencies]
+alloy-primitives.workspace = true
+alloy-sol-types.workspace = true
+stylus-sdk.workspace = true
+ultrahonk = { path = "../packages/ultrahonk" }
+ark-ff.workspace = true
+ark-bn254.workspace = true
+
+[dev-dependencies]
+alloy.workspace = true
+alloy-primitives.workspace = true
+tokio = { version = "1.12.0", features = ["full"] }
+stylus-sdk = { workspace = true, features = ["stylus-test"] }
+rand.workspace = true
+eyre.workspace = true
+
+[features]
+default = ["mini-alloc"]
+export-abi = ["stylus-sdk/export-abi"]
+debug = ["stylus-sdk/debug"]
+mini-alloc = ["stylus-sdk/mini-alloc"]
+verifier = []
+zk-verifier = []
+sumcheck-verifier = []
+zk-sumcheck-verifier = []
+shplemini-verifier = []
+zk-shplemini-verifier = []
+precompile-tests = []
+
+[[bin]]
+name = "stylus-noir-verifier"
+path = "src/main.rs"
+
+[lib]
+crate-type = ["lib", "cdylib"]

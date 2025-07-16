@@ -18,12 +18,12 @@ use crate::{
 };
 use ark_ff::One;
 
-pub(crate) type SumcheckRoundOutput = Univariate;
+pub(crate) type SumcheckRoundOutput<const SIZE: usize> = Univariate<SIZE>;
 
-pub struct SumcheckVerifierRound;
+pub(crate) struct SumcheckVerifierRound;
 
 impl SumcheckVerifierRound {
-    pub fn compute_full_relation_purported_value(
+    pub(crate) fn compute_full_relation_purported_value(
         extended_edges: &ClaimedEvaluations,
         relation_parameters: &RelationParameters,
         scaling_factor: &ScalarField,

@@ -118,7 +118,7 @@ impl Mul for Quantized {
     }
 }
 
-impl Ord for Quantized { // TODO is it cheaper to create a function that returns a bool directly?
+impl Ord for Quantized { 
     fn cmp(self: Self, other: Self) -> Ordering {
         let self_positive = is_positive(self.x);
         let other_positive = is_positive(other.x);

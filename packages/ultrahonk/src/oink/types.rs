@@ -10,13 +10,14 @@ pub struct VerifierMemory {
     pub challenges: Challenges,
 }
 
+#[cfg_attr(test, derive(Eq, PartialEq, Debug))]
 pub struct Challenges {
-    pub eta_1: ScalarField,
-    pub eta_2: ScalarField,
-    pub eta_3: ScalarField,
-    pub beta: ScalarField,
-    pub gamma: ScalarField,
-    pub alphas: [ScalarField; NUM_ALPHAS],
+    pub(crate) eta_1: ScalarField,
+    pub(crate) eta_2: ScalarField,
+    pub(crate) eta_3: ScalarField,
+    pub(crate) beta: ScalarField,
+    pub(crate) gamma: ScalarField,
+    pub(crate) alphas: [ScalarField; NUM_ALPHAS],
 }
 
 impl Default for Challenges {

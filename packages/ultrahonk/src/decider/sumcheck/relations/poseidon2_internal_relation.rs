@@ -1,8 +1,8 @@
 use super::Relation;
 use crate::alloc::borrow::ToOwned;
 use crate::decider::types::{ClaimedEvaluations, RelationParameters};
+use crate::serialize::BytesDeserializable;
 use crate::types::ScalarField;
-use crate::Utils;
 use ark_ff::Field;
 
 #[derive(Clone, Debug, Default)]
@@ -70,23 +70,43 @@ impl Relation for Poseidon2InternalRelation {
 
         let q_pos_by_scaling = q_poseidon2_internal.to_owned() * scaling_factor;
 
-        // TACEO TODO this poseidon instance is very hardcoded to the bn254 curve
-        let internal_matrix_diag_0 = Utils::field_from_hex_string(
-            "0x10dc6e9c006ea38b04b1e03b4bd9490c0d03f98929ca1d7fb56821fd19d3b6e7",
+        // This poseidon instance is hardcoded to the bn254 curve
+        let internal_matrix_diag_0 = ScalarField::deserialize_from_bytes(
+            // hex::decode("10dc6e9c006ea38b04b1e03b4bd9490c0d03f98929ca1d7fb56821fd19d3b6e7")
+            &[
+                16, 220, 110, 156, 0, 110, 163, 139, 4, 177, 224, 59, 75, 217, 73, 12, 13, 3, 249,
+                137, 41, 202, 29, 127, 181, 104, 33, 253, 25, 211, 182, 231,
+            ],
         )
-        .unwrap();
-        let internal_matrix_diag_1 = Utils::field_from_hex_string(
-            "0x0c28145b6a44df3e0149b3d0a30b3bb599df9756d4dd9b84a86b38cfb45a740b",
+        .unwrap()
+        .0;
+        let internal_matrix_diag_1 = ScalarField::deserialize_from_bytes(
+            // hex::decode("0c28145b6a44df3e0149b3d0a30b3bb599df9756d4dd9b84a86b38cfb45a740b")
+            &[
+                12, 40, 20, 91, 106, 68, 223, 62, 1, 73, 179, 208, 163, 11, 59, 181, 153, 223, 151,
+                86, 212, 221, 155, 132, 168, 107, 56, 207, 180, 90, 116, 11,
+            ],
         )
-        .unwrap();
-        let internal_matrix_diag_2 = Utils::field_from_hex_string(
-            "0x00544b8338791518b2c7645a50392798b21f75bb60e3596170067d00141cac15",
+        .unwrap()
+        .0;
+        let internal_matrix_diag_2 = ScalarField::deserialize_from_bytes(
+            // hex::decode("00544b8338791518b2c7645a50392798b21f75bb60e3596170067d00141cac15")
+            &[
+                0, 84, 75, 131, 56, 121, 21, 24, 178, 199, 100, 90, 80, 57, 39, 152, 178, 31, 117,
+                187, 96, 227, 89, 97, 112, 6, 125, 0, 20, 28, 172, 21,
+            ],
         )
-        .unwrap();
-        let internal_matrix_diag_3 = Utils::field_from_hex_string(
-            "0x222c01175718386f2e2e82eb122789e352e105a3b8fa852613bc534433ee428b",
+        .unwrap()
+        .0;
+        let internal_matrix_diag_3 = ScalarField::deserialize_from_bytes(
+            // hex::decode("222c01175718386f2e2e82eb122789e352e105a3b8fa852613bc534433ee428b")
+            &[
+                34, 44, 1, 23, 87, 24, 56, 111, 46, 46, 130, 235, 18, 39, 137, 227, 82, 225, 5,
+                163, 184, 250, 133, 38, 19, 188, 83, 68, 51, 238, 66, 139,
+            ],
         )
-        .unwrap();
+        .unwrap()
+        .0;
 
         let mut v1 = u1 * internal_matrix_diag_0;
         v1 += &sum;
