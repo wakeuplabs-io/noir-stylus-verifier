@@ -148,10 +148,6 @@ impl ShpleminiVerifier {
         transcript: &mut Transcript,
         padding_indicator_array: &[ScalarField; CONST_PROOF_SIZE_LOG_N],
         libra_commitments: Vec<G1Affine>,
-        // libra_univariate_evaluation: ScalarField,
-        // consistency_checked: &mut bool,
-        // const core::vector<RefVector<Commitment>>& concatenation_group_commitments = {},
-        // RefSpan<ScalarField> concatenated_evaluations = {}
     ) -> HonkVerifyResult<(
         ShpleminiVerifierOpeningClaim,
         [ScalarField; NUM_SMALL_IPA_EVALUATIONS],
@@ -187,6 +183,7 @@ impl ShpleminiVerifier {
         // Get evaluations of partially evaluated batched interleaved polynomials P₊(rˢ) and P₋((-r)ˢ)
         let p_pos = ScalarField::zero();
         let p_neg = ScalarField::zero();
+        // interleaved is not supported yet
         // if (claim_batcher.interleaved) {
         //     p_pos = transcript->template receive_from_prover<ScalarField>("Gemini:P_pos");
         //     p_neg = transcript->template receive_from_prover<ScalarField>("Gemini:P_neg");
@@ -333,7 +330,7 @@ impl ShpleminiVerifier {
                 &shplonk_evaluation_challenge,
             )?;
 
-            // consistency check moved to outside of this function but still being done
+            // consistency check moved to outside into the main verifier
         }
 
         // Finalize the batch opening claim
