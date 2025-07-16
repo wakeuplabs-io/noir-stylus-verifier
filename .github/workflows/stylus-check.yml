@@ -43,9 +43,6 @@ jobs:
       - name: Install cargo-stylus
         run: cargo install cargo-stylus@0.6.0
 
-      - name: Install wasm-opt
-        run: cargo install wasm-opt@0.116.1
-
       - uses: extractions/setup-just@v3
         with:
           just-version: 1.38.0 
