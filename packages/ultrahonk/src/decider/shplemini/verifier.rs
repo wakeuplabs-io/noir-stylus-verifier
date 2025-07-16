@@ -63,12 +63,10 @@ impl ShpleminiVerifier {
         multivariate_challenge: Vec<ScalarField>,
         circuit_size: u32,
         libra_commitments: Vec<G1Affine>,
-        // libra_univariate_evaluation: ScalarField,
     ) -> HonkVerifyResult<(bool, [ScalarField; NUM_SMALL_IPA_EVALUATIONS], ScalarField)> {
+        // we could share this with sumcheck verifier, but we rather reduce serializations in contract
         let log_circuit_size = circuit_size.ilog2() as usize;
-
         let mut padding_indicator_array = [ScalarField::zero(); CONST_PROOF_SIZE_LOG_N];
-
         for (idx, value) in padding_indicator_array.iter_mut().enumerate() {
             *value = if idx < log_circuit_size {
                 ScalarField::one()
@@ -83,8 +81,6 @@ impl ShpleminiVerifier {
                 transcript,
                 &padding_indicator_array,
                 libra_commitments,
-                // libra_univariate_evaluation,
-                // consistency_checked,
             )?;
 
         let pairing_points = Self::reduce_verify_shplemini::<P>(&mut opening_claim, transcript)?;
@@ -97,13 +93,6 @@ impl ShpleminiVerifier {
         )
         .unwrap();
 
-        // let consistency_checked = Self::check_evaluations_consistency(
-        //     &libra_evaluations,
-        //     gemini_evaluation_challenge,
-        //     &multivariate_challenge,
-        //     libra_univariate_evaluation,
-        // )?;
-
         Ok((pcs_verified, libra_evaluations, gemini_evaluation_challenge))
     }
 
@@ -114,8 +103,8 @@ impl ShpleminiVerifier {
         let quotient_commitment = transcript.receive_point_from_prover()?; // "KZG:W"
         opening_pair.commitments.push(quotient_commitment);
         opening_pair.scalars.push(opening_pair.challenge);
-        let p_1 = -quotient_commitment.into_group();
 
+        let p_1 = -quotient_commitment.into_group();
         let p_0 = P::msm(&opening_pair.scalars, &opening_pair.commitments)
             .map_err(|_| HonkProofError::MSMError)?;
 

@@ -87,12 +87,11 @@ impl VerifierContract {
         let proof = must_deser!(HonkProof, proof_bytes);
 
         // create transcript and memory
-        let proof = proof.insert_public_inputs(public_inputs);
-        let mut transcript = Transcript::new_verifier(proof);
+        let mut transcript = Transcript::new_verifier(proof.insert_public_inputs(public_inputs));
 
         let oink_verifier = OinkVerifier::default();
         let verifier_memory = oink_verifier
-            .build_verifier_memory::<PrecompileHashBackend>(&vk, &mut transcript)
+            .verify::<PrecompileHashBackend>(&vk, &mut transcript)
             .unwrap();
 
         let mut gate_challenges: Vec<ScalarField> = Vec::with_capacity(CONST_PROOF_SIZE_LOG_N);

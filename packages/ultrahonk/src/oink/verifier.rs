@@ -16,19 +16,15 @@ pub struct OinkVerifier {
 
 impl Default for OinkVerifier {
     fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl OinkVerifier {
-    pub fn new() -> Self {
         Self {
             memory: VerifierMemory::default(),
             public_inputs: Default::default(),
         }
     }
+}
 
-    pub fn build_verifier_memory<H: HashBackend>(
+impl OinkVerifier {
+    pub fn verify<H: HashBackend>(
         mut self,
         verifying_key: &VerifyingKey,
         transcript: &mut Transcript,

@@ -3,8 +3,8 @@ name = "contracts"
 version = "0.1.11"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-homepage = "https://github.com/OffchainLabs/stylus-hello-world"
-repository = "https://github.com/OffchainLabs/stylus-hello-world"
+homepage = "https://www.wakeuplabs.io"
+repository = "https://github.com/wakeuplabs-io/noir-stylus-verifier"
 keywords = ["arbitrum", "ethereum", "stylus", "alloy"]
 description = "Stylus noir verifier"
 

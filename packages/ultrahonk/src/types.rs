@@ -39,9 +39,6 @@ pub enum HonkProofError {
     /// Indicates that the witness is too small for the provided circuit.
     #[error("Cannot index into witness {0}")]
     CorruptedWitness(usize),
-    /// Indicates that the crs is too small
-    #[error("CRS too small")]
-    CrsTooSmall,
     /// The proof has too few elements
     #[error("Proof too small")]
     ProofTooSmall,

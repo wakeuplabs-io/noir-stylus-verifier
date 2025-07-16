@@ -121,10 +121,12 @@ impl SumcheckVerifier {
         for (round_idx, &padding_value) in padding_indicator_array.iter().enumerate() {
             // Obtain the round univariate from the transcript
             let evaluations = transcript.receive_fr_array_from_verifier::<SIZE>()?;
-
             let round_univariate = SumcheckRoundOutput { evaluations };
+            
             let round_challenge = transcript.get_challenge::<H>(); // format!("Sumcheck:u_{}", round_idx)
             multivariate_challenge.push(round_challenge);
+
+            gate_separators.partially_evaluate(round_challenge, padding_indicator_array[round_idx]);
 
             let checked = Self::round_check_sum(
                 &round_univariate,
@@ -138,7 +140,6 @@ impl SumcheckVerifier {
                 padding_value,
                 &mut round_target_total_sum,
             );
-            gate_separators.partially_evaluate(round_challenge, padding_indicator_array[round_idx]);
 
             verified = verified && checked;
         }
@@ -166,8 +167,7 @@ impl SumcheckVerifier {
         // For ZK Flavors: the evaluation of the Row Disabling Polynomial at the sumcheck challenge
         let claimed_libra_evaluation = if has_zk {
             let libra_evaluation = transcript.receive_fr_from_prover()?; // "Libra:claimed_evaluation"
-                                                                         // No recursive flavor, otherwise we need to make some modifications to the following
-
+                                                                        
             let correcting_factor = RowDisablingPolynomial::evaluate_at_challenge_with_padding(
                 &multivariate_challenge,
                 &padding_indicator_array,
@@ -175,24 +175,22 @@ impl SumcheckVerifier {
 
             full_honk_purported_value =
                 full_honk_purported_value * correcting_factor + libra_evaluation * libra_challenge;
+            
             libra_evaluation
         } else {
+            // Treated as "None"
             ScalarField::zero()
         };
 
-        let final_check = full_honk_purported_value == round_target_total_sum;
-        verified = verified && final_check;
-
         if has_zk {
             libra_commitments.push(transcript.receive_point_from_prover().unwrap()); // "Libra:grand_sum_commitment"
-            libra_commitments.push(transcript.receive_point_from_prover().unwrap());
-            // "Libra:quotient_commitment"
+            libra_commitments.push(transcript.receive_point_from_prover().unwrap()); // "Libra:quotient_commitment"
         }
 
         Ok((
             SumcheckVerifierOutput {
                 multivariate_challenge,
-                verified,
+                verified: verified && full_honk_purported_value == round_target_total_sum,
                 claimed_libra_evaluation,
             },
             libra_commitments,

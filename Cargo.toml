@@ -13,7 +13,7 @@ repository = "https:://github.com/wakeuplabs-io/noir-stylus-verifier"
 license = "MIT OR Apache-2.0"
 publish = false
 readme = "./README.md"
-include = ["Cargo.toml", "src", "README.md", "LICENSE-APACHE", "LICENSE-MIT"]
+include = ["Cargo.toml", "src", "README.md", "LICENSE-APACHE", "LICENSE-MIT", "LICENSE-GPL"]
 categories = ["cryptography"]
 
 [workspace.dependencies]

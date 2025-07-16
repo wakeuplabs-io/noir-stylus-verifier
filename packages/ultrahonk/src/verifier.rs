@@ -21,13 +21,12 @@ impl UltraHonk {
         vk: &VerifyingKey,
         has_zk: bool,
     ) -> HonkVerifyResult<bool> {
-        let honk_proof = honk_proof.insert_public_inputs(public_inputs.to_vec());
-
-        let mut transcript = Transcript::new_verifier(honk_proof);
+        let mut transcript =
+            Transcript::new_verifier(honk_proof.insert_public_inputs(public_inputs.to_vec()));
 
         let oink_verifier = OinkVerifier::default();
         let oink_memory = oink_verifier
-            .build_verifier_memory::<H>(vk, &mut transcript)
+            .verify::<H>(vk, &mut transcript)
             .unwrap();
 
         let mut gate_challenges: Vec<ScalarField> = Vec::with_capacity(CONST_PROOF_SIZE_LOG_N);
@@ -57,6 +56,9 @@ impl UltraHonk {
                 has_zk,
             )?
         };
+        if !sumcheck_output.verified {
+            return Ok(false);
+        }
 
         // build shplemini verifier
         let mut shplemini_verifier = ShpleminiVerifier::new(ShpleminiVerifierMemory::new(
@@ -71,6 +73,9 @@ impl UltraHonk {
                 vk.circuit_size,
                 libra_commitments,
             )?;
+        if !pcs_verified {
+            return Ok(false);
+        }
 
         // consistency check
         let mut consistency_checked = true;
