@@ -1235,7 +1235,6 @@ dependencies = [
  "alloy-primitives",
  "alloy-sol-types",
  "ark-bn254",
- "ark-ec",
  "ark-ff 0.5.0",
  "eyre",
  "rand 0.8.5",
