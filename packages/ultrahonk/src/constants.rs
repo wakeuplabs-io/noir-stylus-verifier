@@ -25,6 +25,14 @@ pub const NUM_BASEFIELD_ELEMENTS: usize = 2;
 /// This is the number of elements required to represent the scalar field.
 pub const NUM_SCALARFIELD_ELEMENTS: usize = 1;
 
+// For ZK Flavors: the number of the commitments required by Libra and SmallSubgroupIPA.
+pub const NUM_LIBRA_COMMITMENTS: usize = 3;
+
+/// The maximum partial relation length.
+pub const MAX_PARTIAL_RELATION_LENGTH: usize = 7;
+pub const BATCHED_RELATION_PARTIAL_LENGTH: usize = MAX_PARTIAL_RELATION_LENGTH + 1;
+pub const BATCHED_RELATION_PARTIAL_LENGTH_ZK: usize = BATCHED_RELATION_PARTIAL_LENGTH + 1;
+
 // We are getting grumpkin::b, which is -17. Cannot use a static because it is not a constant and avoid using Lazy to avoid size bloat.
 pub(crate) fn get_honk_curve_b() -> ScalarField {
     -ScalarField::from(17)
@@ -41,6 +49,30 @@ pub(crate) fn get_crs_g2() -> G2Affine {
             187, 154, 114, 133, 156, 242, 160, 70, 65, 249, 155, 164, 238, 65, 60, 128, 218, 106,
             95, 228, 34, 254, 189, 163, 192, 192, 99, 42, 86, 71, 91, 66, 20, 229, 97, 94, 17, 230,
             221, 63, 150, 230, 206, 162, 133, 74, 135, 212, 218, 204, 94, 85,
+        ],
+    )
+    .unwrap()
+    .0
+}
+
+pub(crate) fn get_subgroup_generator() -> ScalarField {
+    ScalarField::deserialize_from_bytes(
+        // hex::decode("07b0c561a6148404f086204a9f36ffb0617942546750f230c893619174a57a76")
+        &[
+            7, 176, 197, 97, 166, 20, 132, 4, 240, 134, 32, 74, 159, 54, 255, 176, 97, 121, 66, 84,
+            103, 80, 242, 48, 200, 147, 97, 145, 116, 165, 122, 118,
+        ],
+    )
+    .unwrap()
+    .0
+}
+
+pub(crate) fn get_subgroup_generator_inverse() -> ScalarField {
+    ScalarField::deserialize_from_bytes(
+        // hex::decode("204bd3277422fad364751ad938e2b5e6a54cf8c68712848a692c553d0329f5d6")
+        &[
+            32, 75, 211, 39, 116, 34, 250, 211, 100, 117, 26, 217, 56, 226, 181, 230, 165, 76, 248,
+            198, 135, 18, 132, 138, 105, 44, 85, 61, 3, 41, 245, 214,
         ],
     )
     .unwrap()

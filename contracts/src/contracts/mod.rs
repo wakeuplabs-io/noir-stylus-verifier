@@ -1,4 +1,4 @@
 pub mod core;
 
-#[cfg(feature = "precompile-test-contract")]
+#[cfg(feature = "precompile-tests")]
 pub mod test;

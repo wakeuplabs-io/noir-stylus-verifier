@@ -18,7 +18,7 @@ use crate::{
 };
 use ark_ff::One;
 
-pub(crate) type SumcheckRoundOutput = Univariate;
+pub(crate) type SumcheckRoundOutput<const SIZE: usize> = Univariate<SIZE>;
 
 pub(crate) struct SumcheckVerifierRound;
 

@@ -2,7 +2,7 @@ use crate::alloc::borrow::ToOwned;
 use crate::backends::HashBackend;
 use crate::constants::{NUM_BASEFIELD_ELEMENTS, NUM_SCALARFIELD_ELEMENTS};
 use crate::serialize::{BytesDeserializable, BytesSerializable};
-use crate::types::{G1Affine, HonkProof, HonkProofError, HonkProofResult, ScalarField};
+use crate::types::{G1Affine, HonkProof, HonkProofError, HonkVerifyResult, ScalarField};
 use crate::Utils;
 use alloc::vec::Vec;
 use ark_ec::AffineRepr;
@@ -73,7 +73,7 @@ impl Transcript {
         self.add_to_hash_buffer(&[el]);
     }
 
-    fn receive_n_from_prover(&mut self, n: usize) -> HonkProofResult<Vec<ScalarField>> {
+    fn receive_n_from_prover(&mut self, n: usize) -> HonkVerifyResult<Vec<ScalarField>> {
         if self.num_frs_read + n > self.proof_data.len() {
             return Err(HonkProofError::ProofTooSmall);
         }
@@ -84,13 +84,13 @@ impl Transcript {
         Ok(elements)
     }
 
-    pub(crate) fn receive_fr_from_prover(&mut self) -> HonkProofResult<ScalarField> {
+    pub(crate) fn receive_fr_from_prover(&mut self) -> HonkVerifyResult<ScalarField> {
         let elements = self.receive_n_from_prover(NUM_SCALARFIELD_ELEMENTS)?;
 
         Ok(Utils::convert_scalarfield_back(&elements))
     }
 
-    pub(crate) fn receive_point_from_prover(&mut self) -> HonkProofResult<G1Affine> {
+    pub(crate) fn receive_point_from_prover(&mut self) -> HonkVerifyResult<G1Affine> {
         let elements = self.receive_n_from_prover(NUM_BASEFIELD_ELEMENTS * 2)?;
 
         let coords = elements
@@ -113,7 +113,7 @@ impl Transcript {
     pub(crate) fn receive_fr_vec_from_verifier(
         &mut self,
         n: usize,
-    ) -> HonkProofResult<Vec<ScalarField>> {
+    ) -> HonkVerifyResult<Vec<ScalarField>> {
         let elements = self.receive_n_from_prover(NUM_SCALARFIELD_ELEMENTS * n)?;
 
         let elements = elements
@@ -126,7 +126,7 @@ impl Transcript {
 
     pub(crate) fn receive_fr_array_from_verifier<const SIZE: usize>(
         &mut self,
-    ) -> HonkProofResult<[ScalarField; SIZE]> {
+    ) -> HonkVerifyResult<[ScalarField; SIZE]> {
         let mut res: [ScalarField; SIZE] = [ScalarField::zero(); SIZE];
         let elements = self.receive_n_from_prover(NUM_SCALARFIELD_ELEMENTS * SIZE)?;
 
@@ -193,7 +193,7 @@ impl Transcript {
         new_challenges
     }
 
-    pub(crate) fn get_challenge<H: HashBackend>(&mut self) -> ScalarField {
+    pub fn get_challenge<H: HashBackend>(&mut self) -> ScalarField {
         let challenge = self.get_next_duplex_challenge_buffer::<H>(1)[0];
         let res = challenge.to_owned();
         self.round_number += 1;

@@ -5,5 +5,6 @@
 #[macro_use]
 extern crate alloc;
 
-pub mod contracts;
+#[macro_use]
 pub mod utils;
+pub mod contracts;

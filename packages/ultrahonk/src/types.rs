@@ -31,7 +31,7 @@ pub struct HonkProof {
     proof: Vec<ScalarField>,
 }
 
-pub type HonkProofResult<T> = Result<T, HonkProofError>;
+pub(crate) type HonkVerifyResult<T> = Result<T, HonkProofError>;
 
 /// The errors that may arise during the computation of a HONK proof.
 #[derive(Debug, thiserror::Error)]
@@ -98,12 +98,12 @@ impl HonkProof {
 pub(crate) const NUM_ALL_ENTITIES: usize =
     WITNESS_ENTITIES_SIZE + PRECOMPUTED_ENTITIES_SIZE + SHIFTED_WITNESS_ENTITIES_SIZE;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 #[cfg_attr(test, derive(Debug, PartialEq, Eq))]
-pub(crate) struct AllEntities<T: Default> {
-    pub(crate) witness: WitnessEntities<T>,
-    pub(crate) precomputed: PrecomputedEntities<T>,
-    pub(crate) shifted_witness: ShiftedWitnessEntities<T>,
+pub struct AllEntities<T: Default> {
+    pub witness: WitnessEntities<T>,
+    pub precomputed: PrecomputedEntities<T>,
+    pub shifted_witness: ShiftedWitnessEntities<T>,
 }
 
 impl<T: Default> AllEntities<T> {
@@ -117,18 +117,18 @@ impl<T: Default> AllEntities<T> {
 
 pub(crate) const WITNESS_ENTITIES_SIZE: usize = 8;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 #[cfg_attr(test, derive(Debug, PartialEq, Eq))]
-pub(crate) struct WitnessEntities<T: Default> {
-    pub(crate) elements: [T; WITNESS_ENTITIES_SIZE],
+pub struct WitnessEntities<T: Default> {
+    pub elements: [T; WITNESS_ENTITIES_SIZE],
 }
 
 pub(crate) const SHIFTED_WITNESS_ENTITIES_SIZE: usize = 5;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 #[cfg_attr(test, derive(Debug, PartialEq, Eq))]
-pub(crate) struct ShiftedWitnessEntities<T: Default> {
-    pub(crate) elements: [T; SHIFTED_WITNESS_ENTITIES_SIZE],
+pub struct ShiftedWitnessEntities<T: Default> {
+    pub elements: [T; SHIFTED_WITNESS_ENTITIES_SIZE],
 }
 
 impl<T: Default> IntoIterator for ShiftedWitnessEntities<T> {
@@ -281,8 +281,8 @@ pub(crate) const PRECOMPUTED_ENTITIES_SIZE: usize = 27;
 
 #[derive(Default, Clone)]
 #[cfg_attr(test, derive(Debug, PartialEq, Eq))]
-pub(crate) struct PrecomputedEntities<T: Default> {
-    pub(crate) elements: [T; PRECOMPUTED_ENTITIES_SIZE],
+pub struct PrecomputedEntities<T: Default> {
+    pub elements: [T; PRECOMPUTED_ENTITIES_SIZE],
 }
 
 impl<T: Default> PrecomputedEntities<T> {

@@ -1,69 +1,78 @@
+use crate::must_deser;
 use crate::utils::backends::PrecompileHashBackend;
 use alloc::vec::Vec;
-use alloy_sol_types::sol;
 use stylus_sdk::{abi::Bytes, prelude::*};
-use ultrahonk::decider::types::VerifierMemory;
-use ultrahonk::decider::verifier::DeciderVerifier;
-use ultrahonk::serialize::{BytesDeserializable, BytesSerializable};
+use ultrahonk::constants::{BATCHED_RELATION_PARTIAL_LENGTH, BATCHED_RELATION_PARTIAL_LENGTH_ZK};
+use ultrahonk::decider::sumcheck::verifier::{SumcheckVerifier, SumcheckVerifierMemory};
+use ultrahonk::oink::types::Challenges;
+use ultrahonk::serialize::BytesSerializable;
 use ultrahonk::transcript::Transcript;
+use ultrahonk::types::ScalarField;
 
 sol_storage! {
-    #[cfg_attr(feature = "sumcheck-verifier", entrypoint)]
+    #[cfg_attr(any(feature = "sumcheck-verifier", feature = "zk-sumcheck-verifier"), entrypoint)]
     pub struct SumcheckVerifierContract {}
-}
-
-// Define errors that can occur during the execution of the contract
-sol! {
-    error TranscriptDeserializationFailed();
-    error MemoryDeserializationFailed();
-    error SumcheckVerificationFailed();
-}
-
-#[derive(SolidityError)]
-pub enum VerifierErrors {
-    SumcheckVerificationFailed(SumcheckVerificationFailed),
-    TranscriptDeserializationFailed(TranscriptDeserializationFailed),
-    MemoryDeserializationFailed(MemoryDeserializationFailed),
 }
 
 #[public]
 impl SumcheckVerifierContract {
     pub fn verify(
         &self,
-        memory_bytes: Bytes,
         transcript_bytes: Bytes,
+        challenges_bytes: Bytes,
+        public_input_delta_bytes: Bytes,
+        gate_challenges_bytes: Bytes,
         circuit_size: u32,
-    ) -> Result<(Bytes, Bytes, Bytes, bool), VerifierErrors> {
-        // deserialize transcript
-        let mut transcript = Transcript::deserialize_from_bytes(transcript_bytes.as_slice())
-            .map_err(|_| {
-                VerifierErrors::TranscriptDeserializationFailed(TranscriptDeserializationFailed {})
-            })?
-            .0;
+    ) -> (bool, Bytes, Bytes, Bytes, Bytes, Bytes) {
+        // deserialize parameters
+        let mut transcript = must_deser!(Transcript, transcript_bytes);
+        let challenges = must_deser!(Challenges, challenges_bytes);
+        let public_input_delta = must_deser!(ScalarField, public_input_delta_bytes);
+        let gate_challenges = must_deser!(Vec<ScalarField>, gate_challenges_bytes);
 
-        // deserialize memory and create decider verifier
-        let memory = VerifierMemory::deserialize_from_bytes(memory_bytes.as_slice())
-            .map_err(|_| {
-                VerifierErrors::MemoryDeserializationFailed(MemoryDeserializationFailed {})
-            })?
-            .0;
-        let mut decider_verifier = DeciderVerifier::new(memory);
+        // build sumcheck verifier
+        let mut sumcheck_verifier =
+            SumcheckVerifier::new(SumcheckVerifierMemory::from_memory_and_gate_challenges::<
+                PrecompileHashBackend,
+            >(
+                &challenges, gate_challenges, public_input_delta
+            ));
 
-        // verify sumcheck
-        let sumcheck_output = decider_verifier
-            .verify_sumcheck::<PrecompileHashBackend>(&mut transcript, circuit_size)
-            .map_err(|_| {
-                VerifierErrors::SumcheckVerificationFailed(SumcheckVerificationFailed {})
-            })?;
+        let (sumcheck_output, libra_commitments) = sumcheck_verifier
+            .verify_sumcheck::<PrecompileHashBackend, {
+                #[cfg(feature = "zk-sumcheck-verifier")]
+                {
+                    BATCHED_RELATION_PARTIAL_LENGTH_ZK
+                }
 
-        Ok((
-            decider_verifier.memory.serialize_to_bytes().into(),
+                #[cfg(not(feature = "zk-sumcheck-verifier"))]
+                {
+                    BATCHED_RELATION_PARTIAL_LENGTH
+                }
+            }>(
+                &mut transcript,
+                circuit_size,
+                cfg!(feature = "zk-sumcheck-verifier"),
+            )
+            .unwrap();
+
+        (
+            sumcheck_output.verified,
+            sumcheck_verifier
+                .memory
+                .claimed_evaluations
+                .serialize_to_bytes()
+                .into(),
             transcript.serialize_to_bytes().into(),
             sumcheck_output
                 .multivariate_challenge
                 .serialize_to_bytes()
                 .into(),
-            sumcheck_output.verified,
-        ))
+            sumcheck_output
+                .claimed_libra_evaluation
+                .serialize_to_bytes()
+                .into(),
+            libra_commitments.serialize_to_bytes().into(),
+        )
     }
 }

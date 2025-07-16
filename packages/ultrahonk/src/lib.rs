@@ -1,4 +1,4 @@
-#![no_std]
+// #![no_std]
 #![warn(clippy::iter_over_hash_type)]
 
 #[macro_use]
@@ -9,6 +9,7 @@ pub mod constants;
 pub mod decider;
 pub mod keys;
 pub mod oink;
+pub mod polynomials;
 pub mod serialize;
 pub mod transcript;
 pub mod types;
@@ -27,7 +28,7 @@ pub(crate) const NUM_ALPHAS: usize = decider::sumcheck::relations::NUM_SUBRELATI
 
 /// The log of the max circuit size assumed in order to achieve constant sized Honk proofs
 /// AZTEC TODO(<https://github.com/AztecProtocol/barretenberg/issues/1046>): Remove the need for const sized proofs
-pub(crate) const CONST_PROOF_SIZE_LOG_N: usize = 28;
+pub const CONST_PROOF_SIZE_LOG_N: usize = 28;
 
 // The interleaving trick needed for Translator adds 2 extra claims to Gemini fold claims
 // AZTEC TODO(https://github.com/AztecProtocol/barretenberg/issues/1293): Decouple Gemini from Interleaving

@@ -7,4 +7,5 @@ pub mod verifier;
 pub struct SumcheckVerifierOutput {
     pub multivariate_challenge: Vec<ScalarField>,
     pub verified: bool,
+    pub claimed_libra_evaluation: ScalarField,
 }

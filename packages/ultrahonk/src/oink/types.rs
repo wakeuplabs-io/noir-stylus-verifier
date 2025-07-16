@@ -4,13 +4,13 @@ use crate::{
 };
 
 #[derive(Default)]
-pub(crate) struct VerifierMemory {
-    pub(crate) public_input_delta: ScalarField,
-    pub(crate) witness_commitments: WitnessEntities<G1Affine>,
-    pub(crate) challenges: Challenges,
+pub struct VerifierMemory {
+    pub public_input_delta: ScalarField,
+    pub witness_commitments: WitnessEntities<G1Affine>,
+    pub challenges: Challenges,
 }
 
-pub(crate) struct Challenges {
+pub struct Challenges {
     pub(crate) eta_1: ScalarField,
     pub(crate) eta_2: ScalarField,
     pub(crate) eta_3: ScalarField,

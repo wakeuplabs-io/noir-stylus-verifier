@@ -23,8 +23,11 @@ Verify calls are readonly therefore developers can choose between a few paths:
 2. Generate a verifier contract particular to the circuit that uses the global verifier behind the curtains as shown in `examples/hello_world/contracts`. This one already includes the verification key in the contract and allows for a more friendly contract call.
 3. Pull in the `ultrahonk` package all together and use the verifier directly. Developers may struck size limitations as well deriving in multiple contracts, but it would all be under their domain. 
 
+Flavors
+- 
+
 ## Packages
 
 - `packages/ultrahonk`: Contains the core ultrahonk verifier logic.
-- `packages/ark-ec`: A copy from `arkworks/ec` that implements `only-arithmetic-backend` feature to verify `ultrahonk` package does `ec_add`, `ec_scalar_mul`, `ec_pairing_check` and `msm` though the adapter and not using the arkworks package.
+- `vendor/algebra`: A from from `arkworks/algebra` that implements `only-arithmetic-backend` feature for the `ec` package to verify that the`ultrahonk` package does `ec_add`, `ec_scalar_mul`, `ec_pairing_check` and `msm` though the adapter and not using the arkworks.
 - `integration`: Runs integration tests

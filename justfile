@@ -46,9 +46,16 @@ test-ultrahonk:
 test-integration:
   cargo run -p integration -- --rpc-url {{rpc_url}} --priv-key {{private_key}}
 
-verify-proof verifier_address test_vector_name:
+verify-proof verifier_address test_vector_name zk="false":
   #!/usr/bin/env bash
-  proof_hex=$(xxd -p -c 1000000 "test_vectors/{{test_vector_name}}/kat/proof" | tr -d '\n')
+
+  if [ "{{zk}}" = "true" ]; then
+    echo "Verifying zk-flavored proof"
+    proof_hex=$(xxd -p -c 1000000 "test_vectors/{{test_vector_name}}/kat/zk-proof" | tr -d '\n')
+  else
+    proof_hex=$(xxd -p -c 1000000 "test_vectors/{{test_vector_name}}/kat/proof" | tr -d '\n')
+  fi
+
   inputs_hex=$(xxd -p -c 1000000 "test_vectors/{{test_vector_name}}/kat/public_inputs" | tr -d '\n')
   vk_hex=$(xxd -p -c 1000000 "test_vectors/{{test_vector_name}}/kat/vk" | tr -d '\n')
 

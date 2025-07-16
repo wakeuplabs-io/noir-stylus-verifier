@@ -20,7 +20,7 @@ Some build scripts for the project.
 - `just build-all` 
 - `just build-ultrahonk`: Build ultrahonk package
 - `just build-contract {contract}`: Build the contract package with `{contract}` as feature and renames the generated wasm accordingly.
-- `just profile-contract {contract}`: Uses twiggy to further analyze the generated wasm. You need to set `strip = "none"` in `Cargo.toml` release target to get some readable output from this. Generated analyses will be in `profile/{contract}...`
+- `just profile-contract {contract}`: Uses twiggy to further analyze the generated wasm. You need to set `strip = "none"` in `Cargo.toml` release target to get some readable output from this. Generated analyses will be in `profile/{contract}...`. Also make sure to run build before it.
 
 ### Tests 
 
@@ -70,8 +70,6 @@ If you have an idea for a new feature or an improvement to an existing feature, 
 ### Submitting Code Changes
 
 Before you start working on a new feature or a bug fix, please check the open issues and confirm that the work is not already in progress. If it’s a significant change, it might be worth discussing your idea with the maintainers first.
-
-
 
 #### Guidelines
 

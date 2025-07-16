@@ -5,6 +5,7 @@ use alloc::vec::Vec;
 use ark_bn254::Bn254;
 use ark_ec::{pairing::Pairing, AffineRepr, CurveGroup};
 use ark_ff::One;
+use paste::paste;
 use sha3::{Digest, Keccak256};
 use std::env;
 use ultrahonk::{
@@ -77,35 +78,46 @@ impl G1ArithmeticBackend for ArkHonkCurve {
 macro_rules! generate_tests {
     ($($name:ident),* $(,)?) => {
         $(
-            #[test]
-            fn $name() {
-                // build path to test vector data
-                let workspace_path = std::path::Path::new(&env::var("CARGO_MANIFEST_DIR").unwrap())
-                    .ancestors()
-                    .nth(2) // Go up 2 levels: ultrahonk/ -> packages/ -> workspace root
-                    .unwrap()
-                    .to_path_buf();
-                let test_vector_path = workspace_path.join("test_vectors").join(stringify!($name));
-                let proof_file = test_vector_path.join("kat/proof");
-                let vk_file = test_vector_path.join("kat/vk");
-                let public_inputs_file = test_vector_path.join("kat/public_inputs");
+            paste! {
+                #[test]
+                fn [<$name _test>]() {
+                    // build path to test vector data
+                    let workspace_path = std::path::Path::new(&env::var("CARGO_MANIFEST_DIR").unwrap())
+                        .ancestors()
+                        .nth(2) // Go up 2 levels: ultrahonk/ -> packages/ -> workspace root
+                        .unwrap()
+                        .to_path_buf();
+                    let test_vector_path = workspace_path.join("test_vectors").join(stringify!($name));
 
-                // parse proof file
-                let proof_u8 = std::fs::read(proof_file).unwrap();
-                let proof = HonkProof::deserialize_from_bytes(&proof_u8).unwrap().0;
+                    // parse proof file
+                    let proof = HonkProof::deserialize_from_bytes(&std::fs::read(test_vector_path.join("kat/proof")).unwrap()).unwrap().0;
+                    let public_inputs = Vec::<ScalarField>::deserialize_from_bytes(&std::fs::read(test_vector_path.join("kat/public_inputs")).unwrap()).unwrap().0;
+                    let vk = VerifyingKey::deserialize_from_bytes(&std::fs::read(test_vector_path.join("kat/vk")).unwrap()).unwrap().0;
 
-                // parse public_inputs file
-                let public_inputs_u8 = std::fs::read(public_inputs_file).unwrap();
-                let public_inputs = Vec::<ScalarField>::deserialize_from_bytes(&public_inputs_u8).unwrap().0;
+                    // verify proofs
+                    assert!(UltraHonk::verify::<ArkKeccak256, ArkHonkCurve>(proof, &public_inputs, &vk, false).unwrap());
+                }
+            }
 
-                // parse verification key file
-                let vk_u8 = std::fs::read(vk_file).unwrap();
-                let vk = VerifyingKey::deserialize_from_bytes(&vk_u8).unwrap().0;
+            paste! {
+                #[test]
+                fn [<zk_$name _test>]() {
+                    // build path to test vector data
+                    let workspace_path = std::path::Path::new(&env::var("CARGO_MANIFEST_DIR").unwrap())
+                        .ancestors()
+                        .nth(2) // Go up 2 levels: ultrahonk/ -> packages/ -> workspace root
+                        .unwrap()
+                        .to_path_buf();
+                    let test_vector_path = workspace_path.join("test_vectors").join(stringify!($name));
 
-                let is_valid =
-                    UltraHonk::verify::<ArkKeccak256, ArkHonkCurve>(proof, &public_inputs, &vk).unwrap();
+                    // parse proof file
+                    let zk_proof = HonkProof::deserialize_from_bytes(&std::fs::read(test_vector_path.join("kat/zk-proof")).unwrap()).unwrap().0;
+                    let public_inputs = Vec::<ScalarField>::deserialize_from_bytes(&std::fs::read(test_vector_path.join("kat/public_inputs")).unwrap()).unwrap().0;
+                    let vk = VerifyingKey::deserialize_from_bytes(&std::fs::read(test_vector_path.join("kat/vk")).unwrap()).unwrap().0;
 
-                assert!(is_valid);
+                    // verify proofs
+                    assert!(UltraHonk::verify::<ArkKeccak256, ArkHonkCurve>(zk_proof, &public_inputs, &vk, true).unwrap());
+                }
             }
         )*
     };

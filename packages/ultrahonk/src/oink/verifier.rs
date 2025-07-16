@@ -1,79 +1,15 @@
 use super::types::VerifierMemory;
 use crate::{
-    backends::HashBackend, keys::verification_key::VerifyingKey, transcript::Transcript,
-    types::ScalarField, verifier::HonkVerifyResult, NUM_ALPHAS,
+    backends::HashBackend,
+    keys::verification_key::VerifyingKey,
+    transcript::Transcript,
+    types::{HonkVerifyResult, ScalarField},
+    NUM_ALPHAS,
 };
 use alloc::vec::Vec;
 use ark_ff::One;
 
-pub(crate) struct Oink;
-
-impl Default for Oink {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Oink {
-    pub(crate) fn new() -> Self {
-        Self
-    }
-
-    pub(crate) fn compute_public_input_delta(
-        beta: &ScalarField,
-        gamma: &ScalarField,
-        public_inputs: &[ScalarField],
-        circuit_size: u32,
-        pub_inputs_offset: u32,
-    ) -> ScalarField {
-        // Let m be the number of public inputs x₀,…, xₘ₋₁.
-        // Recall that we broke the permutation σ⁰ by changing the mapping
-        //  (i) -> (n+i)   to   (i) -> (-(i+1))   i.e. σ⁰ᵢ = −(i+1)
-        //
-        // Therefore, the term in the numerator with ID¹ᵢ = n+i does not cancel out with any term in the denominator.
-        // Similarly, the denominator contains an extra σ⁰ᵢ = −(i+1) term that does not appear in the numerator.
-        // We expect the values of W⁰ᵢ and W¹ᵢ to be equal to xᵢ.
-        // The expected accumulated product would therefore be equal to
-
-        //   ∏ᵢ (γ + W¹ᵢ + β⋅ID¹ᵢ)        ∏ᵢ (γ + xᵢ + β⋅(n+i) )
-        //  -----------------------  =  ------------------------
-        //   ∏ᵢ (γ + W⁰ᵢ + β⋅σ⁰ᵢ )        ∏ᵢ (γ + xᵢ - β⋅(i+1) )
-
-        // At the start of the loop for each xᵢ where i = 0, 1, …, m-1,
-        // we have
-        //      numerator_acc   = γ + β⋅(n+i) = γ + β⋅n + β⋅i
-        //      denominator_acc = γ - β⋅(1+i) = γ - β   - β⋅i
-        // at the end of the loop, add and subtract β to each term respectively to
-        // set the expected value for the start of iteration i+1.
-        // Note: The public inputs may be offset from the 0th index of the wires, for example due to the inclusion of an
-        // initial zero row or Goblin-stlye ECC op gates. Accordingly, the indices i in the above formulas are given by i =
-        // [0, m-1] + offset, i.e. i = offset, 1 + offset, …, m - 1 + offset.
-
-        let mut num = ScalarField::one();
-        let mut denom = ScalarField::one();
-        let mut num_acc =
-            *gamma + ScalarField::from((circuit_size + pub_inputs_offset) as u64) * beta;
-        let mut denom_acc = *gamma - ScalarField::from((1 + pub_inputs_offset) as u64) * beta;
-
-        for x_i in public_inputs.iter() {
-            num *= num_acc + x_i;
-            denom *= denom_acc + x_i;
-            num_acc += beta;
-            denom_acc -= beta;
-        }
-        num / denom
-    }
-
-    /// Generate relation separators alphas for sumcheck/combiner computation
-    pub(crate) fn generate_alphas_round<H: HashBackend>(
-        alphas: &mut [ScalarField; NUM_ALPHAS],
-        transcript: &mut Transcript,
-    ) {
-        alphas.copy_from_slice(&transcript.get_challenges::<H>(NUM_ALPHAS)); // alpha_{i from 0 to NUM_ALPHAS-1}
-    }
-}
-
-pub(crate) struct OinkVerifier {
+pub struct OinkVerifier {
     memory: VerifierMemory,
     pub(crate) public_inputs: Vec<ScalarField>,
 }
@@ -85,11 +21,25 @@ impl Default for OinkVerifier {
 }
 
 impl OinkVerifier {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             memory: VerifierMemory::default(),
             public_inputs: Default::default(),
         }
+    }
+
+    pub fn build_verifier_memory<H: HashBackend>(
+        mut self,
+        verifying_key: &VerifyingKey,
+        transcript: &mut Transcript,
+    ) -> HonkVerifyResult<VerifierMemory> {
+        self.execute_preamble_round(verifying_key, transcript)?;
+        self.execute_wire_commitments_round(transcript)?;
+        self.execute_sorted_list_accumulator_round::<H>(transcript)?;
+        self.execute_log_derivative_inverse_round::<H>(transcript)?;
+        self.execute_grand_product_computation_round(verifying_key, transcript)?;
+        Self::generate_alphas_round::<H>(&mut self.memory.challenges.alphas, transcript);
+        Ok(self.memory)
     }
 
     fn execute_preamble_round(
@@ -167,7 +117,7 @@ impl OinkVerifier {
         verifying_key: &VerifyingKey,
         transcript: &mut Transcript,
     ) -> HonkVerifyResult<()> {
-        self.memory.public_input_delta = Oink::compute_public_input_delta(
+        self.memory.public_input_delta = Self::compute_public_input_delta(
             &self.memory.challenges.beta,
             &self.memory.challenges.gamma,
             &self.public_inputs,
@@ -178,17 +128,56 @@ impl OinkVerifier {
         Ok(())
     }
 
-    pub(crate) fn build_memory<H: HashBackend>(
-        mut self,
-        verifying_key: &VerifyingKey,
+    fn compute_public_input_delta(
+        beta: &ScalarField,
+        gamma: &ScalarField,
+        public_inputs: &[ScalarField],
+        circuit_size: u32,
+        pub_inputs_offset: u32,
+    ) -> ScalarField {
+        // Let m be the number of public inputs x₀,…, xₘ₋₁.
+        // Recall that we broke the permutation σ⁰ by changing the mapping
+        //  (i) -> (n+i)   to   (i) -> (-(i+1))   i.e. σ⁰ᵢ = −(i+1)
+        //
+        // Therefore, the term in the numerator with ID¹ᵢ = n+i does not cancel out with any term in the denominator.
+        // Similarly, the denominator contains an extra σ⁰ᵢ = −(i+1) term that does not appear in the numerator.
+        // We expect the values of W⁰ᵢ and W¹ᵢ to be equal to xᵢ.
+        // The expected accumulated product would therefore be equal to
+
+        //   ∏ᵢ (γ + W¹ᵢ + β⋅ID¹ᵢ)        ∏ᵢ (γ + xᵢ + β⋅(n+i) )
+        //  -----------------------  =  ------------------------
+        //   ∏ᵢ (γ + W⁰ᵢ + β⋅σ⁰ᵢ )        ∏ᵢ (γ + xᵢ - β⋅(i+1) )
+
+        // At the start of the loop for each xᵢ where i = 0, 1, …, m-1,
+        // we have
+        //      numerator_acc   = γ + β⋅(n+i) = γ + β⋅n + β⋅i
+        //      denominator_acc = γ - β⋅(1+i) = γ - β   - β⋅i
+        // at the end of the loop, add and subtract β to each term respectively to
+        // set the expected value for the start of iteration i+1.
+        // Note: The public inputs may be offset from the 0th index of the wires, for example due to the inclusion of an
+        // initial zero row or Goblin-stlye ECC op gates. Accordingly, the indices i in the above formulas are given by i =
+        // [0, m-1] + offset, i.e. i = offset, 1 + offset, …, m - 1 + offset.
+
+        let mut num = ScalarField::one();
+        let mut denom = ScalarField::one();
+        let mut num_acc =
+            *gamma + ScalarField::from((circuit_size + pub_inputs_offset) as u64) * beta;
+        let mut denom_acc = *gamma - ScalarField::from((1 + pub_inputs_offset) as u64) * beta;
+
+        for x_i in public_inputs.iter() {
+            num *= num_acc + x_i;
+            denom *= denom_acc + x_i;
+            num_acc += beta;
+            denom_acc -= beta;
+        }
+        num / denom
+    }
+
+    /// Generate relation separators alphas for sumcheck/combiner computation
+    fn generate_alphas_round<H: HashBackend>(
+        alphas: &mut [ScalarField; NUM_ALPHAS],
         transcript: &mut Transcript,
-    ) -> HonkVerifyResult<VerifierMemory> {
-        self.execute_preamble_round(verifying_key, transcript)?;
-        self.execute_wire_commitments_round(transcript)?;
-        self.execute_sorted_list_accumulator_round::<H>(transcript)?;
-        self.execute_log_derivative_inverse_round::<H>(transcript)?;
-        self.execute_grand_product_computation_round(verifying_key, transcript)?;
-        Oink::generate_alphas_round::<H>(&mut self.memory.challenges.alphas, transcript);
-        Ok(self.memory)
+    ) {
+        alphas.copy_from_slice(&transcript.get_challenges::<H>(NUM_ALPHAS)); // alpha_{i from 0 to NUM_ALPHAS-1}
     }
 }

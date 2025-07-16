@@ -44,6 +44,8 @@ pub struct TestContext {
     pub precompiles_contract_address: Address,
     /// The address of the verifier contract
     pub verifier_contract_address: Address,
+    /// The address of the zk-flavored verifier contract
+    pub zk_flavored_verifier_contract_address: Address,
 }
 
 impl TestContext {
@@ -91,16 +93,56 @@ impl TestContext {
         )
         .await?;
 
+        // deploy zk-flavored verifier contract
+        let zk_flavored_sumcheck_verifier_contract_address = deploy_stylus_contract(
+            &StylusContract::ZkFlavoredSumcheckVerifier,
+            &value.rpc_url,
+            &value.priv_key,
+            "",
+            &[],
+        )
+        .await?;
+
+        let zk_flavored_shplemini_verifier_contract_address = deploy_stylus_contract(
+            &StylusContract::ZkFlavoredShpleminiVerifier,
+            &value.rpc_url,
+            &value.priv_key,
+            "",
+            &[],
+        )
+        .await?;
+
+        let zk_flavored_verifier_contract_address = deploy_stylus_contract(
+            &StylusContract::ZkFlavoredVerifier,
+            &value.rpc_url,
+            &value.priv_key,
+            "constructor(address,address)",
+            &[
+                zk_flavored_sumcheck_verifier_contract_address.to_string(),
+                zk_flavored_shplemini_verifier_contract_address.to_string(),
+            ],
+        )
+        .await?;
+
         Ok(Self {
             client,
             precompiles_contract_address,
             verifier_contract_address,
+            zk_flavored_verifier_contract_address,
         })
     }
 
     /// Build an instance of the darkpool contract
     pub fn verifier_contract(&self) -> VerifierTestInstance {
         VerifierTestInstance::new(self.verifier_contract_address, self.client.provider())
+    }
+
+    /// Build an instance of the zk-flavored verifier contract
+    pub fn zk_flavored_verifier_contract(&self) -> VerifierTestInstance {
+        VerifierTestInstance::new(
+            self.zk_flavored_verifier_contract_address,
+            self.client.provider(),
+        )
     }
 
     /// Build an instance of the precompile test contract

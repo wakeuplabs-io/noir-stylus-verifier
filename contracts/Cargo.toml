@@ -16,16 +16,26 @@ ultrahonk = { path = "../packages/ultrahonk" }
 ark-ff.workspace = true
 ark-bn254.workspace = true
 
+[dev-dependencies]
+alloy.workspace = true
+alloy-primitives.workspace = true
+tokio = { version = "1.12.0", features = ["full"] }
+stylus-sdk = { workspace = true, features = ["stylus-test"] }
+rand.workspace = true
+eyre.workspace = true
+
 [features]
 default = ["mini-alloc"]
 export-abi = ["stylus-sdk/export-abi"]
 debug = ["stylus-sdk/debug"]
 mini-alloc = ["stylus-sdk/mini-alloc"]
 verifier = []
+zk-verifier = []
 sumcheck-verifier = []
+zk-sumcheck-verifier = []
 shplemini-verifier = []
-precompile-test-contract = []
-sumcheck-verifier-round = []
+zk-shplemini-verifier = []
+precompile-tests = []
 
 [[bin]]
 name = "stylus-noir-verifier"

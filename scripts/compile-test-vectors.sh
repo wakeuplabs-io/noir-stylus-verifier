@@ -34,14 +34,23 @@ for folder in "$TEST_VECTORS_DIR"/*; do
         # bb write_vk --oracle_hash keccak -o target -b target/$dir_name.json
 
         nargo execute >/dev/null 2>&1 || { echo "Error in nargo execute for $dir_name"; continue; }
-        bb prove -b "./target/$dir_name.json" -w "./target/$dir_name.gz" -o ./target --scheme ultra_honk --oracle_hash keccak >/dev/null 2>&1 || { echo "Error in bb prove for $dir_name"; continue; }
-        bb write_vk --oracle_hash keccak -o target -b "target/$dir_name.json" >/dev/null 2>&1 || { echo "Error in bb write_vk for $dir_name"; continue; }
+        bb prove -b "./target/$dir_name.json" -w "./target/$dir_name.gz" -o ./target --scheme ultra_honk --oracle_hash keccak --write_vk >/dev/null 2>&1 || { echo "Error in bb prove for $dir_name"; continue; }
 
         if [ -d "target" ]; then
             echo "Moving files from target to kat in $dir_name"
             mv ./target/proof ./kat/proof
             mv ./target/public_inputs ./kat/public_inputs
             mv ./target/vk ./kat/vk
+        else
+            echo "'target' is missing in $dir_name"
+        fi
+
+        # zk flavor
+        bb prove -b "./target/$dir_name.json" -w "./target/$dir_name.gz" -o ./target --scheme ultra_honk --oracle_hash keccak --write_vk --zk >/dev/null 2>&1 || { echo "Error in bb prove for $dir_name"; continue; }
+
+        if [ -d "target" ]; then
+            echo "Moving files from target to kat in $dir_name"
+            mv ./target/proof ./kat/zk-proof
         else
             echo "'target' is missing in $dir_name"
         fi
