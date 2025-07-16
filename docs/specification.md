@@ -17,7 +17,7 @@
   Supports local node, sepolia, or mainnet by passing appropriate parameters.
 
 * **`packages/ultrahonk/`**
-  Core Ultrahonk verifier logic, based on the [TACEO implementation](https://github.com/TaceoLabs/co-snarks).
+  Core Ultrahonk verifier logic, based on the [TACEO implementation](https://github.com/TaceoLabs/co-snarks) which closely follows original [BB implementation](https://github.com/AztecProtocol/aztec-packages/tree/master/barretenberg/cpp/src/barretenberg/ultra_honk)
 
 * **`scripts/`**
   Assorted bash scripts for setup, builds, and automation.
