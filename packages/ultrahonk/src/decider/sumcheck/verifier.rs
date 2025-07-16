@@ -18,6 +18,7 @@ use crate::{
 use alloc::vec::Vec;
 use ark_ff::{One, Zero};
 
+#[cfg_attr(test, derive(Debug, Default, PartialEq, Eq))]
 pub struct SumcheckVerifierMemory {
     pub relation_parameters: RelationParameters,
     pub claimed_evaluations: ClaimedEvaluations,

@@ -5,7 +5,7 @@ use crate::{
         types::{
             ClaimedEvaluations,
             RelationParameters,
-            VerifierCommitments, // VerifierMemory
+            VerifierCommitments, 
         },
     },
     keys::verification_key::VerifyingKey,
@@ -135,7 +135,6 @@ impl<P: MontConfig<NUM_U64S_FELT>> BytesDeserializable for Vec<MontFp256<P>> {
             return Err(());
         }
 
-        // Read data
         let mut offset: usize = 0;
         let mut res = Vec::with_capacity(num_elements);
         for _ in 0..num_elements {
@@ -455,6 +454,72 @@ impl BytesDeserializable for PrecomputedEntities<G1Affine> {
     }
 }
 
+impl BytesSerializable for SumcheckVerifierMemory {
+    fn serialize_to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        bytes.extend(self.relation_parameters.serialize_to_bytes());
+        bytes.extend(self.claimed_evaluations.serialize_to_bytes());
+        bytes
+    }
+}
+
+impl BytesDeserializable for SumcheckVerifierMemory {
+    fn deserialize_from_bytes(bytes: &[u8]) -> Result<(Self, usize), ()> {
+        let mut offset = 0;
+        let relation_parameters = deserialize_cursor::<RelationParameters>(bytes, &mut offset)?;
+        let claimed_evaluations = deserialize_cursor::<ClaimedEvaluations>(bytes, &mut offset)?;
+        Ok((
+            Self {
+                relation_parameters,
+                claimed_evaluations,
+            },
+            offset,
+        ))
+    }
+}
+
+impl BytesSerializable for Challenges {
+    fn serialize_to_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        bytes.extend(self.eta_1.serialize_to_bytes());
+        bytes.extend(self.eta_2.serialize_to_bytes());
+        bytes.extend(self.eta_3.serialize_to_bytes());
+        bytes.extend(self.beta.serialize_to_bytes());
+        bytes.extend(self.gamma.serialize_to_bytes());
+        for alpha in self.alphas {
+            bytes.extend(alpha.serialize_to_bytes());
+        }
+        bytes
+    }
+}
+
+impl BytesDeserializable for Challenges {
+    fn deserialize_from_bytes(bytes: &[u8]) -> Result<(Self, usize), ()> {
+        let mut offset = 0;
+        let eta_1 = deserialize_cursor::<ScalarField>(bytes, &mut offset)?;
+        let eta_2 = deserialize_cursor::<ScalarField>(bytes, &mut offset)?;
+        let eta_3 = deserialize_cursor::<ScalarField>(bytes, &mut offset)?;
+        let beta = deserialize_cursor::<ScalarField>(bytes, &mut offset)?;
+        let gamma = deserialize_cursor::<ScalarField>(bytes, &mut offset)?;
+        let mut alphas = [ScalarField::zero(); NUM_ALPHAS];
+        for alpha in alphas.iter_mut() {
+            *alpha = deserialize_cursor::<ScalarField>(bytes, &mut offset)?;
+        }
+
+        Ok((
+            Self {
+                eta_1,
+                eta_2,
+                eta_3,
+                beta,
+                gamma,
+                alphas,
+            },
+            offset,
+        ))
+    }
+}
+
 impl BytesSerializable for Transcript {
     fn serialize_to_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
@@ -567,71 +632,6 @@ impl BytesDeserializable for HonkProof {
     }
 }
 
-impl BytesSerializable for SumcheckVerifierMemory {
-    fn serialize_to_bytes(&self) -> Vec<u8> {
-        let mut bytes = Vec::new();
-        bytes.extend(self.relation_parameters.serialize_to_bytes());
-        bytes.extend(self.claimed_evaluations.serialize_to_bytes());
-        bytes
-    }
-}
-
-impl BytesDeserializable for SumcheckVerifierMemory {
-    fn deserialize_from_bytes(bytes: &[u8]) -> Result<(Self, usize), ()> {
-        let mut offset = 0;
-        let relation_parameters = deserialize_cursor::<RelationParameters>(bytes, &mut offset)?;
-        let claimed_evaluations = deserialize_cursor::<ClaimedEvaluations>(bytes, &mut offset)?;
-        Ok((
-            Self {
-                relation_parameters,
-                claimed_evaluations,
-            },
-            offset,
-        ))
-    }
-}
-
-impl BytesSerializable for Challenges {
-    fn serialize_to_bytes(&self) -> Vec<u8> {
-        let mut bytes = Vec::new();
-        bytes.extend(self.eta_1.serialize_to_bytes());
-        bytes.extend(self.eta_2.serialize_to_bytes());
-        bytes.extend(self.eta_3.serialize_to_bytes());
-        bytes.extend(self.beta.serialize_to_bytes());
-        bytes.extend(self.gamma.serialize_to_bytes());
-        for alpha in self.alphas {
-            bytes.extend(alpha.serialize_to_bytes());
-        }
-        bytes
-    }
-}
-
-impl BytesDeserializable for Challenges {
-    fn deserialize_from_bytes(bytes: &[u8]) -> Result<(Self, usize), ()> {
-        let mut offset = 0;
-        let eta_1 = deserialize_cursor::<ScalarField>(bytes, &mut offset)?;
-        let eta_2 = deserialize_cursor::<ScalarField>(bytes, &mut offset)?;
-        let eta_3 = deserialize_cursor::<ScalarField>(bytes, &mut offset)?;
-        let beta = deserialize_cursor::<ScalarField>(bytes, &mut offset)?;
-        let gamma = deserialize_cursor::<ScalarField>(bytes, &mut offset)?;
-        let mut alphas = [ScalarField::zero(); NUM_ALPHAS];
-        for alpha in alphas.iter_mut() {
-            *alpha = deserialize_cursor::<ScalarField>(bytes, &mut offset)?;
-        }
-
-        Ok((
-            Self {
-                eta_1,
-                eta_2,
-                eta_3,
-                beta,
-                gamma,
-                alphas,
-            },
-            offset,
-        ))
-    }
-}
 
 /// Deserializes a type from a slice of bytes starting at the cursor position,
 /// and increments the cursor by the number of bytes deserialized.
@@ -744,6 +744,20 @@ mod tests {
     }
 
     #[test]
+    fn test_g1_affine_vec_serialization() {
+        let test_cases = vec![
+            vec![],
+            vec![G1Affine::generator()],
+        ];
+
+        for test_case in test_cases {
+            let serialized = test_case.serialize_to_bytes();
+            let deserialized = Vec::<G1Affine>::deserialize_from_bytes(&serialized).unwrap();
+            assert_eq!(test_case, deserialized.0);
+        }
+    }
+
+    #[test]
     fn test_g2_affine_serialization() {
         let mut rng = thread_rng();
         let test_cases = vec![
@@ -777,6 +791,61 @@ mod tests {
         for test_case in test_cases {
             let serialized = test_case.serialize_to_bytes();
             let deserialized = RelationParameters::deserialize_from_bytes(&serialized).unwrap();
+            assert_eq!(test_case, deserialized.0);
+        }
+    }
+
+    #[test]
+    fn test_claimed_evaluations_serialization() {
+        let test_cases = vec![ClaimedEvaluations::default()];
+
+        for test_case in test_cases {
+            let serialized = test_case.serialize_to_bytes();
+            let deserialized = ClaimedEvaluations::deserialize_from_bytes(&serialized).unwrap();
+            assert_eq!(test_case, deserialized.0);
+        }
+    }
+
+    #[test]
+    fn test_witness_entities_serialization() {
+        let test_cases = vec![WitnessEntities::<G1Affine>::default()];
+
+        for test_case in test_cases {
+            let serialized = test_case.serialize_to_bytes();
+            let deserialized = WitnessEntities::<G1Affine>::deserialize_from_bytes(&serialized).unwrap();
+            assert_eq!(test_case, deserialized.0);
+        }
+    }
+
+    #[test]
+    fn test_precomputed_entities_serialization() {
+        let test_cases = vec![PrecomputedEntities::<G1Affine>::default()];
+
+        for test_case in test_cases {
+            let serialized = test_case.serialize_to_bytes();
+            let deserialized = PrecomputedEntities::<G1Affine>::deserialize_from_bytes(&serialized).unwrap();
+            assert_eq!(test_case, deserialized.0);
+        }
+    }
+
+    #[test]
+    fn test_sumcheck_verifier_memory_serialization() {
+        let test_cases = vec![SumcheckVerifierMemory::default()];
+
+        for test_case in test_cases {
+            let serialized = test_case.serialize_to_bytes();
+            let deserialized = SumcheckVerifierMemory::deserialize_from_bytes(&serialized).unwrap();
+            assert_eq!(test_case, deserialized.0);
+        }
+    }
+
+    #[test]
+    fn test_challenges_serialization() {
+        let test_cases = vec![Challenges::default()];
+
+        for test_case in test_cases {
+            let serialized = test_case.serialize_to_bytes();
+            let deserialized = Challenges::deserialize_from_bytes(&serialized).unwrap();
             assert_eq!(test_case, deserialized.0);
         }
     }

@@ -10,6 +10,7 @@ pub struct VerifierMemory {
     pub challenges: Challenges,
 }
 
+#[cfg_attr(test, derive(Eq, PartialEq, Debug))]
 pub struct Challenges {
     pub(crate) eta_1: ScalarField,
     pub(crate) eta_2: ScalarField,
