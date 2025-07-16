@@ -154,7 +154,7 @@ impl ShpleminiVerifier {
         ScalarField,
     )> {
         let virtual_log_n = multivariate_challenge.len();
-        let has_zk = libra_commitments.len() > 0;
+        let has_zk = !libra_commitments.is_empty();
 
         let mut batched_evaluation = ScalarField::zero();
         let mut hiding_polynomial_commitment = G1Affine::default();

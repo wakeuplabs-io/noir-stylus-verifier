@@ -2,11 +2,7 @@ use crate::{
     constants::{NUM_BYTES_FELT, NUM_U64S_FELT},
     decider::{
         sumcheck::verifier::SumcheckVerifierMemory,
-        types::{
-            ClaimedEvaluations,
-            RelationParameters,
-            VerifierCommitments, 
-        },
+        types::{ClaimedEvaluations, RelationParameters, VerifierCommitments},
     },
     keys::verification_key::VerifyingKey,
     oink::types::Challenges,
@@ -31,6 +27,7 @@ pub trait BytesSerializable {
 pub trait BytesDeserializable {
     /// Deserializes a type from a slice of bytes,
     /// returning the deserialized value and the number of bytes read
+    #[allow(clippy::result_unit_err)]
     fn deserialize_from_bytes(bytes: &[u8]) -> Result<(Self, usize), ()>
     where
         Self: Sized;
@@ -632,7 +629,6 @@ impl BytesDeserializable for HonkProof {
     }
 }
 
-
 /// Deserializes a type from a slice of bytes starting at the cursor position,
 /// and increments the cursor by the number of bytes deserialized.
 fn deserialize_cursor<D: BytesDeserializable>(bytes: &[u8], cursor: &mut usize) -> Result<D, ()> {
@@ -745,10 +741,7 @@ mod tests {
 
     #[test]
     fn test_g1_affine_vec_serialization() {
-        let test_cases = vec![
-            vec![],
-            vec![G1Affine::generator()],
-        ];
+        let test_cases = vec![vec![], vec![G1Affine::generator()]];
 
         for test_case in test_cases {
             let serialized = test_case.serialize_to_bytes();
@@ -812,7 +805,8 @@ mod tests {
 
         for test_case in test_cases {
             let serialized = test_case.serialize_to_bytes();
-            let deserialized = WitnessEntities::<G1Affine>::deserialize_from_bytes(&serialized).unwrap();
+            let deserialized =
+                WitnessEntities::<G1Affine>::deserialize_from_bytes(&serialized).unwrap();
             assert_eq!(test_case, deserialized.0);
         }
     }
@@ -823,7 +817,8 @@ mod tests {
 
         for test_case in test_cases {
             let serialized = test_case.serialize_to_bytes();
-            let deserialized = PrecomputedEntities::<G1Affine>::deserialize_from_bytes(&serialized).unwrap();
+            let deserialized =
+                PrecomputedEntities::<G1Affine>::deserialize_from_bytes(&serialized).unwrap();
             assert_eq!(test_case, deserialized.0);
         }
     }

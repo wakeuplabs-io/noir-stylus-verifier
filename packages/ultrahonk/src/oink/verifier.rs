@@ -9,18 +9,10 @@ use crate::{
 use alloc::vec::Vec;
 use ark_ff::One;
 
+#[derive(Default)]
 pub struct OinkVerifier {
     memory: VerifierMemory,
     pub(crate) public_inputs: Vec<ScalarField>,
-}
-
-impl Default for OinkVerifier {
-    fn default() -> Self {
-        Self {
-            memory: VerifierMemory::default(),
-            public_inputs: Default::default(),
-        }
-    }
 }
 
 impl OinkVerifier {

@@ -25,9 +25,7 @@ impl UltraHonk {
             Transcript::new_verifier(honk_proof.insert_public_inputs(public_inputs.to_vec()));
 
         let oink_verifier = OinkVerifier::default();
-        let oink_memory = oink_verifier
-            .verify::<H>(vk, &mut transcript)
-            .unwrap();
+        let oink_memory = oink_verifier.verify::<H>(vk, &mut transcript).unwrap();
 
         let mut gate_challenges: Vec<ScalarField> = Vec::with_capacity(CONST_PROOF_SIZE_LOG_N);
         for _ in 0..CONST_PROOF_SIZE_LOG_N {
