@@ -1,6 +1,6 @@
 rpc_url := "http://localhost:8547"
 private_key := "0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659"
-apple_target := "x86_64-apple-darwin"
+macos_target := "x86_64-apple-darwin"
 windows_target := "x86_64-pc-windows-gnu"
 linux_target := "x86_64-unknown-linux-musl"
 version := "0.1.0"
@@ -31,12 +31,12 @@ build-cli-linux: clean-cli-linux
 	mv nsv nsv-v{{version}}-{{linux_target}} && \
 	tar -czf nsv-v{{version}}-{{linux_target}}.tar.gz nsv-v{{version}}-{{linux_target}})
 
-build-cli-apple: clean-cli-apple
-	cargo zigbuild --target={{apple_target}} --release -p nsv
-	(cd target/{{apple_target}}/release && \
-	mkdir nsv-v{{version}}-{{apple_target}} && \
-	cp nsv nsv-v{{version}}-{{apple_target}} && \
-	tar -czf nsv-v{{version}}-{{apple_target}}.tar.gz nsv-v{{version}}-{{apple_target}})
+build-cli-macos: clean-cli-macos
+	cargo zigbuild --target={{macos_target}} --release -p nsv
+	(cd target/{{macos_target}}/release && \
+	mkdir nsv-v{{version}}-{{macos_target}} && \
+	cp nsv nsv-v{{version}}-{{macos_target}} && \
+	tar -czf nsv-v{{version}}-{{macos_target}}.tar.gz nsv-v{{version}}-{{macos_target}})
 
 # Profiling
 
@@ -117,8 +117,8 @@ lint-fix:
   cargo clippy --package ultrahonk --package contracts --package integration --package nsv --fix
 
 
-clean-cli-apple:
-	rm -rf target/{{apple_target}}/release/nsv-v{{version}}-{{apple_target}}
+clean-cli-macos:
+	rm -rf target/{{macos_target}}/release/nsv-v{{version}}-{{macos_target}}
 
 clean-cli-linux:
 	rm -rf target/{{linux_target}}/release/nsv-v{{version}}-{{linux_target}}

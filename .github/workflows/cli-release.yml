@@ -52,13 +52,13 @@ jobs:
       strategy:
         matrix:
           include:
-            - os: ubuntu-latest
+            - os: linux
               target: x86_64-unknown-linux-gnu
               extension: tar.gz
-            - os: macos-latest
+            - os: macos
               target: x86_64-apple-darwin
               extension: tar.gz
-            - os: windows-latest
+            - os: windows
               target: x86_64-pc-windows-gnu
               extension: zip
   
@@ -78,13 +78,14 @@ jobs:
         - name: Add Target for Cross-Compilation
           run: rustup target add ${{ matrix.target }}
 
-        - name: Install zig
-          uses: korandoru/setup-zig@v1
-          with:
-            zig-version: 0.13.0
-  
+        - name: Install cargo-zigbuild
+          run: cargo install --locked cargo-zigbuild
+
+        - name: Install build tools
+          run: sudo apt-get update && sudo apt-get install -y build-essential gcc lld mingw-w64
+
         - name: Build Project with zig
-          run: zig build --package nsv --release --target ${{ matrix.target }}
+          run: cargo zigbuild --target=${{ matrix.target }} --release -p nsv
   
         - name: Package Binary
           shell: bash
@@ -95,7 +96,7 @@ jobs:
   
             # Create directory and move the binary
             mkdir "$output_dir"
-            if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            if [ "${{ matrix.os }}" = "windows" ]; then
               mv "target/${{ matrix.target }}/release/$binary_name.exe" "$output_dir/"
             else
               mv "target/${{ matrix.target }}/release/$binary_name" "$output_dir/"
