@@ -18,6 +18,16 @@ jobs:
   build:
     name: Build Contracts
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        contract:
+          - sumcheck-verifier
+          - shplemini-verifier
+          - verifier
+          - zk-sumcheck-verifier
+          - zk-shplemini-verifier
+          - zk-verifier
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -44,20 +54,5 @@ jobs:
         with:
           just-version: 1.38.0 
   
-      - name: Build Sumcheck Verifier contract
-        run: just build-contract sumcheck-verifier
-
-      - name: Build Shplemini Verifier contract
-        run: just build-contract shplemini-verifier
-
-      - name: Build Verifier contract
-        run: just build-contract verifier
-
-      - name: Build Zk Sumcheck Verifier contract
-        run: just build-contract zk-sumcheck-verifier
-
-      - name: Build Zk Shplemini Verifier contract
-        run: just build-contract zk-shplemini-verifier
-
-      - name: Build Zk Verifier contract
-        run: just build-contract zk-verifier
+      - name: Build ${{ matrix.contract }}
+        run: just build-contract ${{ matrix.contract }}
