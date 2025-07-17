@@ -41,18 +41,14 @@ impl NewCommand {
 
         create_spinner.finish_with_message(format!(
             "{} Created {name} at {}\n",
-            "✔️ Success!".green(),
+            "✅ Success!".green(),
             root.display()
         ));
 
         // print instructions ========================================
 
         println!(
-            "\n{title}\n\n\
-            - {bin} {build_cmd}\n\
-            \tBuilds the stylus compatible wasm.\n\
-            - {bin} {deploy_cmd}\n\
-            \tDeploys the verifier to the blockchain.\n",
+            "\n {title}\n\n  - {bin} {build_cmd}: Builds the stylus compatible wasm.\n  - {bin} {deploy_cmd}: Deploys the verifier to the blockchain.\n",
             title = "What's Next?".bright_white().bold(),
             bin = env!("CARGO_BIN_NAME").blue(),
             build_cmd = "build".blue(),

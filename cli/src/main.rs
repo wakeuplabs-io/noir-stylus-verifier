@@ -8,7 +8,7 @@ use commands::new::NewCommand;
 use dotenv::dotenv;
 use log::{Level, LevelFilter};
 
-use crate::infrastructure::console::terminal::print_error;
+use crate::infrastructure::console::terminal::{print_app_title};
 
 #[derive(Parser)]
 #[clap(name = "nsv")]
@@ -62,11 +62,15 @@ async fn main() {
 
     let ctx = AppContext {};
 
+    // print app title
+    clear_screen!();
+    print_app_title();
+
     // run commands
     if let Err(e) = match args.cmd {
         Commands::New { target } => NewCommand::new().run(&ctx, &target).await,
     } {
-        print_error(&format!("\n\nError: {e}\n\n"));
+        print_error!(" Error: {e} \n");
         std::process::exit(1);
     }
 }
