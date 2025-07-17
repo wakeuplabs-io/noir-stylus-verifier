@@ -1,10 +1,10 @@
-# Noir Stylus Verifier
+## Noir Stylus Verifier by WakeUp Labs
+
+[![WakeUp Labs](docs/assets/wakeuplabs.png)](https://www.wakeuplabs.io/)
 
 [![Build Status](https://github.com/wakeuplabs-io/noir-stylus-verifier/actions/workflows/rust-build.yml/badge.svg)](https://github.com/wakeuplabs-io/noir-stylus-verifier/actions/workflows/rust-build.yml)
 
-A Stylus-compatible UltraHonk verifier that bridges Noir's zero-knowledge capabilities with Arbitrum Stylus, enabling efficient verification of Barretenberg proofs in a WASM environment.
-
-This project surges as a [proposal](https://github.com/orgs/noir-lang/discussions/8673) to Aztec [discussion](https://github.com/orgs/noir-lang/discussions/8345)
+A Stylus-compatible UltraHonk verifier that bridges Noir's zero-knowledge capabilities with Arbitrum Stylus, enabling efficient verification of Barretenberg proofs in a WASM environment. This project surges as a [proposal](https://github.com/orgs/noir-lang/discussions/8673) to Aztec [discussion](https://github.com/orgs/noir-lang/discussions/8345)
 
 Find out everything about the project at the [docs folder](/docs/)
 

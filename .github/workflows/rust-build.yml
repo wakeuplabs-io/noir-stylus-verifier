@@ -18,20 +18,30 @@ jobs:
   build:
     name: Build Contracts
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        contract:
+          - sumcheck-verifier
+          - shplemini-verifier
+          - verifier
+          - zk-sumcheck-verifier
+          - zk-shplemini-verifier
+          - zk-verifier
+
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
 
       - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@master
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: nightly-2025-06-12
 
       - name: Add rust-src component
         run: rustup component add rust-src --toolchain nightly-2025-06-12
 
-      - name: Install wasm32 target
+      - name: Install Build Targets
         run: rustup target add wasm32-unknown-unknown --toolchain nightly-2025-06-12
 
       - uses: Swatinem/rust-cache@v2
@@ -39,15 +49,10 @@ jobs:
       - name: Install build tools
         run: sudo apt-get update && sudo apt-get install -y build-essential gcc lld
 
-      - uses: extractions/setup-just@v3
+      - name: Install just
+        uses: extractions/setup-just@v3
         with:
           just-version: 1.38.0 
-
-      - name: Build Sumcheck Verifier contract
-        run: just build-contract sumcheck-verifier
-
-      - name: Build Shplemini Verifier contract
-        run: just build-contract shplemini-verifier
-
-      - name: Build Verifier contract
-        run: just build-contract verifier
+  
+      - name: Build ${{ matrix.contract }}
+        run: just build-contract ${{ matrix.contract }}
