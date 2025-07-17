@@ -1,0 +1,120 @@
+name: Cross-Platform Cli Rust Build and Release
+
+on:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+
+jobs:
+    init_release:
+      name: Zip and Release init files
+      runs-on: ubuntu-latest
+
+      steps:
+        - name: Checkout Code
+          uses: actions/checkout@v3
+
+        - name: Set Version from Tag
+          shell: bash
+          run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+        - name: Create ZIP and TAR files
+          shell: bash
+          run: |
+            outdir="init-example"
+            echo "DIRNAME=$outdir"
+
+            (cd examples/hello_world && zip -r "../../../$outdir.zip" .)
+            echo "ZIP=$outdir.zip" >> $GITHUB_ENV
+                
+            (cd examples/hello_world && tar -czf "../../../$outdir.tar.gz" .)
+            echo "TAR=$outdir.tar.gz" >> $GITHUB_ENV
+
+        - name: Release
+          uses: softprops/action-gh-release@v1
+          with:
+            files: |
+              ${{ env.TAR }}
+
+        - name: Release
+          uses: softprops/action-gh-release@v1
+          with:
+            files: |
+              ${{ env.ZIP }}
+
+    cli_release:
+      name: Build and Release for Multiple Platforms
+      runs-on: ${{ matrix.os }}
+  
+      strategy:
+        matrix:
+          include:
+            - os: ubuntu-latest
+              target: x86_64-unknown-linux-gnu
+              extension: tar.gz
+            - os: macos-latest
+              target: x86_64-apple-darwin
+              extension: tar.gz
+            - os: windows-latest
+              target: x86_64-pc-windows-gnu
+              extension: zip
+  
+      steps:
+        - name: Checkout Code
+          uses: actions/checkout@v3
+  
+        - name: Set Version from Tag
+          shell: bash
+          run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+  
+        - name: Install Rust
+          uses: dtolnay/rust-toolchain@stable
+          with:
+            toolchain: nightly-2025-06-12
+  
+        - name: Add Target for Cross-Compilation
+          run: rustup target add ${{ matrix.target }}
+
+        - name: Install zig
+          uses: korandoru/setup-zig@v1
+          with:
+            zig-version: 0.13.0
+  
+        - name: Build Project with zig
+          run: zig build --package nsv --release --target ${{ matrix.target }}
+  
+        - name: Package Binary
+          shell: bash
+          run: |
+            # Define binary name and output directory
+            binary_name="nsv"
+            output_dir="${binary_name}-${{ env.VERSION }}-${{ matrix.target }}"
+  
+            # Create directory and move the binary
+            mkdir "$output_dir"
+            if [ "${{ matrix.os }}" = "windows-latest" ]; then
+              mv "target/${{ matrix.target }}/release/$binary_name.exe" "$output_dir/"
+            else
+              mv "target/${{ matrix.target }}/release/$binary_name" "$output_dir/"
+            fi
+  
+            # Package the output directory
+            if [ "${{ matrix.extension }}" = "zip" ]; then
+              zip -r "${output_dir}.zip" "$output_dir"
+              echo "ASSET=${output_dir}.zip" >> $GITHUB_ENV
+            else
+              tar -czf "${output_dir}.tar.gz" "$output_dir"
+              echo "ASSET=${output_dir}.tar.gz" >> $GITHUB_ENV
+            fi
+  
+        - name: Upload Release Asset
+          uses: softprops/action-gh-release@v1
+          with:
+            files: ${{ env.ASSET }}
+            tag_name: ${{ github.ref_name }}
+            draft: false
+            prerelease: false
+ 

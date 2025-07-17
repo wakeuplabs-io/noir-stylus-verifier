@@ -1,5 +1,5 @@
 [workspace]
-members = ["contracts", "integration", "packages/ultrahonk"]
+members = [ "cli","contracts", "integration", "packages/ultrahonk"]
 exclude = ["examples/hello_world/contracts"]
 resolver = "2"
 

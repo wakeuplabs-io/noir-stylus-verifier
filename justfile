@@ -13,6 +13,28 @@ build-contract contract:
   cargo build -p contracts --target wasm32-unknown-unknown --release --features {{contract}} -Z unstable-options -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort && \
   mv ./target/wasm32-unknown-unknown/release/contracts.wasm ./target/wasm32-unknown-unknown/release/{{contract}}.wasm
 
+
+build-cli-windows: clean-windows
+	cargo zigbuild --target={{WINDOWS_TARGET}} --release -p cli
+	(cd target/{{WINDOWS_TARGET}}/release && \
+	mkdir nsv-v{{VERSION}}-{{WINDOWS_TARGET}} && \
+	mv nsv.exe nsv-v{{VERSION}}-{{WINDOWS_TARGET}} && \
+	zip -r nsv-v{{VERSION}}-{{WINDOWS_TARGET}}.zip nsv-v{{VERSION}}-{{WINDOWS_TARGET}})
+
+build-cli-linux: clean-linux
+	cargo zigbuild --target={{LINUX_TARGET}} --release -p cli
+	(cd target/{{LINUX_TARGET}}/release && \
+	mkdir nsv-v{{VERSION}}-{{LINUX_TARGET}} && \
+	mv nsv nsv-v{{VERSION}}-{{LINUX_TARGET}} && \
+	tar -czf nsv-v{{VERSION}}-{{LINUX_TARGET}}.tar.gz nsv-v{{VERSION}}-{{LINUX_TARGET}})
+
+cli-build-apple: clean-apple
+	cargo zigbuild --target={{APPLE_TARGET}} --release -p cli
+	(cd target/{{APPLE_TARGET}}/release && \
+	mkdir nsv-v{{VERSION}}-{{APPLE_TARGET}} && \
+	cp nsv nsv-v{{VERSION}}-{{APPLE_TARGET}} && \
+	tar -czf nsv-v{{VERSION}}-{{APPLE_TARGET}}.tar.gz nsv-v{{VERSION}}-{{APPLE_TARGET}})
+
 # Profiling
 
 profile-contract contract: 
@@ -87,3 +109,13 @@ lint:
 
 lint-fix:
   cargo clippy --package ultrahonk --package contracts --package integration --fix
+
+
+clean-cli-apple:
+	rm -rf target/{{APPLE_TARGET}}/release/nsv-v{{VERSION}}-{{APPLE_TARGET}}
+
+clean-cli-linux:
+	rm -rf target/{{LINUX_TARGET}}/release/nsv-v{{VERSION}}-{{LINUX_TARGET}}
+
+clean-cli-windows:
+	rm -rf target/{{WINDOWS_TARGET}}/release/nsv-v{{VERSION}}-{{WINDOWS_TARGET}}

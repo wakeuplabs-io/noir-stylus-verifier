@@ -25,7 +25,7 @@ jobs:
           submodules: 'recursive'
       
       - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@master
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: nightly-2025-06-12
 
@@ -42,3 +42,5 @@ jobs:
 
       - name: Test ultrahonk
         run: cargo test -p ultrahonk --profile ci-dev --features ark-ec/only-arithmetic-backend  # ark-ec/only-arithmetic-backend panics if we attempt to do arithmetic outside of the G1ArithmeticBackend
+
+      # TODO: test cli
