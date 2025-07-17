@@ -8,7 +8,7 @@ use commands::new::NewCommand;
 use dotenv::dotenv;
 use log::{Level, LevelFilter};
 
-use crate::infrastructure::console::terminal::{print_app_title};
+use crate::infrastructure::console::terminal::print_app_title;
 
 #[derive(Parser)]
 #[clap(name = "nsv")]

@@ -7,7 +7,7 @@ macro_rules! print_info {
     };
 }
 
-#[macro_export] 
+#[macro_export]
 macro_rules! print_error {
     ($($arg:tt)*) => {
         eprintln!("{}", format!($($arg)*).bold().red());
