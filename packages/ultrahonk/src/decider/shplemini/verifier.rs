@@ -563,20 +563,13 @@ impl ShpleminiVerifier {
         shplonk_batching_challenge: ScalarField,
         virtual_log_n: usize,
         has_zk: bool,
-        // committed_sumcheck: bool, we don't have this (yet)
     ) -> Vec<ScalarField> {
         let mut num_powers = 2 * virtual_log_n + NUM_INTERLEAVING_CLAIMS as usize;
-        // // Each round univariate is opened at 0, 1, and a round challenge.
-        // const NUM_COMMITTED_SUMCHECK_CLAIMS_PER_ROUND: usize = 3;
 
         // Shplonk evaluation and batching challenges are re-used in SmallSubgroupIPA.
         if has_zk {
             num_powers += NUM_SMALL_IPA_EVALUATIONS;
         }
-
-        // if committed_sumcheck {
-        //     num_powers += NUM_COMMITTED_SUMCHECK_CLAIMS_PER_ROUND * CONST_PROOF_SIZE_LOG_N;
-        // }
 
         let mut result = Vec::with_capacity(num_powers);
         result.push(ScalarField::one());
