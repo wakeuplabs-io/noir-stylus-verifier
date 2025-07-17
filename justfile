@@ -1,5 +1,9 @@
 rpc_url := "http://localhost:8547"
 private_key := "0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659"
+apple_target := "x86_64-apple-darwin"
+windows_target := "x86_64-pc-windows-gnu"
+linux_target := "x86_64-unknown-linux-musl"
+version := "0.1.0"
 
 # Builds
 
@@ -13,27 +17,26 @@ build-contract contract:
   cargo build -p contracts --target wasm32-unknown-unknown --release --features {{contract}} -Z unstable-options -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort && \
   mv ./target/wasm32-unknown-unknown/release/contracts.wasm ./target/wasm32-unknown-unknown/release/{{contract}}.wasm
 
+build-cli-windows: clean-cli-windows
+	cargo zigbuild --target={{windows_target}} --release -p nsv
+	(cd target/{{windows_target}}/release && \
+	mkdir nsv-v{{version}}-{{windows_target}} && \
+	mv nsv.exe nsv-v{{version}}-{{windows_target}} && \
+	zip -r nsv-v{{version}}-{{windows_target}}.zip nsv-v{{version}}-{{windows_target}})
 
-build-cli-windows: clean-windows
-	cargo zigbuild --target={{WINDOWS_TARGET}} --release -p cli
-	(cd target/{{WINDOWS_TARGET}}/release && \
-	mkdir nsv-v{{VERSION}}-{{WINDOWS_TARGET}} && \
-	mv nsv.exe nsv-v{{VERSION}}-{{WINDOWS_TARGET}} && \
-	zip -r nsv-v{{VERSION}}-{{WINDOWS_TARGET}}.zip nsv-v{{VERSION}}-{{WINDOWS_TARGET}})
+build-cli-linux: clean-cli-linux
+	cargo zigbuild --target={{linux_target}} --release -p nsv
+	(cd target/{{linux_target}}/release && \
+	mkdir nsv-v{{version}}-{{linux_target}} && \
+	mv nsv nsv-v{{version}}-{{linux_target}} && \
+	tar -czf nsv-v{{version}}-{{linux_target}}.tar.gz nsv-v{{version}}-{{linux_target}})
 
-build-cli-linux: clean-linux
-	cargo zigbuild --target={{LINUX_TARGET}} --release -p cli
-	(cd target/{{LINUX_TARGET}}/release && \
-	mkdir nsv-v{{VERSION}}-{{LINUX_TARGET}} && \
-	mv nsv nsv-v{{VERSION}}-{{LINUX_TARGET}} && \
-	tar -czf nsv-v{{VERSION}}-{{LINUX_TARGET}}.tar.gz nsv-v{{VERSION}}-{{LINUX_TARGET}})
-
-cli-build-apple: clean-apple
-	cargo zigbuild --target={{APPLE_TARGET}} --release -p cli
-	(cd target/{{APPLE_TARGET}}/release && \
-	mkdir nsv-v{{VERSION}}-{{APPLE_TARGET}} && \
-	cp nsv nsv-v{{VERSION}}-{{APPLE_TARGET}} && \
-	tar -czf nsv-v{{VERSION}}-{{APPLE_TARGET}}.tar.gz nsv-v{{VERSION}}-{{APPLE_TARGET}})
+build-cli-apple: clean-cli-apple
+	cargo zigbuild --target={{apple_target}} --release -p nsv
+	(cd target/{{apple_target}}/release && \
+	mkdir nsv-v{{version}}-{{apple_target}} && \
+	cp nsv nsv-v{{version}}-{{apple_target}} && \
+	tar -czf nsv-v{{version}}-{{apple_target}}.tar.gz nsv-v{{version}}-{{apple_target}})
 
 # Profiling
 
@@ -68,6 +71,9 @@ test-ultrahonk:
 test-integration:
   cargo run -p integration -- --rpc-url {{rpc_url}} --priv-key {{private_key}}
 
+test-cli:
+  cargo test -p nsv -- --test-threads=1 --nocapture
+
 verify-proof verifier_address test_vector_name zk="false":
   #!/usr/bin/env bash
 
@@ -99,23 +105,23 @@ nitro-testnode-down:
   ./scripts/nitro-testnode.sh --quit
 
 fmt:
-  cargo fmt --package ultrahonk --package contracts --package integration -- --check
+  cargo fmt --package ultrahonk --package contracts --package integration --package nsv -- --check
 
 fmt-fix:
-  cargo fmt --package ultrahonk --package contracts --package integration
+  cargo fmt --package ultrahonk --package contracts --package integration --package nsv
 
 lint:
-  cargo clippy --package ultrahonk --package contracts --package integration --no-deps
+  cargo clippy --package ultrahonk --package contracts --package integration --package nsv --no-deps
 
 lint-fix:
-  cargo clippy --package ultrahonk --package contracts --package integration --fix
+  cargo clippy --package ultrahonk --package contracts --package integration --package nsv --fix
 
 
 clean-cli-apple:
-	rm -rf target/{{APPLE_TARGET}}/release/nsv-v{{VERSION}}-{{APPLE_TARGET}}
+	rm -rf target/{{apple_target}}/release/nsv-v{{version}}-{{apple_target}}
 
 clean-cli-linux:
-	rm -rf target/{{LINUX_TARGET}}/release/nsv-v{{VERSION}}-{{LINUX_TARGET}}
+	rm -rf target/{{linux_target}}/release/nsv-v{{version}}-{{linux_target}}
 
 clean-cli-windows:
-	rm -rf target/{{WINDOWS_TARGET}}/release/nsv-v{{VERSION}}-{{WINDOWS_TARGET}}
+	rm -rf target/{{windows_target}}/release/nsv-v{{version}}-{{windows_target}}

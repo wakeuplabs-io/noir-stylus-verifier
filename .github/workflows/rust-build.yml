@@ -31,17 +31,26 @@ jobs:
       - name: Add rust-src component
         run: rustup component add rust-src --toolchain nightly-2025-06-12
 
-      - name: Install wasm32 target
-        run: rustup target add wasm32-unknown-unknown --toolchain nightly-2025-06-12
+      - name: Install Build Targets
+        run: rustup target add wasm32-unknown-unknown --toolchain nightly-2025-06-12 && \
+              rustup target add x86_64-pc-windows-gnu --toolchain nightly-2025-06-12 && \
+              rustup target add x86_64-unknown-linux-musl --toolchain nightly-2025-06-12 && \
+              rustup target add x86_64-apple-darwin --toolchain nightly-2025-06-12
 
       - uses: Swatinem/rust-cache@v2
 
       - name: Install build tools
-        run: sudo apt-get update && sudo apt-get install -y build-essential gcc lld
+        run: sudo apt-get update && sudo apt-get install -y build-essential gcc lld mingw-w64
 
-      - uses: extractions/setup-just@v3
+      - name: Install just
+        uses: extractions/setup-just@v3
         with:
           just-version: 1.38.0 
+      
+      - name: Install zig for cross compilation
+        uses: ziglang/setup-zig@v1
+        with:
+          version: 0.12.0
 
       - name: Build Sumcheck Verifier contract
         run: just build-contract sumcheck-verifier
@@ -52,5 +61,20 @@ jobs:
       - name: Build Verifier contract
         run: just build-contract verifier
 
-      # TODO: build cli
-        
+      - name: Build Zk Sumcheck Verifier contract
+        run: just build-contract zk-sumcheck-verifier
+
+      - name: Build Zk Shplemini Verifier contract
+        run: just build-contract zk-shplemini-verifier
+
+      - name: Build Zk Verifier contract
+        run: just build-contract zk-verifier
+
+      - name: Build CLI for Linux
+        run: just build-cli-linux
+
+      - name: Build CLI for Windows
+        run: just build-cli-windows
+
+      - name: Build CLI for Apple
+        run: just build-cli-apple

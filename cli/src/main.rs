@@ -1,10 +1,10 @@
 mod commands;
-mod infrastructure;
 mod config;
+mod infrastructure;
 
 use clap::{Parser, Subcommand};
 use colored::Colorize;
-use commands::init::InitCommand;
+use commands::new::NewCommand;
 use dotenv::dotenv;
 use log::{Level, LevelFilter};
 
@@ -25,12 +25,11 @@ struct Args {
 
 #[derive(Subcommand, Debug, Clone)]
 enum Commands {
-    /// Initialize a new project
-    Init { target: String },
+    /// Create a new project
+    New { target: String },
 }
 
-pub(crate) struct AppContext {
-}
+pub(crate) struct AppContext {}
 
 #[tokio::main]
 async fn main() {
@@ -65,9 +64,9 @@ async fn main() {
 
     // run commands
     if let Err(e) = match args.cmd {
-        Commands::Init { target } => InitCommand::new().run(&ctx, &target),
+        Commands::New { target } => NewCommand::new().run(&ctx, &target).await,
     } {
-        print_error(&format!("\n\nError: {}\n\n", e));
+        print_error(&format!("\n\nError: {e}\n\n"));
         std::process::exit(1);
     }
 }

@@ -32,9 +32,6 @@ jobs:
       - name: Add rust-src component
         run: rustup component add rust-src --toolchain nightly-2025-06-12
 
-      - name: Install wasm32 target
-        run: rustup target add wasm32-unknown-unknown --toolchain nightly-2025-06-12
-
       - uses: Swatinem/rust-cache@v2
 
       - name: Install build tools
@@ -43,4 +40,5 @@ jobs:
       - name: Test ultrahonk
         run: cargo test -p ultrahonk --profile ci-dev --features ark-ec/only-arithmetic-backend  # ark-ec/only-arithmetic-backend panics if we attempt to do arithmetic outside of the G1ArithmeticBackend
 
-      # TODO: test cli
+      - name: Test CLI
+        run: cargo test -p nsv --profile ci-dev

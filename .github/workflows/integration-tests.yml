@@ -41,7 +41,8 @@ jobs:
       - name: Install cargo-stylus
         run: cargo install cargo-stylus@0.6.0
       
-      - uses: extractions/setup-just@v3
+      - name: Install just
+        uses: extractions/setup-just@v3
         with:
           just-version: 1.38.0 
 

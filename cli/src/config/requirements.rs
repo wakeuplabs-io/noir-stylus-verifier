@@ -68,6 +68,8 @@ impl SystemRequirementsChecker {
 
 impl TSystemRequirementsChecker for SystemRequirementsChecker {
     fn check(&self, requirements: Vec<Requirement>) -> Result<(), String> {
+        let re = Regex::new(r"(\d+\.\d+\.\d+)").expect("Failed to compile regex");
+
         for requirement in requirements.iter() {
             let output = self
                 .system
@@ -78,15 +80,15 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
                         requirement.program, requirement.version_arg
                     )
                 })?;
-            let re = Regex::new(r"(\d+\.\d+\.\d+)").expect("Failed to compile regex");
 
             let version = Version::parse(
                 &re.captures(&output)
-                    .ok_or(format!("Failed to parse version from output: {}", output))?[1],
+                    .ok_or(format!("Failed to parse version from output: {output}"))?[1],
             )
             .expect("Failed to parse version");
 
-            let required_version = Version::parse(requirement.required_version).map_err(|e| e.to_string())?;
+            let required_version =
+                Version::parse(requirement.required_version).map_err(|e| e.to_string())?;
             match requirement.required_comparator {
                 Comparison::Equal => {
                     if version != required_version {

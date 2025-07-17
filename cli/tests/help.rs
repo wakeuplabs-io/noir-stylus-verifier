@@ -18,7 +18,7 @@ fn get_help() {
 fn get_help_per_command() {
     let mut cmd = Command::cargo_bin(BIN).unwrap();
 
-    cmd.arg("init").arg("--help");
+    cmd.arg("new").arg("--help");
     cmd.assert()
         .success()
         .stdout(predicate::str::contains("Usage:"));

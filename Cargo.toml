@@ -95,6 +95,17 @@ zeroize = { version = "1", default-features = false }
 proc-macro2 = "1.0"
 quote = "1.0"
 syn = "2.0.104"
+dotenv = "0.15.0"
+tempfile = "3.8.0"
+dialoguer = "0.11.0"
+indicatif = "0.18.0"
+pretty_env_logger = "0.5.0"
+env_logger = "0.11.8"
+mockall = "0.13.1"
+semver = "1.0.26"
+log = "0.4.22"
+reqwest = { version = "0.12.22", features = ["rustls-tls"], default-features = false }
+zip = "4.3.0"
 
 [patch.crates-io]
 ark-ec = { path = "vendor/algebra/ec", package = "ark-ec", version = "0.5.0" }
