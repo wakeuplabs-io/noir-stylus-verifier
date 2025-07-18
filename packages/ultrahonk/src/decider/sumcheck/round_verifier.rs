@@ -94,7 +94,7 @@ impl SumcheckVerifierRound {
         relation_parameters: &RelationParameters,
         scaling_factor: &ScalarField,
     ) {
-        R::verify_accumulate(
+        R::accumulate(
             univariate_accumulator,
             extended_edges,
             relation_parameters,

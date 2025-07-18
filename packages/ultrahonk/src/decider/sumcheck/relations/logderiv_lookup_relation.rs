@@ -97,6 +97,7 @@ impl Relation for LogDerivLookupRelation {
     type VerifyAcc = LogDerivLookupRelationEvals;
 
     /// Log-derivative style lookup argument for conventional lookups form tables with 3 or fewer columns
+    ///
     /// The identity to be checked is of the form
     ///
     /// \sum{i=0}^{n-1} \frac{read_counts_i}{write_term_i} - \frac{q_lookup}{read_term_i} = 0
@@ -129,6 +130,7 @@ impl Relation for LogDerivLookupRelation {
     ///
     /// and read_tags is a polynomial taking boolean values indicating whether the table entry at the corresponding row
     /// has been read or not.
+    ///
     /// @note This relation utilizes functionality in the log-derivative library to compute the polynomial of inverses
     fn accumulate(
         univariate_accumulator: &mut Self::VerifyAcc,
