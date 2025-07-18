@@ -2,9 +2,7 @@ use crate::{
     config::requirements::{
         SystemRequirementsChecker, TSystemRequirementsChecker, CARGO_STYLUS_REQUIREMENT,
     },
-    infrastructure::{
-        console::progress::style_spinner, stylus::Stylus,
-    },
+    infrastructure::{console::progress::style_spinner, stylus::Stylus},
     AppContext,
 };
 use colored::*;
@@ -33,8 +31,8 @@ impl CheckCommand {
         self.system_requirements_checker
             .check(vec![CARGO_STYLUS_REQUIREMENT])?;
 
-        let root = if circuit.is_some() {
-            PathBuf::from(circuit.unwrap())
+        let root = if let Some(circuit) = circuit {
+            PathBuf::from(circuit)
         } else {
             env::current_dir()?
         };
@@ -51,14 +49,17 @@ impl CheckCommand {
         );
 
         // run stylus check in contracts directory
-        match self.stylus.check(&contracts_root, &rpc_url.unwrap_or("https://sepolia-rollup.arbitrum.io/rpc".to_string())) {
+        match self.stylus.check(
+            &contracts_root,
+            &rpc_url.unwrap_or("https://sepolia-rollup.arbitrum.io/rpc".to_string()),
+        ) {
             Ok(result) => {
                 create_spinner.finish_with_message(format!(
                     "{} Checked contract for circuit at {}\n",
                     "✅ Success!".green(),
                     root.display()
                 ));
-                println!("{}", result);
+                println!("{result}");
             }
             Err(e) => {
                 create_spinner.finish_with_message(format!(

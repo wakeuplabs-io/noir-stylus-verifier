@@ -1,5 +1,5 @@
 use crate::infrastructure::system::{System, TSystem};
-use std::{fmt::format, path::Path};
+use std::path::Path;
 use tera::Tera;
 
 struct CircuitInputs {
@@ -30,11 +30,14 @@ impl VerifierGenerator {
     ) -> Result<Vec<ProjectFile>, Box<dyn std::error::Error>> {
         // generate vk bytes
         let vk_bytes = self.system.read_file(vk_path)?;
-        let vk_bytes_str = format!("[{}].into()", vk_bytes
-            .iter()
-            .map(|b| format!("{}", b))
-            .collect::<Vec<String>>()
-            .join(", "));
+        let vk_bytes_str = format!(
+            "[{}].into()",
+            vk_bytes
+                .iter()
+                .map(|b| format!("{b}"))
+                .collect::<Vec<String>>()
+                .join(", ")
+        );
 
         // generate inputs prototype and serialization
         let circuit_json_str = self.system.read_file_str(circuit_json_path)?;
@@ -114,7 +117,7 @@ impl VerifierGenerator {
         &self,
         circuit_json_str: &str,
     ) -> Result<Vec<CircuitInputs>, Box<dyn std::error::Error>> {
-        let circuit_json: serde_json::Value = serde_json::from_str(&circuit_json_str)?;
+        let circuit_json: serde_json::Value = serde_json::from_str(circuit_json_str)?;
         let circuit_abi = circuit_json["abi"].clone();
         let circuit_inputs = circuit_abi["parameters"].clone();
         let circuit_inputs = circuit_inputs.as_array().unwrap();

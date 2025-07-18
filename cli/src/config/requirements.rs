@@ -32,29 +32,10 @@ pub(crate) struct SystemRequirementsChecker {
 
 // requirements constants ======================================
 
-pub(crate) const DOCKER_REQUIREMENT: Requirement = Requirement {
-    program: "docker",
-    version_arg: "-v",
-    required_version: "24.0.0",
-    required_comparator: Comparison::GreaterThanOrEqual,
-};
-pub(crate) const GIT_REQUIREMENT: Requirement = Requirement {
-    program: "git",
-    version_arg: "--version",
-    required_version: "2.0.0",
-    required_comparator: Comparison::GreaterThanOrEqual,
-};
-
 pub(crate) const CARGO_STYLUS_REQUIREMENT: Requirement = Requirement {
     program: "cargo-stylus",
     version_arg: "--version",
     required_version: "0.1.0",
-    required_comparator: Comparison::GreaterThanOrEqual,
-};
-pub(crate) const CARGO_REQUIREMENT: Requirement = Requirement {
-    program: "cargo",
-    version_arg: "--version",
-    required_version: "1.0.0",
     required_comparator: Comparison::GreaterThanOrEqual,
 };
 pub(crate) const BB_UP_REQUIREMENT: Requirement = Requirement {
@@ -110,15 +91,15 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
         let re = Regex::new(r"(\d+\.\d+\.\d+)").expect("Failed to compile regex");
 
         for requirement in requirements.iter() {
-            let mut installed = false;
+            let mut installed;
             let mut version = Version::parse("0.0.0").unwrap();
             let mut required_version = Version::parse("0.0.0").unwrap();
 
             if requirement.required_comparator == Comparison::Installed {
-                if !self
+                if self
                     .system
                     .execute_command(Command::new("which").arg(requirement.program))
-                    .is_ok()
+                    .is_err()
                 {
                     return Err(format!(
                         "{} is not installed. Please install it.",

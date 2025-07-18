@@ -8,10 +8,18 @@ pub(crate) struct Stylus {
 
 impl Stylus {
     pub(crate) fn new() -> Self {
-        Self { system: System::new() }
+        Self {
+            system: System::new(),
+        }
     }
 
-    pub(crate) fn deploy(&self, root: &Path, rpc_url: &str, private_key: &str, constructor_args: &str) -> Result<String, Box<dyn std::error::Error>> {
+    pub(crate) fn deploy(
+        &self,
+        root: &Path,
+        rpc_url: &str,
+        private_key: &str,
+        constructor_args: &str,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         let result = self.system.execute_command(
             Command::new("cargo")
                 .arg("stylus")
@@ -29,7 +37,11 @@ impl Stylus {
         Ok(result)
     }
 
-    pub(crate) fn check(&self, root: &Path, rpc_url: &str) -> Result<String, Box<dyn std::error::Error>> {
+    pub(crate) fn check(
+        &self,
+        root: &Path,
+        rpc_url: &str,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         let result = self.system.execute_command(
             Command::new("cargo")
                 .arg("stylus")
@@ -42,4 +54,3 @@ impl Stylus {
         Ok(result)
     }
 }
-

@@ -37,8 +37,8 @@ impl GenerateCommand {
         self.system_requirements_checker
             .check(vec![BB_UP_REQUIREMENT, NOIRUP_REQUIREMENT])?;
 
-        let root = if circuit.is_some() {
-            PathBuf::from(circuit.unwrap())
+        let root = if let Some(circuit) = circuit {
+            PathBuf::from(circuit)
         } else {
             env::current_dir()?
         };
@@ -92,13 +92,13 @@ impl GenerateCommand {
                 .arg("-o")
                 .arg("target")
                 .arg("-b")
-                .arg(root.join("target").join(format!("{}.json", package_name)))
+                .arg(root.join("target").join(format!("{package_name}.json")))
                 .current_dir(&root),
         )?;
 
         // generate verifier contract
         let project_files = self.verifier_generator.generate_verifier_contract(
-            &root.join("target").join(format!("{}.json", package_name)),
+            &root.join("target").join(format!("{package_name}.json")),
             &root.join("target").join("vk"),
         )?;
         for file in project_files {

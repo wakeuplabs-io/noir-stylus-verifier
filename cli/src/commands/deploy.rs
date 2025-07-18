@@ -3,7 +3,7 @@ use crate::{
         SystemRequirementsChecker, TSystemRequirementsChecker, CARGO_STYLUS_REQUIREMENT,
     },
     infrastructure::{console::progress::style_spinner, stylus::Stylus},
-    print_warning, AppContext,
+    print_error, print_warning, AppContext,
 };
 use colored::*;
 use core::panic;
@@ -15,8 +15,6 @@ pub(crate) struct DeployCommand {
     system_requirements_checker: SystemRequirementsChecker,
     stylus: Stylus,
 }
-
-// cargo run -p nsv deploy --rpc-url http://localhost:8547 --private-key 0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659 --verifier-address 0x0000000000000000000000000000000000000001 
 
 impl DeployCommand {
     pub(crate) fn new() -> Self {
@@ -38,8 +36,8 @@ impl DeployCommand {
         self.system_requirements_checker
             .check(vec![CARGO_STYLUS_REQUIREMENT])?;
 
-        let root = if circuit.is_some() {
-            PathBuf::from(circuit.unwrap())
+        let root = if let Some(circuit) = circuit {
+            PathBuf::from(circuit)
         } else {
             env::current_dir()?
         };
@@ -66,16 +64,16 @@ impl DeployCommand {
                 let verifier_address = match chain_id {
                     42161 => {
                         if zk_flavor {
-                            "0x0000000000000000000000000000000000000000"
+                            "TODO: configure deployments"
                         } else {
-                            "0x0000000000000000000000000000000000000000"
+                            "TODO: configure deployments"
                         }
                     } // arbitrum
                     421614 => {
                         if zk_flavor {
-                            "0x0000000000000000000000000000000000000000"
+                            "TODO: configure deployments"
                         } else {
-                            "0x0000000000000000000000000000000000000000"
+                            "TODO: configure deployments"
                         }
                     } // arbitrum sepolia
                     _ => panic!("No default verifier address for chain id: {}", chain_id),
@@ -101,7 +99,7 @@ impl DeployCommand {
                     "✅ Success!".green(),
                     root.display()
                 ));
-                println!("{}", result);
+                println!("{result}");
             }
             Err(e) => {
                 create_spinner.finish_with_message(format!(
@@ -109,7 +107,7 @@ impl DeployCommand {
                     "❌ Error!".red(),
                     root.display()
                 ));
-                println!("{}", e);
+                print_error!("{e}");
             }
         }
 
