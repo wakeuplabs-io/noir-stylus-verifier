@@ -112,6 +112,7 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
         for requirement in requirements.iter() {
             let mut installed = false;
             let mut version = Version::parse("0.0.0").unwrap();
+            let mut required_version = Version::parse("0.0.0").unwrap();
 
             if requirement.required_comparator == Comparison::Installed {
                 if !self
@@ -143,10 +144,9 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
                         .ok_or(format!("Failed to parse version from output: {output}"))?[1],
                 )
                 .expect("Failed to parse version");
+                required_version = Version::parse(requirement.required_version).unwrap();
             }
 
-            let required_version =
-                Version::parse(requirement.required_version).map_err(|e| e.to_string())?;
             match requirement.required_comparator {
                 Comparison::Equal => {
                     if version != required_version {

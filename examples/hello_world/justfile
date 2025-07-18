@@ -19,13 +19,13 @@ cp-circuit:
 # build and deploy the contract
 
 build-contract: nargo-execute bb-write-vk cp-vk cp-circuit
-  cd contracts && cargo build --release --target wasm32-unknown-unknown
+  cd circuit/contracts && cargo build --release --target wasm32-unknown-unknown
 
 deploy-contract global_verifier_address:
-  cd contracts && cargo stylus deploy -e {{rpc_url}} --private-key {{private_key}} --verbose --no-verify --constructor-args {{global_verifier_address}}
+  cd circuit/contracts && cargo stylus deploy -e {{rpc_url}} --private-key {{private_key}} --verbose --no-verify --constructor-args {{global_verifier_address}}
 
 verify-contract deployment_tx:
-  cd contracts && cargo stylus verify --endpoint {{rpc_url}} --deployment-tx {{deployment_tx}} --no-verify
+  cd circuit/contracts && cargo stylus verify --endpoint {{rpc_url}} --deployment-tx {{deployment_tx}} --no-verify
 
 # run example scripts
 

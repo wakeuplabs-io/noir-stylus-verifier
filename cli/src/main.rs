@@ -28,7 +28,10 @@ enum Commands {
     /// Create a new project
     New { target: String },
     /// Generate a verifier
-    Generate { circuit: String },
+    Generate {
+        #[arg(short, long)]
+        circuit: Option<String>,
+    },
     /// Deploy a verifier to the blockchain
     Deploy {
         #[arg(short, long)]
@@ -84,14 +87,25 @@ async fn main() {
     // run commands
     if let Err(e) = match args.cmd {
         Commands::New { target } => NewCommand::new().run(&ctx, &target).await,
-        Commands::Generate { circuit } => GenerateCommand::new().run(&ctx, &circuit).await,
+        Commands::Generate { circuit } => GenerateCommand::new().run(&ctx, circuit).await,
         Commands::Deploy {
             rpc_url,
             private_key,
             circuit,
             verifier_address,
             zk_flavor,
-        } => DeployCommand::new().run(&ctx, &circuit, zk_flavor, &rpc_url, &private_key, verifier_address).await,
+        } => {
+            DeployCommand::new()
+                .run(
+                    &ctx,
+                    &circuit,
+                    &rpc_url,
+                    &private_key,
+                    verifier_address,
+                    zk_flavor,
+                )
+                .await
+        }
     } {
         print_error!(" Error: {e} \n");
         std::process::exit(1);

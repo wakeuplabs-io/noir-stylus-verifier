@@ -1,44 +1,48 @@
 use crate::{
-    infrastructure::{console::progress::style_spinner, downloader::github},
+    config::requirements::{
+        SystemRequirementsChecker, TSystemRequirementsChecker, CARGO_STYLUS_REQUIREMENT,
+    },
+    infrastructure::{console::progress::style_spinner, downloader::github, system::System},
     AppContext,
 };
 use colored::*;
 use indicatif::ProgressBar;
 use std::{env, path::PathBuf};
 
-pub(crate) struct DeployCommand {}
+pub(crate) struct DeployCommand {
+    system_requirements_checker: SystemRequirementsChecker,
+}
 
 impl DeployCommand {
     pub(crate) fn new() -> Self {
-        Self {}
+        Self {
+            system_requirements_checker: SystemRequirementsChecker::new(),
+        }
     }
 
     pub(crate) async fn run(
         &self,
         _ctx: &AppContext,
-        circuit: &str,
-        zk_flavor: bool,
-        rpc_url: &str, 
+        contract: &str, // path to circuit directory. Optionally, otherwise try from root
+        rpc_url: &str,
         private_key: &str,
         verifier_address: Option<String>, // TODO: option, if not provided take constants from provided
+        zk_flavor: bool,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let mut root = PathBuf::from(&circuit);
+        self.system_requirements_checker
+            .check(vec![CARGO_STYLUS_REQUIREMENT])?;
+
+            // TODO: circuit or root
+        let mut root = PathBuf::from(".");
         if !root.is_absolute() {
             root = env::current_dir()?.join(root)
         }
 
-        if root.exists() {
-            return Err(format!("Directory already exists: {}", root.display()).into());
-        } else {
-            std::fs::create_dir_all(&root)?;
-        }
 
         let create_spinner = style_spinner(
             ProgressBar::new_spinner(),
             &format!("⏳ Deploying {}...", root.display()),
         );
-
-        // TODO: export the vk and circuit json using bb and move to `contracts/assets`
 
         // TODO: deploy the verifier to the blockchain using cargo-stylus
 
