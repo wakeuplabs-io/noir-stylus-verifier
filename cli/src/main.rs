@@ -4,7 +4,7 @@ mod infrastructure;
 
 use clap::{Parser, Subcommand};
 use colored::Colorize;
-use commands::new::NewCommand;
+use commands::{deploy::DeployCommand, generate::GenerateCommand, new::NewCommand};
 use dotenv::dotenv;
 use log::{Level, LevelFilter};
 
@@ -27,6 +27,21 @@ struct Args {
 enum Commands {
     /// Create a new project
     New { target: String },
+    /// Generate a verifier
+    Generate { circuit: String },
+    /// Deploy a verifier to the blockchain
+    Deploy {
+        #[arg(short, long)]
+        rpc_url: String,
+        #[arg(short, long)]
+        private_key: String,
+        #[arg(short, long)]
+        circuit: String,
+        #[arg(short, long)]
+        verifier_address: Option<String>,
+        #[arg(short, long, default_value_t = false)]
+        zk_flavor: bool,
+    },
 }
 
 pub(crate) struct AppContext {}
@@ -69,6 +84,14 @@ async fn main() {
     // run commands
     if let Err(e) = match args.cmd {
         Commands::New { target } => NewCommand::new().run(&ctx, &target).await,
+        Commands::Generate { circuit } => GenerateCommand::new().run(&ctx, &circuit).await,
+        Commands::Deploy {
+            rpc_url,
+            private_key,
+            circuit,
+            verifier_address,
+            zk_flavor,
+        } => DeployCommand::new().run(&ctx, &circuit, zk_flavor, &rpc_url, &private_key, verifier_address).await,
     } {
         print_error!(" Error: {e} \n");
         std::process::exit(1);
