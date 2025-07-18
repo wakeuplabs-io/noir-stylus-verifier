@@ -32,13 +32,13 @@ impl GenerateCommand {
     pub(crate) async fn run(
         &self,
         _ctx: &AppContext,
-        circuit_root: Option<String>,
+        circuit: Option<String>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         self.system_requirements_checker
             .check(vec![BB_UP_REQUIREMENT, NOIRUP_REQUIREMENT])?;
 
-        let root = if circuit_root.is_some() {
-            PathBuf::from(circuit_root.unwrap())
+        let root = if circuit.is_some() {
+            PathBuf::from(circuit.unwrap())
         } else {
             env::current_dir()?
         };

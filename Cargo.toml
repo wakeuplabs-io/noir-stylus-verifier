@@ -108,6 +108,7 @@ reqwest = { version = "0.12.22", features = ["rustls-tls"], default-features = f
 zip = "4.3.0"
 figlet-rs = "0.1.5"
 tera = "1.20.0"
+ethers = { version = "2.0.14" }
 
 [patch.crates-io]
 ark-ec = { path = "vendor/algebra/ec", package = "ark-ec", version = "0.5.0" }

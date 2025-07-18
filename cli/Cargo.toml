@@ -29,6 +29,7 @@ reqwest = { workspace = true, features = ["rustls-tls"], default-features = fals
 zip.workspace = true
 serde_json.workspace = true
 tera.workspace = true
+ethers.workspace = true
 
 [dev-dependencies]
 assert_cmd = "2.0.10"

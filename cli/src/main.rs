@@ -44,6 +44,8 @@ enum Commands {
     /// Deploy a verifier to the blockchain
     Deploy {
         #[arg(short, long)]
+        circuit: Option<String>,
+        #[arg(short, long)]
         rpc_url: String,
         #[arg(short, long)]
         private_key: String,
@@ -99,6 +101,7 @@ async fn main() {
             CheckCommand::new().run(&ctx, circuit, rpc_url).await
         }
         Commands::Deploy {
+            circuit,
             rpc_url,
             private_key,
             verifier_address,
@@ -107,8 +110,9 @@ async fn main() {
             DeployCommand::new()
                 .run(
                     &ctx,
-                    &rpc_url,
-                    &private_key,
+                    circuit,
+                    rpc_url,
+                    private_key,
                     verifier_address,
                     zk_flavor,
                 )

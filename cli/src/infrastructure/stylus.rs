@@ -11,12 +11,22 @@ impl Stylus {
         Self { system: System::new() }
     }
 
-    pub(crate) fn build(&self, root: &Path) -> Result<(), Box<dyn std::error::Error>> {
-        Ok(())
-    }
+    pub(crate) fn deploy(&self, root: &Path, rpc_url: &str, private_key: &str, constructor_args: &str) -> Result<String, Box<dyn std::error::Error>> {
+        let result = self.system.execute_command(
+            Command::new("cargo")
+                .arg("stylus")
+                .arg("deploy")
+                .arg("--endpoint")
+                .arg(rpc_url)
+                .arg("--private-key")
+                .arg(private_key)
+                .arg("--constructor-args")
+                .arg(constructor_args)
+                .arg("--no-verify")
+                .current_dir(root),
+        )?;
 
-    pub(crate) fn deploy(&self, root: &Path) -> Result<(), Box<dyn std::error::Error>> {
-        Ok(())
+        Ok(result)
     }
 
     pub(crate) fn check(&self, root: &Path, rpc_url: &str) -> Result<String, Box<dyn std::error::Error>> {
