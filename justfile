@@ -1,5 +1,9 @@
 rpc_url := "http://localhost:8547"
 private_key := "0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659"
+macos_target := "x86_64-apple-darwin"
+windows_target := "x86_64-pc-windows-gnu"
+linux_target := "x86_64-unknown-linux-musl"
+version := "0.1.0"
 
 # Builds
 
@@ -12,6 +16,27 @@ build-ultrahonk:
 build-contract contract:
   cargo build -p contracts --target wasm32-unknown-unknown --release --features {{contract}} -Z unstable-options -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort && \
   mv ./target/wasm32-unknown-unknown/release/contracts.wasm ./target/wasm32-unknown-unknown/release/{{contract}}.wasm
+
+build-cli-windows: clean-cli-windows
+	cargo zigbuild --target={{windows_target}} --release -p nsv
+	(cd target/{{windows_target}}/release && \
+	mkdir nsv-v{{version}}-{{windows_target}} && \
+	mv nsv.exe nsv-v{{version}}-{{windows_target}} && \
+	zip -r nsv-v{{version}}-{{windows_target}}.zip nsv-v{{version}}-{{windows_target}})
+
+build-cli-linux: clean-cli-linux
+	cargo zigbuild --target={{linux_target}} --release -p nsv
+	(cd target/{{linux_target}}/release && \
+	mkdir nsv-v{{version}}-{{linux_target}} && \
+	mv nsv nsv-v{{version}}-{{linux_target}} && \
+	tar -czf nsv-v{{version}}-{{linux_target}}.tar.gz nsv-v{{version}}-{{linux_target}})
+
+build-cli-macos: clean-cli-macos
+	cargo zigbuild --target={{macos_target}} --release -p nsv
+	(cd target/{{macos_target}}/release && \
+	mkdir nsv-v{{version}}-{{macos_target}} && \
+	cp nsv nsv-v{{version}}-{{macos_target}} && \
+	tar -czf nsv-v{{version}}-{{macos_target}}.tar.gz nsv-v{{version}}-{{macos_target}})
 
 # Profiling
 
@@ -46,6 +71,9 @@ test-ultrahonk:
 test-integration:
   cargo run -p integration -- --rpc-url {{rpc_url}} --priv-key {{private_key}}
 
+test-cli:
+  cargo test -p nsv -- --test-threads=1 --nocapture
+
 verify-proof verifier_address test_vector_name zk="false":
   #!/usr/bin/env bash
 
@@ -77,13 +105,23 @@ nitro-testnode-down:
   ./scripts/nitro-testnode.sh --quit
 
 fmt:
-  cargo fmt --package ultrahonk --package contracts --package integration -- --check
+  cargo fmt --package ultrahonk --package contracts --package integration --package nsv -- --check
 
 fmt-fix:
-  cargo fmt --package ultrahonk --package contracts --package integration
+  cargo fmt --package ultrahonk --package contracts --package integration --package nsv
 
 lint:
-  cargo clippy --package ultrahonk --package contracts --package integration --no-deps
+  cargo clippy --package ultrahonk --package contracts --package integration --package nsv --no-deps
 
 lint-fix:
-  cargo clippy --package ultrahonk --package contracts --package integration --fix
+  cargo clippy --package ultrahonk --package contracts --package integration --package nsv --fix
+
+
+clean-cli-macos:
+	rm -rf target/{{macos_target}}/release/nsv-v{{version}}-{{macos_target}}
+
+clean-cli-linux:
+	rm -rf target/{{linux_target}}/release/nsv-v{{version}}-{{linux_target}}
+
+clean-cli-windows:
+	rm -rf target/{{windows_target}}/release/nsv-v{{version}}-{{windows_target}}

@@ -1,4 +1,3 @@
-# off until ultrahonk package is fully compatible with stylus
 name: Stylus Check
 
 on:
@@ -19,13 +18,23 @@ jobs:
   build:
     name: Stylus Check
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        contract:
+          - verifier
+          - sumcheck-verifier
+          - shplemini-verifier
+          - zk-verifier
+          - zk-sumcheck-verifier
+          - zk-shplemini-verifier
+
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
 
       - name: Setup Rust toolchain
-        uses: dtolnay/rust-toolchain@master
+        uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: nightly-2025-06-12
 
@@ -47,11 +56,5 @@ jobs:
         with:
           just-version: 1.38.0 
 
-      - name: Check Verifier contract
-        run: just check-contract verifier
-
-      - name: Check Sumcheck Verifier contract
-        run: just check-contract sumcheck-verifier
-
-      - name: Check Shplemini Verifier contract
-        run: just check-contract shplemini-verifier
+      - name: Check ${{ matrix.contract }}
+        run: just check-contract ${{ matrix.contract }}
