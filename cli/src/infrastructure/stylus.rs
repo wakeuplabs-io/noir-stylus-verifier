@@ -24,13 +24,13 @@ impl Stylus {
             Command::new("cargo")
                 .arg("stylus")
                 .arg("deploy")
+                .arg("--no-verify")
                 .arg("--endpoint")
                 .arg(rpc_url)
                 .arg("--private-key")
                 .arg(private_key)
                 .arg("--constructor-args")
                 .arg(constructor_args)
-                .arg("--no-verify")
                 .current_dir(root),
         )?;
 
