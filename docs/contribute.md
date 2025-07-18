@@ -181,7 +181,7 @@ Clear and comprehensive documentation helps others understand how to use and con
 
 ## Security Vulnerabilities
 
-If you find a security vulnerability, DO NOT open an issue on GitHub. Instead, please email the details to [WakeUp](mailto:contact@wakeuplabs.io).
+If you find a security vulnerability, DO NOT open an issue on GitHub. Instead, please email the details to [WakeUp](mailto:code@wakeuplabs.io).
 
 We take security vulnerabilities seriously and will respond promptly to address the issue.
 

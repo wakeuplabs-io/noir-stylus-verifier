@@ -31,6 +31,7 @@ try {
   const { proof, publicInputs } = await backend.generateProof(witness, {
     keccak: true,
   });
+  console.log("Public inputs:", publicInputs);
 
   console.log("Verifying proof with contract...");
   const result = await client.readContract({

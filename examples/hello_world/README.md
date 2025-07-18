@@ -1,7 +1,12 @@
 
 # Hello World example
 
-Note: `@aztec/bb.js` specific version of `0.86.0` is important.
+
+A small example project that deploys a hello_world circuit made with noir to stylus.
+
+To run simply do: `npm install` and and run the specified `just` commands from the example root. The scripts in `scripts` will work with `contracts/assets` `vk` and `hello_world.json` so if you change the circuit, make sure to update them.
+
+Note: `@aztec/bb.js` should be exactly `0.86.0`.
 
 
 ## Deployments
