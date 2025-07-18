@@ -1,10 +1,13 @@
-use std::process::Command;
+use std::{path::Path, process::Command};
 
 pub(crate) struct System;
 
 #[cfg_attr(test, mockall::automock)]
 pub(crate) trait TSystem: Send + Sync {
     fn execute_command(&self, command: &mut Command) -> Result<String, String>;
+    fn write_file(&self, path: &Path, content: String) -> Result<(), String>;
+    fn read_file(&self, path: &Path) -> Result<String, String>;
+    fn ensure_dir(&self, path: &Path) -> Result<(), String>;
 }
 
 // implementations ==========================================
@@ -28,5 +31,20 @@ impl TSystem for System {
             let error_message = String::from_utf8_lossy(&output.stderr).to_string();
             Err(format!("Command failed with error: {error_message}"))
         }
+    }
+
+    fn write_file(&self, path: &Path, content: String) -> Result<(), String> {
+        let parent_dir = path.parent().unwrap();
+        std::fs::create_dir_all(parent_dir)
+            .map_err(|e| format!("Failed to create directory: {e}"))?;
+        std::fs::write(path, content).map_err(|e| format!("Failed to write file: {e}"))
+    }
+
+    fn read_file(&self, path: &Path) -> Result<String, String> {
+        std::fs::read_to_string(path).map_err(|e| format!("Failed to read file: {e}"))
+    }
+
+    fn ensure_dir(&self, path: &Path) -> Result<(), String> {
+        std::fs::create_dir_all(path).map_err(|e| format!("Failed to create directory: {e}"))
     }
 }
