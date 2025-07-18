@@ -1,4 +1,5 @@
-{{ circuit_comment }}
+// Contract for circuit
+// {{ circuit_comment }}
 
 extern crate alloc;
 
@@ -34,8 +35,8 @@ impl VerifierContract {
             #[allow(deprecated)]
             InterfaceCall::new(),
             proof_bytes.to_vec().into(),
-            [{{ inputs_serialization }}].concat().into(),
-            [{{ vk_bytes }}].into(),
+            {{ inputs_serialization }},
+            {{ vk_bytes }},
         ).unwrap_or(false)
     }
 

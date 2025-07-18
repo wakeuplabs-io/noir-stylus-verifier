@@ -23,7 +23,6 @@ impl DeployCommand {
     pub(crate) async fn run(
         &self,
         _ctx: &AppContext,
-        contract: &str, // path to circuit directory. Optionally, otherwise try from root
         rpc_url: &str,
         private_key: &str,
         verifier_address: Option<String>, // TODO: option, if not provided take constants from provided

@@ -4,7 +4,9 @@ mod infrastructure;
 
 use clap::{Parser, Subcommand};
 use colored::Colorize;
-use commands::{deploy::DeployCommand, generate::GenerateCommand, new::NewCommand};
+use commands::{
+    check::CheckCommand, deploy::DeployCommand, generate::GenerateCommand, new::NewCommand,
+};
 use dotenv::dotenv;
 use log::{Level, LevelFilter};
 
@@ -32,14 +34,19 @@ enum Commands {
         #[arg(short, long)]
         circuit: Option<String>,
     },
+    /// Check a verifier contract
+    Check {
+        #[arg(short, long)]
+        circuit: Option<String>,
+        #[arg(short, long)]
+        rpc_url: Option<String>,
+    },
     /// Deploy a verifier to the blockchain
     Deploy {
         #[arg(short, long)]
         rpc_url: String,
         #[arg(short, long)]
         private_key: String,
-        #[arg(short, long)]
-        circuit: String,
         #[arg(short, long)]
         verifier_address: Option<String>,
         #[arg(short, long, default_value_t = false)]
@@ -88,17 +95,18 @@ async fn main() {
     if let Err(e) = match args.cmd {
         Commands::New { target } => NewCommand::new().run(&ctx, &target).await,
         Commands::Generate { circuit } => GenerateCommand::new().run(&ctx, circuit).await,
+        Commands::Check { circuit, rpc_url } => {
+            CheckCommand::new().run(&ctx, circuit, rpc_url).await
+        }
         Commands::Deploy {
             rpc_url,
             private_key,
-            circuit,
             verifier_address,
             zk_flavor,
         } => {
             DeployCommand::new()
                 .run(
                     &ctx,
-                    &circuit,
                     &rpc_url,
                     &private_key,
                     verifier_address,

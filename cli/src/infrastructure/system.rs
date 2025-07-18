@@ -6,7 +6,8 @@ pub(crate) struct System;
 pub(crate) trait TSystem: Send + Sync {
     fn execute_command(&self, command: &mut Command) -> Result<String, String>;
     fn write_file(&self, path: &Path, content: String) -> Result<(), String>;
-    fn read_file(&self, path: &Path) -> Result<String, String>;
+    fn read_file(&self, path: &Path) -> Result<Vec<u8>, String>;
+    fn read_file_str(&self, path: &Path) -> Result<String, String>;
     fn ensure_dir(&self, path: &Path) -> Result<(), String>;
 }
 
@@ -40,7 +41,11 @@ impl TSystem for System {
         std::fs::write(path, content).map_err(|e| format!("Failed to write file: {e}"))
     }
 
-    fn read_file(&self, path: &Path) -> Result<String, String> {
+    fn read_file(&self, path: &Path) -> Result<Vec<u8>, String> {
+        std::fs::read(path).map_err(|e| format!("Failed to read file: {e}"))
+    }
+
+    fn read_file_str(&self, path: &Path) -> Result<String, String> {
         std::fs::read_to_string(path).map_err(|e| format!("Failed to read file: {e}"))
     }
 

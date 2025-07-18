@@ -43,7 +43,7 @@ impl GenerateCommand {
             env::current_dir()?
         };
 
-        // verify we are in a circuit directory
+        // verify we are in a circuit directory. TODO: properly handle workspaces, same for binaries
         if !root.join("Nargo.toml").exists() {
             return Err(format!("Directory {} does not contain a circuit", root.display()).into());
         }
@@ -127,7 +127,7 @@ impl GenerateCommand {
     }
 
     fn read_package_name(&self, root: PathBuf) -> Result<String, Box<dyn std::error::Error>> {
-        let package_toml = self.system.read_file(&root.join("Nargo.toml"))?;
+        let package_toml = self.system.read_file_str(&root.join("Nargo.toml"))?;
         let package_name = package_toml
             .split("name = ")
             .nth(1)

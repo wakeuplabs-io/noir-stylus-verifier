@@ -1,5 +1,5 @@
 use crate::infrastructure::system::{System, TSystem};
-use std::path::Path;
+use std::{fmt::format, path::Path};
 use tera::Tera;
 
 struct CircuitInputs {
@@ -30,34 +30,45 @@ impl VerifierGenerator {
     ) -> Result<Vec<ProjectFile>, Box<dyn std::error::Error>> {
         // generate vk bytes
         let vk_bytes = self.system.read_file(vk_path)?;
-        let vk_bytes_str = vk_bytes.split("").collect::<Vec<&str>>().join(", ");
+        let vk_bytes_str = format!("vec![{}].into()", vk_bytes
+            .iter()
+            .map(|b| format!("{}", b))
+            .collect::<Vec<String>>()
+            .join(", "));
 
         // generate inputs prototype and serialization
-        let circuit_json_str = self.system.read_file(circuit_json_path)?;
+        let circuit_json_str = self.system.read_file_str(circuit_json_path)?;
         let circuit_inputs = self.parse_circuit_inputs(&circuit_json_str)?;
-        let mut inputs_prototype_str = String::new();
-        let mut inputs_serialization_str = String::new();
-        if !circuit_inputs.is_empty() {
-            inputs_prototype_str = circuit_inputs
-                .iter()
-                .filter(|input| input.visibility == "public")
-                .map(|input| format!("{}: Bytes", input.name))
-                .collect::<Vec<String>>()
-                .join(", ");
-            inputs_serialization_str = circuit_inputs
-                .iter()
-                .filter(|input| input.visibility == "public")
-                .map(|input| format!("{}.to_vec()", input.name))
-                .collect::<Vec<String>>()
-                .join(", ");
+        let public_inputs = circuit_inputs
+            .iter()
+            .filter(|input| input.visibility == "public")
+            .collect::<Vec<&CircuitInputs>>();
+        let mut inputs_prototype_str = "".to_string();
+        let mut inputs_serialization_str = "vec![].into()".to_string();
+        if !public_inputs.is_empty() {
+            inputs_prototype_str = ", ".to_string()
+                + &public_inputs
+                    .iter()
+                    .map(|input| format!("{}: Bytes", input.name))
+                    .collect::<Vec<String>>()
+                    .join(", ");
+            inputs_serialization_str = format!(
+                "vec![{}].into()",
+                public_inputs
+                    .iter()
+                    .map(|input| format!("{}.to_vec()", input.name))
+                    .collect::<Vec<String>>()
+                    .join(", ")
+            );
         };
+        let circuit_comment = circuit_json_str.replace("\n", "");
 
         // build tera context
         let mut context = tera::Context::new();
         context.insert("vk_bytes", &vk_bytes_str);
         context.insert("inputs_prototype", &inputs_prototype_str);
         context.insert("inputs_serialization", &inputs_serialization_str);
-        context.insert("circuit_comment", &circuit_json_str);
+        context.insert("circuit_comment", &circuit_comment);
 
         // add templates
         let mut tera = Tera::default();
@@ -65,6 +76,7 @@ impl VerifierGenerator {
         tera.add_raw_template("src/lib.rs", include_str!("templates/src/lib.rs.tera"))?;
         tera.add_raw_template(".gitignore", include_str!("templates/.gitignore.tera"))?;
         tera.add_raw_template("Cargo.toml", include_str!("templates/Cargo.toml.tera"))?;
+        tera.add_raw_template("Cargo.lock", include_str!("templates/Cargo.lock.tera"))?;
         tera.add_raw_template(
             "rust-toolchain.toml",
             include_str!("templates/rust-toolchain.toml.tera"),
@@ -86,6 +98,10 @@ impl VerifierGenerator {
             ProjectFile {
                 path: "Cargo.toml".to_string(),
                 content: tera.render("Cargo.toml", &context)?,
+            },
+            ProjectFile {
+                path: "Cargo.lock".to_string(),
+                content: tera.render("Cargo.lock", &context)?,
             },
             ProjectFile {
                 path: "rust-toolchain.toml".to_string(),
