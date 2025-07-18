@@ -16,6 +16,8 @@ pub(crate) struct DeployCommand {
     stylus: Stylus,
 }
 
+// cargo run -p nsv deploy --rpc-url http://localhost:8547 --private-key 0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659 --verifier-address 0x0000000000000000000000000000000000000001 
+
 impl DeployCommand {
     pub(crate) fn new() -> Self {
         Self {

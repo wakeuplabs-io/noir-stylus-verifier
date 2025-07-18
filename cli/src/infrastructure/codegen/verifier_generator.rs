@@ -30,7 +30,7 @@ impl VerifierGenerator {
     ) -> Result<Vec<ProjectFile>, Box<dyn std::error::Error>> {
         // generate vk bytes
         let vk_bytes = self.system.read_file(vk_path)?;
-        let vk_bytes_str = format!("vec![{}].into()", vk_bytes
+        let vk_bytes_str = format!("[{}].into()", vk_bytes
             .iter()
             .map(|b| format!("{}", b))
             .collect::<Vec<String>>()
@@ -44,7 +44,7 @@ impl VerifierGenerator {
             .filter(|input| input.visibility == "public")
             .collect::<Vec<&CircuitInputs>>();
         let mut inputs_prototype_str = "".to_string();
-        let mut inputs_serialization_str = "vec![].into()".to_string();
+        let mut inputs_serialization_str = "[].into()".to_string();
         if !public_inputs.is_empty() {
             inputs_prototype_str = ", ".to_string()
                 + &public_inputs
@@ -53,7 +53,7 @@ impl VerifierGenerator {
                     .collect::<Vec<String>>()
                     .join(", ");
             inputs_serialization_str = format!(
-                "vec![{}].into()",
+                "[{}].concat().into()",
                 public_inputs
                     .iter()
                     .map(|input| format!("{}.to_vec()", input.name))
