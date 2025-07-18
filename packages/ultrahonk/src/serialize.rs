@@ -4,12 +4,11 @@ use crate::{
         sumcheck::verifier::SumcheckVerifierMemory,
         types::{ClaimedEvaluations, RelationParameters, VerifierCommitments},
     },
-    keys::verification_key::VerifyingKey,
     oink::types::Challenges,
     transcript::Transcript,
     types::{
         AllEntities, G1Affine, G1BaseField, G2Affine, G2BaseField, HonkProof, MontFp256,
-        PrecomputedEntities, ScalarField, WitnessEntities,
+        PrecomputedEntities, ScalarField, VerifyingKey, WitnessEntities,
     },
     NUM_ALPHAS,
 };

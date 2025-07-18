@@ -37,7 +37,27 @@ impl Poseidon2InternalRelation {
 impl Relation for Poseidon2InternalRelation {
     type VerifyAcc = Poseidon2InternalRelationEvals;
 
-    fn verify_accumulate(
+    /// Expression for the poseidon2 internal round relation, based on I_i in Section 6 of
+    /// <https://eprint.iacr.org/2023/323.pdf>.
+    ///
+    /// This relation is defined as C(in(X)...) :=
+    /// q_poseidon2_internal * ( (v1 - w_1_shift) + \alpha * (v2 - w_2_shift) +
+    /// \alpha^2 * (v3 - w_3_shift) + \alpha^3 * (v4 - w_4_shift) ) = 0 where:
+    ///      u1 := (w_1 + q_1)^5
+    ///      sum := u1 + w_2 + w_3 + w_4
+    ///      v1 := u1 * D1 + sum
+    ///      v2 := w_2 * D2 + sum
+    ///      v3 := w_3 * D3 + sum
+    ///      v4 := w_4 * D4 + sum
+    ///      Di is the ith internal diagonal value - 1 of the internal matrix M_I
+    ///
+    /// # Arguments
+    ///
+    /// * `univariate_accumulator` transformed to `univariate_accumulator + C(in(X)...)*scaling_factor`
+    /// * `input` an std::array containing the fully extended Univariate edges.
+    /// * `relation_parameters` contains beta, gamma, and public_input_delta, ....
+    /// * `scaling_factor` optional term to scale the evaluation before adding to evals.
+    fn accumulate(
         univariate_accumulator: &mut Self::VerifyAcc,
         input: &ClaimedEvaluations,
         _relation_parameters: &RelationParameters,

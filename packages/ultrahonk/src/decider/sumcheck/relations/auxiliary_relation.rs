@@ -40,41 +40,43 @@ impl AuxiliaryRelation {
 impl Relation for AuxiliaryRelation {
     type VerifyAcc = AuxiliaryRelationEvals;
 
-    /**
-     * @brief Expression for the generalized permutation sort gate.
-     * @details The following explanation is reproduced from the Plonk analog 'plookup_auxiliary_widget':
-     * Adds contributions for identities associated with several custom gates:
-     *  * RAM/ROM read-write consistency check
-     *  * RAM timestamp difference consistency check
-     *  * RAM/ROM index difference consistency check
-     *  * Bigfield product evaluation (3 in total)
-     *  * Bigfield limb accumulation (2 in total)
-     *
-     * Multiple selectors are used to 'switch' aux gates on/off according to the following pattern:
-     *
-     * | gate type                    | q_aux | q_1 | q_2 | q_3 | q_4 | q_m | q_c | q_arith |
-     * | ---------------------------- | ----- | --- | --- | --- | --- | --- | --- | ------  |
-     * | Bigfield Limb Accumulation 1 | 1     | 0   | 0   | 1   | 1   | 0   | --- | 0       |
-     * | Bigfield Limb Accumulation 2 | 1     | 0   | 0   | 1   | 0   | 1   | --- | 0       |
-     * | Bigfield Product 1           | 1     | 0   | 1   | 1   | 0   | 0   | --- | 0       |
-     * | Bigfield Product 2           | 1     | 0   | 1   | 0   | 1   | 0   | --- | 0       |
-     * | Bigfield Product 3           | 1     | 0   | 1   | 0   | 0   | 1   | --- | 0       |
-     * | RAM/ROM access gate          | 1     | 1   | 0   | 0   | 0   | 1   | --- | 0       |
-     * | RAM timestamp check          | 1     | 1   | 0   | 0   | 1   | 0   | --- | 0       |
-     * | ROM consistency check        | 1     | 1   | 1   | 0   | 0   | 0   | --- | 0       |
-     * | RAM consistency check        | 1     | 0   | 0   | 0   | 0   | 0   | 0   | 1       |
-     *
-     * N.B. The RAM consistency check identity is degree 3. To keep the overall quotient degree at <=5, only 2 selectors
-     * can be used to select it.
-     *
-     * N.B.2 The q_c selector is used to store circuit-specific values in the RAM/ROM access gate
-     *
-     * @param evals transformed to `evals + C(in(X)...)*scaling_factor`
-     * @param in an core::array containing the Totaly extended Univariate edges.
-     * @param parameters contains beta, gamma, and public_input_delta, ....
-     * @param scaling_factor optional term to scale the evaluation before adding to evals.
-     */
-    fn verify_accumulate(
+    /// Expression for the generalized permutation sort gate.
+    ///
+    /// The following explanation is reproduced from the Plonk analog 'plookup_auxiliary_widget':
+    /// Adds contributions for identities associated with several custom gates:
+    ///  * RAM/ROM read-write consistency check
+    ///  * RAM timestamp difference consistency check
+    ///  * RAM/ROM index difference consistency check
+    ///  * Bigfield product evaluation (3 in total)
+    ///  * Bigfield limb accumulation (2 in total)
+    ///
+    /// Multiple selectors are used to 'switch' aux gates on/off according to the following pattern:
+    ///
+    /// | gate type                    | q_aux | q_1 | q_2 | q_3 | q_4 | q_m | q_c | q_arith |
+    /// | ---------------------------- | ----- | --- | --- | --- | --- | --- | --- | ------  |
+    /// | Bigfield Limb Accumulation 1 | 1     | 0   | 0   | 1   | 1   | 0   | --- | 0       |
+    /// | Bigfield Limb Accumulation 2 | 1     | 0   | 0   | 1   | 0   | 1   | --- | 0       |
+    /// | Bigfield Product 1           | 1     | 0   | 1   | 1   | 0   | 0   | --- | 0       |
+    /// | Bigfield Product 2           | 1     | 0   | 1   | 0   | 1   | 0   | --- | 0       |
+    /// | Bigfield Product 3           | 1     | 0   | 1   | 0   | 0   | 1   | --- | 0       |
+    /// | RAM/ROM access gate          | 1     | 1   | 0   | 0   | 0   | 1   | --- | 0       |
+    /// | RAM timestamp check          | 1     | 1   | 0   | 0   | 1   | 0   | --- | 0       |
+    /// | ROM consistency check        | 1     | 1   | 1   | 0   | 0   | 0   | --- | 0       |
+    /// | RAM consistency check        | 1     | 0   | 0   | 0   | 0   | 0   | 0   | 1       |
+    ///
+    /// N.B. The RAM consistency check identity is degree 3. To keep the overall quotient degree at <=5, only 2 selectors
+    /// can be used to select it.
+    ///
+    /// N.B.2 The q_c selector is used to store circuit-specific values in the RAM/ROM access gate
+    ///
+    /// # Arguments
+    ///
+    /// `evals` transformed to `evals + C(in(X)...)*scaling_factor`
+    /// `in` an core::array containing the Totaly extended Univariate edges.
+    /// `parameters` contains beta, gamma, and public_input_delta, ....
+    /// `scaling_factor` optional term to scale the evaluation before adding to evals.
+    ///
+    fn accumulate(
         univariate_accumulator: &mut Self::VerifyAcc,
         input: &ClaimedEvaluations,
         relation_parameters: &RelationParameters,

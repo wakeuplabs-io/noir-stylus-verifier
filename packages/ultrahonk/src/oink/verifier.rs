@@ -1,9 +1,8 @@
 use super::types::VerifierMemory;
 use crate::{
     backends::HashBackend,
-    keys::verification_key::VerifyingKey,
     transcript::Transcript,
-    types::{HonkVerifyResult, ScalarField},
+    types::{HonkVerifyResult, ScalarField, VerifyingKey},
     NUM_ALPHAS,
 };
 use alloc::vec::Vec;
@@ -16,6 +15,7 @@ pub struct OinkVerifier {
 }
 
 impl OinkVerifier {
+    /// Oink Verifier function that runs all the rounds of the verifier
     pub fn verify<H: HashBackend>(
         mut self,
         verifying_key: &VerifyingKey,
@@ -30,6 +30,7 @@ impl OinkVerifier {
         Ok(self.memory)
     }
 
+    /// Get circuit size, public input size, and public inputs from transcript
     fn execute_preamble_round(
         &mut self,
         verifying_key: &VerifyingKey,
@@ -46,13 +47,15 @@ impl OinkVerifier {
         self.public_inputs = Vec::with_capacity(public_input_size as usize);
 
         for _ in 0..public_input_size {
-            let public_input = transcript.receive_fr_from_prover()?; // format!("public_input_{}", i)
+            let public_input = transcript.receive_fr_from_prover()?; // "public_input_{i}"
             self.public_inputs.push(public_input);
         }
 
         Ok(())
     }
 
+    /// Get the wire polynomials (part of the witness), with the exception of the fourth wire, which is
+    /// only received after adding memory records.
     fn execute_wire_commitments_round(
         &mut self,
         transcript: &mut Transcript,
@@ -61,10 +64,11 @@ impl OinkVerifier {
         *self.memory.witness_commitments.w_r_mut() = transcript.receive_point_from_prover()?; // "W_R"
         *self.memory.witness_commitments.w_o_mut() = transcript.receive_point_from_prover()?; // "W_O"
 
-        // Round is done since ultra_honk is no goblin flavor
+        // Round is skipped since ultra_honk is no goblin flavor
         Ok(())
     }
 
+    /// Get sorted witness-table accumulator and fourth wire commitments
     fn execute_sorted_list_accumulator_round<H: HashBackend>(
         &mut self,
         transcript: &mut Transcript,
@@ -85,6 +89,7 @@ impl OinkVerifier {
         Ok(())
     }
 
+    /// Get log derivative inverse polynomial
     fn execute_log_derivative_inverse_round<H: HashBackend>(
         &mut self,
         transcript: &mut Transcript,
@@ -100,6 +105,7 @@ impl OinkVerifier {
         Ok(())
     }
 
+    /// Compute lookup grand product delta and get permutation and lookup grand product commitments
     fn execute_grand_product_computation_round(
         &mut self,
         verifying_key: &VerifyingKey,
@@ -116,6 +122,7 @@ impl OinkVerifier {
         Ok(())
     }
 
+    /// Compute lookup grand product delta and get permutation and lookup grand product commitments
     fn compute_public_input_delta(
         beta: &ScalarField,
         gamma: &ScalarField,

@@ -1,9 +1,13 @@
-use ark_bn254::G1Affine;
-
 use crate::{
     decider::types::{ClaimedEvaluations, VerifierCommitments},
-    types::{PrecomputedEntities, ScalarField, ShiftedWitnessEntities, WitnessEntities},
+    types::{G1Affine, PrecomputedEntities, ScalarField, ShiftedWitnessEntities, WitnessEntities},
 };
+
+pub(crate) struct ShpleminiVerifierOpeningClaim {
+    pub(crate) challenge: ScalarField,
+    pub(crate) scalars: Vec<ScalarField>,
+    pub(crate) commitments: Vec<G1Affine>,
+}
 
 pub(crate) struct PolyF<'a, T: Default> {
     pub(crate) precomputed: &'a PrecomputedEntities<T>,

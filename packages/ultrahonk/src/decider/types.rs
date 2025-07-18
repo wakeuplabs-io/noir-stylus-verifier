@@ -39,6 +39,16 @@ impl GateSeparatorPolynomial {
             periodicity,
         }
     }
+
+    /// Partially evaluate the \f$pow_{\beta} \f$-polynomial at the new challenge and update \f$ c_i \f$
+    /// Update the constant \f$c_{i} \to c_{i+1} \f$ multiplying it by \f$pow_{\beta}\f$'s factor \f$\left(
+    /// (1-X_i) + X_i\cdot \beta_i\right)\vert_{X_i = u_i}\f$ computed by \ref univariate_eval.
+    ///
+    /// # Arguments
+    ///
+    /// * `round_challenge` - \f$ i \f$-th verifier challenge \f$ u_{i}\f$
+    /// * `indicator` - An entry of `padding_indicator_array`, which is equal to 1 when round_idx < log_circuit_size and is 0 otherwise.
+    ///
     pub(crate) fn partially_evaluate(
         &mut self,
         round_challenge: ScalarField,

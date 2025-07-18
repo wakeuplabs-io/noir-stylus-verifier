@@ -31,7 +31,24 @@ impl UltraPermutationRelation {
 impl Relation for UltraPermutationRelation {
     type VerifyAcc = UltraPermutationRelationEvals;
 
-    fn verify_accumulate(
+    /// Compute contribution of the permutation relation for a given edge (internal function)
+    ///  
+    /// This relation confirms faithful calculation of the grand
+    /// product polynomial \f$ Z_{\text{perm}}\f$.
+    /// In Sumcheck Prover Round, this method adds to accumulators evaluations of subrelations at the point
+    /// \f$(u_0,\ldots, u_{i-1}, k, \vec\ell)\f$ for \f$ k=0,\ldots, D\f$, where \f$ \vec \ell\f$ is a point  on the
+    /// Boolean hypercube \f$\{0,1\}^{d-1-i}\f$ and \f$ D \f$ is specified by the calling class. It does so by taking as
+    /// input an array of Prover Polynomials partially evaluated at the points \f$(u_0,\ldots, u_{i-1}, k, \vec\ell)\f$ and
+    /// computing point-wise evaluations of the sub-relations. \todo Protogalaxy Accumulation
+    ///
+    /// # Arguments
+    ///
+    /// * `univariate_accumulator` transformed to `univariate_accumulator + C(in(X)...)*scaling_factor`
+    /// * `input` an std::array containing the fully extended Univariate edges.
+    /// * `relation_parameters` contains beta, gamma, and public_input_delta, ....
+    /// * `scaling_factor` optional term to scale the evaluation before adding to evals.
+    ///
+    fn accumulate(
         univariate_accumulator: &mut Self::VerifyAcc,
         input: &ClaimedEvaluations,
         relation_parameters: &RelationParameters,

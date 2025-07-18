@@ -31,6 +31,14 @@ pub struct HonkProof {
     proof: Vec<ScalarField>,
 }
 
+/// The verifying key for the HONK proof
+pub struct VerifyingKey {
+    pub circuit_size: u32,
+    pub commitments: PrecomputedEntities<G1Affine>,
+    pub num_public_inputs: u32,
+    pub pub_inputs_offset: u32,
+}
+
 pub(crate) type HonkVerifyResult<T> = Result<T, HonkProofError>;
 
 /// The errors that may arise during the computation of a HONK proof.

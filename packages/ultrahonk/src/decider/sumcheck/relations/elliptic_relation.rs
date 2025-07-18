@@ -28,6 +28,18 @@ pub(crate) struct EllipticRelation {}
 impl EllipticRelation {
     pub(crate) const NUM_RELATIONS: usize = 2;
 
+    /// Expression for the Ultra Arithmetic gate.
+    ///
+    /// The relation is defined as C(in(X)...) =
+    ///    TODO(#429): steal description from elliptic_widget.hpp
+    ///
+    /// # Arguments
+    ///
+    /// * `univariate_accumulator` transformed to `univariate_accumulator + C(in(X)...)*scaling_factor`
+    /// * `input` an std::array containing the fully extended Univariate edges.
+    /// * `relation_parameters` contains beta, gamma, and public_input_delta, ....
+    /// * `scaling_factor` optional term to scale the evaluation before adding to evals.
+    ///
     pub(crate) fn verify_accumulate(
         univariate_accumulator: &mut EllipticRelationEvals,
         input: &ClaimedEvaluations,

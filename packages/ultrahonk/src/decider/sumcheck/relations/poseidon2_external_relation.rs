@@ -36,7 +36,32 @@ impl Poseidon2ExternalRelation {
 impl Relation for Poseidon2ExternalRelation {
     type VerifyAcc = Poseidon2ExternalRelationEvals;
 
-    fn verify_accumulate(
+    /// Expression for the poseidon2 external round relation, based on E_i in Section 6 of
+    /// <https://eprint.iacr.org/2023/323.pdf>.
+    ///
+    /// This relation is defined as C(in(X)...) :=
+    /// q_poseidon2_external * ( (v1 - w_1_shift) + \alpha * (v2 - w_2_shift) +
+    /// \alpha^2 * (v3 - w_3_shift) + \alpha^3 * (v4 - w_4_shift) ) = 0 where:
+    ///      u1 := (w_1 + q_1)^5
+    ///      u2 := (w_2 + q_2)^5
+    ///      u3 := (w_3 + q_3)^5
+    ///      u4 := (w_4 + q_4)^5
+    ///      t0 := u1 + u2                                           (1, 1, 0, 0)
+    ///      t1 := u3 + u4                                           (0, 0, 1, 1)
+    ///      t2 := 2 * u2 + t1 = 2 * u2 + u3 + u4                    (0, 2, 1, 1)
+    ///      t3 := 2 * u4 + t0 = u1 + u2 + 2 * u4                    (1, 1, 0, 2)
+    ///      v4 := 4 * t1 + t3 = u1 + u2 + 4 * u3 + 6 * u4           (1, 1, 4, 6)
+    ///      v2 := 4 * t0 + t2 = 4 * u1 + 6 * u2 + u3 + u4           (4, 6, 1, 1)
+    ///      v1 := t3 + v2 = 5 * u1 + 7 * u2 + 1 * u3 + 3 * u4       (5, 7, 1, 3)
+    ///      v3 := t2 + v4                                           (1, 3, 5, 7)
+    ///
+    /// # Arguments
+    ///
+    /// * `univariate_accumulator` transformed to `univariate_accumulator + C(in(X)...)*scaling_factor`
+    /// * `input` an std::array containing the fully extended Univariate edges.
+    /// * `relation_parameters` contains beta, gamma, and public_input_delta, ....
+    /// * `scaling_factor` optional term to scale the evaluation before adding to evals.
+    fn accumulate(
         univariate_accumulator: &mut Self::VerifyAcc,
         input: &ClaimedEvaluations,
         _relation_parameters: &RelationParameters,

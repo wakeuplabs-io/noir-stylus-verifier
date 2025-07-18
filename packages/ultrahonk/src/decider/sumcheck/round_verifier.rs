@@ -23,6 +23,9 @@ pub(crate) type SumcheckRoundOutput<const SIZE: usize> = Univariate<SIZE>;
 pub(crate) struct SumcheckVerifierRound;
 
 impl SumcheckVerifierRound {
+    /// Given the evaluations  \f$P_1(u_0,\ldots, u_{d-1}), \ldots, P_N(u_0,\ldots, u_{d-1}) \f$ of the
+    /// ProverPolynomials at the challenge point \f$(u_0,\ldots, u_{d-1})\f$ stored in extended_edges, this
+    /// method computes the evaluation of \f$ \tilde{F} \f$ taking these values as arguments.
     pub(crate) fn compute_full_relation_purported_value(
         extended_edges: &ClaimedEvaluations,
         relation_parameters: &RelationParameters,

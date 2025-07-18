@@ -5,10 +5,9 @@ use crate::{
         shplemini::verifier::{ShpleminiVerifier, ShpleminiVerifierMemory},
         sumcheck::verifier::{SumcheckVerifier, SumcheckVerifierMemory},
     },
-    keys::verification_key::VerifyingKey,
     oink::verifier::OinkVerifier,
     transcript::Transcript,
-    types::{HonkProof, HonkVerifyResult, ScalarField},
+    types::{HonkProof, HonkVerifyResult, ScalarField, VerifyingKey},
     CONST_PROOF_SIZE_LOG_N,
 };
 

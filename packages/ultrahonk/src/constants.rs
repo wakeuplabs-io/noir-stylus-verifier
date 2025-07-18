@@ -33,7 +33,7 @@ pub const MAX_PARTIAL_RELATION_LENGTH: usize = 7;
 pub const BATCHED_RELATION_PARTIAL_LENGTH: usize = MAX_PARTIAL_RELATION_LENGTH + 1;
 pub const BATCHED_RELATION_PARTIAL_LENGTH_ZK: usize = BATCHED_RELATION_PARTIAL_LENGTH + 1;
 
-// We are getting grumpkin::b, which is -17. Cannot use a static because it is not a constant and avoid using Lazy to avoid size bloat.
+// We are getting grumpkin::b, which is -17
 pub(crate) fn get_honk_curve_b() -> ScalarField {
     -ScalarField::from(17)
 }

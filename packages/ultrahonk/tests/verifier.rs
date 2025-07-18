@@ -11,9 +11,8 @@ use std::env;
 use ultrahonk::{
     backends::{G1ArithmeticBackend, G1ArithmeticError, HashBackend},
     constants::HASH_OUTPUT_SIZE,
-    keys::verification_key::VerifyingKey,
     serialize::BytesDeserializable,
-    types::{G1Affine, G2Affine, HonkProof, ScalarField},
+    types::{G1Affine, G2Affine, HonkProof, ScalarField, VerifyingKey},
     verifier::UltraHonk,
 };
 

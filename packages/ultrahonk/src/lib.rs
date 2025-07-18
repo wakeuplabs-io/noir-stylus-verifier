@@ -7,7 +7,6 @@ extern crate alloc;
 pub mod backends;
 pub mod constants;
 pub mod decider;
-pub mod keys;
 pub mod oink;
 pub mod polynomials;
 pub mod serialize;

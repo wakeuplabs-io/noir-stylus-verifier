@@ -96,7 +96,41 @@ impl LogDerivLookupRelation {
 impl Relation for LogDerivLookupRelation {
     type VerifyAcc = LogDerivLookupRelationEvals;
 
-    fn verify_accumulate(
+    /// Log-derivative style lookup argument for conventional lookups form tables with 3 or fewer columns
+    /// The identity to be checked is of the form
+    ///
+    /// \sum{i=0}^{n-1} \frac{read_counts_i}{write_term_i} - \frac{q_lookup}{read_term_i} = 0
+    ///
+    /// where write_term = table_col_1 + \gamma + table_col_2 * \eta_1 + table_col_3 * \eta_2 + table_index * \eta_3
+    /// and read_term = derived_table_entry_1 + \gamma + derived_table_entry_2 * \eta_1 + derived_table_entry_3 * \eta_2
+    /// + table_index * \eta_3, with derived_table_entry_i = w_i - col_step_size_i\cdot w_i_shift. (The table entries
+    /// must be 'derived' from wire values in this way since the stored witnesses are actually successive accumulators,
+    /// the differences of which are equal to entries in a table. This is an efficiency trick to avoid using additional
+    /// gates to reconstruct full size values from the limbs contained in tables).
+    ///
+    /// In practice this identity is expressed in terms of polynomials by defining a polynomial of inverses I_i =
+    /// \frac{1}{read_term_i\cdot write_term_i} then rewriting the above identity as
+    ///
+    /// (1) \sum{i=0}^{n-1} (read_counts_i\cdot I_i\cdot read_term_i) - (q_lookup\cdot I_i\cdot write_term_i) = 0
+    ///
+    /// This requires a second subrelation to check that polynomial I was computed correctly. For all i, it must hold
+    /// that
+    ///
+    /// (2) I_i\cdot read_term_i\cdot write_term_i - 1 = 0
+    ///
+    /// Note that (1) is 'linearly dependent' in the sense that it holds only as a sum across the entire execution trace.
+    /// (2) on the other hand holds independently at every row. Finally, note that to avoid unnecessary computation, we
+    /// only compute I_i at indices where the relation is 'active', i.e. on rows which either contain a lookup gate or
+    /// table data that has been read. For inactive rows i, we set I_i = 0. We can thus rewrite (2) as
+    ///
+    /// (2) I_i\cdot read_term_i\cdot write_term_i - is_active_i
+    ///
+    /// where is_active = q_lookup + read_tags - q_lookup\cdot read_tags
+    ///
+    /// and read_tags is a polynomial taking boolean values indicating whether the table entry at the corresponding row
+    /// has been read or not.
+    /// @note This relation utilizes functionality in the log-derivative library to compute the polynomial of inverses
+    fn accumulate(
         univariate_accumulator: &mut Self::VerifyAcc,
         input: &ClaimedEvaluations,
         relation_parameters: &RelationParameters,

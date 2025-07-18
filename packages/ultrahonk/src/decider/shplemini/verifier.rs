@@ -1,7 +1,4 @@
-use super::{
-    types::{PolyF, PolyG, PolyGShift},
-    ShpleminiVerifierOpeningClaim,
-};
+use super::types::{PolyF, PolyG, PolyGShift, ShpleminiVerifierOpeningClaim};
 use crate::{
     backends::G1ArithmeticBackend,
     constants::{
@@ -13,11 +10,10 @@ use crate::{
 use crate::{
     backends::HashBackend,
     transcript::Transcript,
-    types::{G1Affine, HonkVerifyResult, ScalarField},
+    types::{G1Affine, G2Affine, HonkVerifyResult, ScalarField},
     CONST_PROOF_SIZE_LOG_N, NUM_INTERLEAVING_CLAIMS,
 };
 use alloc::vec::Vec;
-use ark_bn254::G2Affine;
 use ark_ec::AffineRepr;
 use ark_ff::{Field, One, Zero};
 
@@ -343,19 +339,9 @@ impl ShpleminiVerifier {
         ))
     }
 
-    /**
-     * @brief Append the commitments and scalars from each batch of claims to the Shplemini, vectors which subsequently
-     * will be inputs to the batch mul;
-     * update the batched evaluation and the running batching challenge (power of rho) in place.
-     *
-     * @param commitments commitment inputs to the single Shplemini batch mul
-     * @param scalars scalar inputs to the single Shplemini batch mul
-     * @param batched_evaluation running batched evaluation of the committed multilinear polynomials
-     * @param rho multivariate batching challenge \rho
-     * @param rho_power current power of \rho used in the batching scalar
-     * @param shplonk_batching_pos and @param shplonk_batching_neg consecutive powers of the Shplonk batching
-     * challenge ν for the interleaved contributions
-     */
+    /// Append the commitments and scalars from each batch of claims to the Shplemini, vectors which subsequently
+    /// will be inputs to the batch mul;
+    /// update the batched evaluation and the running batching challenge (power of rho) in place.
     fn update_batch_mul_inputs_and_batched_evaluation(
         &self,
         multivariate_batching_challenge: &ScalarField,
@@ -402,41 +388,29 @@ impl ShpleminiVerifier {
         }
     }
 
-    /**
-     * @brief Populates the 'commitments' and 'scalars' vectors with the commitments to Gemini fold polynomials \f$
-     * A_i \f$.
-     *
-     * @details Once the commitments to Gemini "fold" polynomials \f$ A_i \f$ and their evaluations at \f$ -r^{2^i}
-     * \f$, where \f$ i = 1, \ldots, n-1 \f$, are received by the verifier, it performs the following operations:
-     *
-     * 1. Moves the vector
-     *    \f[
-     *    \left( \text{com}(A_1), \text{com}(A_2), \ldots, \text{com}(A_{n-1}) \right)
-     *    \f]
-     *    to the 'commitments' vector.
-     *
-     * 2. Computes the scalars:
-     *    \f[
-     *    \frac{\nu^{2}}{z + r^2}, \frac{\nu^3}{z + r^4}, \ldots, \frac{\nu^{n-1}}{z + r^{2^{n-1}}}
-     *    \f]
-     *    and places them into the 'scalars' vector.
-     *
-     * 3. Accumulates the summands of the constant term:
-     *    \f[
-     *    \sum_{i=2}^{n-1} \frac{\nu^{i} \cdot A_i(-r^{2^i})}{z + r^{2^i}}
-     *    \f]
-     *    and adds them to the 'constant_term_accumulator'.
-     *
-     * @param log_circuit_size The logarithm of the circuit size, determining the depth of the Gemini protocol.
-     * @param fold_commitments A vector containing the commitments to the Gemini fold polynomials \f$ A_i \f$.
-     * @param gemini_evaluations A vector containing the evaluations of the Gemini fold polynomials \f$ A_i \f$ at
-     * points \f$ -r^{2^i} \f$.
-     * @param inverse_vanishing_evals A vector containing the inverse evaluations of the vanishing polynomial.
-     * @param shplonk_batching_challenge The batching challenge \f$ \nu \f$ used in the SHPLONK protocol.
-     * @param commitments Output vector where the commitments to the Gemini fold polynomials will be stored.
-     * @param scalars Output vector where the computed scalars will be stored.
-     * @param constant_term_accumulator The accumulator for the summands of the constant term.
-     */
+    /// Populates the 'commitments' and 'scalars' vectors with the commitments to Gemini fold polynomials \f$
+    /// A_i \f$.
+    ///
+    /// Once the commitments to Gemini "fold" polynomials \f$ A_i \f$ and their evaluations at \f$ -r^{2^i}
+    /// \f$, where \f$ i = 1, \ldots, n-1 \f$, are received by the verifier, it performs the following operations:
+    ///
+    /// 1. Moves the vector
+    ///    \f[
+    ///    \left( \text{com}(A_1), \text{com}(A_2), \ldots, \text{com}(A_{n-1}) \right)
+    ///    \f]
+    ///    to the 'commitments' vector.
+    ///
+    /// 2. Computes the scalars:
+    ///    \f[
+    ///    \frac{\nu^{2}}{z + r^2}, \frac{\nu^3}{z + r^4}, \ldots, \frac{\nu^{n-1}}{z + r^{2^{n-1}}}
+    ///    \f]
+    ///    and places them into the 'scalars' vector.
+    ///
+    /// 3. Accumulates the summands of the constant term:
+    ///    \f[
+    ///    \sum_{i=2}^{n-1} \frac{\nu^{i} \cdot A_i(-r^{2^i})}{z + r^{2^i}}
+    ///    \f]
+    ///    and adds them to the 'constant_term_accumulator'.
     #[expect(clippy::too_many_arguments)]
     fn batch_gemini_claims_received_from_prover(
         padding_indicator_array: &[ScalarField; CONST_PROOF_SIZE_LOG_N],
@@ -554,11 +528,7 @@ impl ShpleminiVerifier {
         fold_pos_evaluations
     }
 
-    /**
-     * @brief A helper used by Shplemini Verifier. Precomputes a vector of the powers of \f$ \nu \f$ needed to batch all
-     * univariate claims.
-     *
-     */
+    /// A helper used by Shplemini Verifier. Precomputes a vector of the powers of \f$ \nu \f$ needed to batch all univariate claims.
     fn compute_shplonk_batching_challenge_powers(
         shplonk_batching_challenge: ScalarField,
         virtual_log_n: usize,
@@ -579,23 +549,13 @@ impl ShpleminiVerifier {
         result
     }
 
-    /**
-     * @brief Add the opening data corresponding to Libra masking univariates to the batched opening claim
-     *
-     * @details After verifying ZK Sumcheck, the verifier has to validate the claims about the evaluations of Libra
-     * univariates used to mask Sumcheck round univariates. To minimize the overhead of such openings, we continue
-     * the Shplonk batching started in Gemini, i.e. we add new claims multiplied by a suitable power of the Shplonk
-     * batching challenge and re-use the evaluation challenge sampled to prove the evaluations of Gemini
-     * polynomials.
-     *
-     * @param commitments
-     * @param scalars
-     * @param libra_commitments
-     * @param libra_univariate_evaluations
-     * @param multivariate_challenge
-     * @param shplonk_batching_challenge
-     * @param shplonk_evaluation_challenge
-     */
+    /// Add the opening data corresponding to Libra masking univariates to the batched opening claim
+    ///
+    /// After verifying ZK Sumcheck, the verifier has to validate the claims about the evaluations of Libra
+    /// univariates used to mask Sumcheck round univariates. To minimize the overhead of such openings, we continue
+    /// the Shplonk batching started in Gemini, i.e. we add new claims multiplied by a suitable power of the Shplonk
+    /// batching challenge and re-use the evaluation challenge sampled to prove the evaluations of Gemini
+    /// polynomials.
     #[expect(clippy::too_many_arguments)]
     fn add_zk_data(
         virtual_log_n: usize,

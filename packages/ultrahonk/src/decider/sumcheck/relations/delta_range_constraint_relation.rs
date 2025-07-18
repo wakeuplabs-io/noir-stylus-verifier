@@ -36,7 +36,24 @@ impl DeltaRangeConstraintRelation {
 impl Relation for DeltaRangeConstraintRelation {
     type VerifyAcc = DeltaRangeConstraintRelationEvals;
 
-    fn verify_accumulate(
+    /// Expression for the generalized permutation sort gate.
+    ///
+    /// The relation is defined as C(in(X)...) =
+    ///    q_delta_range * \sum{ i = [0, 3]} \alpha^i D_i(D_i - 1)(D_i - 2)(D_i - 3)
+    ///       where
+    ///       D_0 = w_2 - w_1
+    ///       D_1 = w_3 - w_2
+    ///       D_2 = w_4 - w_3
+    ///       D_3 = w_1_shift - w_4
+    ///
+    /// # Arguments
+    ///
+    /// * `univariate_accumulator` transformed to `univariate_accumulator + C(in(X)...)*scaling_factor`
+    /// * `input` an std::array containing the fully extended Univariate edges.
+    /// * `relation_parameters` contains beta, gamma, and public_input_delta, ....
+    /// * `scaling_factor` optional term to scale the evaluation before adding to evals.
+    ///
+    fn accumulate(
         univariate_accumulator: &mut Self::VerifyAcc,
         input: &ClaimedEvaluations,
         _relation_parameters: &RelationParameters,

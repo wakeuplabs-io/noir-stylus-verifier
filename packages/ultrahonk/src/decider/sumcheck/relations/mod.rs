@@ -24,7 +24,7 @@ use ultra_arithmetic_relation::{UltraArithmeticRelation, UltraArithmeticRelation
 pub(crate) trait Relation {
     type VerifyAcc: Default;
 
-    fn verify_accumulate(
+    fn accumulate(
         univariate_accumulator: &mut Self::VerifyAcc,
         input: &ClaimedEvaluations,
         relation_parameters: &RelationParameters,

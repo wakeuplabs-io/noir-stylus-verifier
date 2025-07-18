@@ -4,10 +4,9 @@ use ark_ff::One;
 
 pub(crate) struct Barycentric {}
 
+/// Methods for computing arrays of precomputable data used for barycentric extension and evaluation
 impl Barycentric {
-    // Methods for computing arrays of precomputable data used for barycentric extension and evaluation
-
-    // build big_domain, currently the set of x_i in {domain_start, ..., big_domain_end - 1 }
+    /// Build big_domain, currently the set of x_i in {domain_start, ..., big_domain_end - 1 }
     pub(crate) fn construct_big_domain(domain_size: usize, num_evals: usize) -> Vec<ScalarField> {
         let big_domain_size = core::cmp::max(domain_size, num_evals);
         let mut res = Vec::with_capacity(big_domain_size);
@@ -17,7 +16,7 @@ impl Barycentric {
         res
     }
 
-    // build set of lagrange_denominators d_i = \prod_{j!=i} x_i - x_j
+    /// Build set of lagrange_denominators d_i = \prod_{j!=i} x_i - x_j
     pub(crate) fn construct_lagrange_denominators(
         domain_size: usize,
         big_domain: &[ScalarField],

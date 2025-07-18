@@ -199,7 +199,7 @@ impl SumcheckVerifier {
         ))
     }
 
-    // round state update functions
+    /// After checking that the univariate is good for this round, compute the next target sum given by the evaluation \f$ \tilde{S}^i(u_i) \f$.
     pub(crate) fn round_compute_next_target_sum<const SIZE: usize>(
         univariate: &SumcheckRoundOutput<SIZE>,
         round_challenge: ScalarField,
@@ -210,7 +210,7 @@ impl SumcheckVerifier {
             + indicator * univariate.evaluate(round_challenge);
     }
 
-    // sumcheck round check functions
+    /// Check that the round target sum is correct
     pub(crate) fn round_check_sum<const SIZE: usize>(
         univariate: &SumcheckRoundOutput<SIZE>,
         indicator: ScalarField,

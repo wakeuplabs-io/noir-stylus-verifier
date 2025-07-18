@@ -7,6 +7,8 @@ pub(crate) struct Univariate<const SIZE: usize> {
 }
 
 impl<const SIZE: usize> Univariate<SIZE> {
+    /// Evaluate a univariate at a point u not known at compile time
+    /// and assumed not to be in the domain (else we divide by zero).
     pub(crate) fn evaluate(&self, u: ScalarField) -> ScalarField {
         if u == ScalarField::zero() {
             return self.evaluations[0];
@@ -30,6 +32,7 @@ impl<const SIZE: usize> Univariate<SIZE> {
         }
 
         let mut result = ScalarField::zero();
+
         // Compute each term v_j / (d_j*(x-x_j)) of the sum
         for (i, &inverse) in denominator_inverses.iter().enumerate() {
             let mut term = self.evaluations[i];
