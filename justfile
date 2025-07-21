@@ -66,7 +66,7 @@ deploy-contract contract constructor_signature="" *constructor_args="":
 
 test-ultrahonk:
   #  ark-ec/only-arithmetic-backend panics if we attempt to do arithmetic outside of the G1ArithmeticBackend
-  cargo test -p ultrahonk --features ark-ec/only-arithmetic-backend -- --test-threads=1 --nocapture
+  cargo test -p ultrahonk --features ark-ec/only-arithmetic-backend -- --test-threads=1 
 
 test-integration:
   cargo run -p integration -- --rpc-url {{rpc_url}} --priv-key {{private_key}}
