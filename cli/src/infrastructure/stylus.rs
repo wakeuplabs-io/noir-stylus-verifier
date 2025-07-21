@@ -2,9 +2,18 @@ use std::{path::Path, process::Command};
 
 use crate::infrastructure::system::{System, TSystem};
 
+
 pub(crate) struct Stylus {
     system: System,
 }
+
+#[cfg_attr(test, mockall::automock)]
+pub(crate) trait TStylus: Send + Sync {
+    fn deploy(&self, root: &Path, rpc_url: &str, private_key: &str, constructor_args: &str) -> Result<String, Box<dyn std::error::Error>>;
+    fn check(&self, root: &Path, rpc_url: &str) -> Result<String, Box<dyn std::error::Error>>;
+}
+
+// implementations ==========================================
 
 impl Stylus {
     pub(crate) fn new() -> Self {
@@ -12,8 +21,10 @@ impl Stylus {
             system: System::new(),
         }
     }
+}
 
-    pub(crate) fn deploy(
+impl TStylus for Stylus {
+    fn deploy(
         &self,
         root: &Path,
         rpc_url: &str,
@@ -37,7 +48,7 @@ impl Stylus {
         Ok(result)
     }
 
-    pub(crate) fn check(
+    fn check(
         &self,
         root: &Path,
         rpc_url: &str,

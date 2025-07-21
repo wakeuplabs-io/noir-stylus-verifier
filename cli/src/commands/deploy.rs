@@ -1,8 +1,18 @@
 use crate::{
-    config::requirements::{
-        SystemRequirementsChecker, TSystemRequirementsChecker, CARGO_STYLUS_REQUIREMENT,
+    config::{
+        constants::{
+            CHAIN_ID_ARBITRUM, CHAIN_ID_ARBITRUM_SEPOLIA, VERIFIER_ADDRESS_ARBITRUM,
+            VERIFIER_ADDRESS_ARBITRUM_SEPOLIA, VERIFIER_ADDRESS_ARBITRUM_SEPOLIA_ZK,
+            VERIFIER_ADDRESS_ARBITRUM_ZK,
+        },
+        requirements::{
+            SystemRequirementsChecker, TSystemRequirementsChecker, CARGO_STYLUS_REQUIREMENT,
+        },
     },
-    infrastructure::{console::progress::style_spinner, stylus::Stylus},
+    infrastructure::{
+        console::progress::style_spinner,
+        stylus::{Stylus, TStylus},
+    },
     print_error, print_warning, AppContext,
 };
 use colored::*;
@@ -62,20 +72,20 @@ impl DeployCommand {
 
                 // select default verifier address from constants.
                 let verifier_address = match chain_id {
-                    42161 => {
+                    CHAIN_ID_ARBITRUM => {
                         if zk_flavor {
-                            "TODO: configure deployments"
+                            VERIFIER_ADDRESS_ARBITRUM_ZK
                         } else {
-                            "TODO: configure deployments"
+                            VERIFIER_ADDRESS_ARBITRUM
                         }
-                    } // arbitrum
-                    421614 => {
+                    } 
+                    CHAIN_ID_ARBITRUM_SEPOLIA => {
                         if zk_flavor {
-                            "TODO: configure deployments"
+                            VERIFIER_ADDRESS_ARBITRUM_SEPOLIA_ZK
                         } else {
-                            "TODO: configure deployments"
+                            VERIFIER_ADDRESS_ARBITRUM_SEPOLIA
                         }
-                    } // arbitrum sepolia
+                    }
                     _ => panic!("No default verifier address for chain id: {}", chain_id),
                 }
                 .to_string();
@@ -112,5 +122,17 @@ impl DeployCommand {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_deploy_command() {
+        let command = DeployCommand::new();
+        // let result = command.run(&AppContext::new(), None, "https://rpc.sepolia.org".to_string(), "0x0".to_string(), None, false).await;
+        // assert!(result.is_ok());
     }
 }

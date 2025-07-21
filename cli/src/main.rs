@@ -98,7 +98,7 @@ async fn main() {
         Commands::New { target } => NewCommand::new().run(&ctx, &target).await,
         Commands::Generate { circuit } => GenerateCommand::new().run(&ctx, circuit).await,
         Commands::Check { circuit, rpc_url } => {
-            CheckCommand::new().run(&ctx, circuit, rpc_url).await
+            CheckCommand::default().run(&ctx, circuit, rpc_url).await
         }
         Commands::Deploy {
             circuit,

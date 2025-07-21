@@ -9,6 +9,7 @@ pub(crate) trait TSystem: Send + Sync {
     fn read_file(&self, path: &Path) -> Result<Vec<u8>, String>;
     fn read_file_str(&self, path: &Path) -> Result<String, String>;
     fn ensure_dir(&self, path: &Path) -> Result<(), String>;
+    fn exists(&self, path: &Path) -> bool;
 }
 
 // implementations ==========================================
@@ -51,5 +52,9 @@ impl TSystem for System {
 
     fn ensure_dir(&self, path: &Path) -> Result<(), String> {
         std::fs::create_dir_all(path).map_err(|e| format!("Failed to create directory: {e}"))
+    }
+
+    fn exists(&self, path: &Path) -> bool {
+        path.exists()
     }
 }

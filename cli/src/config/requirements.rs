@@ -14,7 +14,7 @@ pub(crate) enum Comparison {
     Installed,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub(crate) struct Requirement<'a> {
     pub(crate) program: &'a str,
     pub(crate) version_arg: &'a str,
@@ -22,8 +22,9 @@ pub(crate) struct Requirement<'a> {
     pub(crate) required_comparator: Comparison,
 }
 
-pub(crate) trait TSystemRequirementsChecker {
-    fn check(&self, requirements: Vec<Requirement>) -> Result<(), String>;
+#[cfg_attr(test, mockall::automock)]
+pub(crate) trait TSystemRequirementsChecker: Send + Sync {
+    fn check<'a>(&self, requirements: Vec<Requirement<'a>>) -> Result<(), String>;
 }
 
 pub(crate) struct SystemRequirementsChecker {
