@@ -5,9 +5,9 @@ use crate::{
     },
     infrastructure::{
         bb::{Bb, TBb},
-        codegen::verifier_generator::{TVerifierGenerator, VerifierGenerator},
-        console::progress::create_spinner,
+        codegen::{Codegen, TCodegen},
         nargo::{Nargo, TNargo},
+        progress::create_spinner,
         system::{System, TSystem},
     },
     AppContext,
@@ -18,7 +18,7 @@ use std::{env, path::PathBuf};
 pub(crate) struct GenerateCommand {
     system: Box<dyn TSystem>,
     system_requirements_checker: Box<dyn TSystemRequirementsChecker>,
-    verifier_generator: Box<dyn TVerifierGenerator>,
+    verifier_generator: Box<dyn TCodegen>,
     nargo: Box<dyn TNargo>,
     bb: Box<dyn TBb>,
 }
@@ -28,7 +28,7 @@ impl Default for GenerateCommand {
         Self {
             system: Box::new(System::default()),
             system_requirements_checker: Box::new(SystemRequirementsChecker::default()),
-            verifier_generator: Box::new(VerifierGenerator::default()),
+            verifier_generator: Box::new(Codegen::default()),
             nargo: Box::new(Nargo::default()),
             bb: Box::new(Bb::default()),
         }
@@ -118,7 +118,7 @@ impl GenerateCommand {
         // print instructions ========================================
 
         println!(
-            "\n {title}\n\n  - {bin} {check_cmd}: Checks the verifier contract.\n  - {bin} {deploy_cmd}: Deploys the verifier to the blockchain.\n",
+            "\n {title}\n\n  - {bin} {check_cmd}: Runs `stylus check` on the generated contract.\n  - {bin} {deploy_cmd}: Deploys the verifier to the blockchain.\n",
             title = "What's Next?".bright_white().bold(),
             bin = env!("CARGO_BIN_NAME").blue(),
             check_cmd = "check".blue(),
@@ -133,10 +133,9 @@ impl GenerateCommand {
 mod tests {
     use super::*;
     use crate::config::requirements::MockTSystemRequirementsChecker;
-    use crate::infrastructure::codegen::verifier_generator::ProjectFile;
+    use crate::infrastructure::codegen::ProjectFile;
     use crate::infrastructure::{
-        bb::MockTBb, codegen::verifier_generator::MockTVerifierGenerator, nargo::MockTNargo,
-        system::MockTSystem,
+        bb::MockTBb, codegen::MockTCodegen, nargo::MockTNargo, system::MockTSystem,
     };
     use mockall::predicate::*;
 
@@ -200,8 +199,8 @@ mod tests {
             .returning(|_| Ok(()));
         bb_mock.expect_write_vk().returning(|_, _| Ok(()));
 
-        let mut verifier_generator_mock = MockTVerifierGenerator::new();
-        verifier_generator_mock
+        let mut codegen_mock = MockTCodegen::new();
+        codegen_mock
             .expect_generate_verifier_contract()
             .with(
                 eq(PathBuf::from(ROOT)
@@ -214,7 +213,7 @@ mod tests {
         let result = GenerateCommand {
             system: Box::new(system_mock),
             system_requirements_checker: Box::new(system_requirements_checker_mock),
-            verifier_generator: Box::new(verifier_generator_mock),
+            verifier_generator: Box::new(codegen_mock),
             nargo: Box::new(nargo_mock),
             bb: Box::new(bb_mock),
         }

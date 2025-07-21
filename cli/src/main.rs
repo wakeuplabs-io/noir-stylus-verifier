@@ -10,7 +10,7 @@ use commands::{
 use dotenv::dotenv;
 use log::{Level, LevelFilter};
 
-use crate::infrastructure::console::terminal::print_app_title;
+use crate::infrastructure::terminal::print_app_title;
 
 #[derive(Parser)]
 #[clap(name = "nsv")]
@@ -95,7 +95,7 @@ async fn main() {
 
     // run commands
     if let Err(e) = match args.cmd {
-        Commands::New { target } => NewCommand::new().run(&ctx, &target).await,
+        Commands::New { target } => NewCommand::default().run(&ctx, &target).await,
         Commands::Generate { circuit } => GenerateCommand::default().run(&ctx, circuit).await,
         Commands::Check { circuit, rpc_url } => {
             CheckCommand::default().run(&ctx, circuit, rpc_url).await

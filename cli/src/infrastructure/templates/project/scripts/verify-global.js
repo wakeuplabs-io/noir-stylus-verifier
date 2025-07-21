@@ -1,0 +1,55 @@
+import fs from "fs";
+import { UltraHonkBackend } from "@aztec/bb.js";
+import { Noir } from "@noir-lang/noir_js";
+import { createPublicClient, http, parseAbi } from "viem";
+
+const GLOBAL_VERIFIER_ADDRESS = process.env.GLOBAL_VERIFIER_ADDRESS;
+const RPC_ADDRESS = process.env.RPC_ADDRESS;
+
+if (!GLOBAL_VERIFIER_ADDRESS || !RPC_ADDRESS) {
+  console.error("GLOBAL_VERIFIER_ADDRESS and RPC_ADDRESS must be set");
+  process.exit(1);
+}
+
+const client = createPublicClient({
+  transport: http(RPC_ADDRESS),
+});
+
+try {
+  const vk = "0x" + fs.readFileSync("./contracts/assets/vk", "hex");
+  const circuit = JSON.parse(
+    fs.readFileSync("./contracts/assets/hello_world.json", "utf8")
+  );
+
+  const noir = new Noir(circuit);
+  const backend = new UltraHonkBackend(circuit.bytecode);
+
+  console.log("Executing circuit...");
+  const { witness } = await noir.execute({ x: 1, y: 2, z: 3 });
+
+  console.log("Generating proof...");
+  const { proof, publicInputs } = await backend.generateProof(witness, {
+    keccak: true,
+  });
+
+  console.log("Verifying proof with contract...");
+  const result = await client.readContract({
+    functionName: "verify",
+    address: GLOBAL_VERIFIER_ADDRESS,
+    abi: parseAbi([
+      "function verify(bytes proof, bytes public_inputs, bytes vk) view returns (bool)",
+    ]),
+    args: [
+      "0x" + Array.from(proof, (byte) => byte.toString(16).padStart(2, "0")).join(""),
+      "0x" + publicInputs.map((i) => i.slice(2)).join(""),
+      vk,
+    ],
+  });
+
+  console.log("Result:", result);
+
+  process.exit(0);
+} catch (error) {
+  console.error(error);
+  process.exit(1);
+}

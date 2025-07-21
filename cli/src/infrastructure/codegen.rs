@@ -13,12 +13,16 @@ pub(crate) struct ProjectFile {
     pub(crate) content: String,
 }
 
-pub(crate) struct VerifierGenerator {
+pub(crate) struct Codegen {
     system: Box<dyn TSystem>,
 }
 
 #[cfg_attr(test, mockall::automock)]
-pub(crate) trait TVerifierGenerator: Send + Sync + 'static {
+pub(crate) trait TCodegen: Send + Sync + 'static {
+    /// Generates a new example project, returns files and their content to be written to disk
+    fn generate_project(&self, name: &str) -> Result<Vec<ProjectFile>, Box<dyn std::error::Error>>;
+
+    /// Generates a verifier contract, returns files and their content to be written to disk
     fn generate_verifier_contract(
         &self,
         circuit_json_path: &Path,
@@ -26,7 +30,7 @@ pub(crate) trait TVerifierGenerator: Send + Sync + 'static {
     ) -> Result<Vec<ProjectFile>, Box<dyn std::error::Error>>;
 }
 
-impl Default for VerifierGenerator {
+impl Default for Codegen {
     fn default() -> Self {
         Self {
             system: Box::new(System::default()),
@@ -34,7 +38,11 @@ impl Default for VerifierGenerator {
     }
 }
 
-impl TVerifierGenerator for VerifierGenerator {
+impl TCodegen for Codegen {
+    fn generate_project(&self, name: &str) -> Result<Vec<ProjectFile>, Box<dyn std::error::Error>> {
+        Ok(vec![])
+    }
+
     fn generate_verifier_contract(
         &self,
         circuit_json_path: &Path,
@@ -87,14 +95,29 @@ impl TVerifierGenerator for VerifierGenerator {
 
         // add templates
         let mut tera = Tera::default();
-        tera.add_raw_template("src/main.rs", include_str!("templates/src/main.rs.tera"))?;
-        tera.add_raw_template("src/lib.rs", include_str!("templates/src/lib.rs.tera"))?;
-        tera.add_raw_template(".gitignore", include_str!("templates/.gitignore.tera"))?;
-        tera.add_raw_template("Cargo.toml", include_str!("templates/Cargo.toml.tera"))?;
-        tera.add_raw_template("Cargo.lock", include_str!("templates/Cargo.lock.tera"))?;
+        tera.add_raw_template(
+            "src/main.rs",
+            include_str!("templates/verifier/src/main.rs.tera"),
+        )?;
+        tera.add_raw_template(
+            "src/lib.rs",
+            include_str!("templates/verifier/src/lib.rs.tera"),
+        )?;
+        tera.add_raw_template(
+            ".gitignore",
+            include_str!("templates/verifier/.gitignore.tera"),
+        )?;
+        tera.add_raw_template(
+            "Cargo.toml",
+            include_str!("templates/verifier/Cargo.toml.tera"),
+        )?;
+        tera.add_raw_template(
+            "Cargo.lock",
+            include_str!("templates/verifier/Cargo.lock.tera"),
+        )?;
         tera.add_raw_template(
             "rust-toolchain.toml",
-            include_str!("templates/rust-toolchain.toml.tera"),
+            include_str!("templates/verifier/rust-toolchain.toml.tera"),
         )?;
 
         Ok(vec![
@@ -126,7 +149,7 @@ impl TVerifierGenerator for VerifierGenerator {
     }
 }
 
-impl VerifierGenerator {
+impl Codegen {
     fn parse_circuit_inputs(
         &self,
         circuit_json_str: &str,

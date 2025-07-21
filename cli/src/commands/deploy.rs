@@ -10,7 +10,7 @@ use crate::{
         },
     },
     infrastructure::{
-        console::progress::create_spinner,
+        progress::create_spinner,
         rpc::{Rpc, TRpc},
         stylus::{Stylus, TStylus},
         system::{System, TSystem},
@@ -18,7 +18,6 @@ use crate::{
     print_error, print_warning, AppContext,
 };
 use colored::*;
-use indicatif::ProgressBar;
 use std::{env, path::PathBuf};
 
 pub(crate) struct DeployCommand {
@@ -142,7 +141,7 @@ mod tests {
     use super::*;
     use crate::config::requirements::MockTSystemRequirementsChecker;
     use crate::infrastructure::{rpc::MockTRpc, stylus::MockTStylus, system::MockTSystem};
-    use mockall::{predicate::*, *};
+    use mockall::{predicate::*};
 
     // default values for testing
     const RPC_URL: &str = "https://rpc.sepolia.org";

@@ -12,6 +12,6 @@ pub(crate) fn create_spinner(message: &str) -> ProgressBar {
     spinner.set_message(message.to_string());
     spinner.enable_steady_tick(Duration::from_millis(100));
     spinner.tick();
-    
+
     spinner
 }

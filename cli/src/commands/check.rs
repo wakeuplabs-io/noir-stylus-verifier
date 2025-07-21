@@ -6,14 +6,13 @@ use crate::{
         },
     },
     infrastructure::{
-        console::progress::create_spinner,
+        progress::create_spinner,
         stylus::{Stylus, TStylus},
         system::{System, TSystem},
     },
     print_warning, AppContext,
 };
 use colored::*;
-use indicatif::ProgressBar;
 use std::{env, path::PathBuf};
 
 pub(crate) struct CheckCommand {
@@ -74,7 +73,10 @@ impl CheckCommand {
         };
 
         // all good, we can run the check
-        let progress = create_spinner(&format!("⏳ Checking contract for circuit at {}...", root.display()));
+        let progress = create_spinner(&format!(
+            "⏳ Checking contract for circuit at {}...",
+            root.display()
+        ));
 
         // run stylus check in contracts directory
         match self.stylus.check(&contracts_root, &rpc_url) {
