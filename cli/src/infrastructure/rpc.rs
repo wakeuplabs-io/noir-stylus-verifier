@@ -1,4 +1,5 @@
-use ethers::providers::{Http, Middleware, Provider};
+use reqwest::Client;
+use serde_json::json;
 use std::{error::Error, future::Future, pin::Pin};
 
 #[derive(Default)]
@@ -22,8 +23,25 @@ impl TRpc for Rpc {
         let rpc_url = rpc_url.to_string();
 
         Box::pin(async move {
-            let provider = Provider::<Http>::try_from(rpc_url.as_str())?;
-            let chain_id = provider.get_chainid().await?.as_u64();
+            let client = Client::new();
+            let res = client
+                .post(&rpc_url)
+                .json(&json!({
+                    "jsonrpc": "2.0",
+                    "method": "eth_chainId",
+                    "params": [],
+                    "id": 1
+                }))
+                .send()
+                .await?
+                .json::<serde_json::Value>()
+                .await?;
+
+            let hex = res["result"]
+                .as_str()
+                .ok_or("Missing result from eth_chainId")?;
+
+            let chain_id = u64::from_str_radix(hex.trim_start_matches("0x"), 16)?;
             Ok(chain_id)
         })
     }
