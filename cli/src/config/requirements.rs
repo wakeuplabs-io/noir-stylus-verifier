@@ -82,7 +82,7 @@ impl fmt::Display for Comparison {
 impl Default for SystemRequirementsChecker {
     fn default() -> Self {
         Self {
-            system: Box::new(System::default()),
+            system: Box::new(System),
         }
     }
 }

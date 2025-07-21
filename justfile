@@ -114,7 +114,7 @@ lint:
   cargo clippy --package ultrahonk --package contracts --package integration --package nsv --no-deps
 
 lint-fix:
-  cargo clippy --package ultrahonk --package contracts --package integration --package nsv --fix
+  cargo clippy --package ultrahonk --package contracts --package integration --package nsv --fix --allow-dirty
 
 
 clean-cli-macos:

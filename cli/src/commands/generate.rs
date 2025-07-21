@@ -26,7 +26,7 @@ pub(crate) struct GenerateCommand {
 impl Default for GenerateCommand {
     fn default() -> Self {
         Self {
-            system: Box::new(System::default()),
+            system: Box::new(System),
             system_requirements_checker: Box::new(SystemRequirementsChecker::default()),
             verifier_generator: Box::new(Codegen::default()),
             nargo: Box::new(Nargo::default()),

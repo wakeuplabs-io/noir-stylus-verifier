@@ -36,7 +36,7 @@ pub(crate) struct ProjectFile {
 impl Default for Codegen {
     fn default() -> Self {
         Self {
-            system: Box::new(System::default()),
+            system: Box::new(System),
         }
     }
 }

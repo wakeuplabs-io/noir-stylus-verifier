@@ -1,5 +1,6 @@
 use std::{path::Path, process::Command};
 
+#[derive(Default)]
 pub(crate) struct System;
 
 #[cfg_attr(test, mockall::automock)]
@@ -13,12 +14,6 @@ pub(crate) trait TSystem: Send + Sync {
 }
 
 // implementations ==========================================
-
-impl Default for System {
-    fn default() -> Self {
-        Self
-    }
-}
 
 impl TSystem for System {
     fn execute_command(&self, command: &mut Command) -> Result<String, String> {

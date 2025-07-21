@@ -23,7 +23,7 @@ pub(crate) trait TStylus: Send + Sync {
 impl Default for Stylus {
     fn default() -> Self {
         Self {
-            system: Box::new(System::default()),
+            system: Box::new(System),
         }
     }
 }

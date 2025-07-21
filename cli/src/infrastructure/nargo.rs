@@ -14,7 +14,7 @@ pub(crate) struct Nargo {
 impl Default for Nargo {
     fn default() -> Self {
         Self {
-            system: Box::new(System::default()),
+            system: Box::new(System),
         }
     }
 }
@@ -31,7 +31,7 @@ impl TNargo for Nargo {
         self.system.execute_command(
             Command::new("nargo")
                 .arg("compile")
-                .current_dir(&circuit_path),
+                .current_dir(circuit_path),
         )?;
 
         Ok(())

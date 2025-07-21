@@ -17,7 +17,7 @@ pub(crate) struct NewCommand {
 impl Default for NewCommand {
     fn default() -> Self {
         Self {
-            system: Box::new(System::default()),
+            system: Box::new(System),
             codegen: Box::new(Codegen::default()),
         }
     }

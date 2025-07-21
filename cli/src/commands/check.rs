@@ -26,7 +26,7 @@ impl Default for CheckCommand {
         Self {
             system_requirements_checker: Box::new(SystemRequirementsChecker::default()),
             stylus: Box::new(Stylus::default()),
-            system: Box::new(System::default()),
+            system: Box::new(System),
         }
     }
 }

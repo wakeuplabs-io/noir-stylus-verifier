@@ -32,7 +32,7 @@ impl Default for DeployCommand {
         Self {
             system_requirements_checker: Box::new(SystemRequirementsChecker::default()),
             stylus: Box::new(Stylus::default()),
-            system: Box::new(System::default()),
+            system: Box::new(System),
             rpc: Box::new(Rpc::default()),
         }
     }
@@ -95,7 +95,7 @@ impl DeployCommand {
                             VERIFIER_ADDRESS_ARBITRUM_SEPOLIA
                         }
                     }
-                    _ => panic!("No default verifier address for chain id: {}", chain_id),
+                    _ => panic!("No default verifier address for chain id: {chain_id}"),
                 }
                 .to_string();
 

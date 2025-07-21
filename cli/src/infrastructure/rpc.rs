@@ -1,6 +1,7 @@
 use ethers::providers::{Http, Middleware, Provider};
 use std::{error::Error, future::Future, pin::Pin};
 
+#[derive(Default)]
 pub(crate) struct Rpc {}
 
 #[cfg_attr(test, mockall::automock)]
@@ -12,12 +13,6 @@ pub(crate) trait TRpc: Send + Sync + 'static {
 }
 
 // implementations ==========================================
-
-impl Default for Rpc {
-    fn default() -> Self {
-        Self {}
-    }
-}
 
 impl TRpc for Rpc {
     fn get_chain_id(

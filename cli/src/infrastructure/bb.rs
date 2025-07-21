@@ -19,7 +19,7 @@ pub(crate) trait TBb {
 impl Default for Bb {
     fn default() -> Self {
         Self {
-            system: Box::new(System::default()),
+            system: Box::new(System),
         }
     }
 }
@@ -49,7 +49,7 @@ impl TBb for Bb {
                         .join("target")
                         .join(format!("{package_name}.json")),
                 )
-                .current_dir(&circuit_path),
+                .current_dir(circuit_path),
         )?;
         Ok(())
     }
