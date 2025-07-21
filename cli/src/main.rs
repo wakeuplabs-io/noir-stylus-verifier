@@ -107,7 +107,7 @@ async fn main() {
             verifier_address,
             zk_flavor,
         } => {
-            DeployCommand::new()
+            DeployCommand::default()
                 .run(
                     &ctx,
                     circuit,

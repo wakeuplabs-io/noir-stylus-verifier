@@ -11,29 +11,36 @@ use crate::{
     },
     infrastructure::{
         console::progress::style_spinner,
+        rpc::{Rpc, TRpc},
         stylus::{Stylus, TStylus},
+        system::{System, TSystem},
     },
     print_error, print_warning, AppContext,
 };
 use colored::*;
-use core::panic;
 use ethers::providers::{Http, Middleware, Provider};
 use indicatif::ProgressBar;
 use std::{env, path::PathBuf};
 
 pub(crate) struct DeployCommand {
-    system_requirements_checker: SystemRequirementsChecker,
-    stylus: Stylus,
+    system_requirements_checker: Box<dyn TSystemRequirementsChecker>,
+    stylus: Box<dyn TStylus>,
+    system: Box<dyn TSystem>,
+    rpc: Box<dyn TRpc>,
+}
+
+impl Default for DeployCommand {
+    fn default() -> Self {
+        Self {
+            system_requirements_checker: Box::new(SystemRequirementsChecker::new()),
+            stylus: Box::new(Stylus::new()),
+            system: Box::new(System::new()),
+            rpc: Box::new(Rpc::new()),
+        }
+    }
 }
 
 impl DeployCommand {
-    pub(crate) fn new() -> Self {
-        Self {
-            system_requirements_checker: SystemRequirementsChecker::new(),
-            stylus: Stylus::new(),
-        }
-    }
-
     pub(crate) async fn run(
         &self,
         _ctx: &AppContext,
@@ -54,7 +61,7 @@ impl DeployCommand {
         let contracts_root = root.join("contracts");
 
         // verify we are in a circuit directory.
-        if !root.join("Nargo.toml").exists() {
+        if !self.system.exists(&root.join("Nargo.toml")) {
             return Err(format!("Directory {} does not contain a circuit", root.display()).into());
         }
 
@@ -67,8 +74,7 @@ impl DeployCommand {
             Some(address) => address,
             None => {
                 // get chain id from rpc url
-                let provider = Provider::<Http>::try_from(&rpc_url)?;
-                let chain_id = provider.get_chainid().await?.as_u64();
+                let chain_id = self.rpc.get_chain_id(&rpc_url).await?;
 
                 // select default verifier address from constants.
                 let verifier_address = match chain_id {
@@ -78,7 +84,7 @@ impl DeployCommand {
                         } else {
                             VERIFIER_ADDRESS_ARBITRUM
                         }
-                    } 
+                    }
                     CHAIN_ID_ARBITRUM_SEPOLIA => {
                         if zk_flavor {
                             VERIFIER_ADDRESS_ARBITRUM_SEPOLIA_ZK
@@ -95,6 +101,7 @@ impl DeployCommand {
                     chain_id,
                     verifier_address
                 );
+
                 verifier_address
             }
         };
@@ -128,11 +135,126 @@ impl DeployCommand {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::requirements::MockTSystemRequirementsChecker;
+    use crate::infrastructure::{rpc::MockTRpc, stylus::MockTStylus, system::MockTSystem};
+    use mockall::{predicate::*, *};
 
     #[tokio::test]
     async fn test_deploy_command() {
-        let command = DeployCommand::new();
-        // let result = command.run(&AppContext::new(), None, "https://rpc.sepolia.org".to_string(), "0x0".to_string(), None, false).await;
-        // assert!(result.is_ok());
+        let rpc_mock = MockTRpc::new();
+        let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
+        let mut stylus_mock = MockTStylus::new();
+        let mut system_mock = MockTSystem::new();
+
+        let rpc_url = "https://rpc.sepolia.org";
+        let private_key = "0x0000000000000000000000000000000000000000000000000000000000000000";
+        let verifier_address = "0x0000000000000000000000000000000000000000";
+        let root = PathBuf::from("circuit");
+        let contracts_root = root.join("contracts");
+
+        // validate stylus is installed
+        system_requirements_checker_mock
+            .expect_check()
+            .withf(|reqs| reqs.len() == 1 && reqs[0] == CARGO_STYLUS_REQUIREMENT)
+            .returning(|_| Ok(()));
+
+        // validate we are in a circuit directory
+        system_mock
+            .expect_exists()
+            .with(eq(root.join("Nargo.toml")))
+            .returning(|_| true);
+
+        // call stylus deploy
+        stylus_mock
+            .expect_deploy()
+            .with(
+                eq(contracts_root),
+                eq(rpc_url),
+                eq(private_key),
+                eq(verifier_address),
+            )
+            .returning(|_, _, _, _| Ok("".to_string()));
+
+        let command = DeployCommand {
+            system_requirements_checker: Box::new(system_requirements_checker_mock),
+            stylus: Box::new(stylus_mock),
+            system: Box::new(system_mock),
+            rpc: Box::new(rpc_mock),
+        };
+        let ctx = AppContext {};
+
+        let result = command
+            .run(
+                &ctx,
+                Some(root.to_str().unwrap().to_string()),
+                rpc_url.to_string(),
+                private_key.to_string(),
+                Some(verifier_address.to_string()),
+                false,
+            )
+            .await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_deploy_default_verifier_address() {
+        let mut rpc_mock = MockTRpc::new();
+        let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
+        let mut stylus_mock = MockTStylus::new();
+        let mut system_mock = MockTSystem::new();
+
+        let rpc_url = "https://rpc.sepolia.org";
+        let private_key = "0x0000000000000000000000000000000000000000000000000000000000000000";
+        let root = PathBuf::from("circuit");
+        let contracts_root = root.join("contracts");
+
+        // validate stylus is installed
+        system_requirements_checker_mock
+            .expect_check()
+            .withf(|reqs| reqs.len() == 1 && reqs[0] == CARGO_STYLUS_REQUIREMENT)
+            .returning(|_| Ok(()));
+
+        // validate we are in a circuit directory
+        system_mock
+            .expect_exists()
+            .with(eq(root.join("Nargo.toml")))
+            .returning(|_| true);
+
+        // call rpc get chain id to later determine default verifier address
+        rpc_mock
+            .expect_get_chain_id()
+            .with(eq(rpc_url))
+            .returning(|_| Box::pin(async { Ok(CHAIN_ID_ARBITRUM_SEPOLIA) }));
+
+        // call stylus deploy
+        stylus_mock
+            .expect_deploy()
+            .with(
+                eq(contracts_root),
+                eq(rpc_url),
+                eq(private_key),
+                eq(VERIFIER_ADDRESS_ARBITRUM_SEPOLIA),
+            )
+            .returning(|_, _, _, _| Ok("".to_string()));
+
+        let command = DeployCommand {
+            system_requirements_checker: Box::new(system_requirements_checker_mock),
+            stylus: Box::new(stylus_mock),
+            system: Box::new(system_mock),
+            rpc: Box::new(rpc_mock),
+        };
+        let ctx = AppContext {};
+
+        let result = command
+            .run(
+                &ctx,
+                Some(root.to_str().unwrap().to_string()),
+                rpc_url.to_string(),
+                private_key.to_string(),
+                None,
+                false,
+            )
+            .await;
+        assert!(result.is_ok());
     }
 }
