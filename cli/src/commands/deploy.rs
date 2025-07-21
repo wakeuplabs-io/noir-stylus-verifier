@@ -18,7 +18,6 @@ use crate::{
     print_error, print_warning, AppContext,
 };
 use colored::*;
-use ethers::providers::{Http, Middleware, Provider};
 use indicatif::ProgressBar;
 use std::{env, path::PathBuf};
 
@@ -63,9 +62,15 @@ impl DeployCommand {
         // verify we are in a circuit directory.
         if !self.system.exists(&root.join("Nargo.toml")) {
             return Err(format!("Directory {} does not contain a circuit", root.display()).into());
+        } else if !self.system.exists(&contracts_root) {
+            return Err(format!(
+                "We can't find your contracts at {}. Please run generate first.",
+                contracts_root.display()
+            )
+            .into());
         }
 
-        let create_spinner = style_spinner(
+        let spinner = style_spinner(
             ProgressBar::new_spinner(),
             &format!("⏳ Deploying {}...", root.display()),
         );
@@ -73,6 +78,8 @@ impl DeployCommand {
         let verifier_address = match verifier_address {
             Some(address) => address,
             None => {
+                spinner.set_message("Determining default verifier address...");
+
                 // get chain id from rpc url
                 let chain_id = self.rpc.get_chain_id(&rpc_url).await?;
 
@@ -106,12 +113,13 @@ impl DeployCommand {
             }
         };
 
+        spinner.set_message("Deploying...");
         match self
             .stylus
             .deploy(&contracts_root, &rpc_url, &private_key, &verifier_address)
         {
             Ok(result) => {
-                create_spinner.finish_with_message(format!(
+                spinner.finish_with_message(format!(
                     "{} Deployed {}\n",
                     "✅ Success!".green(),
                     root.display()
@@ -119,7 +127,7 @@ impl DeployCommand {
                 println!("{result}");
             }
             Err(e) => {
-                create_spinner.finish_with_message(format!(
+                spinner.finish_with_message(format!(
                     "{} Failed to deploy {}\n",
                     "❌ Error!".red(),
                     root.display()
@@ -139,122 +147,130 @@ mod tests {
     use crate::infrastructure::{rpc::MockTRpc, stylus::MockTStylus, system::MockTSystem};
     use mockall::{predicate::*, *};
 
+    // default values for testing
+    const RPC_URL: &str = "https://rpc.sepolia.org";
+    const PRIVATE_KEY: &str = "0x0000000000000000000000000000000000000000000000000000000000000000";
+    const VERIFIER_ADDRESS: &str = "0x0000000000000000000000000000000000000000";
+    const ROOT: &str = "circuit";
+    const CONTRACTS_ROOT: &str = "circuit/contracts";
+
+    /// Basic test case, user provides all parameters.
+    /// We test we properly run verifications and call the deployment with the correct parameters.
     #[tokio::test]
     async fn test_deploy_command() {
+        // rpc should not be called as we provide verifier address
         let rpc_mock = MockTRpc::new();
-        let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
-        let mut stylus_mock = MockTStylus::new();
-        let mut system_mock = MockTSystem::new();
-
-        let rpc_url = "https://rpc.sepolia.org";
-        let private_key = "0x0000000000000000000000000000000000000000000000000000000000000000";
-        let verifier_address = "0x0000000000000000000000000000000000000000";
-        let root = PathBuf::from("circuit");
-        let contracts_root = root.join("contracts");
 
         // validate stylus is installed
+        let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
         system_requirements_checker_mock
             .expect_check()
             .withf(|reqs| reqs.len() == 1 && reqs[0] == CARGO_STYLUS_REQUIREMENT)
             .returning(|_| Ok(()));
 
         // validate we are in a circuit directory
+        let mut system_mock = MockTSystem::new();
         system_mock
             .expect_exists()
-            .with(eq(root.join("Nargo.toml")))
+            .with(eq(PathBuf::from(ROOT).join("Nargo.toml")))
+            .returning(|_| true);
+        system_mock
+            .expect_exists()
+            .with(eq(PathBuf::from(CONTRACTS_ROOT)))
             .returning(|_| true);
 
         // call stylus deploy
+        let mut stylus_mock = MockTStylus::new();
         stylus_mock
             .expect_deploy()
             .with(
-                eq(contracts_root),
-                eq(rpc_url),
-                eq(private_key),
-                eq(verifier_address),
+                eq(PathBuf::from(CONTRACTS_ROOT)),
+                eq(RPC_URL),
+                eq(PRIVATE_KEY),
+                eq(VERIFIER_ADDRESS),
             )
             .returning(|_, _, _, _| Ok("".to_string()));
 
-        let command = DeployCommand {
+        // run deploy command
+        let result = DeployCommand {
             system_requirements_checker: Box::new(system_requirements_checker_mock),
             stylus: Box::new(stylus_mock),
             system: Box::new(system_mock),
             rpc: Box::new(rpc_mock),
-        };
-        let ctx = AppContext {};
+        }
+        .run(
+            &AppContext {},
+            Some(ROOT.to_string()),
+            RPC_URL.to_string(),
+            PRIVATE_KEY.to_string(),
+            Some(VERIFIER_ADDRESS.to_string()),
+            false,
+        )
+        .await;
 
-        let result = command
-            .run(
-                &ctx,
-                Some(root.to_str().unwrap().to_string()),
-                rpc_url.to_string(),
-                private_key.to_string(),
-                Some(verifier_address.to_string()),
-                false,
-            )
-            .await;
+        // assert result is ok, rest is handled by mock
         assert!(result.is_ok());
     }
 
+    /// If user does not provide verifier address, we should use the default one.
+    /// This test checks that we properly determine the default verifier address based on the rpc provided.
     #[tokio::test]
     async fn test_deploy_default_verifier_address() {
-        let mut rpc_mock = MockTRpc::new();
-        let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
-        let mut stylus_mock = MockTStylus::new();
-        let mut system_mock = MockTSystem::new();
-
-        let rpc_url = "https://rpc.sepolia.org";
-        let private_key = "0x0000000000000000000000000000000000000000000000000000000000000000";
-        let root = PathBuf::from("circuit");
-        let contracts_root = root.join("contracts");
-
         // validate stylus is installed
+        let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
         system_requirements_checker_mock
             .expect_check()
             .withf(|reqs| reqs.len() == 1 && reqs[0] == CARGO_STYLUS_REQUIREMENT)
             .returning(|_| Ok(()));
 
         // validate we are in a circuit directory
+        let mut system_mock = MockTSystem::new();
         system_mock
             .expect_exists()
-            .with(eq(root.join("Nargo.toml")))
+            .with(eq(PathBuf::from(ROOT).join("Nargo.toml")))
+            .returning(|_| true);
+        system_mock
+            .expect_exists()
+            .with(eq(PathBuf::from(CONTRACTS_ROOT)))
             .returning(|_| true);
 
         // call rpc get chain id to later determine default verifier address
+        let mut rpc_mock = MockTRpc::new();
         rpc_mock
             .expect_get_chain_id()
-            .with(eq(rpc_url))
+            .with(eq(RPC_URL))
             .returning(|_| Box::pin(async { Ok(CHAIN_ID_ARBITRUM_SEPOLIA) }));
 
         // call stylus deploy
+        let mut stylus_mock = MockTStylus::new();
         stylus_mock
             .expect_deploy()
             .with(
-                eq(contracts_root),
-                eq(rpc_url),
-                eq(private_key),
+                eq(PathBuf::from(CONTRACTS_ROOT)),
+                eq(RPC_URL),
+                eq(PRIVATE_KEY),
                 eq(VERIFIER_ADDRESS_ARBITRUM_SEPOLIA),
             )
             .returning(|_, _, _, _| Ok("".to_string()));
 
-        let command = DeployCommand {
+        // run deploy command
+        let result = DeployCommand {
             system_requirements_checker: Box::new(system_requirements_checker_mock),
             stylus: Box::new(stylus_mock),
             system: Box::new(system_mock),
             rpc: Box::new(rpc_mock),
-        };
-        let ctx = AppContext {};
+        }
+        .run(
+            &AppContext {},
+            Some(ROOT.to_string()),
+            RPC_URL.to_string(),
+            PRIVATE_KEY.to_string(),
+            None,
+            false,
+        )
+        .await;
 
-        let result = command
-            .run(
-                &ctx,
-                Some(root.to_str().unwrap().to_string()),
-                rpc_url.to_string(),
-                private_key.to_string(),
-                None,
-                false,
-            )
-            .await;
+        // assert result is ok, rest is handled by mock
         assert!(result.is_ok());
     }
 }

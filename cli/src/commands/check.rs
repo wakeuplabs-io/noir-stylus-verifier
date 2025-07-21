@@ -52,6 +52,12 @@ impl CheckCommand {
         // verify we are in a circuit directory.
         if !self.system.exists(&root.join("Nargo.toml")) {
             return Err(format!("We can't find your circuit at {}. Please run this command from the root of your circuit.", root.display()).into());
+        } else if !self.system.exists(&contracts_root) {
+            return Err(format!(
+                "We can't find your contracts at {}. Please run generate first.",
+                contracts_root.display()
+            )
+            .into());
         }
 
         // get rpc url from command line or use default
@@ -103,129 +109,128 @@ mod tests {
     use crate::infrastructure::{stylus::MockTStylus, system::MockTSystem};
     use mockall::predicate::*;
 
+    // default values for testing
+    const RPC_URL: &str = "https://rpc.sepolia.org";
+    const ROOT: &str = "circuit";
+    const CONTRACTS_ROOT: &str = "circuit/contracts";
+
+    /// Basic test case, user provides all parameters.
+    /// We test we properly run verifications and call the deployment with the correct parameters.
     #[tokio::test]
     async fn test_check_command() {
-        let mut mock_stylus = MockTStylus::new();
-        let mut mock_system = MockTSystem::new();
-        let mut mock_system_requirements_checker = MockTSystemRequirementsChecker::new();
-
-        let circuit_root = PathBuf::from("circuit");
-        let contracts_root = circuit_root.join("contracts");
-        let rpc_url = "https://sepolia-rollup.arbitrum.io/rpc";
-
         // should check we have stylus installed
-        mock_system_requirements_checker
+        let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
+        system_requirements_checker_mock
             .expect_check()
             .withf(|reqs| reqs.len() == 1 && reqs[0] == CARGO_STYLUS_REQUIREMENT)
             .returning(|_| Ok(()));
 
         // should check we're at the circuit root
-        mock_system
+        let mut system_mock = MockTSystem::new();
+        system_mock
             .expect_exists()
-            .with(eq(circuit_root.join("Nargo.toml")))
+            .with(eq(PathBuf::from(ROOT).join("Nargo.toml")))
+            .returning(|_| true);
+        system_mock
+            .expect_exists()
+            .with(eq(PathBuf::from(CONTRACTS_ROOT)))
             .returning(|_| true);
 
         // should run stylus check
-        mock_stylus
+        let mut stylus_mock = MockTStylus::new();
+        stylus_mock
             .expect_check()
-            .with(eq(contracts_root), eq(rpc_url))
+            .with(eq(PathBuf::from(CONTRACTS_ROOT)), eq(RPC_URL))
             .returning(|_, _| Ok("✅ Success!".to_string()));
 
-        let check_command = CheckCommand {
-            system_requirements_checker: Box::new(mock_system_requirements_checker),
-            stylus: Box::new(mock_stylus),
-            system: Box::new(mock_system),
-        };
-        let ctx = AppContext {};
-
-        let result = check_command
-            .run(
-                &ctx,
-                Some(circuit_root.to_str().unwrap().to_string()),
-                Some(rpc_url.to_string()),
-            )
-            .await;
+        let result = CheckCommand {
+            system_requirements_checker: Box::new(system_requirements_checker_mock),
+            stylus: Box::new(stylus_mock),
+            system: Box::new(system_mock),
+        }
+        .run(
+            &AppContext {},
+            Some(ROOT.to_string()),
+            Some(RPC_URL.to_string()),
+        )
+        .await;
 
         assert!(result.is_ok());
     }
 
+    /// If user does not provide rpc url, we should use the default one.
+    /// This test checks that we properly determine the default rpc url based on the rpc provided.
     #[tokio::test]
     async fn check_uses_sepolia_as_default_rpc_url() {
-        let mut mock_stylus = MockTStylus::new();
-        let mut mock_system = MockTSystem::new();
-        let mut mock_system_requirements_checker = MockTSystemRequirementsChecker::new();
-
-        let circuit_root = PathBuf::from("circuit");
-        let contracts_root = circuit_root.join("contracts");
-
         // should check we have stylus installed
-        mock_system_requirements_checker
+        let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
+        system_requirements_checker_mock
             .expect_check()
             .withf(|reqs| reqs.len() == 1 && reqs[0] == CARGO_STYLUS_REQUIREMENT)
             .returning(|_| Ok(()));
 
         // should check we're at the circuit root
-        mock_system
+        let mut system_mock = MockTSystem::new();
+        system_mock
             .expect_exists()
-            .with(eq(circuit_root.join("Nargo.toml")))
+            .with(eq(PathBuf::from(ROOT).join("Nargo.toml")))
+            .returning(|_| true);
+        system_mock
+            .expect_exists()
+            .with(eq(PathBuf::from(CONTRACTS_ROOT)))
             .returning(|_| true);
 
         // should run stylus check
-        mock_stylus
+        let mut stylus_mock = MockTStylus::new();
+        stylus_mock
             .expect_check()
-            .with(
-                eq(contracts_root),
-                eq("https://sepolia-rollup.arbitrum.io/rpc"),
-            )
+            .with(eq(PathBuf::from(CONTRACTS_ROOT)), eq(DEFAULT_RPC_URL))
             .returning(|_, _| Ok("✅ Success!".to_string()));
 
-        let check_command = CheckCommand {
-            system_requirements_checker: Box::new(mock_system_requirements_checker),
-            stylus: Box::new(mock_stylus),
-            system: Box::new(mock_system),
-        };
-        let ctx = AppContext {};
-
-        let result = check_command
-            .run(&ctx, Some(circuit_root.to_str().unwrap().to_string()), None)
-            .await;
+        let result = CheckCommand {
+            system_requirements_checker: Box::new(system_requirements_checker_mock),
+            stylus: Box::new(stylus_mock),
+            system: Box::new(system_mock),
+        }
+        .run(&AppContext {}, Some(ROOT.to_string()), None)
+        .await;
 
         assert!(result.is_ok());
     }
 
+    /// The cli should be run from the root of the circuit, just where Nargo.toml is.
+    /// This test checks that we fail if that's not the case.
     #[tokio::test]
     async fn check_project_root_fails() {
-        let mut mock_stylus = MockTStylus::new();
-        let mut mock_system = MockTSystem::new();
-        let mut mock_system_requirements_checker = MockTSystemRequirementsChecker::new();
-
-        let circuit_root = PathBuf::from("circuit");
-
         // should check we have stylus installed
-        mock_system_requirements_checker
+        let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
+        system_requirements_checker_mock
             .expect_check()
             .withf(|reqs| reqs.len() == 1 && reqs[0] == CARGO_STYLUS_REQUIREMENT)
             .returning(|_| Ok(()));
 
         // should check we're at the circuit root
-        mock_system
+        let mut system_mock = MockTSystem::new();
+        system_mock
             .expect_exists()
-            .with(eq(circuit_root.join("Nargo.toml")))
+            .with(eq(PathBuf::from(ROOT).join("Nargo.toml")))
             .returning(|_| false);
+        system_mock
+            .expect_exists()
+            .with(eq(PathBuf::from(CONTRACTS_ROOT)))
+            .returning(|_| true);
 
         // should not run stylus check if we can't find the contracts directory
-        mock_stylus.expect_check().never();
+        let mut stylus_mock = MockTStylus::new();
+        stylus_mock.expect_check().never();
 
-        let check_command = CheckCommand {
-            system_requirements_checker: Box::new(mock_system_requirements_checker),
-            stylus: Box::new(mock_stylus),
-            system: Box::new(mock_system),
-        };
-        let ctx = AppContext {};
-
-        let result = check_command
-            .run(&ctx, Some(circuit_root.to_str().unwrap().to_string()), None)
-            .await;
+        let result = CheckCommand {
+            system_requirements_checker: Box::new(system_requirements_checker_mock),
+            stylus: Box::new(stylus_mock),
+            system: Box::new(system_mock),
+        }
+        .run(&AppContext {}, Some(ROOT.to_string()), None)
+        .await;
 
         assert!(result.is_err());
         assert_eq!(result.unwrap_err().to_string(), "We can't find your circuit at circuit. Please run this command from the root of your circuit.");

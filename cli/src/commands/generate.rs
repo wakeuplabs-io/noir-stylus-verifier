@@ -44,7 +44,7 @@ impl GenerateCommand {
         };
 
         // verify we are in a circuit directory. TODO: properly handle workspaces, same for binaries
-        if !root.join("Nargo.toml").exists() {
+        if !self.system.exists(&root.join("Nargo.toml")) {
             return Err(format!("Directory {} does not contain a circuit", root.display()).into());
         }
         let package_name = self.read_package_name(root.clone())?;
@@ -54,6 +54,7 @@ impl GenerateCommand {
             &format!("⏳ Generating {}...", root.display()),
         );
 
+        // create contracts directory
         let contracts_root = root.join("contracts");
         self.system.ensure_dir(&contracts_root)?;
 
@@ -79,10 +80,12 @@ impl GenerateCommand {
                 .arg(BB_REQUIREMENT.required_version),
         )?;
 
+        // compile circuit
         spinner.set_message("Compiling circuit...");
         self.system
             .execute_command(Command::new("nargo").arg("compile").current_dir(&root))?;
 
+        // write vk
         spinner.set_message("Writing vk...");
         self.system.execute_command(
             Command::new("bb")
