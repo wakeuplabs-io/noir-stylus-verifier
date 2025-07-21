@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import fs from "fs";
 import { UltraHonkBackend } from "@aztec/bb.js";
 import { Noir } from "@noir-lang/noir_js";
@@ -16,10 +18,8 @@ const client = createPublicClient({
 });
 
 try {
-  const vk = "0x" + fs.readFileSync("./contracts/assets/vk", "hex");
-  const circuit = JSON.parse(
-    fs.readFileSync("./contracts/assets/hello_world.json", "utf8")
-  );
+  const vk = "0x" + fs.readFileSync("./circuits/target/vk", "hex");
+  const circuit = JSON.parse(fs.readFileSync("./circuits/target/{{ project_name }}.json", "utf8"));
 
   const noir = new Noir(circuit);
   const backend = new UltraHonkBackend(circuit.bytecode);

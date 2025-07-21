@@ -1,5 +1,5 @@
 [package]
-name = "hello_world"
+name = "{{ project_name }}"
 type = "bin"
 authors = [""]
 

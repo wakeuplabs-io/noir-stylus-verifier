@@ -141,7 +141,7 @@ mod tests {
     use super::*;
     use crate::config::requirements::MockTSystemRequirementsChecker;
     use crate::infrastructure::{rpc::MockTRpc, stylus::MockTStylus, system::MockTSystem};
-    use mockall::{predicate::*};
+    use mockall::predicate::*;
 
     // default values for testing
     const RPC_URL: &str = "https://rpc.sepolia.org";

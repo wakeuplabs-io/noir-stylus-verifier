@@ -92,7 +92,7 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
         let re = Regex::new(r"(\d+\.\d+\.\d+)").expect("Failed to compile regex");
 
         for requirement in requirements.iter() {
-            let mut installed;
+            let mut installed = true;
             let mut version = Version::parse("0.0.0").unwrap();
             let mut required_version = Version::parse("0.0.0").unwrap();
 
@@ -102,13 +102,8 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
                     .execute_command(Command::new("which").arg(requirement.program))
                     .is_err()
                 {
-                    return Err(format!(
-                        "{} is not installed. Please install it.",
-                        requirement.program
-                    ));
+                    installed = false;
                 }
-
-                installed = true;
             } else {
                 let output = self
                 .system
@@ -120,7 +115,6 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
                     )
                 })?;
 
-                installed = true;
                 version = Version::parse(
                     &re.captures(&output)
                         .ok_or(format!("Failed to parse version from output: {output}"))?[1],
