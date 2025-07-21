@@ -72,7 +72,7 @@ test-integration:
   cargo run -p integration -- --rpc-url {{rpc_url}} --priv-key {{private_key}}
 
 test-cli:
-  cargo test -p nsv -- --test-threads=1 --nocapture
+  cargo test -p nsv -- --test-threads=1 
 
 verify-proof verifier_address test_vector_name zk="false":
   #!/usr/bin/env bash

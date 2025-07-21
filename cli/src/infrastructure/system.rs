@@ -14,8 +14,8 @@ pub(crate) trait TSystem: Send + Sync {
 
 // implementations ==========================================
 
-impl System {
-    pub(crate) fn new() -> Self {
+impl Default for System {
+    fn default() -> Self {
         Self
     }
 }

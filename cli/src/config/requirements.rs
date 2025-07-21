@@ -79,10 +79,10 @@ impl fmt::Display for Comparison {
     }
 }
 
-impl SystemRequirementsChecker {
-    pub(crate) fn new() -> Self {
+impl Default for SystemRequirementsChecker {
+    fn default() -> Self {
         Self {
-            system: Box::new(System::new()),
+            system: Box::new(System::default()),
         }
     }
 }

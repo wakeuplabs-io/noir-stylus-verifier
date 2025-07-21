@@ -7,23 +7,35 @@ struct CircuitInputs {
     visibility: String,
 }
 
+#[cfg_attr(test, derive(Debug, PartialEq, Eq, Clone))]
 pub(crate) struct ProjectFile {
     pub(crate) path: String,
     pub(crate) content: String,
 }
 
 pub(crate) struct VerifierGenerator {
-    system: System,
+    system: Box<dyn TSystem>,
 }
 
-impl VerifierGenerator {
-    pub(crate) fn new() -> Self {
+#[cfg_attr(test, mockall::automock)]
+pub(crate) trait TVerifierGenerator: Send + Sync + 'static {
+    fn generate_verifier_contract(
+        &self,
+        circuit_json_path: &Path,
+        vk_path: &Path,
+    ) -> Result<Vec<ProjectFile>, Box<dyn std::error::Error>>;
+}
+
+impl Default for VerifierGenerator {
+    fn default() -> Self {
         Self {
-            system: System::new(),
+            system: Box::new(System::default()),
         }
     }
+}
 
-    pub(crate) fn generate_verifier_contract(
+impl TVerifierGenerator for VerifierGenerator {
+    fn generate_verifier_contract(
         &self,
         circuit_json_path: &Path,
         vk_path: &Path,
@@ -112,7 +124,9 @@ impl VerifierGenerator {
             },
         ])
     }
+}
 
+impl VerifierGenerator {
     fn parse_circuit_inputs(
         &self,
         circuit_json_str: &str,

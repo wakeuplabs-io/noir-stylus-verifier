@@ -1,9 +1,8 @@
 use crate::{
-    infrastructure::{console::progress::style_spinner, downloader::github},
+    infrastructure::{console::progress::create_spinner, downloader::github},
     AppContext,
 };
 use colored::*;
-use indicatif::ProgressBar;
 use std::{env, path::PathBuf};
 
 pub(crate) struct NewCommand {}
@@ -29,17 +28,14 @@ impl NewCommand {
             std::fs::create_dir_all(&root)?;
         }
 
-        let create_spinner = style_spinner(
-            ProgressBar::new_spinner(),
-            &format!("⏳ Creating {name} at {}...", root.display()),
-        );
+        let spinner = create_spinner(&format!("⏳ Creating {name} at {}...", root.display()));
 
         // Download hello world example
         // TODO: update this paths once repo is public and we have a release
         github::download_zipped_asset("wakeuplabs-io/op-ruaas", "v1.0.1", "infra-aws", &root)
             .await?;
 
-        create_spinner.finish_with_message(format!(
+        spinner.finish_with_message(format!(
             "{} Created {name} at {}\n",
             "✅ Success!".green(),
             root.display()

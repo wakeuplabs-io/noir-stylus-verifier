@@ -10,7 +10,7 @@ use crate::{
         },
     },
     infrastructure::{
-        console::progress::style_spinner,
+        console::progress::create_spinner,
         rpc::{Rpc, TRpc},
         stylus::{Stylus, TStylus},
         system::{System, TSystem},
@@ -31,10 +31,10 @@ pub(crate) struct DeployCommand {
 impl Default for DeployCommand {
     fn default() -> Self {
         Self {
-            system_requirements_checker: Box::new(SystemRequirementsChecker::new()),
-            stylus: Box::new(Stylus::new()),
-            system: Box::new(System::new()),
-            rpc: Box::new(Rpc::new()),
+            system_requirements_checker: Box::new(SystemRequirementsChecker::default()),
+            stylus: Box::new(Stylus::default()),
+            system: Box::new(System::default()),
+            rpc: Box::new(Rpc::default()),
         }
     }
 }
@@ -70,10 +70,7 @@ impl DeployCommand {
             .into());
         }
 
-        let spinner = style_spinner(
-            ProgressBar::new_spinner(),
-            &format!("⏳ Deploying {}...", root.display()),
-        );
+        let spinner = create_spinner(&format!("⏳ Deploying {}...", root.display()));
 
         let verifier_address = match verifier_address {
             Some(address) => address,

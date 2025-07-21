@@ -6,7 +6,7 @@ use crate::{
         },
     },
     infrastructure::{
-        console::progress::style_spinner,
+        console::progress::create_spinner,
         stylus::{Stylus, TStylus},
         system::{System, TSystem},
     },
@@ -25,9 +25,9 @@ pub(crate) struct CheckCommand {
 impl Default for CheckCommand {
     fn default() -> Self {
         Self {
-            system_requirements_checker: Box::new(SystemRequirementsChecker::new()),
-            stylus: Box::new(Stylus::new()),
-            system: Box::new(System::new()),
+            system_requirements_checker: Box::new(SystemRequirementsChecker::default()),
+            stylus: Box::new(Stylus::default()),
+            system: Box::new(System::default()),
         }
     }
 }
@@ -73,10 +73,8 @@ impl CheckCommand {
             }
         };
 
-        let progress = style_spinner(
-            ProgressBar::new_spinner(),
-            &format!("⏳ Checking contract for circuit at {}...", root.display()),
-        );
+        // all good, we can run the check
+        let progress = create_spinner(&format!("⏳ Checking contract for circuit at {}...", root.display()));
 
         // run stylus check in contracts directory
         match self.stylus.check(&contracts_root, &rpc_url) {

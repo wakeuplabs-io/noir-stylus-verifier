@@ -13,8 +13,8 @@ pub(crate) trait TRpc: Send + Sync + 'static {
 
 // implementations ==========================================
 
-impl Rpc {
-    pub(crate) fn new() -> Self {
+impl Default for Rpc {
+    fn default() -> Self {
         Self {}
     }
 }

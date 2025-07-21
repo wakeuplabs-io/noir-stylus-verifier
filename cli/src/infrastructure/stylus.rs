@@ -3,7 +3,7 @@ use std::{path::Path, process::Command};
 use crate::infrastructure::system::{System, TSystem};
 
 pub(crate) struct Stylus {
-    system: System,
+    system: Box<dyn TSystem>,
 }
 
 #[cfg_attr(test, mockall::automock)]
@@ -20,10 +20,10 @@ pub(crate) trait TStylus: Send + Sync {
 
 // implementations ==========================================
 
-impl Stylus {
-    pub(crate) fn new() -> Self {
+impl Default for Stylus {
+    fn default() -> Self {
         Self {
-            system: System::new(),
+            system: Box::new(System::default()),
         }
     }
 }
