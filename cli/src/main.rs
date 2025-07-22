@@ -2,6 +2,8 @@ mod commands;
 mod config;
 mod infrastructure;
 
+use std::path::PathBuf;
+
 use clap::{Parser, Subcommand};
 use colored::Colorize;
 use commands::{
@@ -9,8 +11,12 @@ use commands::{
 };
 use dotenv::dotenv;
 use log::{Level, LevelFilter};
+use thiserror::Error;
 
-use crate::infrastructure::terminal::print_app_title;
+use crate::{
+    commands::{prove::ProveCommand, verify::VerifyCommand},
+    infrastructure::terminal::print_app_title,
+};
 
 #[derive(Parser)]
 #[clap(name = "nsv")]
@@ -32,19 +38,19 @@ enum Commands {
     /// Generate a verifier
     Generate {
         #[arg(short, long)]
-        circuit: Option<String>,
+        package: Option<String>,
     },
     /// Check a verifier contract
     Check {
         #[arg(short, long)]
-        circuit: Option<String>,
+        package: Option<String>,
         #[arg(short, long)]
         rpc_url: Option<String>,
     },
     /// Deploy a verifier to the blockchain
     Deploy {
         #[arg(short, long)]
-        circuit: Option<String>,
+        package: Option<String>,
         #[arg(short, long)]
         rpc_url: String,
         #[arg(short, long)]
@@ -52,9 +58,53 @@ enum Commands {
         #[arg(short, long)]
         verifier_address: Option<String>,
         #[arg(short, long, default_value_t = false)]
-        zk_flavor: bool,
+        zk: bool,
+    },
+    /// Generate proof
+    Prove {
+        #[arg(short, long)]
+        package: Option<String>,
+        #[arg(short, long, default_value_t = false)]
+        zk: bool,
+    },
+    /// Verify proof
+    Verify {
+        #[arg(short, long)]
+        package: Option<String>,
+        #[arg(short, long)]
+        proof: Option<String>,
+        #[arg(short, long)]
+        public_input: Option<String>,
+        #[arg(short, long)]
+        verifier_address: Option<String>,
+        #[arg(short, long, default_value_t = false)]
+        zk: bool,
     },
 }
+
+#[derive(Error, Debug, PartialEq, Eq)]
+pub(crate) enum AppError {
+    #[error("We can't find your contracts at {0}. Please run generate first.")]
+    ContractsNotFound(PathBuf),
+    #[error("Missing dependencies")]
+    MissingDependencies(),
+    #[error("Stylus error: {0}")]
+    StylusError(String),
+    #[error("Package not found")]
+    PackageNotFound,
+    #[error("RPC error: {0}")]
+    RpcError(String),
+    #[error("Other error: {0}")]
+    Other(&'static str),
+    #[error("Compile error")]
+    CompileError,
+    #[error("Generate error")]
+    GenerateError,
+    #[error("Name is invalid: {0}")]
+    InvalidName(String),
+    #[error("Directory already exists: {0}")]
+    DirectoryAlreadyExists(String),
+}   
 
 pub(crate) struct AppContext {}
 
@@ -96,26 +146,31 @@ async fn main() {
     // run commands
     if let Err(e) = match args.cmd {
         Commands::New { target } => NewCommand::default().run(&ctx, &target).await,
-        Commands::Generate { circuit } => GenerateCommand::default().run(&ctx, circuit).await,
-        Commands::Check { circuit, rpc_url } => {
-            CheckCommand::default().run(&ctx, circuit, rpc_url).await
+        Commands::Generate { package } => GenerateCommand::default().run(&ctx, package).await,
+        Commands::Check { package, rpc_url } => {
+            CheckCommand::default().run(&ctx, package, rpc_url).await
+        }
+        Commands::Prove { package, zk } => ProveCommand::default().run(&ctx, package, zk).await,
+        Commands::Verify {
+            package,
+            proof,
+            public_input,
+            verifier_address,
+            zk,
+        } => {
+            VerifyCommand::default()
+                .run(&ctx, package, proof, public_input, verifier_address, zk)
+                .await
         }
         Commands::Deploy {
-            circuit,
+            package,
             rpc_url,
             private_key,
             verifier_address,
-            zk_flavor,
+            zk,
         } => {
             DeployCommand::default()
-                .run(
-                    &ctx,
-                    circuit,
-                    rpc_url,
-                    private_key,
-                    verifier_address,
-                    zk_flavor,
-                )
+                .run(&ctx, package, rpc_url, private_key, verifier_address, zk)
                 .await
         }
     } {

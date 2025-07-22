@@ -10,21 +10,22 @@ use crate::{
         },
     },
     infrastructure::{
+        nargo::{Nargo, TNargo},
         progress::create_spinner,
         rpc::{Rpc, TRpc},
         stylus::{Stylus, TStylus},
         system::{System, TSystem},
     },
-    print_error, print_warning, AppContext,
+    print_error, print_warning, AppContext, AppError,
 };
 use colored::*;
-use std::{env, path::PathBuf};
 
 pub(crate) struct DeployCommand {
     system_requirements_checker: Box<dyn TSystemRequirementsChecker>,
     stylus: Box<dyn TStylus>,
     system: Box<dyn TSystem>,
     rpc: Box<dyn TRpc>,
+    nargo: Box<dyn TNargo>,
 }
 
 impl Default for DeployCommand {
@@ -34,6 +35,7 @@ impl Default for DeployCommand {
             stylus: Box::new(Stylus::default()),
             system: Box::new(System),
             rpc: Box::new(Rpc::default()),
+            nargo: Box::new(Nargo::default()),
         }
     }
 }
@@ -42,31 +44,28 @@ impl DeployCommand {
     pub(crate) async fn run(
         &self,
         _ctx: &AppContext,
-        circuit: Option<String>,
+        package: Option<String>,
         rpc_url: String,
         private_key: String,
         verifier_address: Option<String>,
         zk_flavor: bool,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<(), AppError> {
         self.system_requirements_checker
-            .check(vec![CARGO_STYLUS_REQUIREMENT])?;
+            .check(vec![CARGO_STYLUS_REQUIREMENT])
+            .map_err(|_| AppError::MissingDependencies())?;
 
-        let root = if let Some(circuit) = circuit {
-            PathBuf::from(circuit)
-        } else {
-            env::current_dir()?
+        let root = match package {
+            Some(package) => self
+                .nargo
+                .find_package_root(&package)
+                .map_err(|_| AppError::PackageNotFound)?,
+            None => self.system.current_dir(),
         };
         let contracts_root = root.join("contracts");
 
-        // verify we are in a circuit directory.
-        if !self.system.exists(&root.join("Nargo.toml")) {
-            return Err(format!("Directory {} does not contain a circuit", root.display()).into());
-        } else if !self.system.exists(&contracts_root) {
-            return Err(format!(
-                "We can't find your contracts at {}. Please run generate first.",
-                contracts_root.display()
-            )
-            .into());
+        // verify that contracts were already generated.
+        if !self.system.exists(&contracts_root) {
+            return Err(AppError::ContractsNotFound(contracts_root));
         }
 
         let spinner = create_spinner(&format!("⏳ Deploying {}...", root.display()));
@@ -77,7 +76,11 @@ impl DeployCommand {
                 spinner.set_message("Determining default verifier address...");
 
                 // get chain id from rpc url
-                let chain_id = self.rpc.get_chain_id(&rpc_url).await?;
+                let chain_id = self
+                    .rpc
+                    .get_chain_id(&rpc_url)
+                    .await
+                    .map_err(|e| AppError::RpcError(e.to_string()))?;
 
                 // select default verifier address from constants.
                 let verifier_address = match chain_id {
@@ -140,8 +143,11 @@ impl DeployCommand {
 mod tests {
     use super::*;
     use crate::config::requirements::MockTSystemRequirementsChecker;
-    use crate::infrastructure::{rpc::MockTRpc, stylus::MockTStylus, system::MockTSystem};
+    use crate::infrastructure::{
+        nargo::MockTNargo, rpc::MockTRpc, stylus::MockTStylus, system::MockTSystem,
+    };
     use mockall::predicate::*;
+    use std::path::PathBuf;
 
     // default values for testing
     const RPC_URL: &str = "https://rpc.sepolia.org";
@@ -164,12 +170,14 @@ mod tests {
             .withf(|reqs| reqs.len() == 1 && reqs[0] == CARGO_STYLUS_REQUIREMENT)
             .returning(|_| Ok(()));
 
-        // validate we are in a circuit directory
+        let mut nargo_mock = MockTNargo::new();
+        nargo_mock
+            .expect_find_package_root()
+            .with(eq(ROOT))
+            .returning(|_| Ok(PathBuf::from(ROOT)));
+
+        // validate contracts were generated
         let mut system_mock = MockTSystem::new();
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from(ROOT).join("Nargo.toml")))
-            .returning(|_| true);
         system_mock
             .expect_exists()
             .with(eq(PathBuf::from(CONTRACTS_ROOT)))
@@ -193,6 +201,7 @@ mod tests {
             stylus: Box::new(stylus_mock),
             system: Box::new(system_mock),
             rpc: Box::new(rpc_mock),
+            nargo: Box::new(nargo_mock),
         }
         .run(
             &AppContext {},
@@ -220,11 +229,14 @@ mod tests {
             .returning(|_| Ok(()));
 
         // validate we are in a circuit directory
+        let mut nargo_mock = MockTNargo::new();
+        nargo_mock
+            .expect_find_package_root()
+            .with(eq(ROOT))
+            .returning(|_| Ok(PathBuf::from(ROOT)));
+
+        // validate we are in a circuit directory
         let mut system_mock = MockTSystem::new();
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from(ROOT).join("Nargo.toml")))
-            .returning(|_| true);
         system_mock
             .expect_exists()
             .with(eq(PathBuf::from(CONTRACTS_ROOT)))
@@ -235,7 +247,7 @@ mod tests {
         rpc_mock
             .expect_get_chain_id()
             .with(eq(RPC_URL))
-            .returning(|_| Box::pin(async { Ok(CHAIN_ID_ARBITRUM_SEPOLIA) }));
+            .returning(|_| Ok(CHAIN_ID_ARBITRUM_SEPOLIA));
 
         // call stylus deploy
         let mut stylus_mock = MockTStylus::new();
@@ -255,6 +267,7 @@ mod tests {
             stylus: Box::new(stylus_mock),
             system: Box::new(system_mock),
             rpc: Box::new(rpc_mock),
+            nargo: Box::new(nargo_mock),
         }
         .run(
             &AppContext {},

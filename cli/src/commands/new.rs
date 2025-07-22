@@ -4,7 +4,7 @@ use crate::{
         progress::create_spinner,
         system::{System, TSystem},
     },
-    AppContext,
+    AppContext, AppError,
 };
 use colored::*;
 use std::{env, path::PathBuf};
@@ -24,31 +24,30 @@ impl Default for NewCommand {
 }
 
 impl NewCommand {
-    pub(crate) async fn run(
-        &self,
-        _ctx: &AppContext,
-        name: &str,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    pub(crate) async fn run(&self, _ctx: &AppContext, name: &str) -> Result<(), AppError> {
         // validate name
-        self.validate_name(name)?;
+        self.validate_name(name)
+            .map_err(|_| AppError::InvalidName(name.to_string()))?;
 
         // create project directory
         let root = PathBuf::from(&name);
         if self.system.exists(&root) {
-            return Err(format!("Directory already exists: {}", root.display()).into());
+            return Err(AppError::DirectoryAlreadyExists(root.display().to_string()));
         } else {
-            self.system.ensure_dir(&root)?;
+            self.system.ensure_dir(&root);
         }
 
         // all good, let's create the project
         let spinner = create_spinner(&format!("⏳ Creating {name} at {}...", root.display()));
 
         // generate project
-        let project_files = self.codegen.generate_project(name)?;
+        let project_files = self
+            .codegen
+            .generate_project(name)
+            .map_err(|_| AppError::GenerateError)?;
         for file in project_files {
             spinner.set_message(format!("Writing {}", file.path));
-            self.system
-                .write_file(&root.join(file.path), file.content)?;
+            self.system.write_file(&root.join(file.path), file.content)
         }
 
         spinner.finish_with_message(format!(
@@ -147,14 +146,14 @@ mod tests {
             .expect_exists()
             .with(eq(PathBuf::from(PROJECT_NAME)))
             .returning(|_| false);
-        system_mock.expect_ensure_dir().returning(|_| Ok(()));
+        system_mock.expect_ensure_dir().returning(|_| ());
         system_mock
             .expect_write_file()
             .with(
                 eq(PathBuf::from(PROJECT_NAME).join("README.md")),
                 eq(mocked_project_files[0].content.clone()),
             )
-            .returning(|_, _| Ok(()));
+            .returning(|_, _| ());
 
         // check we generate the project files
         let mut codegen_mock = MockTCodegen::new();
