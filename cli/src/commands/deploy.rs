@@ -61,7 +61,6 @@ impl DeployCommand {
                 .map_err(|_| AppError::PackageNotFound)?,
             None => self.system.current_dir(),
         };
-        let relative_root = root.strip_prefix(self.system.current_dir()).unwrap();
         let contracts_root = root.join("contracts");
 
         // verify that contracts were already generated.
@@ -69,7 +68,7 @@ impl DeployCommand {
             return Err(AppError::ContractsNotFound(contracts_root));
         }
 
-        let spinner = create_spinner(&format!("⏳ Deploying {}...", relative_root.display()));
+        let spinner = create_spinner(&format!("⏳ Deploying {}...", contracts_root.display()));
 
         let verifier_address = match verifier_address {
             Some(address) => address,
@@ -122,7 +121,7 @@ impl DeployCommand {
                 spinner.finish_with_message(format!(
                     "{} Deployed {}\n",
                     "✅ Success!".green(),
-                    relative_root.display()
+                    contracts_root.display()
                 ));
                 println!("{result}");
             }
@@ -130,7 +129,7 @@ impl DeployCommand {
                 spinner.finish_with_message(format!(
                     "{} Failed to deploy {}\n",
                     "❌ Error!".red(),
-                    relative_root.display()
+                    contracts_root.display()
                 ));
                 print_error!("{e}");
             }

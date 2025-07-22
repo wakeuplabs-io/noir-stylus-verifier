@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import fs from "fs";
 import { UltraHonkBackend } from "@aztec/bb.js";
 import { Noir } from "@noir-lang/noir_js";
@@ -17,9 +19,7 @@ const client = createPublicClient({
 
 try {
   const vk = fs.readFileSync("./contracts/assets/vk", "hex");
-  const circuit = JSON.parse(
-    fs.readFileSync("./contracts/assets/hello_world.json", "utf8")
-  );
+  const circuit = JSON.parse(fs.readFileSync("./contracts/assets/bytecode.json", "utf8"));
 
   const noir = new Noir(circuit);
   const backend = new UltraHonkBackend(circuit.bytecode);
@@ -36,10 +36,10 @@ try {
   console.log("Verifying proof with contract...");
   const result = await client.readContract({
     address: VERIFIER_ADDRESS,
+    functionName: "verify",
     abi: parseAbi([
       "function verify(bytes proof, bytes y, bytes z) view returns (bool)",
     ]),
-    functionName: "verify",
     args: [
       "0x" + Array.from(proof, (byte) => byte.toString(16).padStart(2, "0")).join(""),
       publicInputs[0],

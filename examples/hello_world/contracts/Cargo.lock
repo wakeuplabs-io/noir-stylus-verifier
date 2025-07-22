@@ -4394,20 +4394,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "stylus-hello-world"
-version = "0.1.11"
-dependencies = [
- "alloy-primitives",
- "alloy-sol-types",
- "dotenv",
- "ethers",
- "eyre",
- "hex",
- "stylus-sdk",
- "tokio",
-]
-
-[[package]]
 name = "stylus-proc"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5079,6 +5065,20 @@ name = "vcpkg"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
+
+[[package]]
+name = "verifier"
+version = "0.1.0"
+dependencies = [
+ "alloy-primitives",
+ "alloy-sol-types",
+ "dotenv",
+ "ethers",
+ "eyre",
+ "hex",
+ "stylus-sdk",
+ "tokio",
+]
 
 [[package]]
 name = "version_check"

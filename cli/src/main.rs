@@ -44,27 +44,27 @@ enum Commands {
     Check {
         #[arg(short, long)]
         package: Option<String>,
-        #[arg(short, long)]
+        #[arg(long)]
         rpc_url: Option<String>,
     },
     /// Deploy a verifier to the blockchain
     Deploy {
         #[arg(short, long)]
         package: Option<String>,
-        #[arg(short, long)]
+        #[arg(long)]
         rpc_url: String,
-        #[arg(short, long)]
+        #[arg(long)]
         private_key: String,
-        #[arg(short, long)]
+        #[arg(long)]
         verifier_address: Option<String>,
-        #[arg(short, long, default_value_t = false)]
+        #[arg(long, default_value_t = false)]
         zk: bool,
     },
     /// Generate proof
     Prove {
         #[arg(short, long)]
         package: Option<String>,
-        #[arg(short, long, default_value_t = false)]
+        #[arg(long, default_value_t = false)]
         zk: bool,
     },
     /// Verify proof
@@ -77,6 +77,8 @@ enum Commands {
         vk: Option<String>,
         #[arg(long)]
         verifier_address: Option<String>,
+        #[arg(long)]
+        rpc_url: Option<String>,
         #[arg(long, default_value_t = false)]
         zk: bool,
     },
@@ -156,10 +158,11 @@ async fn main() {
             public_input,
             vk,
             verifier_address,
+            rpc_url,
             zk,
         } => {
             VerifyCommand::default()
-                .run(&ctx, proof, public_input, vk, verifier_address, zk)
+                .run(&ctx, proof, public_input, vk, verifier_address, rpc_url, zk)
                 .await
         }
         Commands::Deploy {

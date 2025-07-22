@@ -9,8 +9,13 @@ pub(crate) trait TNargo {
     fn find_package_root(&self, package: &str) -> Result<PathBuf, Box<dyn std::error::Error>>;
     fn read_package_name(&self, root: &Path) -> Result<String, Box<dyn std::error::Error>>;
     fn setup(&self, version: &str) -> Result<(), Box<dyn std::error::Error>>;
-    fn compile(&self, circuit_path: &Path) -> Result<(), Box<dyn std::error::Error>>;
     fn execute(&self, root: &Path, package_name: &str) -> Result<(), Box<dyn std::error::Error>>;
+    fn compile(
+        &self,
+        root: &Path,
+        package_name: &str,
+        bytecode_path: &Path,
+    ) -> Result<(), Box<dyn std::error::Error>>;
 }
 
 pub(crate) struct Nargo {
@@ -57,12 +62,19 @@ impl TNargo for Nargo {
         Ok(())
     }
 
-    fn compile(&self, circuit_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
-        self.system.execute_command(
-            Command::new("nargo")
-                .arg("compile")
-                .current_dir(circuit_path),
-        )?;
+    fn compile(
+        &self,
+        root: &Path,
+        package_name: &str,
+        bytecode_path: &Path,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        self.system
+            .execute_command(Command::new("nargo").arg("compile").current_dir(root))?;
+
+        self.system.copy_file(
+            &root.join("target").join(format!("{package_name}.json")),
+            bytecode_path,
+        );
 
         Ok(())
     }

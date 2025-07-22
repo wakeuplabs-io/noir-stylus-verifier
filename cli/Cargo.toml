@@ -30,7 +30,7 @@ zip.workspace = true
 serde_json.workspace = true
 tera.workspace = true
 toml.workspace = true
-alloy.workspace = true 
+alloy.workspace = true
 async-trait.workspace = true
 thiserror.workspace = true
 
