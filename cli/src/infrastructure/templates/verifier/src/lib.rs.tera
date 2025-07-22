@@ -36,7 +36,7 @@ impl VerifierContract {
             InterfaceCall::new(),
             proof_bytes.to_vec().into(),
             {{ inputs_serialization }},
-            {{ vk_bytes }},
+            include_bytes!("../assets/vk").to_vec().into()
         ).unwrap_or(false)
     }
 

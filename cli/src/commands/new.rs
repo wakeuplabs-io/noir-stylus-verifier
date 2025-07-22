@@ -38,7 +38,7 @@ impl NewCommand {
         }
 
         // all good, let's create the project
-        let spinner = create_spinner(&format!("⏳ Creating {name} at {}...", root.display()));
+        let spinner = create_spinner(&format!("⏳ Creating {name}..."));
 
         // generate project
         let project_files = self
@@ -50,11 +50,7 @@ impl NewCommand {
             self.system.write_file(&root.join(file.path), file.content)
         }
 
-        spinner.finish_with_message(format!(
-            "{} Created {name} at {}\n",
-            "✅ Success!".green(),
-            root.display()
-        ));
+        spinner.finish_with_message(format!("{} Created {name}\n", "✅ Success!".green()));
 
         // print instructions ========================================
 

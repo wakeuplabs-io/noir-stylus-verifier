@@ -53,6 +53,7 @@ impl GenerateCommand {
                 .map_err(|_| AppError::PackageNotFound)?,
             None => self.system.current_dir(),
         };
+        let relative_root = root.strip_prefix(self.system.current_dir()).unwrap();
 
         // read package name, double checks root and needed later for nargo and bb
         let package_name = self
@@ -63,7 +64,7 @@ impl GenerateCommand {
         // all good, we can start generating the verifier contract
         let spinner = create_spinner(&format!(
             "⏳ Generating verifier contract for {}...",
-            root.display()
+            relative_root.display()
         ));
 
         // create contracts directory
@@ -96,16 +97,17 @@ impl GenerateCommand {
 
         // write vk
         spinner.set_message("Writing vk...");
+        let vk_path = contracts_root.join("assets").join("vk");
         self.bb
-            .write_vk(&root, &package_name)
+            .write_vk(&root, &package_name, &vk_path)
             .map_err(|_| AppError::Other("Failed to write vk"))?;
 
         // generate verifier contract
         let circuit_json_path = root.join("target").join(format!("{package_name}.json"));
-        let vk_path = root.join("target").join("vk");
+
         let project_files = self
             .verifier_generator
-            .generate_verifier_contract(&circuit_json_path, &vk_path)
+            .generate_verifier_contract(&circuit_json_path)
             .map_err(|_| AppError::GenerateError)?;
 
         // write project files
@@ -116,9 +118,9 @@ impl GenerateCommand {
         }
 
         spinner.finish_with_message(format!(
-            "{} Generated at {}\n",
+            "{} Generated at ./{}\n",
             "✅ Success!".green(),
-            contracts_root.display()
+            relative_root.display()
         ));
 
         // print instructions ========================================
@@ -148,6 +150,8 @@ mod tests {
 
     const ROOT: &str = "circuit";
     const PACKAGE_NAME: &str = "hello_world";
+    const VK_PATH: &str = "circuit/contracts/assets/vk";
+    const CONTRACTS_ROOT: &str = "circuit/contracts";
 
     /// Basic test case, all parameters are given and correct.
     /// We check calls are as expected.
@@ -170,15 +174,16 @@ mod tests {
 
         // ensure we're at root and can read the package name. Then create the contracts directory and write the verifier outputs.
         let mut system_mock = MockTSystem::new();
-        let contracts_root = PathBuf::from(ROOT).join("contracts");
         system_mock
             .expect_ensure_dir()
-            .with(eq(contracts_root.clone()))
+            .with(eq(PathBuf::from(CONTRACTS_ROOT)))
             .returning(|_| ());
         system_mock
             .expect_write_file()
             .with(
-                eq(contracts_root.join(&mock_files[0].path).clone()),
+                eq(PathBuf::from(CONTRACTS_ROOT)
+                    .join(&mock_files[0].path)
+                    .clone()),
                 eq(mock_files[0].content.clone()),
             )
             .returning(|_, _| ());
@@ -205,18 +210,24 @@ mod tests {
             .expect_setup()
             .with(eq(BB_REQUIREMENT.required_version))
             .returning(|_| Ok(()));
-        bb_mock.expect_write_vk().returning(|_, _| Ok(()));
+        bb_mock
+            .expect_write_vk()
+            .with(
+                eq(PathBuf::from(ROOT)),
+                eq(PACKAGE_NAME.to_string()),
+                eq(PathBuf::from(VK_PATH)),
+            )
+            .returning(|_, _, _| Ok(()));
 
         // ensure we generate the verifier contract
         let mut codegen_mock = MockTCodegen::new();
         let circuit_json_path = PathBuf::from(ROOT)
             .join("target")
             .join(format!("{PACKAGE_NAME}.json"));
-        let vk_path = PathBuf::from(ROOT).join("target").join("vk");
         codegen_mock
             .expect_generate_verifier_contract()
-            .with(eq(circuit_json_path), eq(vk_path))
-            .returning(move |_, _| Ok(mock_files.clone()));
+            .with(eq(circuit_json_path))
+            .returning(move |_| Ok(mock_files.clone()));
 
         // run the command
         let result = GenerateCommand {

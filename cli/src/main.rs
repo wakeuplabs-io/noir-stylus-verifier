@@ -69,15 +69,15 @@ enum Commands {
     },
     /// Verify proof
     Verify {
-        #[arg(short, long)]
-        package: Option<String>,
-        #[arg(short, long)]
+        #[arg(long)]
         proof: Option<String>,
-        #[arg(short, long)]
+        #[arg(long)]
         public_input: Option<String>,
-        #[arg(short, long)]
+        #[arg(long)]
+        vk: Option<String>,
+        #[arg(long)]
         verifier_address: Option<String>,
-        #[arg(short, long, default_value_t = false)]
+        #[arg(long, default_value_t = false)]
         zk: bool,
     },
 }
@@ -152,14 +152,14 @@ async fn main() {
         }
         Commands::Prove { package, zk } => ProveCommand::default().run(&ctx, package, zk).await,
         Commands::Verify {
-            package,
             proof,
             public_input,
+            vk,
             verifier_address,
             zk,
         } => {
             VerifyCommand::default()
-                .run(&ctx, package, proof, public_input, verifier_address, zk)
+                .run(&ctx, proof, public_input, vk, verifier_address, zk)
                 .await
         }
         Commands::Deploy {

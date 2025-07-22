@@ -32,6 +32,7 @@ impl ProveCommand {
         package: Option<String>,
         zk: bool,
     ) -> Result<(), AppError> {
+        // find package root
         let root = match package {
             Some(package) => self
                 .nargo
@@ -39,6 +40,9 @@ impl ProveCommand {
                 .map_err(|_| AppError::PackageNotFound)?,
             None => self.system.current_dir(),
         };
+        let relative_root = root.strip_prefix(self.system.current_dir()).unwrap();
+
+        // Read package name, double checks root and needed later for nargo and bb
         let package_name = self
             .nargo
             .read_package_name(&root)
@@ -47,8 +51,8 @@ impl ProveCommand {
         // All good, let's generate the proof
 
         let spinner = create_spinner(&format!(
-            "⏳ Creating proof for {package_name} at {}...",
-            root.display()
+            "⏳ Creating proof for {package_name} at ./{}...",
+            relative_root.display()
         ));
 
         self.nargo
@@ -59,9 +63,9 @@ impl ProveCommand {
             .map_err(|_| AppError::Other("Failed to generate proof"))?;
 
         spinner.finish_with_message(format!(
-            "{} Proof generated at {}\n",
+            "{} Proof generated at ./{}\n",
             "✅ Success!".green(),
-            root.join("target").join("proof").display()
+            relative_root.join("target").join("proof").display()
         ));
 
         Ok(())

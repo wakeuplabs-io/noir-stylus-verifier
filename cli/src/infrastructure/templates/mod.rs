@@ -10,9 +10,9 @@ pub(crate) const VERIFIER_TEMPLATES: &[(&str, &str)] = &[
 ];
 
 pub(crate) const PROJECT_TEMPLATES: &[(&str, &str)] = &[
-    ("circuit/src/main.nr", include_str!("project/circuit/src/main.nr.tera")),
-    ("circuit/Nargo.toml", include_str!("project/circuit/Nargo.toml.tera")),
-    ("circuit/Prover.toml", include_str!("project/circuit/Prover.toml.tera")),
+    ("src/main.nr", include_str!("project/src/main.nr.tera")),
+    ("Nargo.toml", include_str!("project/Nargo.toml.tera")),
+    ("Prover.toml", include_str!("project/Prover.toml.tera")),
     ("scripts/verify-global.js", include_str!("project/scripts/verify-global.js.tera")),
     ("scripts/verify.js", include_str!("project/scripts/verify.js.tera")),
     (".gitignore", include_str!("project/.gitignore.tera")),

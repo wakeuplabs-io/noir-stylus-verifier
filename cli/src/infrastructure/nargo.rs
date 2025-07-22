@@ -37,7 +37,7 @@ impl TNargo for Nargo {
 
     fn read_package_name(&self, root: &Path) -> Result<String, Box<dyn std::error::Error>> {
         let content = self.system.read_file_str(&root.join("Nargo.toml"));
-        let toml: toml::Value = content.parse()?;
+        let toml: toml::Value = toml::from_str(&content)?;
 
         if let Some(name) = toml
             .get("package")

@@ -10,11 +10,11 @@ pub(crate) struct System;
 pub(crate) trait TSystem: Send + Sync {
     fn execute_command(&self, command: &mut Command) -> Result<String, String>;
     fn write_file(&self, path: &Path, content: String);
-    fn read_file(&self, path: &Path) -> Vec<u8>;
     fn read_file_str(&self, path: &Path) -> String;
     fn ensure_dir(&self, path: &Path);
     fn exists(&self, path: &Path) -> bool;
     fn current_dir(&self) -> PathBuf;
+    fn copy_file(&self, source: &Path, destination: &Path);
 }
 
 // implementations ==========================================
@@ -40,10 +40,6 @@ impl TSystem for System {
         std::fs::write(path, content).unwrap();
     }
 
-    fn read_file(&self, path: &Path) -> Vec<u8> {
-        std::fs::read(path).unwrap()
-    }
-
     fn read_file_str(&self, path: &Path) -> String {
         std::fs::read_to_string(path).unwrap()
     }
@@ -58,5 +54,9 @@ impl TSystem for System {
 
     fn exists(&self, path: &Path) -> bool {
         path.exists()
+    }
+
+    fn copy_file(&self, source: &Path, destination: &Path) {
+        std::fs::copy(source, destination).unwrap();
     }
 }

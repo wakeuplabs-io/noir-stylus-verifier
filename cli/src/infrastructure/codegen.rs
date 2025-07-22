@@ -18,7 +18,6 @@ pub(crate) trait TCodegen: Send + Sync + 'static {
     fn generate_verifier_contract(
         &self,
         circuit_json_path: &Path,
-        vk_path: &Path,
     ) -> Result<Vec<ProjectFile>, Box<dyn std::error::Error>>;
 }
 
@@ -63,19 +62,7 @@ impl TCodegen for Codegen {
     fn generate_verifier_contract(
         &self,
         circuit_json_path: &Path,
-        vk_path: &Path,
     ) -> Result<Vec<ProjectFile>, Box<dyn std::error::Error>> {
-        // generate vk bytes
-        let vk_bytes = self.system.read_file(vk_path);
-        let vk_bytes_str = format!(
-            "[{}].into()",
-            vk_bytes
-                .iter()
-                .map(|b| format!("{b}"))
-                .collect::<Vec<String>>()
-                .join(", ")
-        );
-
         // generate inputs prototype and serialization
         let circuit_json_str = self.system.read_file_str(circuit_json_path);
         let circuit_json: serde_json::Value = serde_json::from_str(&circuit_json_str)?;
@@ -117,7 +104,6 @@ impl TCodegen for Codegen {
 
         // build tera context
         let context = tera::Context::from_serialize(serde_json::json!({
-            "vk_bytes": vk_bytes_str,
             "inputs_prototype": inputs_prototype_str,
             "inputs_serialization": inputs_serialization_str,
             "circuit_comment": circuit_comment,
