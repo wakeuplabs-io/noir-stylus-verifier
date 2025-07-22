@@ -104,7 +104,7 @@ pub(crate) enum AppError {
     InvalidName(String),
     #[error("Directory already exists: {0}")]
     DirectoryAlreadyExists(String),
-}   
+}
 
 pub(crate) struct AppContext {}
 

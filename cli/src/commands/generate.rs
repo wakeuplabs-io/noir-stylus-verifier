@@ -107,11 +107,12 @@ impl GenerateCommand {
             .verifier_generator
             .generate_verifier_contract(&circuit_json_path, &vk_path)
             .map_err(|_| AppError::GenerateError)?;
-        
+
         // write project files
         for file in project_files {
             spinner.set_message(format!("Writing {}", file.path));
-            self.system.write_file(&contracts_root.join(file.path), file.content);
+            self.system
+                .write_file(&contracts_root.join(file.path), file.content);
         }
 
         spinner.finish_with_message(format!(
@@ -169,14 +170,15 @@ mod tests {
 
         // ensure we're at root and can read the package name. Then create the contracts directory and write the verifier outputs.
         let mut system_mock = MockTSystem::new();
+        let contracts_root = PathBuf::from(ROOT).join("contracts");
         system_mock
             .expect_ensure_dir()
-            .with(eq(PathBuf::from(ROOT).join("contracts")))
+            .with(eq(contracts_root.clone()))
             .returning(|_| ());
         system_mock
             .expect_write_file()
             .with(
-                eq(PathBuf::from(ROOT).join("contracts").join(&mock_files[0].path)),
+                eq(contracts_root.join(&mock_files[0].path).clone()),
                 eq(mock_files[0].content.clone()),
             )
             .returning(|_, _| ());
@@ -184,13 +186,17 @@ mod tests {
         // We need specific version of nargo to ensure compatibility.
         let mut nargo_mock = MockTNargo::new();
         nargo_mock
+            .expect_find_package_root()
+            .with(eq(PACKAGE_NAME.to_string()))
+            .returning(|_| Ok(PathBuf::from(ROOT)));
+        nargo_mock
             .expect_setup()
             .with(eq(NOIR_REQUIREMENT.required_version))
             .returning(|_| Ok(()));
         nargo_mock
             .expect_read_package_name()
             .with(eq(PathBuf::from(ROOT)))
-            .returning(|_| Ok("hello_world".to_string()));
+            .returning(|_| Ok(PACKAGE_NAME.to_string()));
         nargo_mock.expect_compile().returning(|_| Ok(()));
 
         // Same for bb
@@ -201,17 +207,18 @@ mod tests {
             .returning(|_| Ok(()));
         bb_mock.expect_write_vk().returning(|_, _| Ok(()));
 
+        // ensure we generate the verifier contract
         let mut codegen_mock = MockTCodegen::new();
+        let circuit_json_path = PathBuf::from(ROOT)
+            .join("target")
+            .join(format!("{PACKAGE_NAME}.json"));
+        let vk_path = PathBuf::from(ROOT).join("target").join("vk");
         codegen_mock
             .expect_generate_verifier_contract()
-            .with(
-                eq(PathBuf::from(ROOT)
-                    .join("target")
-                    .join(format!("{PACKAGE_NAME}.json"))),
-                eq(PathBuf::from(ROOT).join("target").join("vk")),
-            )
+            .with(eq(circuit_json_path), eq(vk_path))
             .returning(move |_, _| Ok(mock_files.clone()));
 
+        // run the command
         let result = GenerateCommand {
             system: Box::new(system_mock),
             system_requirements_checker: Box::new(system_requirements_checker_mock),
@@ -219,7 +226,7 @@ mod tests {
             nargo: Box::new(nargo_mock),
             bb: Box::new(bb_mock),
         }
-        .run(&AppContext {}, Some(ROOT.to_string()))
+        .run(&AppContext {}, Some(PACKAGE_NAME.to_string()))
         .await;
 
         assert!(result.is_ok());
