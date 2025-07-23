@@ -33,6 +33,7 @@ toml.workspace = true
 alloy.workspace = true
 async-trait.workspace = true
 thiserror.workspace = true
+openssl.workspace = true
 
 [dev-dependencies]
 assert_cmd = "2.0.10"
