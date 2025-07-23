@@ -227,7 +227,10 @@ mod tests {
         let mut stylus_mock = MockTStylus::new();
         stylus_mock
             .expect_check()
-            .with(eq(PathBuf::from(CONTRACTS_ROOT)), eq(DEFAULT_RPC_URL.to_string()))
+            .with(
+                eq(PathBuf::from(CONTRACTS_ROOT)),
+                eq(DEFAULT_RPC_URL.to_string()),
+            )
             .returning(|_, _| Ok("✅ Success!".to_string()));
 
         let command = CheckCommand {
