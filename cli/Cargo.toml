@@ -25,7 +25,6 @@ env_logger.workspace = true
 mockall.workspace = true
 semver.workspace = true
 regex.workspace = true
-reqwest = { workspace = true, features = ["rustls-tls", "json"], default-features = false }
 zip.workspace = true
 serde_json.workspace = true
 tera.workspace = true
