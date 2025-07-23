@@ -2,9 +2,10 @@
 
 [![Build Status](https://github.com/wakeuplabs-io/noir-stylus-verifier/actions/workflows/rust-build.yml/badge.svg)](https://github.com/wakeuplabs-io/noir-stylus-verifier/actions/workflows/rust-build.yml)
 
+> 🚧 Work in progress – things may break or change.
+
 A Stylus-compatible UltraHonk verifier that bridges Noir's zero-knowledge capabilities with Arbitrum Stylus, enabling efficient verification of Barretenberg proofs in a WASM environment.
 
-> 🚧 Work in progress – things may break or change.
 
 This project surges as a [proposal](https://github.com/orgs/noir-lang/discussions/8673) to Aztec [discussion](https://github.com/orgs/noir-lang/discussions/8345)
 
