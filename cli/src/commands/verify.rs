@@ -41,6 +41,7 @@ sol! {
 }
 
 impl VerifyCommand {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) async fn run(
         &self,
         _ctx: &AppContext,
@@ -427,15 +428,7 @@ mod tests {
         };
 
         let result = command
-            .run(
-                &AppContext {},
-                None,
-                None,
-                None,
-                None,
-                None,
-                false,
-            )
+            .run(&AppContext {}, None, None, None, None, None, false)
             .await;
 
         assert!(result.is_ok());
@@ -606,15 +599,7 @@ mod tests {
         };
 
         let result = command
-            .run(
-                &AppContext {},
-                None,
-                None,
-                None,
-                None,
-                None,
-                false,
-            )
+            .run(&AppContext {}, None, None, None, None, None, false)
             .await;
 
         assert!(result.is_err());

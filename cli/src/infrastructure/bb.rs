@@ -9,8 +9,18 @@ pub(crate) struct Bb {
 #[cfg_attr(test, mockall::automock)]
 pub(crate) trait TBb {
     fn setup(&self, version: &str) -> Result<(), Box<dyn std::error::Error>>;
-    fn write_vk(&self, root: &Path, package_name: &str, output_path: &Path) -> Result<(), Box<dyn std::error::Error>>;
-    fn prove(&self, root: &Path, package_name: &str, zk: bool) -> Result<(), Box<dyn std::error::Error>>;
+    fn write_vk(
+        &self,
+        root: &Path,
+        package_name: &str,
+        output_path: &Path,
+    ) -> Result<(), Box<dyn std::error::Error>>;
+    fn prove(
+        &self,
+        root: &Path,
+        package_name: &str,
+        zk: bool,
+    ) -> Result<(), Box<dyn std::error::Error>>;
     fn verify(
         &self,
         root: &Path,
@@ -36,7 +46,12 @@ impl TBb for Bb {
         Ok(())
     }
 
-    fn write_vk(&self, root: &Path, package_name: &str, output_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    fn write_vk(
+        &self,
+        root: &Path,
+        package_name: &str,
+        output_path: &Path,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let bytecode_path = root.join("target").join(format!("{package_name}.json"));
         self.system.execute_command(
             Command::new("bb")
@@ -51,7 +66,8 @@ impl TBb for Bb {
         )?;
 
         self.system.ensure_dir(output_path.parent().unwrap());
-        self.system.copy_file(&root.join("target").join("vk"), output_path);
+        self.system
+            .copy_file(&root.join("target").join("vk"), output_path);
 
         Ok(())
     }

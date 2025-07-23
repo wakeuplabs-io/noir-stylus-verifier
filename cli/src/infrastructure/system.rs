@@ -62,7 +62,11 @@ impl TSystem for System {
     }
 
     fn copy_file(&self, source: &Path, destination: &Path) {
-        println!("Copying file from {} to {}", source.display(), destination.display());
+        println!(
+            "Copying file from {} to {}",
+            source.display(),
+            destination.display()
+        );
         // ensure destination directory exists
         std::fs::create_dir_all(destination.parent().unwrap()).unwrap();
         std::fs::copy(source, destination).unwrap();

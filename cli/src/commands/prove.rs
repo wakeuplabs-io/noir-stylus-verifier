@@ -38,7 +38,6 @@ impl ProveCommand {
         package: Option<String>,
         zk: bool,
     ) -> Result<(), AppError> {
-        
         // verify dependencies
         self.system_requirements_checker
             .check(vec![BB_UP_REQUIREMENT, NOIRUP_REQUIREMENT])

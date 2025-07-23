@@ -52,7 +52,7 @@ impl TNargo for Nargo {
             }
         }
 
-        Err(format!("Circuit not found at or above: {}", package).into())
+        Err(format!("Circuit not found at or above: {package}").into())
     }
 
     fn read_package_name(&self, root: &Path) -> Result<String, Box<dyn std::error::Error>> {
