@@ -15,6 +15,7 @@ use thiserror::Error;
 
 use crate::{
     commands::{prove::ProveCommand, verify::VerifyCommand},
+    config::constants::DEFAULT_RPC_URL,
     infrastructure::terminal::print_app_title,
 };
 
@@ -34,52 +35,87 @@ struct Args {
 #[derive(Subcommand, Debug, Clone)]
 enum Commands {
     /// Create a new project
-    New { target: String },
-    /// Generate a verifier contract from a circuit
+    New {
+        #[arg(help = "Name of the project. This will also be the directory and package name.")]
+        target: String,
+    },
+    ///  Generate a verifier contract from a noir circuit
     Generate {
-        #[arg(short, long)]
+        #[arg(short, long, help = "Package name containing the circuit")]
         package: Option<String>,
     },
-    /// Check a verifier contract for stylus compatibility
+    /// Check if the generated contract is compatible with Stylus, and how much it costs to deploy
     Check {
-        #[arg(short, long)]
+        #[arg(short, long, help = "Package name containing the circuit")]
         package: Option<String>,
-        #[arg(long)]
-        rpc_url: Option<String>,
-    },
-    /// Deploy a verifier to the blockchain
-    Deploy {
-        #[arg(short, long)]
-        package: Option<String>,
-        #[arg(long)]
+        #[arg(
+            long,
+            help = "RPC URL to use for the check",
+            default_value = DEFAULT_RPC_URL
+        )]
         rpc_url: String,
-        #[arg(long)]
-        private_key: String,
-        #[arg(long)]
-        verifier_address: Option<String>,
-        #[arg(long, default_value_t = false)]
-        zk: bool,
     },
-    /// Generate proof
-    Prove {
-        #[arg(short, long)]
+    /// Deploy the generated contract to the blockchain
+    Deploy {
+        #[arg(short, long, help = "Package name containing the circuit")]
         package: Option<String>,
-        #[arg(long, default_value_t = false)]
+        #[arg(long, help = "RPC URL to use for deployment")]
+        rpc_url: String,
+        #[arg(long, help = "Private key to sign the deployment transaction")]
+        private_key: String,
+        #[arg(
+            long,
+            help = "Address of the global verifier contract. Optional if using defaults (see `docs/deployments.md`)."
+        )]
+        verifier_address: Option<String>,
+        #[arg(long, default_value_t = false, help = "Enable zk-flavored verifier")]
         zk: bool,
     },
-    /// Verify proof
+    /// Generate a proof for a circuit. Useful for testing.
+    Prove {
+        #[arg(short, long, help = "Package name containing the circuit")]
+        package: Option<String>,
+        #[arg(
+            long,
+            default_value = "Prover.toml",
+            help = "Name of the prover to use for the proof generation"
+        )]
+        prover_name: String,
+        #[arg(long, default_value_t = false, help = "Enable zk-flavored proof")]
+        zk: bool,
+    },
+    /// Verify a proof for a circuit. Useful for testing.
     Verify {
-        #[arg(long)]
-        proof: Option<String>,
-        #[arg(long)]
-        public_input: Option<String>,
-        #[arg(long)]
-        vk: Option<String>,
-        #[arg(long)]
+        #[arg(
+            long,
+            default_value = "target/proof",
+            help = "Path to the proof to verify"
+        )]
+        proof: String,
+        #[arg(
+            long,
+            default_value = "target/public_inputs",
+            help = "Path to the public input to verify"
+        )]
+        public_input: String,
+        #[arg(
+            long,
+            default_value = "contracts/assets/vk",
+            help = "Path to the verification key"
+        )]
+        vk: String,
+        #[arg(
+            long,
+            help = "Address of the deployed verifier contract (defaults to local verifier if omitted)"
+        )]
         verifier_address: Option<String>,
-        #[arg(long)]
+        #[arg(long, help = "RPC URL to use for verification")]
         rpc_url: Option<String>,
-        #[arg(long, default_value_t = false)]
+        #[arg(
+            long,
+            default_value_t = false,
+            help = "Set if using a zk-flavored verifier and proof"
+        )]
         zk: bool,
     },
 }
@@ -154,7 +190,15 @@ async fn main() {
         Commands::Check { package, rpc_url } => {
             CheckCommand::default().run(&ctx, package, rpc_url).await
         }
-        Commands::Prove { package, zk } => ProveCommand::default().run(&ctx, package, zk).await,
+        Commands::Prove {
+            package,
+            prover_name,
+            zk,
+        } => {
+            ProveCommand::default()
+                .run(&ctx, package, prover_name, zk)
+                .await
+        }
         Commands::Verify {
             proof,
             public_input,

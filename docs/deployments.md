@@ -1,6 +1,12 @@
 
 # Deployments
 
+| Flavor | Chain | Address |
+|--------|-------|---------|
+| UltraKeccakFlavor | Arbitrum Sepolia | 0x951d400a88f98c2d3f6f8af7b502a59bf418ab76 |
+| UltraKeccakZkFlavor | Arbitrum Sepolia | 0xdcaaed24c926bc718984eaa4126e27b27d60379d |
+
+
 ## UltraKeccakFlavor
 
 Locally
