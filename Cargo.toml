@@ -1,6 +1,6 @@
 [workspace]
 members = [ "cli","contracts", "integration", "packages/ultrahonk"]
-exclude = ["examples/hello_world/contracts"]
+exclude = ["examples/hello_world/contracts", "examples/hello_world/circuit"]
 resolver = "2"
 
 [workspace.package]
@@ -107,6 +107,7 @@ log = "0.4.22"
 reqwest = { version = "0.12.22", features = ["rustls-tls"], default-features = false }
 zip = "4.3.0"
 figlet-rs = "0.1.5"
+tera = "1.20.0"
 
 [patch.crates-io]
 ark-ec = { path = "vendor/algebra/ec", package = "ark-ec", version = "0.5.0" }

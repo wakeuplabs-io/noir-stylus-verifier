@@ -4,11 +4,13 @@ mod infrastructure;
 
 use clap::{Parser, Subcommand};
 use colored::Colorize;
-use commands::new::NewCommand;
+use commands::{
+    check::CheckCommand, deploy::DeployCommand, generate::GenerateCommand, new::NewCommand,
+};
 use dotenv::dotenv;
 use log::{Level, LevelFilter};
 
-use crate::infrastructure::console::terminal::print_app_title;
+use crate::infrastructure::terminal::print_app_title;
 
 #[derive(Parser)]
 #[clap(name = "nsv")]
@@ -27,6 +29,31 @@ struct Args {
 enum Commands {
     /// Create a new project
     New { target: String },
+    /// Generate a verifier
+    Generate {
+        #[arg(short, long)]
+        circuit: Option<String>,
+    },
+    /// Check a verifier contract
+    Check {
+        #[arg(short, long)]
+        circuit: Option<String>,
+        #[arg(short, long)]
+        rpc_url: Option<String>,
+    },
+    /// Deploy a verifier to the blockchain
+    Deploy {
+        #[arg(short, long)]
+        circuit: Option<String>,
+        #[arg(short, long)]
+        rpc_url: String,
+        #[arg(short, long)]
+        private_key: String,
+        #[arg(short, long)]
+        verifier_address: Option<String>,
+        #[arg(short, long, default_value_t = false)]
+        zk_flavor: bool,
+    },
 }
 
 pub(crate) struct AppContext {}
@@ -68,7 +95,29 @@ async fn main() {
 
     // run commands
     if let Err(e) = match args.cmd {
-        Commands::New { target } => NewCommand::new().run(&ctx, &target).await,
+        Commands::New { target } => NewCommand::default().run(&ctx, &target).await,
+        Commands::Generate { circuit } => GenerateCommand::default().run(&ctx, circuit).await,
+        Commands::Check { circuit, rpc_url } => {
+            CheckCommand::default().run(&ctx, circuit, rpc_url).await
+        }
+        Commands::Deploy {
+            circuit,
+            rpc_url,
+            private_key,
+            verifier_address,
+            zk_flavor,
+        } => {
+            DeployCommand::default()
+                .run(
+                    &ctx,
+                    circuit,
+                    rpc_url,
+                    private_key,
+                    verifier_address,
+                    zk_flavor,
+                )
+                .await
+        }
     } {
         print_error!(" Error: {e} \n");
         std::process::exit(1);

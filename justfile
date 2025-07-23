@@ -66,13 +66,13 @@ deploy-contract contract constructor_signature="" *constructor_args="":
 
 test-ultrahonk:
   #  ark-ec/only-arithmetic-backend panics if we attempt to do arithmetic outside of the G1ArithmeticBackend
-  cargo test -p ultrahonk --features ark-ec/only-arithmetic-backend -- --test-threads=1 --nocapture
+  cargo test -p ultrahonk --features ark-ec/only-arithmetic-backend -- --test-threads=1 
 
 test-integration:
   cargo run -p integration -- --rpc-url {{rpc_url}} --priv-key {{private_key}}
 
 test-cli:
-  cargo test -p nsv -- --test-threads=1 --nocapture
+  cargo test -p nsv -- --test-threads=1 
 
 verify-proof verifier_address test_vector_name zk="false":
   #!/usr/bin/env bash
@@ -114,7 +114,7 @@ lint:
   cargo clippy --package ultrahonk --package contracts --package integration --package nsv --no-deps
 
 lint-fix:
-  cargo clippy --package ultrahonk --package contracts --package integration --package nsv --fix
+  cargo clippy --package ultrahonk --package contracts --package integration --package nsv --fix --allow-dirty
 
 
 clean-cli-macos:

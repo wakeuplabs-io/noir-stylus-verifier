@@ -1,0 +1,17 @@
+
+# {{ project_name }}
+
+An example project generated with [nsv](https://github.com/wakeuplabs-io/noir-stylus-verifier)
+
+## How to use this template
+
+You can find 2 main folders in the project:
+- `circuit`: Contains the noir circuit
+- `scripts`: Has example js scripts that call the global or particular verifier with proofs generated for your specific circuit. You need to pass verifier address and rpc urls as env variables. Also make sure to update the scripts to properly reflect your circuit inputs. Remember that to run them you first need to do `pnpm install`. `@aztec/bb.js` has to be version `0.86.0` for compatibility with the stylus verifier. Also, scripts are so far only compatible with the `UltraHonkKeccakFlavor` no Zk flavor yet.
+
+Once you have your circuit ready for deployment, from `circuit` folder do:
+1. `nsv generate` to generate a stylus project for the circuit  at `circuit/contracts`
+2. `nsv check --rpc-url ...` to validate the contract with the blockchain.
+3. `nsv deploy --private-key 0x... --rpc-url ... --verifier-address 0x...` to deploy the generated contract.
+
+

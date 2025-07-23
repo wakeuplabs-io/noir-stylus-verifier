@@ -40,7 +40,7 @@ pub(crate) fn print_app_title() {
     let circles = "◌○●";
     let powered_by = "Powered by WakeupLabs";
 
-    let plain = format!("{} {} {}", title, circles, powered_by);
+    let plain = format!("{title} {circles} {powered_by}");
     let content = format!(
         "{} {} {}",
         title.blue().bold(),

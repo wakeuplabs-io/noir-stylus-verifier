@@ -17,15 +17,18 @@ env:
 jobs:
   build:
     name: Build CLI
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
-          - target: x86_64-unknown-linux-musl
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
             build_command: build-cli-linux
-          - target: x86_64-pc-windows-gnu
+          - os: windows-latest
+            target: x86_64-pc-windows-gnu
             build_command: build-cli-windows
-          - target: x86_64-apple-darwin
+          - os: macos-latest
+            target: x86_64-apple-darwin
             build_command: build-cli-macos
 
     steps:

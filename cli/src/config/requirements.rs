@@ -3,7 +3,7 @@ use regex::Regex;
 use semver::Version;
 use std::{fmt, process::Command};
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 #[allow(dead_code)]
 pub(crate) enum Comparison {
     Equal,
@@ -11,9 +11,10 @@ pub(crate) enum Comparison {
     LessThanOrEqual,
     GreaterThan,
     LessThan,
+    Installed,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub(crate) struct Requirement<'a> {
     pub(crate) program: &'a str,
     pub(crate) version_arg: &'a str,
@@ -21,8 +22,9 @@ pub(crate) struct Requirement<'a> {
     pub(crate) required_comparator: Comparison,
 }
 
-pub(crate) trait TSystemRequirementsChecker {
-    fn check(&self, requirements: Vec<Requirement>) -> Result<(), String>;
+#[cfg_attr(test, mockall::automock)]
+pub(crate) trait TSystemRequirementsChecker: Send + Sync {
+    fn check<'a>(&self, requirements: Vec<Requirement<'a>>) -> Result<(), String>;
 }
 
 pub(crate) struct SystemRequirementsChecker {
@@ -31,17 +33,35 @@ pub(crate) struct SystemRequirementsChecker {
 
 // requirements constants ======================================
 
-pub(crate) const DOCKER_REQUIREMENT: Requirement = Requirement {
-    program: "docker",
-    version_arg: "-v",
-    required_version: "24.0.0",
+pub(crate) const CARGO_STYLUS_REQUIREMENT: Requirement = Requirement {
+    program: "cargo-stylus",
+    version_arg: "--version",
+    required_version: "0.1.0",
     required_comparator: Comparison::GreaterThanOrEqual,
 };
-pub(crate) const GIT_REQUIREMENT: Requirement = Requirement {
-    program: "git",
+pub(crate) const BB_UP_REQUIREMENT: Requirement = Requirement {
+    program: "bbup",
+    version_arg: "",
+    required_version: "",
+    required_comparator: Comparison::Installed,
+};
+pub(crate) const BB_REQUIREMENT: Requirement = Requirement {
+    program: "bb",
     version_arg: "--version",
-    required_version: "2.0.0",
-    required_comparator: Comparison::GreaterThanOrEqual,
+    required_version: "0.86.0",
+    required_comparator: Comparison::Equal,
+};
+pub(crate) const NOIRUP_REQUIREMENT: Requirement = Requirement {
+    program: "noirup",
+    version_arg: "",
+    required_version: "",
+    required_comparator: Comparison::Installed,
+};
+pub(crate) const NOIR_REQUIREMENT: Requirement = Requirement {
+    program: "noir",
+    version_arg: "--version",
+    required_version: "1.0.0-beta.6",
+    required_comparator: Comparison::Equal,
 };
 
 // implementations =============================================
@@ -54,14 +74,15 @@ impl fmt::Display for Comparison {
             Comparison::LessThanOrEqual => write!(f, "<="),
             Comparison::GreaterThan => write!(f, ">"),
             Comparison::LessThan => write!(f, "<"),
+            Comparison::Installed => write!(f, "installed"),
         }
     }
 }
 
-impl SystemRequirementsChecker {
-    pub(crate) fn new() -> Self {
+impl Default for SystemRequirementsChecker {
+    fn default() -> Self {
         Self {
-            system: Box::new(System::new()),
+            system: Box::new(System),
         }
     }
 }
@@ -71,7 +92,20 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
         let re = Regex::new(r"(\d+\.\d+\.\d+)").expect("Failed to compile regex");
 
         for requirement in requirements.iter() {
-            let output = self
+            let mut installed = true;
+            let mut version = Version::parse("0.0.0").unwrap();
+            let mut required_version = Version::parse("0.0.0").unwrap();
+
+            if requirement.required_comparator == Comparison::Installed {
+                if self
+                    .system
+                    .execute_command(Command::new("which").arg(requirement.program))
+                    .is_err()
+                {
+                    installed = false;
+                }
+            } else {
+                let output = self
                 .system
                 .execute_command(Command::new(requirement.program).arg(requirement.version_arg))
                 .map_err(|_| {
@@ -81,14 +115,14 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
                     )
                 })?;
 
-            let version = Version::parse(
-                &re.captures(&output)
-                    .ok_or(format!("Failed to parse version from output: {output}"))?[1],
-            )
-            .expect("Failed to parse version");
+                version = Version::parse(
+                    &re.captures(&output)
+                        .ok_or(format!("Failed to parse version from output: {output}"))?[1],
+                )
+                .expect("Failed to parse version");
+                required_version = Version::parse(requirement.required_version).unwrap();
+            }
 
-            let required_version =
-                Version::parse(requirement.required_version).map_err(|e| e.to_string())?;
             match requirement.required_comparator {
                 Comparison::Equal => {
                     if version != required_version {
@@ -127,6 +161,14 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
                         return Err(format!(
                             "Version {} is not less than required version {}",
                             version, requirement.required_version
+                        ));
+                    }
+                }
+                Comparison::Installed => {
+                    if !installed {
+                        return Err(format!(
+                            "{} is not installed. Please install it.",
+                            requirement.program
                         ));
                     }
                 }

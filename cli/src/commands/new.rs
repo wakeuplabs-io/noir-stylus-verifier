@@ -1,45 +1,57 @@
 use crate::{
-    infrastructure::{console::progress::style_spinner, downloader::github},
+    infrastructure::{
+        codegen::{Codegen, TCodegen},
+        progress::create_spinner,
+        system::{System, TSystem},
+    },
     AppContext,
 };
 use colored::*;
-use indicatif::ProgressBar;
 use std::{env, path::PathBuf};
 
-pub(crate) struct NewCommand {}
+pub(crate) struct NewCommand {
+    system: Box<dyn TSystem>,
+    codegen: Box<dyn TCodegen>,
+}
+
+impl Default for NewCommand {
+    fn default() -> Self {
+        Self {
+            system: Box::new(System),
+            codegen: Box::new(Codegen::default()),
+        }
+    }
+}
 
 impl NewCommand {
-    pub(crate) fn new() -> Self {
-        Self {}
-    }
-
     pub(crate) async fn run(
         &self,
         _ctx: &AppContext,
         name: &str,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let mut root = PathBuf::from(&name);
-        if !root.is_absolute() {
-            root = env::current_dir()?.join(root)
-        }
+        // validate name
+        self.validate_name(name)?;
 
-        if root.exists() {
+        // create project directory
+        let root = PathBuf::from(&name);
+        if self.system.exists(&root) {
             return Err(format!("Directory already exists: {}", root.display()).into());
         } else {
-            std::fs::create_dir_all(&root)?;
+            self.system.ensure_dir(&root)?;
         }
 
-        let create_spinner = style_spinner(
-            ProgressBar::new_spinner(),
-            &format!("⏳ Creating {name} at {}...", root.display()),
-        );
+        // all good, let's create the project
+        let spinner = create_spinner(&format!("⏳ Creating {name} at {}...", root.display()));
 
-        // Download hello world example
-        // TODO: update this paths once repo is public and we have a release
-        github::download_zipped_asset("wakeuplabs-io/op-ruaas", "v1.0.1", "infra-aws", &root)
-            .await?;
+        // generate project
+        let project_files = self.codegen.generate_project(name)?;
+        for file in project_files {
+            spinner.set_message(format!("Writing {}", file.path));
+            self.system
+                .write_file(&root.join(file.path), file.content)?;
+        }
 
-        create_spinner.finish_with_message(format!(
+        spinner.finish_with_message(format!(
             "{} Created {name} at {}\n",
             "✅ Success!".green(),
             root.display()
@@ -48,13 +60,141 @@ impl NewCommand {
         // print instructions ========================================
 
         println!(
-            "\n {title}\n\n  - {bin} {build_cmd}: Builds the stylus compatible wasm.\n  - {bin} {deploy_cmd}: Deploys the verifier to the blockchain.\n",
+            "\n {title}\n\n  - {bin} {generate_cmd}: Generates a new verifier contract.\n  - {bin} {check_cmd}: Checks the verifier contract.\n  - {bin} {deploy_cmd}: Deploys the verifier to the blockchain.\n",
             title = "What's Next?".bright_white().bold(),
             bin = env!("CARGO_BIN_NAME").blue(),
-            build_cmd = "build".blue(),
-            deploy_cmd = "deploy".blue() // TODO: expand upon new commands
+            generate_cmd = "generate".blue(),
+            check_cmd = "check".blue(),
+            deploy_cmd = "deploy".blue(),
         );
 
         Ok(())
+    }
+
+    /// Same as defined by cargo https://doc.rust-lang.org/cargo/reference/manifest.html#the-name-field
+    fn validate_name(&self, name: &str) -> Result<(), Box<dyn std::error::Error>> {
+        if name.is_empty() {
+            return Err("Name is required".into());
+        }
+        if !name
+            .chars()
+            .all(|c| c.is_alphanumeric() || c == '_' || c == '-')
+        {
+            return Err(
+                "Name can only contain alphanumeric characters, underscores, or hyphens".into(),
+            );
+        }
+        if name.starts_with('-') {
+            return Err("Name cannot start with a hyphen".into());
+        }
+        if name.len() > 64 {
+            return Err("Name cannot be longer than 64 characters".into());
+        }
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::infrastructure::{
+        codegen::{MockTCodegen, ProjectFile},
+        system::MockTSystem,
+    };
+    use mockall::predicate::*;
+
+    const PROJECT_NAME: &str = "hello_world";
+
+    #[test]
+    fn test_validate_name() {
+        let command = NewCommand::default();
+
+        let valid_names = vec![
+            "hello_world",
+            "hello-world",
+            "hello_world_123",
+            "hello",
+            "a_very_long_name_123",
+        ];
+        let invalid_names = vec![
+            "",
+            "hello world",
+            "hello_world!",
+            "hello@world",
+            "hello.world",
+            "64_chars_is_the_max_length_for_a_project_name_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        ];
+
+        for name in valid_names {
+            assert!(command.validate_name(name).is_ok());
+        }
+
+        for name in invalid_names {
+            assert!(command.validate_name(name).is_err());
+        }
+    }
+
+    #[tokio::test]
+    async fn test_new_command() {
+        let mocked_project_files = vec![ProjectFile {
+            path: "README.md".to_string(),
+            content: "".to_string(),
+        }];
+
+        // check we verify folder doesn't exist before creating it. Then that we write all the files
+        let mut system_mock = MockTSystem::new();
+        system_mock
+            .expect_exists()
+            .with(eq(PathBuf::from(PROJECT_NAME)))
+            .returning(|_| false);
+        system_mock.expect_ensure_dir().returning(|_| Ok(()));
+        system_mock
+            .expect_write_file()
+            .with(
+                eq(PathBuf::from(PROJECT_NAME).join("README.md")),
+                eq(mocked_project_files[0].content.clone()),
+            )
+            .returning(|_, _| Ok(()));
+
+        // check we generate the project files
+        let mut codegen_mock = MockTCodegen::new();
+        codegen_mock
+            .expect_generate_project()
+            .with(eq(PROJECT_NAME))
+            .returning(move |_| Ok(mocked_project_files.clone()));
+
+        // run the command
+        let result = NewCommand {
+            system: Box::new(system_mock),
+            codegen: Box::new(codegen_mock),
+        }
+        .run(&AppContext {}, PROJECT_NAME)
+        .await;
+
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_new_command_invalid_name() {
+        let result = NewCommand::default().run(&AppContext {}, "").await;
+        assert!(result.is_err());
+    }
+
+    #[tokio::test]
+    async fn test_new_existing_folder() {
+        let mut system_mock = MockTSystem::new();
+        system_mock
+            .expect_exists()
+            .with(eq(PathBuf::from(PROJECT_NAME)))
+            .returning(|_| true);
+
+        let result = NewCommand {
+            system: Box::new(system_mock),
+            codegen: Box::new(MockTCodegen::new()),
+        }
+        .run(&AppContext {}, PROJECT_NAME)
+        .await;
+
+        assert!(result.is_err());
     }
 }
