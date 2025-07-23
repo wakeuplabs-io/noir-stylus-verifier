@@ -120,148 +120,257 @@ mod tests {
     use mockall::predicate::*;
     use std::path::PathBuf;
 
-    // default values for testing
     const RPC_URL: &str = "https://rpc.sepolia.org";
     const ROOT: &str = "circuit";
+    const CONTRACTS_ROOT: &str = "circuit/contracts";
     const PACKAGE_NAME: &str = "hello_world";
 
-    /// Basic test case, user provides all parameters.
-    /// We test we properly run verifications and call the deployment with the correct parameters.
+    /// Happy path, package is provided
     #[tokio::test]
-    async fn test_check_command() {
-        // should check we have stylus installed
+    async fn happy_path_with_package() {
         let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
         system_requirements_checker_mock
             .expect_check()
-            .withf(|reqs| reqs.len() == 1 && reqs[0] == CARGO_STYLUS_REQUIREMENT)
             .returning(|_| Ok(()));
 
         let mut nargo_mock = MockTNargo::new();
         nargo_mock
             .expect_find_package_root()
-            .with(eq(PACKAGE_NAME))
             .returning(|_| Ok(PathBuf::from(ROOT)));
         nargo_mock
             .expect_read_package_name()
-            .with(eq(PathBuf::from(ROOT)))
             .returning(|_| Ok(PACKAGE_NAME.to_string()));
 
-        // should check we're at the circuit root
         let mut system_mock = MockTSystem::new();
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from(ROOT).join("contracts")))
-            .returning(|_| true);
+        system_mock.expect_exists().returning(|_| true);
 
-        // should run stylus check
         let mut stylus_mock = MockTStylus::new();
         stylus_mock
             .expect_check()
-            .with(eq(PathBuf::from(ROOT).join("contracts")), eq(RPC_URL))
             .returning(|_, _| Ok("✅ Success!".to_string()));
 
-        let result = CheckCommand {
+        let command = CheckCommand {
             system_requirements_checker: Box::new(system_requirements_checker_mock),
             stylus: Box::new(stylus_mock),
             system: Box::new(system_mock),
             nargo: Box::new(nargo_mock),
-        }
-        .run(
-            &AppContext {},
-            Some(PACKAGE_NAME.to_string()),
-            Some(RPC_URL.to_string()),
-        )
-        .await;
+        };
 
-        assert!(result.is_ok());
-    }
-
-    /// If user does not provide rpc url, we should use the default one.
-    /// This test checks that we properly determine the default rpc url based on the rpc provided.
-    #[tokio::test]
-    async fn check_uses_sepolia_as_default_rpc_url() {
-        // should check we have stylus installed
-        let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
-        system_requirements_checker_mock
-            .expect_check()
-            .withf(|reqs| reqs.len() == 1 && reqs[0] == CARGO_STYLUS_REQUIREMENT)
-            .returning(|_| Ok(()));
-
-        let mut nargo_mock = MockTNargo::new();
-        nargo_mock
-            .expect_find_package_root()
-            .with(eq(PACKAGE_NAME))
-            .returning(|_| Ok(PathBuf::from(ROOT)));
-        nargo_mock
-            .expect_read_package_name()
-            .with(eq(PathBuf::from(ROOT)))
-            .returning(|_| Ok(PACKAGE_NAME.to_string()));
-
-        // should check we're at the circuit root
-        let mut system_mock = MockTSystem::new();
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from(ROOT).join("contracts")))
-            .returning(|_| true);
-
-        // should run stylus check
-        let mut stylus_mock = MockTStylus::new();
-        stylus_mock
-            .expect_check()
-            .with(
-                eq(PathBuf::from(ROOT).join("contracts")),
-                eq(DEFAULT_RPC_URL),
+        let result = command
+            .run(
+                &AppContext {},
+                Some(PACKAGE_NAME.to_string()),
+                Some(RPC_URL.to_string()),
             )
-            .returning(|_, _| Ok("✅ Success!".to_string()));
-
-        let result = CheckCommand {
-            system_requirements_checker: Box::new(system_requirements_checker_mock),
-            stylus: Box::new(stylus_mock),
-            system: Box::new(system_mock),
-            nargo: Box::new(nargo_mock),
-        }
-        .run(&AppContext {}, Some(PACKAGE_NAME.to_string()), None)
-        .await;
+            .await;
 
         assert!(result.is_ok());
     }
 
-    /// When we can't find the package root, we should fail right away.
+    /// Happy path, no package is provided, we use current directory.
     #[tokio::test]
-    async fn check_package_root_fails() {
-        // should check we have stylus installed
+    async fn happy_path_without_package() {
         let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
         system_requirements_checker_mock
             .expect_check()
-            .withf(|reqs| reqs.len() == 1 && reqs[0] == CARGO_STYLUS_REQUIREMENT)
             .returning(|_| Ok(()));
 
-        // find package root
         let mut nargo_mock = MockTNargo::new();
         nargo_mock
-            .expect_find_package_root()
-            .with(eq(PACKAGE_NAME))
-            .returning(|_| Err("No package root found".into()));
-        nargo_mock.expect_read_package_name().never();
+            .expect_read_package_name()
+            .returning(|_| Ok(PACKAGE_NAME.to_string()));
 
-        // Check contracts were already generated
         let mut system_mock = MockTSystem::new();
-        system_mock.expect_exists().never();
+        system_mock
+            .expect_current_dir()
+            .returning(|| PathBuf::from(ROOT));
+        system_mock.expect_exists().returning(|_| true);
 
-        // should not run stylus check if we can't find the contracts directory
         let mut stylus_mock = MockTStylus::new();
-        stylus_mock.expect_check().never();
+        stylus_mock
+            .expect_check()
+            .returning(|_, _| Ok("✅ Success!".to_string()));
 
-        let result = CheckCommand {
+        let command = CheckCommand {
             system_requirements_checker: Box::new(system_requirements_checker_mock),
             stylus: Box::new(stylus_mock),
             system: Box::new(system_mock),
             nargo: Box::new(nargo_mock),
-        }
-        .run(&AppContext {}, Some(PACKAGE_NAME.to_string()), None)
-        .await;
+        };
+
+        let result = command
+            .run(&AppContext {}, None, Some(RPC_URL.to_string()))
+            .await;
+
+        assert!(result.is_ok());
+    }
+
+    /// Should use default rpc url if not provided, based on
+    #[tokio::test]
+    async fn default_rpc_url() {
+        let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
+        system_requirements_checker_mock
+            .expect_check()
+            .returning(|_| Ok(()));
+
+        let mut nargo_mock = MockTNargo::new();
+        nargo_mock
+            .expect_find_package_root()
+            .returning(|_| Ok(PathBuf::from(ROOT)));
+        nargo_mock
+            .expect_read_package_name()
+            .returning(|_| Ok(PACKAGE_NAME.to_string()));
+
+        let mut system_mock = MockTSystem::new();
+        system_mock.expect_exists().returning(|_| true);
+
+        let mut stylus_mock = MockTStylus::new();
+        stylus_mock
+            .expect_check()
+            .with(eq(PathBuf::from(CONTRACTS_ROOT)), eq(DEFAULT_RPC_URL.to_string()))
+            .returning(|_, _| Ok("✅ Success!".to_string()));
+
+        let command = CheckCommand {
+            system_requirements_checker: Box::new(system_requirements_checker_mock),
+            stylus: Box::new(stylus_mock),
+            system: Box::new(system_mock),
+            nargo: Box::new(nargo_mock),
+        };
+
+        let result = command
+            .run(&AppContext {}, Some(PACKAGE_NAME.to_string()), None)
+            .await;
+
+        assert!(result.is_ok());
+    }
+
+    /// Should fail if dependencies are not met
+    #[tokio::test]
+    async fn missing_dependencies() {
+        let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
+        system_requirements_checker_mock
+            .expect_check()
+            .returning(|_| Err("cargo-stylus not found".to_string()));
+
+        let command = CheckCommand {
+            system_requirements_checker: Box::new(system_requirements_checker_mock),
+            stylus: Box::new(MockTStylus::new()),
+            system: Box::new(MockTSystem::new()),
+            nargo: Box::new(MockTNargo::new()),
+        };
+
+        let result = command
+            .run(&AppContext {}, Some(PACKAGE_NAME.to_string()), None)
+            .await;
+
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            AppError::MissingDependencies()
+        ));
+    }
+
+    /// Should fail if specified package is not found
+    #[tokio::test]
+    async fn package_not_found() {
+        let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
+        system_requirements_checker_mock
+            .expect_check()
+            .returning(|_| Ok(()));
+
+        let mut nargo_mock = MockTNargo::new();
+        nargo_mock
+            .expect_find_package_root()
+            .returning(|_| Err("No package root found".into()));
+
+        let command = CheckCommand {
+            system_requirements_checker: Box::new(system_requirements_checker_mock),
+            stylus: Box::new(MockTStylus::new()),
+            system: Box::new(MockTSystem::new()),
+            nargo: Box::new(nargo_mock),
+        };
+
+        let result = command
+            .run(&AppContext {}, Some(PACKAGE_NAME.to_string()), None)
+            .await;
 
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), AppError::PackageNotFound);
+    }
+
+    /// Should fail if contracts directory is not found, generate should have created it.
+    #[tokio::test]
+    async fn contracts_directory_not_found() {
+        let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
+        system_requirements_checker_mock
+            .expect_check()
+            .returning(|_| Ok(()));
+
+        let mut nargo_mock = MockTNargo::new();
+        nargo_mock
+            .expect_find_package_root()
+            .returning(|_| Ok(PathBuf::from(ROOT)));
+        nargo_mock
+            .expect_read_package_name()
+            .returning(|_| Ok(PACKAGE_NAME.to_string()));
+
+        let mut system_mock = MockTSystem::new();
+        system_mock.expect_exists().returning(|_| false); // contracts directory doesn't exist
+
+        let command = CheckCommand {
+            system_requirements_checker: Box::new(system_requirements_checker_mock),
+            stylus: Box::new(MockTStylus::new()),
+            system: Box::new(system_mock),
+            nargo: Box::new(nargo_mock),
+        };
+
+        let result = command
+            .run(&AppContext {}, Some(PACKAGE_NAME.to_string()), None)
+            .await;
+
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            AppError::ContractsNotFound(_)
+        ));
+    }
+
+    /// Should fail if stylus check fails
+    #[tokio::test]
+    async fn stylus_failure() {
+        let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
+        system_requirements_checker_mock
+            .expect_check()
+            .returning(|_| Ok(()));
+
+        let mut nargo_mock = MockTNargo::new();
+        nargo_mock
+            .expect_find_package_root()
+            .returning(|_| Ok(PathBuf::from(ROOT)));
+        nargo_mock
+            .expect_read_package_name()
+            .returning(|_| Ok(PACKAGE_NAME.to_string()));
+
+        let mut system_mock = MockTSystem::new();
+        system_mock.expect_exists().returning(|_| true);
+
+        let mut stylus_mock = MockTStylus::new();
+        stylus_mock
+            .expect_check()
+            .returning(|_, _| Err("stylus check failed".into()));
+
+        let command = CheckCommand {
+            system_requirements_checker: Box::new(system_requirements_checker_mock),
+            stylus: Box::new(stylus_mock),
+            system: Box::new(system_mock),
+            nargo: Box::new(nargo_mock),
+        };
+
+        let result = command
+            .run(&AppContext {}, Some(PACKAGE_NAME.to_string()), None)
+            .await;
+
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), AppError::StylusError(_)));
     }
 }

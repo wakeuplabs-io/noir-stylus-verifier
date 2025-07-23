@@ -156,10 +156,10 @@ mod tests {
     const ROOT: &str = "circuit";
     const CONTRACTS_ROOT: &str = "circuit/contracts";
 
-    /// Basic test case, user provides all parameters.
+    /// Happy path, user provides all parameters.
     /// We test we properly run verifications and call the deployment with the correct parameters.
     #[tokio::test]
-    async fn test_deploy_command() {
+    async fn happy_path() {
         // rpc should not be called as we provide verifier address
         let rpc_mock = MockTRpc::new();
 
@@ -220,7 +220,7 @@ mod tests {
     /// If user does not provide verifier address, we should use the default one.
     /// This test checks that we properly determine the default verifier address based on the rpc provided.
     #[tokio::test]
-    async fn test_deploy_default_verifier_address() {
+    async fn default_verifier_address() {
         // validate stylus is installed
         let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
         system_requirements_checker_mock

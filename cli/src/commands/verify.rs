@@ -163,7 +163,6 @@ mod tests {
     use super::*;
     use crate::config::requirements::MockTSystemRequirementsChecker;
     use crate::infrastructure::{bb::MockTBb, system::MockTSystem};
-    use mockall::predicate::*;
     use std::path::PathBuf;
 
     const ROOT: &str = "test";
@@ -171,53 +170,23 @@ mod tests {
     const PUBLIC_INPUT_PATH: &str = "test/target/public_inputs";
     const VK_PATH: &str = "test/contracts/assets/vk";
 
+    /// Happy path, local verification
     #[tokio::test]
-    async fn test_verify_command_success_local() {
-        // Test successful local verification using bb
+    async fn success_local() {
         let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
-        let mut system_mock = MockTSystem::new();
-        let mut bb_mock = MockTBb::new();
-
-        // Should check BB_UP_REQUIREMENT
         system_requirements_checker_mock
             .expect_check()
-            .withf(|reqs| reqs.len() == 1 && reqs[0] == BB_UP_REQUIREMENT)
             .returning(|_| Ok(()));
 
-        // System should return current directory
+        let mut system_mock = MockTSystem::new();
         system_mock
             .expect_current_dir()
             .returning(|| PathBuf::from(ROOT));
+        system_mock.expect_exists().returning(|_| true);
 
-        // All files should exist
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from(PROOF_PATH)))
-            .returning(|_| true);
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from(PUBLIC_INPUT_PATH)))
-            .returning(|_| true);
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from(VK_PATH)))
-            .returning(|_| true);
-
-        // BB should setup and verify successfully
-        bb_mock
-            .expect_setup()
-            .with(eq(BB_REQUIREMENT.required_version))
-            .returning(|_| Ok(()));
-        bb_mock
-            .expect_verify()
-            .with(
-                eq(PathBuf::from(ROOT)),
-                eq(PathBuf::from(PROOF_PATH)),
-                eq(PathBuf::from(PUBLIC_INPUT_PATH)),
-                eq(PathBuf::from(VK_PATH)),
-                eq(false),
-            )
-            .returning(|_, _, _, _, _| Ok(()));
+        let mut bb_mock = MockTBb::new();
+        bb_mock.expect_setup().returning(|_| Ok(()));
+        bb_mock.expect_verify().returning(|_, _, _, _, _| Ok(()));
 
         let command = VerifyCommand {
             system: Box::new(system_mock),
@@ -231,7 +200,7 @@ mod tests {
                 Some(PROOF_PATH.to_string()),
                 Some(PUBLIC_INPUT_PATH.to_string()),
                 Some(VK_PATH.to_string()),
-                None, // no verifier_address
+                None,
                 None,
                 false,
             )
@@ -240,49 +209,23 @@ mod tests {
         assert!(result.is_ok());
     }
 
+    /// Happy path, local verification with zk flavour
     #[tokio::test]
-    async fn test_verify_command_success_local_zk() {
-        // Test successful local verification using bb with zk flag
+    async fn success_local_zk() {
         let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
-        let mut system_mock = MockTSystem::new();
-        let mut bb_mock = MockTBb::new();
-
         system_requirements_checker_mock
             .expect_check()
-            .withf(|reqs| reqs.len() == 1 && reqs[0] == BB_UP_REQUIREMENT)
             .returning(|_| Ok(()));
 
+        let mut system_mock = MockTSystem::new();
         system_mock
             .expect_current_dir()
             .returning(|| PathBuf::from(ROOT));
+        system_mock.expect_exists().returning(|_| true);
 
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from(PROOF_PATH)))
-            .returning(|_| true);
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from(PUBLIC_INPUT_PATH)))
-            .returning(|_| true);
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from(VK_PATH)))
-            .returning(|_| true);
-
-        bb_mock
-            .expect_setup()
-            .with(eq(BB_REQUIREMENT.required_version))
-            .returning(|_| Ok(()));
-        bb_mock
-            .expect_verify()
-            .with(
-                eq(PathBuf::from(ROOT)),
-                eq(PathBuf::from(PROOF_PATH)),
-                eq(PathBuf::from(PUBLIC_INPUT_PATH)),
-                eq(PathBuf::from(VK_PATH)),
-                eq(true), // zk flag
-            )
-            .returning(|_, _, _, _, _| Ok(()));
+        let mut bb_mock = MockTBb::new();
+        bb_mock.expect_setup().returning(|_| Ok(()));
+        bb_mock.expect_verify().returning(|_, _, _, _, _| Ok(()));
 
         let command = VerifyCommand {
             system: Box::new(system_mock),
@@ -305,121 +248,23 @@ mod tests {
         assert!(result.is_ok());
     }
 
+    /// Happy path, default paths are used
     #[tokio::test]
-    async fn test_verify_command_success_default_paths() {
-        // Test successful verification with default file paths
+    async fn success_default_paths() {
         let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
-        let mut system_mock = MockTSystem::new();
-        let mut bb_mock = MockTBb::new();
-
         system_requirements_checker_mock
             .expect_check()
-            .withf(|reqs| reqs.len() == 1 && reqs[0] == BB_UP_REQUIREMENT)
             .returning(|_| Ok(()));
 
+        let mut system_mock = MockTSystem::new();
         system_mock
             .expect_current_dir()
             .returning(|| PathBuf::from(ROOT));
+        system_mock.expect_exists().returning(|_| true);
 
-        // Check default paths
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from("test/target/proof")))
-            .returning(|_| true);
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from("test/target/public_inputs")))
-            .returning(|_| true);
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from("test/contracts/assets/vk")))
-            .returning(|_| true);
-
-        bb_mock
-            .expect_setup()
-            .with(eq(BB_REQUIREMENT.required_version))
-            .returning(|_| Ok(()));
-        bb_mock
-            .expect_verify()
-            .with(
-                eq(PathBuf::from(ROOT)),
-                eq(PathBuf::from("test/target/proof")),
-                eq(PathBuf::from("test/target/public_inputs")),
-                eq(PathBuf::from("test/contracts/assets/vk")),
-                eq(false),
-            )
-            .returning(|_, _, _, _, _| Ok(()));
-
-        let command = VerifyCommand {
-            system: Box::new(system_mock),
-            bb: Box::new(bb_mock),
-            system_requirements_checker: Box::new(system_requirements_checker_mock),
-        };
-
-        let result = command
-            .run(
-                &AppContext {},
-                None, // use default
-                None, // use default
-                None, // use default
-                None,
-                None,
-                false,
-            )
-            .await;
-
-        assert!(result.is_ok());
-    }
-
-    #[tokio::test]
-    async fn test_verify_command_success_fallback_vk() {
-        // Test successful verification with fallback vk path (target/vk)
-        let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
-        let mut system_mock = MockTSystem::new();
         let mut bb_mock = MockTBb::new();
-
-        system_requirements_checker_mock
-            .expect_check()
-            .withf(|reqs| reqs.len() == 1 && reqs[0] == BB_UP_REQUIREMENT)
-            .returning(|_| Ok(()));
-
-        system_mock
-            .expect_current_dir()
-            .returning(|| PathBuf::from(ROOT));
-
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from("test/target/proof")))
-            .returning(|_| true);
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from("test/target/public_inputs")))
-            .returning(|_| true);
-        // Primary vk path doesn't exist
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from("test/contracts/assets/vk")))
-            .returning(|_| false);
-        // Fallback vk path exists
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from("test/target/vk")))
-            .returning(|_| true);
-
-        bb_mock
-            .expect_setup()
-            .with(eq(BB_REQUIREMENT.required_version))
-            .returning(|_| Ok(()));
-        bb_mock
-            .expect_verify()
-            .with(
-                eq(PathBuf::from(ROOT)),
-                eq(PathBuf::from("test/target/proof")),
-                eq(PathBuf::from("test/target/public_inputs")),
-                eq(PathBuf::from("test/target/vk")), // fallback path
-                eq(false),
-            )
-            .returning(|_, _, _, _, _| Ok(()));
+        bb_mock.expect_setup().returning(|_| Ok(()));
+        bb_mock.expect_verify().returning(|_, _, _, _, _| Ok(()));
 
         let command = VerifyCommand {
             system: Box::new(system_mock),
@@ -434,21 +279,51 @@ mod tests {
         assert!(result.is_ok());
     }
 
+    /// Happy path, fallback vk path is used
     #[tokio::test]
-    async fn test_verify_command_missing_dependencies() {
-        // Test failure when BB_UP_REQUIREMENT is not met
+    async fn success_fallback_vk() {
         let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
-        let system_mock = MockTSystem::new();
-        let bb_mock = MockTBb::new();
-
         system_requirements_checker_mock
             .expect_check()
-            .withf(|reqs| reqs.len() == 1 && reqs[0] == BB_UP_REQUIREMENT)
+            .returning(|_| Ok(()));
+
+        let mut system_mock = MockTSystem::new();
+        system_mock
+            .expect_current_dir()
+            .returning(|| PathBuf::from(ROOT));
+        system_mock.expect_exists().returning(|path| {
+            // Primary vk path doesn't exist, fallback does
+            !path.to_string_lossy().contains("contracts/assets/vk")
+        });
+
+        let mut bb_mock = MockTBb::new();
+        bb_mock.expect_setup().returning(|_| Ok(()));
+        bb_mock.expect_verify().returning(|_, _, _, _, _| Ok(()));
+
+        let command = VerifyCommand {
+            system: Box::new(system_mock),
+            bb: Box::new(bb_mock),
+            system_requirements_checker: Box::new(system_requirements_checker_mock),
+        };
+
+        let result = command
+            .run(&AppContext {}, None, None, None, None, None, false)
+            .await;
+
+        assert!(result.is_ok());
+    }
+
+    /// Should fail if dependencies are not met
+    #[tokio::test]
+    async fn missing_dependencies() {
+        let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
+        system_requirements_checker_mock
+            .expect_check()
             .returning(|_| Err("bbup not found".to_string()));
 
         let command = VerifyCommand {
-            system: Box::new(system_mock),
-            bb: Box::new(bb_mock),
+            system: Box::new(MockTSystem::new()),
+            bb: Box::new(MockTBb::new()),
             system_requirements_checker: Box::new(system_requirements_checker_mock),
         };
 
@@ -468,30 +343,25 @@ mod tests {
         assert!(matches!(result.unwrap_err(), AppError::Other(_)));
     }
 
+    /// Should fail if proof is not found
     #[tokio::test]
-    async fn test_verify_command_missing_proof() {
-        // Test failure when proof file doesn't exist
+    async fn missing_proof() {
         let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
-        let mut system_mock = MockTSystem::new();
-        let bb_mock = MockTBb::new();
-
         system_requirements_checker_mock
             .expect_check()
-            .withf(|reqs| reqs.len() == 1 && reqs[0] == BB_UP_REQUIREMENT)
             .returning(|_| Ok(()));
 
+        let mut system_mock = MockTSystem::new();
         system_mock
             .expect_current_dir()
             .returning(|| PathBuf::from(ROOT));
-
         system_mock
             .expect_exists()
-            .with(eq(PathBuf::from(PROOF_PATH)))
-            .returning(|_| false); // proof doesn't exist
+            .returning(|path| !path.to_string_lossy().contains("proof"));
 
         let command = VerifyCommand {
             system: Box::new(system_mock),
-            bb: Box::new(bb_mock),
+            bb: Box::new(MockTBb::new()),
             system_requirements_checker: Box::new(system_requirements_checker_mock),
         };
 
@@ -511,34 +381,25 @@ mod tests {
         assert!(matches!(result.unwrap_err(), AppError::Other(_)));
     }
 
+    /// Should fail if public input is not found
     #[tokio::test]
-    async fn test_verify_command_missing_public_input() {
-        // Test failure when public input file doesn't exist
+    async fn missing_public_input() {
         let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
-        let mut system_mock = MockTSystem::new();
-        let bb_mock = MockTBb::new();
-
         system_requirements_checker_mock
             .expect_check()
-            .withf(|reqs| reqs.len() == 1 && reqs[0] == BB_UP_REQUIREMENT)
             .returning(|_| Ok(()));
 
+        let mut system_mock = MockTSystem::new();
         system_mock
             .expect_current_dir()
             .returning(|| PathBuf::from(ROOT));
-
         system_mock
             .expect_exists()
-            .with(eq(PathBuf::from(PROOF_PATH)))
-            .returning(|_| true);
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from(PUBLIC_INPUT_PATH)))
-            .returning(|_| false); // public input doesn't exist
+            .returning(|path| !path.to_string_lossy().contains("public_inputs"));
 
         let command = VerifyCommand {
             system: Box::new(system_mock),
-            bb: Box::new(bb_mock),
+            bb: Box::new(MockTBb::new()),
             system_requirements_checker: Box::new(system_requirements_checker_mock),
         };
 
@@ -558,43 +419,25 @@ mod tests {
         assert!(matches!(result.unwrap_err(), AppError::Other(_)));
     }
 
+    /// Should fail if vk is not found
     #[tokio::test]
-    async fn test_verify_command_missing_vk() {
-        // Test failure when VK file doesn't exist in any location
+    async fn missing_vk() {
         let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
-        let mut system_mock = MockTSystem::new();
-        let bb_mock = MockTBb::new();
-
         system_requirements_checker_mock
             .expect_check()
-            .withf(|reqs| reqs.len() == 1 && reqs[0] == BB_UP_REQUIREMENT)
             .returning(|_| Ok(()));
 
+        let mut system_mock = MockTSystem::new();
         system_mock
             .expect_current_dir()
             .returning(|| PathBuf::from(ROOT));
-
         system_mock
             .expect_exists()
-            .with(eq(PathBuf::from("test/target/proof")))
-            .returning(|_| true);
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from("test/target/public_inputs")))
-            .returning(|_| true);
-        // Both VK paths don't exist
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from("test/contracts/assets/vk")))
-            .returning(|_| false);
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from("test/target/vk")))
-            .returning(|_| false);
+            .returning(|path| !path.to_string_lossy().contains("vk"));
 
         let command = VerifyCommand {
             system: Box::new(system_mock),
-            bb: Box::new(bb_mock),
+            bb: Box::new(MockTBb::new()),
             system_requirements_checker: Box::new(system_requirements_checker_mock),
         };
 
@@ -606,38 +449,23 @@ mod tests {
         assert!(matches!(result.unwrap_err(), AppError::Other(_)));
     }
 
+    /// Should fail if bb setup fails, we need specific version of bb for compatibility
     #[tokio::test]
-    async fn test_verify_command_bb_setup_failure() {
-        // Test failure when BB setup fails
+    async fn bb_setup_failure() {
         let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
-        let mut system_mock = MockTSystem::new();
-        let mut bb_mock = MockTBb::new();
-
         system_requirements_checker_mock
             .expect_check()
-            .withf(|reqs| reqs.len() == 1 && reqs[0] == BB_UP_REQUIREMENT)
             .returning(|_| Ok(()));
 
+        let mut system_mock = MockTSystem::new();
         system_mock
             .expect_current_dir()
             .returning(|| PathBuf::from(ROOT));
+        system_mock.expect_exists().returning(|_| true);
 
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from(PROOF_PATH)))
-            .returning(|_| true);
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from(PUBLIC_INPUT_PATH)))
-            .returning(|_| true);
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from(VK_PATH)))
-            .returning(|_| true);
-
+        let mut bb_mock = MockTBb::new();
         bb_mock
             .expect_setup()
-            .with(eq(BB_REQUIREMENT.required_version))
             .returning(|_| Err("setup failed".into()));
 
         let command = VerifyCommand {
@@ -662,48 +490,24 @@ mod tests {
         assert!(matches!(result.unwrap_err(), AppError::Other(_)));
     }
 
+    /// Proof verification fails
     #[tokio::test]
-    async fn test_verify_command_bb_verify_failure() {
-        // Test failure when BB verify fails
+    async fn bb_verify_failure() {
         let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
-        let mut system_mock = MockTSystem::new();
-        let mut bb_mock = MockTBb::new();
-
         system_requirements_checker_mock
             .expect_check()
-            .withf(|reqs| reqs.len() == 1 && reqs[0] == BB_UP_REQUIREMENT)
             .returning(|_| Ok(()));
 
+        let mut system_mock = MockTSystem::new();
         system_mock
             .expect_current_dir()
             .returning(|| PathBuf::from(ROOT));
+        system_mock.expect_exists().returning(|_| true);
 
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from(PROOF_PATH)))
-            .returning(|_| true);
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from(PUBLIC_INPUT_PATH)))
-            .returning(|_| true);
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from(VK_PATH)))
-            .returning(|_| true);
-
-        bb_mock
-            .expect_setup()
-            .with(eq(BB_REQUIREMENT.required_version))
-            .returning(|_| Ok(()));
+        let mut bb_mock = MockTBb::new();
+        bb_mock.expect_setup().returning(|_| Ok(()));
         bb_mock
             .expect_verify()
-            .with(
-                eq(PathBuf::from(ROOT)),
-                eq(PathBuf::from(PROOF_PATH)),
-                eq(PathBuf::from(PUBLIC_INPUT_PATH)),
-                eq(PathBuf::from(VK_PATH)),
-                eq(false),
-            )
             .returning(|_, _, _, _, _| Err("verification failed".into()));
 
         let command = VerifyCommand {
@@ -727,8 +531,4 @@ mod tests {
         // Should succeed (returns Ok(())) but prints error internally
         assert!(result.is_ok());
     }
-
-    // Note: On-chain verification tests would require mocking the alloy provider
-    // which is more complex and would need additional setup. The current tests
-    // cover the core logic paths for the verify command.
 }

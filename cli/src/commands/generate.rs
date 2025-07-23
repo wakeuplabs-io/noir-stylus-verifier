@@ -152,10 +152,10 @@ mod tests {
     const BYTECODE_PATH: &str = "circuit/contracts/assets/bytecode.json";
     const CONTRACTS_ROOT: &str = "circuit/contracts";
 
-    /// Basic test case, all parameters are given and correct.
+    /// Happy path, all parameters are given and correct.
     /// We check calls are as expected.
     #[tokio::test]
-    async fn test_generate_command() {
+    async fn happy_path() {
         // emulate verifier generator output, and double check we write the files correctly.
         let mock_files: Vec<ProjectFile> = vec![ProjectFile {
             path: "contracts/demo.txt".to_string(),

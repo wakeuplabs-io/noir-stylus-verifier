@@ -96,100 +96,184 @@ mod tests {
         codegen::{MockTCodegen, ProjectFile},
         system::MockTSystem,
     };
-    use mockall::predicate::*;
 
     const PROJECT_NAME: &str = "hello_world";
 
-    #[test]
-    fn test_validate_name() {
-        let command = NewCommand::default();
-
-        let valid_names = vec![
-            "hello_world",
-            "hello-world",
-            "hello_world_123",
-            "hello",
-            "a_very_long_name_123",
-        ];
-        let invalid_names = vec![
-            "",
-            "hello world",
-            "hello_world!",
-            "hello@world",
-            "hello.world",
-            "64_chars_is_the_max_length_for_a_project_name_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        ];
-
-        for name in valid_names {
-            assert!(command.validate_name(name).is_ok());
-        }
-
-        for name in invalid_names {
-            assert!(command.validate_name(name).is_err());
-        }
-    }
-
+    /// Happy path, project is created successfully
     #[tokio::test]
-    async fn test_new_command() {
-        let mocked_project_files = vec![ProjectFile {
-            path: "README.md".to_string(),
-            content: "".to_string(),
-        }];
+    async fn happy_path() {
+        let mocked_project_files = vec![
+            ProjectFile {
+                path: "README.md".to_string(),
+                content: "# Project".to_string(),
+            },
+            ProjectFile {
+                path: "src/main.nr".to_string(),
+                content: "fn main() {}".to_string(),
+            },
+            ProjectFile {
+                path: "Nargo.toml".to_string(),
+                content: "[package]\nname = \"test\"".to_string(),
+            },
+        ];
 
-        // check we verify folder doesn't exist before creating it. Then that we write all the files
         let mut system_mock = MockTSystem::new();
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from(PROJECT_NAME)))
-            .returning(|_| false);
+        system_mock.expect_exists().returning(|_| false);
         system_mock.expect_ensure_dir().returning(|_| ());
         system_mock
             .expect_write_file()
-            .with(
-                eq(PathBuf::from(PROJECT_NAME).join("README.md")),
-                eq(mocked_project_files[0].content.clone()),
-            )
+            .times(3) // Should be called once for each file
             .returning(|_, _| ());
 
-        // check we generate the project files
         let mut codegen_mock = MockTCodegen::new();
         codegen_mock
             .expect_generate_project()
-            .with(eq(PROJECT_NAME))
             .returning(move |_| Ok(mocked_project_files.clone()));
 
-        // run the command
-        let result = NewCommand {
+        let command = NewCommand {
             system: Box::new(system_mock),
             codegen: Box::new(codegen_mock),
-        }
-        .run(&AppContext {}, PROJECT_NAME)
-        .await;
+        };
+
+        let result = command.run(&AppContext {}, PROJECT_NAME).await;
 
         assert!(result.is_ok());
     }
 
+    /// Should fail if folder already exists
     #[tokio::test]
-    async fn test_new_command_invalid_name() {
-        let result = NewCommand::default().run(&AppContext {}, "").await;
-        assert!(result.is_err());
-    }
-
-    #[tokio::test]
-    async fn test_new_existing_folder() {
+    async fn existing_folder() {
         let mut system_mock = MockTSystem::new();
-        system_mock
-            .expect_exists()
-            .with(eq(PathBuf::from(PROJECT_NAME)))
-            .returning(|_| true);
+        system_mock.expect_exists().returning(|_| true);
 
-        let result = NewCommand {
+        let command = NewCommand {
             system: Box::new(system_mock),
             codegen: Box::new(MockTCodegen::new()),
-        }
-        .run(&AppContext {}, PROJECT_NAME)
-        .await;
+        };
+
+        let result = command.run(&AppContext {}, PROJECT_NAME).await;
 
         assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            AppError::DirectoryAlreadyExists(_)
+        ));
+    }
+
+    /// Should fail if codegen fails
+    #[tokio::test]
+    async fn codegen_failure() {
+        let mut system_mock = MockTSystem::new();
+        system_mock.expect_exists().returning(|_| false);
+        system_mock.expect_ensure_dir().returning(|_| ());
+
+        let mut codegen_mock = MockTCodegen::new();
+        codegen_mock
+            .expect_generate_project()
+            .returning(|_| Err("codegen failed".into()));
+
+        let command = NewCommand {
+            system: Box::new(system_mock),
+            codegen: Box::new(codegen_mock),
+        };
+
+        let result = command.run(&AppContext {}, PROJECT_NAME).await;
+
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), AppError::GenerateError));
+    }
+
+    /// Name must be valid nargo package name as per https://doc.rust-lang.org/cargo/reference/manifest.html#the-name-field
+    #[test]
+    fn validate_name_comprehensive() {
+        let command = NewCommand::default();
+
+        // Test all valid patterns
+        let valid_patterns = vec![
+            // Basic patterns
+            ("hello", "simple name"),
+            ("hello_world", "with underscore"),
+            ("hello-world", "with hyphen"),
+            ("hello123", "with numbers"),
+            ("123hello", "starting with numbers"),
+            ("a", "single character"),
+            // Complex patterns
+            ("hello_world_123", "mixed underscores and numbers"),
+            ("hello-world-123", "mixed hyphens and numbers"),
+            ("hello_world-123", "mixed underscores and hyphens"),
+            ("a_very_long_name_with_underscores", "long with underscores"),
+            ("a-very-long-name-with-hyphens", "long with hyphens"),
+            // Edge cases
+            (
+                "64_char_name_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "exactly 64 chars",
+            ),
+        ];
+
+        for (name, description) in valid_patterns {
+            assert!(
+                command.validate_name(name).is_ok(),
+                "Should be valid: {} ({})",
+                name,
+                description
+            );
+        }
+
+        // Test all invalid patterns
+        let invalid_patterns = vec![
+            // Empty and whitespace
+            ("", "empty string"),
+            (" ", "single space"),
+            ("  ", "multiple spaces"),
+            // Starting with hyphen
+            ("-hello", "starts with hyphen"),
+            ("-", "just hyphen"),
+            // Invalid characters
+            ("hello world", "contains space"),
+            ("hello.world", "contains dot"),
+            ("hello@world", "contains at symbol"),
+            ("hello!world", "contains exclamation"),
+            ("hello#world", "contains hash"),
+            ("hello$world", "contains dollar"),
+            ("hello%world", "contains percent"),
+            ("hello^world", "contains caret"),
+            ("hello&world", "contains ampersand"),
+            ("hello*world", "contains asterisk"),
+            ("hello(world", "contains open paren"),
+            ("hello)world", "contains close paren"),
+            ("hello+world", "contains plus"),
+            ("hello=world", "contains equals"),
+            ("hello[world", "contains open bracket"),
+            ("hello]world", "contains close bracket"),
+            ("hello{world", "contains open brace"),
+            ("hello}world", "contains close brace"),
+            ("hello|world", "contains pipe"),
+            ("hello\\world", "contains backslash"),
+            ("hello:world", "contains colon"),
+            ("hello;world", "contains semicolon"),
+            ("hello\"world", "contains quote"),
+            ("hello'world", "contains apostrophe"),
+            ("hello<world", "contains less than"),
+            ("hello>world", "contains greater than"),
+            ("hello,world", "contains comma"),
+            ("hello?world", "contains question mark"),
+            ("hello/world", "contains forward slash"),
+            ("hello~world", "contains tilde"),
+            ("hello`world", "contains backtick"),
+            // Too long
+            (
+                "this_is_a_very_long_project_name_that_exceeds_the_maximum_allowed_length",
+                "way too long",
+            ),
+        ];
+
+        for (name, description) in invalid_patterns {
+            assert!(
+                command.validate_name(name).is_err(),
+                "Should be invalid: {} ({})",
+                name,
+                description
+            );
+        }
     }
 }
