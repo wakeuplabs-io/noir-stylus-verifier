@@ -21,15 +21,15 @@ jobs:
     strategy:
       matrix:
         include:
-          # - os: ubuntu-latest
-          #   target: x86_64-unknown-linux-musl
-          #   build_command: cargo zigbuild --release --target=x86_64-unknown-linux-musl -p nsv
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            build_command: cargo zigbuild --release --target=x86_64-unknown-linux-musl -p nsv
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             build_command: cargo build --release --target=x86_64-pc-windows-msvc -p nsv
-          # - os: macos-latest
-          #   target: x86_64-apple-darwin
-          #   build_command: cargo zigbuild --release --target=x86_64-apple-darwin -p nsv
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            build_command: cargo zigbuild --release --target=x86_64-apple-darwin -p nsv
 
     steps:
       - uses: actions/checkout@v4

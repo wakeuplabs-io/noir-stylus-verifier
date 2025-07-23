@@ -18,13 +18,13 @@ jobs:
           include:
             - os: ubuntu-latest
               target: x86_64-unknown-linux-musl
-              build_command: cargo build --release --target=x86_64-unknown-linux-musl -p nsv
+              build_command: cargo zigbuild --release --target=x86_64-unknown-linux-musl -p nsv
             - os: windows-latest
               target: x86_64-pc-windows-msvc
               build_command: cargo build --release --target=x86_64-pc-windows-msvc -p nsv
             - os: macos-latest
               target: x86_64-apple-darwin
-              build_command: cargo build --release --target=x86_64-apple-darwin -p nsv
+              build_command: cargo zigbuild --release --target=x86_64-apple-darwin -p nsv
   
       steps:
         - uses: actions/checkout@v4
@@ -48,6 +48,16 @@ jobs:
         - name: Install build tools (macOS only)
           if: runner.os == 'macOS'
           run: brew install llvm
+
+        - name: Install zig
+          if: runner.os == 'Linux' || runner.os == 'macOS'
+          uses: goto-bus-stop/setup-zig@v2
+          with:
+            version: 0.13.0
+        
+        - name: Install cargo-zigbuild
+          if: runner.os == 'Linux' || runner.os == 'macOS'
+          run: cargo install --locked cargo-zigbuild
 
         - name: Build CLI
           run: ${{ matrix.build_command }}
