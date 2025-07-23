@@ -190,6 +190,6 @@ just --set rpc_url https://sepolia-rollup.arbitrum.io/rpc --set private_key  ...
 # deployment tx hash: 0x7a5fe0000a169555f0df2149a5a4b76c743bf76c17730867c3e5a124990d9725
 
 # And verify with
-just  --set rpc_url https://sepolia-rollup.arbitrum.io/rpc get-verifier-addresses 0xdcaaed24c926bc718984eaa4126e27b27d60379d
-just  --set rpc_url https://sepolia-rollup.arbitrum.io/rpc verify-proof 0xdcaaed24c926bc718984eaa4126e27b27d60379d assert true
+just  --set rpc_url https://sepolia-rollup.arbitrum.io/rpc get-verifier-addresses "0xdcaaed24c926bc718984eaa4126e27b27d60379d"
+just  --set rpc_url https://sepolia-rollup.arbitrum.io/rpc verify-proof "0xdcaaed24c926bc718984eaa4126e27b27d60379d" assert true
 ```

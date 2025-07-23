@@ -99,9 +99,15 @@ impl DeployCommand {
                             VERIFIER_ADDRESS_ARBITRUM_SEPOLIA
                         }
                     }
-                    _ => panic!("No default verifier address for chain id: {chain_id}"),
+                    _ => {
+                        return Err(AppError::NoDefaultVerifierAddress);
+                    }
                 }
                 .to_string();
+
+                if verifier_address == "0x0000000000000000000000000000000000000000" {
+                    return Err(AppError::NoDefaultVerifierAddress);
+                }
 
                 print_warning!(
                     "Using default verifier address for chain {}: {}",

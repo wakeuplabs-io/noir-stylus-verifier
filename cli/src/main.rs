@@ -106,6 +106,8 @@ pub(crate) enum AppError {
     InvalidName(String),
     #[error("Directory already exists: {0}")]
     DirectoryAlreadyExists(String),
+    #[error("No default verifier address found for chain")]
+    NoDefaultVerifierAddress,
 }
 
 pub(crate) struct AppContext {}
