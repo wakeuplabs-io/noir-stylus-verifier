@@ -9,7 +9,7 @@
 Install with cargo:
 
 ```bash
-cargo install --git https://github.com/wakeuplabs-io/noir-stylus-verifier --tag v0.1.0 --package nsv
+cargo install --git https://github.com/wakeuplabs-io/noir-stylus-verifier --package nsv
 ```
 
 ## Development

@@ -1,12 +1,13 @@
+
 [package]
-name = "stylus-hello-world"
-version = "0.1.11"
+name = "verifier"
+version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-homepage = "https://github.com/OffchainLabs/stylus-hello-world"
-repository = "https://github.com/OffchainLabs/stylus-hello-world"
+homepage = "https://github.com/wakeuplabs-io/noir-stylus-verifier"
+repository = "https://github.com/wakeuplabs-io/noir-stylus-verifier"
 keywords = ["arbitrum", "ethereum", "stylus", "alloy"]
-description = "Stylus hello world example"
+description = "Stylus verifier"
 
 [dependencies]
 alloy-primitives = "=0.8.20"
@@ -29,7 +30,7 @@ debug = ["stylus-sdk/debug"]
 mini-alloc = ["stylus-sdk/mini-alloc"]
 
 [[bin]]
-name = "stylus-hello-world"
+name = "verifier"
 path = "src/main.rs"
 
 [lib]
@@ -44,3 +45,4 @@ panic = "abort"
 # If you need to reduce the binary size, it is advisable to try other
 # optimization levels, such as "s" and "z"
 opt-level = 3
+

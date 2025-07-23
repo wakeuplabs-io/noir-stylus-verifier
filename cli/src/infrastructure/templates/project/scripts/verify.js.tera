@@ -18,8 +18,8 @@ const client = createPublicClient({
 });
 
 try {
-  const vk = fs.readFileSync("./circuit/target/vk", "hex");
-  const circuit = JSON.parse(fs.readFileSync("./circuit/target/{{ project_name }}.json", "utf8"));
+  const vk = fs.readFileSync("./contracts/assets/vk", "hex");
+  const circuit = JSON.parse(fs.readFileSync("./contracts/assets/bytecode.json", "utf8"));
 
   const noir = new Noir(circuit);
   const backend = new UltraHonkBackend(circuit.bytecode);

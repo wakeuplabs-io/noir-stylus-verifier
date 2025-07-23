@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "verify-global": "node scripts/verify-global.js",
+    "verify": "node scripts/verify.js"
   },
   "keywords": [],
   "author": "",

@@ -1,6 +1,3 @@
-// Contract for circuit
-// {{ circuit_comment }}
-
 extern crate alloc;
 
 use alloc::vec::Vec;
@@ -30,13 +27,13 @@ impl VerifierContract {
         self.verifier_address.set(verifier_address);
     }
 
-    pub fn verify(&mut self, proof_bytes: Bytes{{ inputs_prototype }}) -> bool {
+    pub fn verify(&mut self, proof_bytes: Bytes, public_inputs: Bytes) -> bool {
         IGlobalVerifier::new(self.verifier_address.get()).verify(
             #[allow(deprecated)]
             InterfaceCall::new(),
             proof_bytes.to_vec().into(),
-            {{ inputs_serialization }},
-            {{ vk_bytes }},
+            public_inputs.to_vec().into(),
+            include_bytes!("../assets/vk").to_vec().into()
         ).unwrap_or(false)
     }
 

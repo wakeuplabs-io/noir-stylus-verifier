@@ -1,0 +1,6 @@
+[package]
+name = "{{ project_name }}"
+type = "bin"
+authors = [""]
+
+[dependencies]

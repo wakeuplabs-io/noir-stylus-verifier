@@ -27,13 +27,13 @@ impl VerifierContract {
         self.verifier_address.set(verifier_address);
     }
 
-    pub fn verify(&mut self, proof_bytes: Bytes, y: Bytes, z: Bytes) -> bool {
+    pub fn verify(&mut self, proof_bytes: Bytes, public_inputs: Bytes) -> bool {
         IGlobalVerifier::new(self.verifier_address.get()).verify(
             #[allow(deprecated)]
             InterfaceCall::new(),
             proof_bytes.to_vec().into(),
-            [y.to_vec(), z.to_vec()].concat().into(),
-            include_bytes!("../assets/vk").to_vec().into(),
+            public_inputs.to_vec().into(),
+            include_bytes!("../assets/vk").to_vec().into()
         ).unwrap_or(false)
     }
 
