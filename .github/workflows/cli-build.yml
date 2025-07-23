@@ -25,7 +25,7 @@ jobs:
             target: x86_64-unknown-linux-musl
             build_command: build-cli-linux
           - os: windows-latest
-            target: x86_64-pc-windows-gnu
+            target: x86_64-pc-windows-msvc
             build_command: build-cli-windows
           - os: macos-latest
             target: x86_64-apple-darwin
@@ -48,16 +48,11 @@ jobs:
 
       - name: Install build tools (Linux only)
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y build-essential gcc lld mingw-w64
+        run: sudo apt-get update && sudo apt-get install -y build-essential gcc lld 
 
       - name: Install build tools (macOS only)
         if: runner.os == 'macOS'
-        run: brew install llvm mingw-w64
-
-      - name: Install build tools (Windows only)
-        if: runner.os == 'Windows'
-        run: choco install llvm mingw -y
-
+        run: brew install llvm 
 
       - name: Install zig
         uses: goto-bus-stop/setup-zig@v2
