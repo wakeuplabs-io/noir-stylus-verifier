@@ -23,18 +23,18 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
-            build_command: build-cli-linux
+            build_command: cargo build --release --target=x86_64-unknown-linux-musl -p nsv
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            build_command: build-cli-windows
+            build_command: cargo build --release --target=x86_64-pc-windows-msvc -p nsv
           - os: macos-latest
             target: x86_64-apple-darwin
-            build_command: build-cli-macos
+            build_command: cargo build --release --target=x86_64-apple-darwin -p nsv
 
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: 'recursive'
+          submodules: "recursive"
 
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -48,11 +48,11 @@ jobs:
 
       - name: Install build tools (Linux only)
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y build-essential gcc lld 
+        run: sudo apt-get update && sudo apt-get install -y build-essential gcc lld
 
       - name: Install build tools (macOS only)
         if: runner.os == 'macOS'
-        run: brew install llvm 
+        run: brew install llvm
 
       - name: Install zig
         uses: goto-bus-stop/setup-zig@v2
@@ -65,7 +65,7 @@ jobs:
       - name: Install just
         uses: extractions/setup-just@v3
         with:
-          just-version: 1.38.0 
-  
+          just-version: 1.38.0
+
       - name: Build CLI
         run: cargo zigbuild --target=${{ matrix.target }} --release -p nsv

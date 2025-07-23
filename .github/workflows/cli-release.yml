@@ -18,13 +18,13 @@ jobs:
           include:
             - os: ubuntu-latest
               target: x86_64-unknown-linux-musl
-              build_command: build-cli-linux
+              build_command: cargo build --release --target=x86_64-unknown-linux-musl -p nsv
             - os: windows-latest
               target: x86_64-pc-windows-msvc
-              build_command: build-cli-windows
+              build_command: cargo build --release --target=x86_64-pc-windows-msvc -p nsv
             - os: macos-latest
               target: x86_64-apple-darwin
-              build_command: build-cli-macos
+              build_command: cargo build --release --target=x86_64-apple-darwin -p nsv
   
       steps:
         - uses: actions/checkout@v4
