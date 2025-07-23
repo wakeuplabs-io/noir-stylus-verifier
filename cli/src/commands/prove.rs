@@ -8,6 +8,7 @@ use crate::{
         nargo::{Nargo, TNargo},
         progress::create_spinner,
         system::{System, TSystem},
+        terminal::print_instructions,
     },
     AppContext, AppError,
 };
@@ -77,6 +78,8 @@ impl ProveCommand {
             "✅ Success!".green(),
             root.join("target").join("proof").display()
         ));
+
+        print_instructions(&["verify"]);
 
         Ok(())
     }

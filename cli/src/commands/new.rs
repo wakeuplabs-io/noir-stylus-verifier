@@ -3,11 +3,12 @@ use crate::{
         codegen::{Codegen, TCodegen},
         progress::create_spinner,
         system::{System, TSystem},
+        terminal::print_instructions,
     },
     AppContext, AppError,
 };
 use colored::*;
-use std::{env, path::PathBuf};
+use std::path::PathBuf;
 
 pub(crate) struct NewCommand {
     system: Box<dyn TSystem>,
@@ -52,16 +53,7 @@ impl NewCommand {
 
         spinner.finish_with_message(format!("{} Created {name}\n", "✅ Success!".green()));
 
-        // print instructions ========================================
-
-        println!(
-            "\n {title}\n\n  - {bin} {generate_cmd}: Generates a new verifier contract.\n  - {bin} {check_cmd}: Checks the verifier contract.\n  - {bin} {deploy_cmd}: Deploys the verifier to the blockchain.\n",
-            title = "What's Next?".bright_white().bold(),
-            bin = env!("CARGO_BIN_NAME").blue(),
-            generate_cmd = "generate".blue(),
-            check_cmd = "check".blue(),
-            deploy_cmd = "deploy".blue(),
-        );
+        print_instructions(&["generate", "check", "deploy"]);
 
         Ok(())
     }

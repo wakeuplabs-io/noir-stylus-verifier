@@ -1,3 +1,5 @@
+use crate::Args;
+use clap::CommandFactory;
 use colored::Colorize;
 
 #[macro_export]
@@ -56,4 +58,23 @@ pub(crate) fn print_app_title() {
     println!("{}   {}   {}", "│".blue(), content, "│".blue());
     println!("{}{}{}", "│".blue(), spacer, "│".blue());
     println!("{}{}{}\n", "╰".blue(), horizontal, "╯".blue());
+}
+
+pub(crate) fn print_instructions(commands: &[&str]) {
+    println!("\n\n  {}", "What's Next?\n".bright_white().bold());
+
+    let mut cmd = Args::command();
+
+    for command in commands {
+        if let Some(sub) = cmd.find_subcommand_mut(command) {
+            let about = sub.get_about().unwrap_or_default();
+            println!(
+                "    - {} {}: {about}",
+                env!("CARGO_BIN_NAME").blue(),
+                command.blue(),
+            );
+        }
+    }
+
+    println!();
 }

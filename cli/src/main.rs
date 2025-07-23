@@ -35,12 +35,12 @@ struct Args {
 enum Commands {
     /// Create a new project
     New { target: String },
-    /// Generate a verifier
+    /// Generate a verifier contract from a circuit
     Generate {
         #[arg(short, long)]
         package: Option<String>,
     },
-    /// Check a verifier contract
+    /// Check a verifier contract for stylus compatibility
     Check {
         #[arg(short, long)]
         package: Option<String>,

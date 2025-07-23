@@ -15,6 +15,7 @@ use crate::{
         rpc::{Rpc, TRpc},
         stylus::{Stylus, TStylus},
         system::{System, TSystem},
+        terminal::print_instructions,
     },
     print_error, print_warning, AppContext, AppError,
 };
@@ -134,6 +135,8 @@ impl DeployCommand {
                 print_error!("{e}");
             }
         }
+
+        print_instructions(&["prove", "verify"]);
 
         Ok(())
     }

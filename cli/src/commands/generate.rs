@@ -9,6 +9,7 @@ use crate::{
         nargo::{Nargo, TNargo},
         progress::create_spinner,
         system::{System, TSystem},
+        terminal::print_instructions,
     },
     AppContext, AppError,
 };
@@ -121,15 +122,7 @@ impl GenerateCommand {
             contracts_root.display()
         ));
 
-        // print instructions ========================================
-
-        println!(
-            "\n {title}\n\n  - {bin} {check_cmd}: Runs `stylus check` on the generated contract.\n  - {bin} {deploy_cmd}: Deploys the verifier to the blockchain.\n",
-            title = "What's Next?".bright_white().bold(),
-            bin = env!("CARGO_BIN_NAME").blue(),
-            check_cmd = "check".blue(),
-            deploy_cmd = "deploy".blue() 
-        );
+        print_instructions(&["check", "deploy"]);
 
         Ok(())
     }

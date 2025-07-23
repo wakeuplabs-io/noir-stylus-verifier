@@ -1,3 +1,4 @@
+use crate::infrastructure::terminal::print_instructions;
 use crate::AppError;
 use crate::{
     config::{
@@ -107,6 +108,8 @@ impl CheckCommand {
                 return Err(AppError::StylusError(e.to_string()));
             }
         }
+
+        print_instructions(&["deploy", "prove", "verify"]);
 
         Ok(())
     }
