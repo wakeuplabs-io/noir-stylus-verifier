@@ -49,11 +49,9 @@ jobs:
           if: runner.os == 'macOS'
           run: brew install llvm
 
-        - name: Install zig
-          uses: goto-bus-stop/setup-zig@v2
-          with:
-            version: 0.13.0
-        
+        - name: Build CLI
+          run: ${{ matrix.build_command }}
+
         - name: Set Version from Tag
           shell: bash
           run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
@@ -61,20 +59,17 @@ jobs:
         - name: Package Binary
           shell: bash
           run: |
-            # Define binary name and output directory
             binary_name="nsv"
             output_dir="${binary_name}-${{ env.VERSION }}-${{ matrix.target }}"
-  
-            # Create directory and move the binary
+
             mkdir "$output_dir"
-            if [ "${{ matrix.os }}" = "windows" ]; then
-              mv "target/${{ matrix.target }}/release/$binary_name.exe" "$output_dir/"
+            if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+              mv "target/${{ matrix.target }}/release/${binary_name}.exe" "$output_dir/"
             else
-              mv "target/${{ matrix.target }}/release/$binary_name" "$output_dir/"
+              mv "target/${{ matrix.target }}/release/${binary_name}" "$output_dir/"
             fi
-  
-            # Package the output directory
-            if [ "${{ matrix.extension }}" = "zip" ]; then
+
+            if [[ "${{ matrix.extension }}" == "zip" ]]; then
               zip -r "${output_dir}.zip" "$output_dir"
               echo "ASSET=${output_dir}.zip" >> $GITHUB_ENV
             else

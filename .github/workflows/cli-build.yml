@@ -54,18 +54,5 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install llvm
 
-      - name: Install zig
-        uses: goto-bus-stop/setup-zig@v2
-        with:
-          version: 0.13.0
-
-      - name: Install cargo-zigbuild
-        run: cargo install --locked cargo-zigbuild
-
-      - name: Install just
-        uses: extractions/setup-just@v3
-        with:
-          just-version: 1.38.0
-
       - name: Build CLI
-        run: cargo zigbuild --target=${{ matrix.target }} --release -p nsv
+        run: ${{ matrix.build_command }}
