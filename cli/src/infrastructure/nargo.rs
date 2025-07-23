@@ -32,12 +32,27 @@ impl Default for Nargo {
 
 impl TNargo for Nargo {
     fn find_package_root(&self, package: &str) -> Result<PathBuf, Box<dyn std::error::Error>> {
-        let root = PathBuf::from(package);
-        if self.system.exists(&root.join("Nargo.toml")) {
-            Ok(root)
-        } else {
-            Err(format!("Circuit not found at: {}", root.display()).into())
+        let mut current_dir = self.system.current_dir();
+
+        // Look up to 5 parent directories
+        for _ in 0..5 {
+            if self.system.exists(&current_dir.join("Nargo.toml")) {
+                // check if package name is correct
+                let package_name = self.read_package_name(&current_dir)?;
+                if package_name == package {
+                    return Ok(current_dir);
+                }
+            }
+
+            // Try going up one directory level
+            if let Some(parent) = current_dir.parent() {
+                current_dir = parent.to_path_buf();
+            } else {
+                break;
+            }
         }
+
+        Err(format!("Circuit not found at or above: {}", package).into())
     }
 
     fn read_package_name(&self, root: &Path) -> Result<String, Box<dyn std::error::Error>> {
@@ -80,7 +95,6 @@ impl TNargo for Nargo {
     }
 
     fn execute(&self, root: &Path, package_name: &str) -> Result<(), Box<dyn std::error::Error>> {
-        // TODO:
         self.system.execute_command(
             Command::new("nargo")
                 .arg("execute")
