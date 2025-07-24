@@ -41,11 +41,9 @@ jobs:
       - name: Install stylus
         run: cargo install cargo-stylus@0.6.0
 
-      - name: Install noirup
-        run: |
-          curl -fsSL https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash
-          echo "$HOME/.noirup/bin" >> $GITHUB_PATH
-          noirup -v 1.0.0-beta.6
+      - uses: noir-lang/noirup@v0.1.2
+        with:
+          toolchain: 1.0.0-beta.6
 
       - name: Install bbup
         run: |
