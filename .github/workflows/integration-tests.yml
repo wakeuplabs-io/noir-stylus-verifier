@@ -41,7 +41,7 @@ jobs:
       - name: Install tests dependencies 
         run: |
           cargo install cargo-stylus@0.6.0
-          curl -L https://raw.githubusercontent.com/noir-lang/noirup/refs/heads/main/install | bash
+          curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash
           noirup -v 1.0.0-beta.6
           curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/heads/master/barretenberg/bbup/install | bash
           bbup -v 0.86.0
