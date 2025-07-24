@@ -96,13 +96,18 @@ impl TBb for Bb {
             command.arg("--zk");
         }
 
+        self.system.ensure_dir(&root.join("target"));
         self.system.execute_command(&mut command)?;
 
         // copy proof to output path if it's different
-        if output != root.join("target").join("proof") {
+        if output != root.join("target") {
             self.system.ensure_dir(output.parent().unwrap());
             self.system
-                .copy_file(&root.join("target").join("proof"), output);
+                .copy_file(&root.join("target").join("proof"), &output.join("proof"));
+            self.system.copy_file(
+                &root.join("target").join("public_inputs"),
+                &output.join("public_inputs"),
+            );
         }
 
         Ok(())

@@ -1,6 +1,6 @@
 use crate::infrastructure::{
     system::{System, TSystem},
-    utils::sha256sum,
+    utils::{Sha256Hasher, TSha256Hasher},
 };
 use regex::Regex;
 use semver::Version;
@@ -21,8 +21,8 @@ pub(crate) enum Comparison {
 pub(crate) struct Requirement<'a> {
     pub(crate) program: &'a str,
     pub(crate) version_arg: &'a str,
-    pub(crate) required_version: Option<&'a str>,
-    pub(crate) required_hash: Option<&'a str>,
+    pub(crate) required_version: &'a str,
+    pub(crate) required_hash: &'a [&'a str],
     pub(crate) required_comparator: Comparison,
 }
 
@@ -37,6 +37,7 @@ pub(crate) trait TSystemRequirementsChecker: Send + Sync {
 
 pub(crate) struct SystemRequirementsChecker {
     system: Box<dyn TSystem>,
+    hasher: Box<dyn TSha256Hasher>,
 }
 
 // implementations =============================================
@@ -58,6 +59,7 @@ impl Default for SystemRequirementsChecker {
     fn default() -> Self {
         Self {
             system: Box::new(System),
+            hasher: Box::new(Sha256Hasher),
         }
     }
 }
@@ -67,12 +69,12 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
         // hash has priority over version as some programs don't have a version command
         let version_requirements: Vec<_> = requirements
             .iter()
-            .filter(|r| r.required_version.is_some() && r.required_hash.is_none())
+            .filter(|r| r.required_hash.is_empty())
             .cloned()
             .collect();
         let hash_requirements: Vec<_> = requirements
             .iter()
-            .filter(|r| r.required_hash.is_some())
+            .filter(|r| !r.required_hash.is_empty())
             .cloned()
             .collect();
 
@@ -88,14 +90,16 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
                 .system
                 .which(requirement.program)
                 .ok_or(format!("{} not found", requirement.program))?;
-            let hash = sha256sum(&path)
+            let hash = self
+                .hasher
+                .hash(&path)
                 .map_err(|_| format!("Failed to calculate hash for {}", requirement.program))?;
 
-            if hash != requirement.required_hash.unwrap() {
+            if !requirement.required_hash.contains(&hash.as_str()) {
                 return Err(format!(
                     "Hash {} does not match required hash {}",
                     hash,
-                    requirement.required_hash.unwrap()
+                    requirement.required_hash.join(", ")
                 ));
             }
         }
@@ -135,7 +139,7 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
                         .ok_or(format!("Failed to parse version from output: {output}"))?[1],
                 )
                 .expect("Failed to parse version");
-                required_version = Version::parse(requirement.required_version.unwrap()).unwrap();
+                required_version = Version::parse(requirement.required_version).unwrap();
             }
 
             match requirement.required_comparator {
@@ -143,8 +147,7 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
                     if version != required_version {
                         return Err(format!(
                             "Version {} does not equal required version {}",
-                            version,
-                            requirement.required_version.unwrap()
+                            version, requirement.required_version
                         ));
                     }
                 }
@@ -152,8 +155,7 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
                     if version < required_version {
                         return Err(format!(
                             "Version {} is not greater than or equal to required version {}",
-                            version,
-                            requirement.required_version.unwrap()
+                            version, requirement.required_version
                         ));
                     }
                 }
@@ -161,8 +163,7 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
                     if version > required_version {
                         return Err(format!(
                             "Version {} is not less than or equal to required version {}",
-                            version,
-                            requirement.required_version.unwrap()
+                            version, requirement.required_version
                         ));
                     }
                 }
@@ -170,8 +171,7 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
                     if version <= required_version {
                         return Err(format!(
                             "Version {} is not greater than required version {}",
-                            version,
-                            requirement.required_version.unwrap()
+                            version, requirement.required_version
                         ));
                     }
                 }
@@ -179,8 +179,7 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
                     if version >= required_version {
                         return Err(format!(
                             "Version {} is not less than required version {}",
-                            version,
-                            requirement.required_version.unwrap()
+                            version, requirement.required_version
                         ));
                     }
                 }
@@ -203,15 +202,17 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
 mod tests {
     use super::*;
     use crate::infrastructure::system::MockTSystem;
+    use crate::infrastructure::utils::MockTSha256Hasher;
+    use std::path::PathBuf;
 
     #[test]
     fn test_check_by_version() {
         let requirements = vec![Requirement {
             program: "rustc",
             version_arg: "--version",
-            required_version: Some("1.0.0"),
+            required_version: "1.0.0",
             required_comparator: Comparison::GreaterThanOrEqual,
-            required_hash: None,
+            required_hash: &[],
         }];
 
         let mut mock_system = MockTSystem::new();
@@ -220,8 +221,12 @@ mod tests {
             .times(1)
             .returning(|_| Ok("rustc 1.0.0".to_string()));
 
+        let mut mock_hasher = MockTSha256Hasher::new();
+        mock_hasher.expect_hash().never();
+
         let checker = SystemRequirementsChecker {
             system: Box::new(mock_system),
+            hasher: Box::new(mock_hasher),
         };
         let result = checker.check(requirements);
 
@@ -233,9 +238,9 @@ mod tests {
         let requirements = vec![Requirement {
             program: "rustc",
             version_arg: "--version",
-            required_version: Some("1.0.0"),
+            required_version: "1.0.0",
             required_comparator: Comparison::GreaterThanOrEqual,
-            required_hash: None,
+            required_hash: &[],
         }];
 
         let mut mock_system = MockTSystem::new();
@@ -244,13 +249,45 @@ mod tests {
             .times(1)
             .returning(|_| Ok("rustc 0.9.0".to_string()));
 
+        let mut mock_hasher = MockTSha256Hasher::new();
+        mock_hasher.expect_hash().never();
+
         let checker = SystemRequirementsChecker {
             system: Box::new(mock_system),
+            hasher: Box::new(mock_hasher),
         };
         let result = checker.check(requirements);
 
         assert!(result.is_err());
     }
 
-    // TODO: test check by hash
+    #[test]
+    fn test_check_by_hash() {
+        let requirements = vec![Requirement {
+            program: "bb",
+            version_arg: "--version",
+            required_version: "0.86.0",
+            required_comparator: Comparison::Equal,
+            required_hash: &["0caa9112cd5e446ea336ef9476f0532366dd856f0b2c4ffbd0abd32635c10052"],
+        }];
+
+        let mut mock_system = MockTSystem::new();
+        mock_system
+            .expect_which()
+            .times(1)
+            .returning(|_| Some(PathBuf::from("/usr/local/bin/bb")));
+
+        let mut mock_hasher = MockTSha256Hasher::new();
+        mock_hasher.expect_hash().times(1).returning(|_| {
+            Ok("0caa9112cd5e446ea336ef9476f0532366dd856f0b2c4ffbd0abd32635c10052".to_string())
+        });
+
+        let checker = SystemRequirementsChecker {
+            system: Box::new(mock_system),
+            hasher: Box::new(mock_hasher),
+        };
+        let result = checker.check(requirements);
+
+        assert!(result.is_ok());
+    }
 }

@@ -117,7 +117,7 @@ Usage: nsv prove [OPTIONS]
 Options:
   -p, --package <PACKAGE>              Package name containing the circuit
       --prover-name <PROVER_NAME>      Name of the prover to use for the proof generation [default: Prover.toml]
-      --output-path <OUTPUT_PATH>      Path to the proof to generate [default: target/proof]
+      --output-path <OUTPUT_PATH>      Path where to output the proof and public inputs [default: target]
       --witness-path <WITNESS_PATH>    Path to the witness to use for the proof generation
       --bytecode-path <BYTECODE_PATH>  Path to the bytecode to use for the proof generation
       --zk                             Enable zk-flavored proof

@@ -4,7 +4,7 @@ use predicates::prelude::*;
 use std::fs;
 
 const BIN: &str = env!("CARGO_PKG_NAME");
-const PROJECT_NAME: &str = "my-project";
+const PROJECT_NAME: &str = "hello_world";
 
 #[test]
 fn happy_path() {

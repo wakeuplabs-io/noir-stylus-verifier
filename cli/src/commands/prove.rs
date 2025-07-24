@@ -96,7 +96,7 @@ impl ProveCommand {
                 .execute(&root, &package_name, &prover_path)
                 .map_err(|_| AppError::Other("Failed to execute nargo"))?;
 
-            witness = root.join("target").join("witness.gz");
+            witness = root.join("target").join(format!("{package_name}.gz"));
             bytecode = root.join("target").join(format!("{package_name}.json"));
         }
 

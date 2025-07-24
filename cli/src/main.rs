@@ -88,8 +88,8 @@ enum Commands {
         prover_name: String,
         #[arg(
             long,
-            default_value = "target/proof",
-            help = "Path to the proof to generate"
+            default_value = "target",
+            help = "Path where to output the proof and public inputs"
         )]
         output_path: String,
         #[arg(long, help = "Path to the witness to use for the proof generation")]

@@ -8,7 +8,7 @@ use regex::Regex;
 use strip_ansi_escapes::strip;
 
 const BIN: &str = env!("CARGO_PKG_NAME");
-const PROJECT_NAME: &str = "my-project";
+const PROJECT_NAME: &str = "hello_world";
 const RPC_URL: &str = "http://localhost:8547";
 const PRIVATE_KEY: &str = "0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659";
 const GLOBAL_VERIFIER_ADDRESS: &str = "0x0000000000000000000000000000000000000001";

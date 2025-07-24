@@ -5,7 +5,7 @@ use assert_fs::prelude::*;
 use predicates::prelude::*;
 
 const BIN: &str = env!("CARGO_PKG_NAME");
-const PROJECT_NAME: &str = "my-project";
+const PROJECT_NAME: &str = "hello_world";
 const RPC_URL: &str = "http://localhost:8547";
 
 #[test]

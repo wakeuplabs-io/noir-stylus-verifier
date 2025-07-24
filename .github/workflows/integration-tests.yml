@@ -51,7 +51,7 @@ jobs:
       - name: Install bb
         uses: supplypike/setup-bin@v4
         with:
-          uri: 'https://github.com/AztecProtocol/aztec-packages/releases/download/v0.86.0/barretenberg-arm64-linux.tar.gz'
+          uri: 'https://github.com/AztecProtocol/aztec-packages/releases/download/v0.86.0/barretenberg-amd64-linux.tar.gz'
           name: 'bb'
           version: '0.86.0'
 

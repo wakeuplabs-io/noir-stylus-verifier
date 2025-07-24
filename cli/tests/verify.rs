@@ -3,7 +3,7 @@ use assert_fs::prelude::*;
 use predicates::prelude::*;
 
 const BIN: &str = env!("CARGO_PKG_NAME");
-const PROJECT_NAME: &str = "my-project";
+const PROJECT_NAME: &str = "hello_world";
 
 #[test]
 fn happy_path_local() {

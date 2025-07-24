@@ -5,19 +5,29 @@ use std::{
     path::Path,
 };
 
-pub(crate) fn sha256sum<P: AsRef<Path>>(path: P) -> std::io::Result<String> {
-    let file = File::open(path)?;
-    let mut reader = BufReader::new(file);
-    let mut hasher = Sha256::new();
-    let mut buffer = [0u8; 8192];
+#[cfg_attr(test, mockall::automock)]
+pub(crate) trait TSha256Hasher: Send + Sync {
+    fn hash(&self, path: &Path) -> std::io::Result<String>;
+}
 
-    loop {
-        let count = reader.read(&mut buffer)?;
-        if count == 0 {
-            break;
+#[derive(Default)]
+pub(crate) struct Sha256Hasher;
+
+impl TSha256Hasher for Sha256Hasher {
+    fn hash(&self, path: &Path) -> std::io::Result<String> {
+        let file = File::open(path)?;
+        let mut reader = BufReader::new(file);
+        let mut hasher = Sha256::new();
+        let mut buffer = [0u8; 8192];
+
+        loop {
+            let count = reader.read(&mut buffer)?;
+            if count == 0 {
+                break;
+            }
+            hasher.update(&buffer[..count]);
         }
-        hasher.update(&buffer[..count]);
-    }
 
-    Ok(hex::encode(hasher.finalize()))
+        Ok(hex::encode(hasher.finalize()))
+    }
 }
