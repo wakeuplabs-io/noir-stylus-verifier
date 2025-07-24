@@ -41,21 +41,20 @@ jobs:
       - name: Install stylus
         run: cargo install cargo-stylus@0.6.0
 
-      - uses: noir-lang/noirup@v0.1.2
+      - name: Install nargo
+        uses: supplypike/setup-bin@v4
         with:
-          toolchain: 1.0.0-beta.6
+          uri: 'https://github.com/noir-lang/noir/releases/download/v1.0.0-beta.6/nargo-x86_64-unknown-linux-gnu.tar.gz'
+          name: 'nargo'
+          version: '1.0.0-beta.6'
 
-      - name: Create bbup path
-        shell: bash
-        run: |
-          mkdir -p $HOME/.bbup/bin
-          echo "${HOME}/.bbup/bin" >> $GITHUB_PATH
+      - name: Install bb
+        uses: supplypike/setup-bin@v4
+        with:
+          uri: 'https://github.com/AztecProtocol/aztec-packages/releases/download/v0.86.0/barretenberg-arm64-linux.tar.gz'
+          name: 'bb'
+          version: '0.86.0'
 
-      - name: Run bbup
-        shell: bash
-        run: 
-           ${{ github.action_path }}/bbup -v 0.86.0
-          
       - name: Install just
         run: cargo install just
 
