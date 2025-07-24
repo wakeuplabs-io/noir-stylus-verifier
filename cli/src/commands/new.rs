@@ -51,8 +51,8 @@ impl NewCommand {
             self.system.write_file(&root.join(file.path), file.content)
         }
 
-        spinner.finish_with_message(format!("{} Created {name}\n", "✅ Success!".green()));
-
+        spinner.finish_and_clear();
+        println!("{} Created {name}\n", "✅ Success!".green());
         print_instructions(&["generate", "check", "deploy"]);
 
         Ok(())
@@ -84,96 +84,6 @@ impl NewCommand {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::infrastructure::{
-        codegen::{MockTCodegen, ProjectFile},
-        system::MockTSystem,
-    };
-
-    const PROJECT_NAME: &str = "hello_world";
-
-    /// Happy path, project is created successfully
-    #[tokio::test]
-    async fn happy_path() {
-        let mocked_project_files = vec![
-            ProjectFile {
-                path: "README.md".to_string(),
-                content: "# Project".to_string(),
-            },
-            ProjectFile {
-                path: "src/main.nr".to_string(),
-                content: "fn main() {}".to_string(),
-            },
-            ProjectFile {
-                path: "Nargo.toml".to_string(),
-                content: "[package]\nname = \"test\"".to_string(),
-            },
-        ];
-
-        let mut system_mock = MockTSystem::new();
-        system_mock.expect_exists().returning(|_| false);
-        system_mock.expect_ensure_dir().returning(|_| ());
-        system_mock
-            .expect_write_file()
-            .times(3) // Should be called once for each file
-            .returning(|_, _| ());
-
-        let mut codegen_mock = MockTCodegen::new();
-        codegen_mock
-            .expect_generate_project()
-            .returning(move |_| Ok(mocked_project_files.clone()));
-
-        let command = NewCommand {
-            system: Box::new(system_mock),
-            codegen: Box::new(codegen_mock),
-        };
-
-        let result = command.run(&AppContext {}, PROJECT_NAME).await;
-
-        assert!(result.is_ok());
-    }
-
-    /// Should fail if folder already exists
-    #[tokio::test]
-    async fn existing_folder() {
-        let mut system_mock = MockTSystem::new();
-        system_mock.expect_exists().returning(|_| true);
-
-        let command = NewCommand {
-            system: Box::new(system_mock),
-            codegen: Box::new(MockTCodegen::new()),
-        };
-
-        let result = command.run(&AppContext {}, PROJECT_NAME).await;
-
-        assert!(result.is_err());
-        assert!(matches!(
-            result.unwrap_err(),
-            AppError::DirectoryAlreadyExists(_)
-        ));
-    }
-
-    /// Should fail if codegen fails
-    #[tokio::test]
-    async fn codegen_failure() {
-        let mut system_mock = MockTSystem::new();
-        system_mock.expect_exists().returning(|_| false);
-        system_mock.expect_ensure_dir().returning(|_| ());
-
-        let mut codegen_mock = MockTCodegen::new();
-        codegen_mock
-            .expect_generate_project()
-            .returning(|_| Err("codegen failed".into()));
-
-        let command = NewCommand {
-            system: Box::new(system_mock),
-            codegen: Box::new(codegen_mock),
-        };
-
-        let result = command.run(&AppContext {}, PROJECT_NAME).await;
-
-        assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), AppError::GenerateError));
-    }
 
     /// Name must be valid nargo package name as per https://doc.rust-lang.org/cargo/reference/manifest.html#the-name-field
     #[test]

@@ -8,8 +8,12 @@ use std::{
 pub(crate) trait TNargo {
     fn find_package_root(&self, package: &str) -> Result<PathBuf, Box<dyn std::error::Error>>;
     fn read_package_name(&self, root: &Path) -> Result<String, Box<dyn std::error::Error>>;
-    fn setup(&self, version: &str) -> Result<(), Box<dyn std::error::Error>>;
-    fn execute(&self, root: &Path, package_name: &str) -> Result<(), Box<dyn std::error::Error>>;
+    fn execute(
+        &self,
+        root: &Path,
+        package_name: &str,
+        prover_name: &str,
+    ) -> Result<(), Box<dyn std::error::Error>>;
     fn compile(
         &self,
         root: &Path,
@@ -70,13 +74,6 @@ impl TNargo for Nargo {
         }
     }
 
-    fn setup(&self, version: &str) -> Result<(), Box<dyn std::error::Error>> {
-        self.system
-            .execute_command(Command::new("noirup").arg("-v").arg(version))?;
-
-        Ok(())
-    }
-
     fn compile(
         &self,
         root: &Path,
@@ -94,12 +91,19 @@ impl TNargo for Nargo {
         Ok(())
     }
 
-    fn execute(&self, root: &Path, package_name: &str) -> Result<(), Box<dyn std::error::Error>> {
+    fn execute(
+        &self,
+        root: &Path,
+        package_name: &str,
+        prover_name: &str,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         self.system.execute_command(
             Command::new("nargo")
                 .arg("execute")
                 .arg("--package")
                 .arg(package_name)
+                .arg("--prover-name")
+                .arg(prover_name)
                 .current_dir(root),
         )?;
 

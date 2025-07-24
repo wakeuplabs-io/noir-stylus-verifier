@@ -1,6 +1,5 @@
-use std::{path::Path, process::Command};
-
 use crate::infrastructure::system::{System, TSystem};
+use std::{path::Path, process::Command};
 
 pub(crate) struct Bb {
     system: Box<dyn TSystem>,
@@ -8,17 +7,18 @@ pub(crate) struct Bb {
 
 #[cfg_attr(test, mockall::automock)]
 pub(crate) trait TBb {
-    fn setup(&self, version: &str) -> Result<(), Box<dyn std::error::Error>>;
     fn write_vk(
         &self,
         root: &Path,
-        package_name: &str,
-        output_path: &Path,
+        bytecode: &Path,
+        output: &Path,
     ) -> Result<(), Box<dyn std::error::Error>>;
     fn prove(
         &self,
         root: &Path,
-        package_name: &str,
+        bytecode: &Path,
+        witness: &Path,
+        output: &Path,
         zk: bool,
     ) -> Result<(), Box<dyn std::error::Error>>;
     fn verify(
@@ -40,19 +40,12 @@ impl Default for Bb {
 }
 
 impl TBb for Bb {
-    fn setup(&self, version: &str) -> Result<(), Box<dyn std::error::Error>> {
-        self.system
-            .execute_command(Command::new("bbup").arg("-v").arg(version))?;
-        Ok(())
-    }
-
     fn write_vk(
         &self,
         root: &Path,
-        package_name: &str,
-        output_path: &Path,
+        bytecode: &Path,
+        output: &Path,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let bytecode_path = root.join("target").join(format!("{package_name}.json"));
         self.system.execute_command(
             Command::new("bb")
                 .arg("write_vk")
@@ -61,13 +54,15 @@ impl TBb for Bb {
                 .arg("-o")
                 .arg("target")
                 .arg("-b")
-                .arg(bytecode_path)
+                .arg(bytecode)
                 .current_dir(root),
         )?;
 
-        self.system.ensure_dir(output_path.parent().unwrap());
-        self.system
-            .copy_file(&root.join("target").join("vk"), output_path);
+        if output != root.join("target").join("vk") {
+            self.system.ensure_dir(output.parent().unwrap());
+            self.system
+                .copy_file(&root.join("target").join("vk"), output);
+        }
 
         Ok(())
     }
@@ -75,20 +70,19 @@ impl TBb for Bb {
     fn prove(
         &self,
         root: &Path,
-        package_name: &str,
+        bytecode: &Path,
+        witness: &Path,
+        output: &Path,
         zk: bool,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let bytecode_path = root.join("target").join(format!("{package_name}.json"));
-        let witness_path = root.join("target").join(format!("{package_name}.gz"));
-
         // build command
         let mut command = Command::new("bb");
         command
             .arg("prove")
             .arg("-b")
-            .arg(&bytecode_path)
+            .arg(bytecode)
             .arg("-w")
-            .arg(&witness_path)
+            .arg(witness)
             .arg("-o")
             .arg(root.join("target"))
             .arg("--scheme")
@@ -102,7 +96,19 @@ impl TBb for Bb {
             command.arg("--zk");
         }
 
+        self.system.ensure_dir(&root.join("target"));
         self.system.execute_command(&mut command)?;
+
+        // copy proof to output path if it's different
+        if output != root.join("target") {
+            self.system.ensure_dir(output.parent().unwrap());
+            self.system
+                .copy_file(&root.join("target").join("proof"), &output.join("proof"));
+            self.system.copy_file(
+                &root.join("target").join("public_inputs"),
+                &output.join("public_inputs"),
+            );
+        }
 
         Ok(())
     }

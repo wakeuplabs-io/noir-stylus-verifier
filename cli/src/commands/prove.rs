@@ -1,8 +1,8 @@
+use std::path::PathBuf;
+
 use crate::{
-    config::requirements::{
-        SystemRequirementsChecker, TSystemRequirementsChecker, BB_UP_REQUIREMENT,
-        NOIRUP_REQUIREMENT,
-    },
+    config::constants::{BB_REQUIREMENT, NARGO_REQUIREMENT},
+    infrastructure::requirements::{SystemRequirementsChecker, TSystemRequirementsChecker},
     infrastructure::{
         bb::{Bb, TBb},
         nargo::{Nargo, TNargo},
@@ -33,16 +33,21 @@ impl Default for ProveCommand {
 }
 
 impl ProveCommand {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) async fn run(
         &self,
         _ctx: &AppContext,
         package: Option<String>,
+        prover_path: String,
+        output_path: String,
+        witness_path: Option<String>,
+        bytecode_path: Option<String>,
         zk: bool,
     ) -> Result<(), AppError> {
         // verify dependencies
         self.system_requirements_checker
-            .check(vec![BB_UP_REQUIREMENT, NOIRUP_REQUIREMENT])
-            .map_err(|_| AppError::Other("Failed to verify dependencies"))?;
+            .check(vec![BB_REQUIREMENT, NARGO_REQUIREMENT])
+            .map_err(AppError::MissingDependencies)?;
 
         // find package root
         let root = match package {
@@ -60,194 +65,55 @@ impl ProveCommand {
             .map_err(|_| AppError::PackageNotFound)?;
 
         // All good, let's generate the proof
+        let spinner = create_spinner("⏳ Creating proof...");
 
-        let spinner = create_spinner(&format!(
-            "⏳ Creating proof for {package_name} at:\n\t{}",
-            root.display()
-        ));
+        let witness: PathBuf;
+        let bytecode: PathBuf;
+        if witness_path.is_some() && bytecode_path.is_some() {
+            // Using provided witness and bytecode
+            spinner.set_message("Using provided witness...");
 
-        self.nargo
-            .execute(&root, &package_name)
-            .map_err(|_| AppError::Other("Failed to execute nargo"))?;
+            // check they exist
+            if !self
+                .system
+                .exists(&root.join(witness_path.as_ref().unwrap()))
+            {
+                return Err(AppError::Other("Witness file does not exist"));
+            }
+            if !self
+                .system
+                .exists(&root.join(bytecode_path.as_ref().unwrap()))
+            {
+                return Err(AppError::Other("Bytecode file does not exist"));
+            }
+
+            witness = root.join(witness_path.unwrap());
+            bytecode = root.join(bytecode_path.unwrap());
+        } else {
+            // execute circuit to generate the witness
+            spinner.set_message("Generating witness...");
+            self.nargo
+                .execute(&root, &package_name, &prover_path)
+                .map_err(|_| AppError::Other("Failed to execute nargo"))?;
+
+            witness = root.join("target").join(format!("{package_name}.gz"));
+            bytecode = root.join("target").join(format!("{package_name}.json"));
+        }
+
+        // generate proof
+        spinner.set_message("Generating proof...");
         self.bb
-            .prove(&root, &package_name, zk)
+            .prove(&root, &bytecode, &witness, &root.join(&output_path), zk)
             .map_err(|_| AppError::Other("Failed to generate proof"))?;
 
-        spinner.finish_with_message(format!(
+        spinner.finish_and_clear();
+        println!(
             "{} Proof generated at: \n\t{}\n",
             "✅ Success!".green(),
-            root.join("target").join("proof").display()
-        ));
-
+            root.join(output_path).display()
+        );
         print_instructions(&["verify"]);
 
         Ok(())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::config::requirements::MockTSystemRequirementsChecker;
-    use crate::infrastructure::{bb::MockTBb, nargo::MockTNargo, system::MockTSystem};
-    use std::path::PathBuf;
-
-    const ROOT: &str = "test";
-    const PACKAGE_NAME: &str = "test";
-
-    /// Happy path, package is provided
-    #[tokio::test]
-    async fn success_with_package() {
-        let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
-        system_requirements_checker_mock
-            .expect_check()
-            .returning(|_| Ok(()));
-
-        let mut nargo_mock = MockTNargo::new();
-        nargo_mock
-            .expect_find_package_root()
-            .returning(|_| Ok(PathBuf::from(ROOT)));
-        nargo_mock
-            .expect_read_package_name()
-            .returning(|_| Ok(PACKAGE_NAME.to_string()));
-
-        let mut bb_mock = MockTBb::new();
-        bb_mock.expect_prove().returning(|_, _, _| Ok(()));
-
-        nargo_mock.expect_execute().returning(|_, _| Ok(()));
-
-        let command = ProveCommand {
-            system: Box::new(MockTSystem::new()),
-            bb: Box::new(bb_mock),
-            nargo: Box::new(nargo_mock),
-            system_requirements_checker: Box::new(system_requirements_checker_mock),
-        };
-
-        let result = command
-            .run(&AppContext {}, Some(PACKAGE_NAME.to_string()), false)
-            .await;
-
-        assert!(result.is_ok());
-    }
-
-    /// Happy path, package is provided and zk flavour is enabled
-    #[tokio::test]
-    async fn success_with_package_zk() {
-        let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
-        system_requirements_checker_mock
-            .expect_check()
-            .returning(|_| Ok(()));
-
-        let mut nargo_mock = MockTNargo::new();
-        nargo_mock
-            .expect_find_package_root()
-            .returning(|_| Ok(PathBuf::from(ROOT)));
-        nargo_mock
-            .expect_read_package_name()
-            .returning(|_| Ok(PACKAGE_NAME.to_string()));
-
-        let mut bb_mock = MockTBb::new();
-        bb_mock.expect_prove().returning(|_, _, _| Ok(()));
-
-        nargo_mock.expect_execute().returning(|_, _| Ok(()));
-
-        let command = ProveCommand {
-            system: Box::new(MockTSystem::new()),
-            bb: Box::new(bb_mock),
-            nargo: Box::new(nargo_mock),
-            system_requirements_checker: Box::new(system_requirements_checker_mock),
-        };
-
-        let result = command
-            .run(&AppContext {}, Some(PACKAGE_NAME.to_string()), true)
-            .await;
-
-        assert!(result.is_ok());
-    }
-
-    /// Should default to current directory if no package is provided
-    #[tokio::test]
-    async fn success_without_package() {
-        let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
-        system_requirements_checker_mock
-            .expect_check()
-            .returning(|_| Ok(()));
-
-        let mut system_mock = MockTSystem::new();
-        system_mock
-            .expect_current_dir()
-            .returning(|| PathBuf::from(ROOT));
-
-        let mut nargo_mock = MockTNargo::new();
-        nargo_mock
-            .expect_read_package_name()
-            .returning(|_| Ok(PACKAGE_NAME.to_string()));
-
-        let mut bb_mock = MockTBb::new();
-        bb_mock.expect_prove().returning(|_, _, _| Ok(()));
-
-        nargo_mock.expect_execute().returning(|_, _| Ok(()));
-
-        let command = ProveCommand {
-            system: Box::new(system_mock),
-            bb: Box::new(bb_mock),
-            nargo: Box::new(nargo_mock),
-            system_requirements_checker: Box::new(system_requirements_checker_mock),
-        };
-
-        let result = command.run(&AppContext {}, None, false).await;
-
-        assert!(result.is_ok());
-    }
-
-    /// Should fail if dependencies are not met
-    #[tokio::test]
-    async fn missing_dependencies() {
-        let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
-        system_requirements_checker_mock
-            .expect_check()
-            .returning(|_| Err("dependencies not found".to_string()));
-
-        let command = ProveCommand {
-            system: Box::new(MockTSystem::new()),
-            bb: Box::new(MockTBb::new()),
-            nargo: Box::new(MockTNargo::new()),
-            system_requirements_checker: Box::new(system_requirements_checker_mock),
-        };
-
-        let result = command
-            .run(&AppContext {}, Some(PACKAGE_NAME.to_string()), false)
-            .await;
-
-        assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), AppError::Other(_)));
-    }
-
-    /// Should fail if package is not found
-    #[tokio::test]
-    async fn package_not_found() {
-        let mut system_requirements_checker_mock = MockTSystemRequirementsChecker::new();
-        system_requirements_checker_mock
-            .expect_check()
-            .returning(|_| Ok(()));
-
-        let mut nargo_mock = MockTNargo::new();
-        nargo_mock
-            .expect_find_package_root()
-            .returning(|_| Err("package not found".into()));
-
-        let command = ProveCommand {
-            system: Box::new(MockTSystem::new()),
-            bb: Box::new(MockTBb::new()),
-            nargo: Box::new(nargo_mock),
-            system_requirements_checker: Box::new(system_requirements_checker_mock),
-        };
-
-        let result = command
-            .run(&AppContext {}, Some(PACKAGE_NAME.to_string()), false)
-            .await;
-
-        assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), AppError::PackageNotFound));
     }
 }

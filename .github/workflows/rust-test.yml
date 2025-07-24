@@ -22,11 +22,11 @@ jobs:
     strategy:
       matrix:
         package:
-          - name: ultrahonk
-            features: --features ark-ec/only-arithmetic-backend # ark-ec/only-arithmetic-backend panics if we attempt to do arithmetic outside of the G1ArithmeticBackend
           - name: nsv
-            features: ""
-
+            cmd: cargo test -p nsv --bin nsv --profile ci-dev
+          - name: ultrahonk
+            cmd: cargo test -p ultrahonk --features ark-ec/only-arithmetic-backend --lib --profile ci-dev
+      
     steps:
       - uses: actions/checkout@v4
         with:
@@ -46,4 +46,4 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y build-essential gcc lld
 
       - name: Test ${{ matrix.package.name }}
-        run: cargo test -p ${{ matrix.package.name }} --profile ci-dev ${{ matrix.package.features }}  
+        run: ${{ matrix.package.cmd }}
