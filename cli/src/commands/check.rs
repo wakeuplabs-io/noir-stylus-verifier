@@ -1,9 +1,8 @@
 use crate::infrastructure::terminal::print_instructions;
 use crate::AppError;
 use crate::{
-    config::requirements::{
-        SystemRequirementsChecker, TSystemRequirementsChecker, CARGO_STYLUS_REQUIREMENT,
-    },
+    config::constants::CARGO_STYLUS_REQUIREMENT,
+    infrastructure::requirements::{SystemRequirementsChecker, TSystemRequirementsChecker},
     infrastructure::{
         nargo::{Nargo, TNargo},
         progress::create_spinner,
@@ -41,7 +40,7 @@ impl CheckCommand {
     ) -> Result<(), AppError> {
         self.system_requirements_checker
             .check(vec![CARGO_STYLUS_REQUIREMENT])
-            .map_err(|_| AppError::MissingDependencies())?;
+            .map_err(|e| AppError::MissingDependencies(e))?;
 
         // find package root
         let root = match package {
@@ -74,21 +73,13 @@ impl CheckCommand {
         // run stylus check in contracts directory
         match self.stylus.check(&contracts_root, &rpc_url) {
             Ok(result) => {
-                progress.finish_with_message(format!(
-                    "{} Checked contract for package {} at {}\n",
-                    "✅ Success!".green(),
-                    package_name,
-                    root.display()
-                ));
+                progress.finish_and_clear();
+                println!("{} Checked contract for package {} at {}\n", "✅ Success!".green(), package_name, root.display());
                 println!("{result}");
             }
             Err(e) => {
-                progress.finish_with_message(format!(
-                    "{} Checked contract for package {} at {}\n",
-                    "❌ Error!".red(),
-                    package_name,
-                    root.display()
-                ));
+                progress.finish_and_clear();
+                println!("{} Checked contract for package {} at {}\n", "❌ Error!".red(), package_name, root.display());
                 return Err(AppError::StylusError(e.to_string()));
             }
         }

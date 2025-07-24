@@ -1,8 +1,8 @@
+use std::path::Path;
+
 use crate::{
-    config::requirements::{
-        SystemRequirementsChecker, TSystemRequirementsChecker, BB_REQUIREMENT, BB_UP_REQUIREMENT,
-        NOIRUP_REQUIREMENT, NOIR_REQUIREMENT,
-    },
+    config::constants::{BB_REQUIREMENT, NARGO_REQUIREMENT},
+    infrastructure::requirements::{SystemRequirementsChecker, TSystemRequirementsChecker},
     infrastructure::{
         bb::{Bb, TBb},
         codegen::{Codegen, TCodegen},
@@ -40,11 +40,13 @@ impl GenerateCommand {
         &self,
         _ctx: &AppContext,
         package: Option<String>,
+        bytecode_path: Option<String>,
+        vk_path: Option<String>,
     ) -> Result<(), AppError> {
         // check system requirements for this command
         self.system_requirements_checker
-            .check(vec![BB_UP_REQUIREMENT, NOIRUP_REQUIREMENT])
-            .map_err(|_| AppError::MissingDependencies())?;
+            .check(vec![BB_REQUIREMENT, NARGO_REQUIREMENT])
+            .map_err(|e| AppError::MissingDependencies(e))?;
 
         // find package root
         let root = match package {
@@ -71,37 +73,38 @@ impl GenerateCommand {
         // create contracts directory if it doesn't exist
         self.system.ensure_dir(&contracts_root);
 
-        // set noir version
-        spinner.set_message(format!(
-            "Setting noir version to {}...",
-            NOIR_REQUIREMENT.required_version
-        ));
-        self.nargo
-            .setup(NOIR_REQUIREMENT.required_version)
-            .map_err(|_| AppError::Other("Failed to setup noir"))?;
+        let target_bytecode_path = contracts_root.join("assets").join("bytecode.json");
+        match bytecode_path {
+            Some(bytecode_path) => {
+                // Using provided bytecode, just copy it to the target path
+                spinner.set_message("Using provided bytecode...");
+                self.system
+                    .copy_file(&Path::new(&bytecode_path), &target_bytecode_path);
+            }
+            None => {
+                // Compile circuit
+                spinner.set_message("Compiling circuit...");
+                self.nargo
+                    .compile(&root, &package_name, &target_bytecode_path)
+                    .map_err(|_| AppError::CompileError)?;
+            }
+        }
 
-        // compile circuit
-        spinner.set_message("Compiling circuit...");
-        let bytecode_path = contracts_root.join("assets").join("bytecode.json");
-        self.nargo
-            .compile(&root, &package_name, &bytecode_path)
-            .map_err(|_| AppError::CompileError)?;
-
-        // set bb version and write vk
-        spinner.set_message(format!(
-            "Setting bb version to {}...",
-            BB_REQUIREMENT.required_version
-        ));
-        self.bb
-            .setup(BB_REQUIREMENT.required_version)
-            .map_err(|_| AppError::Other("Failed to setup bb"))?;
-
-        // write vk
-        spinner.set_message("Writing vk...");
-        let vk_path = contracts_root.join("assets").join("vk");
-        self.bb
-            .write_vk(&root, &package_name, &vk_path)
-            .map_err(|_| AppError::Other("Failed to write vk"))?;
+        let target_vk_path = contracts_root.join("assets").join("vk");
+        match vk_path {
+            Some(vk_path) => {
+                // Using provided vk, just copy it to the target path
+                spinner.set_message("Using provided vk...");
+                self.system.copy_file(&Path::new(&vk_path), &target_vk_path);
+            }
+            None => {
+                // We need to generate the vk
+                spinner.set_message("Writing vk...");
+                self.bb
+                    .write_vk(&root, &target_bytecode_path, &target_vk_path)
+                    .map_err(|_| AppError::Other("Failed to write vk"))?;
+            }
+        }
 
         // generate verifier contract
         let project_files = self
@@ -116,12 +119,8 @@ impl GenerateCommand {
                 .write_file(&contracts_root.join(file.path), file.content);
         }
 
-        spinner.finish_with_message(format!(
-            "{} Generated at {}\n",
-            "✅ Success!".green(),
-            contracts_root.display()
-        ));
-
+        spinner.finish_and_clear();
+        println!("{} Generated at {}\n", "✅ Success!".green(), contracts_root.display());
         print_instructions(&["check", "deploy"]);
 
         Ok(())

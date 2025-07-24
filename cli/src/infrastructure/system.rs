@@ -16,6 +16,7 @@ pub(crate) trait TSystem: Send + Sync {
     fn exists(&self, path: &Path) -> bool;
     fn current_dir(&self) -> PathBuf;
     fn copy_file(&self, source: &Path, destination: &Path);
+    fn which(&self, command: &str) -> Option<PathBuf>;
 }
 
 // implementations ==========================================
@@ -62,13 +63,15 @@ impl TSystem for System {
     }
 
     fn copy_file(&self, source: &Path, destination: &Path) {
-        println!(
-            "Copying file from {} to {}",
-            source.display(),
-            destination.display()
-        );
-        // ensure destination directory exists
         std::fs::create_dir_all(destination.parent().unwrap()).unwrap();
         std::fs::copy(source, destination).unwrap();
+    }
+
+    fn which(&self, command: &str) -> Option<PathBuf> {
+        let output = self
+            .execute_command(Command::new("which").arg(command))
+            .map_err(|_| Option::<PathBuf>::None)
+            .ok()?;
+        Some(PathBuf::from(output.trim()))
     }
 }

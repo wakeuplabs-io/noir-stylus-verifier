@@ -5,9 +5,7 @@ use crate::{
             VERIFIER_ADDRESS_ARBITRUM_SEPOLIA, VERIFIER_ADDRESS_ARBITRUM_SEPOLIA_ZK,
             VERIFIER_ADDRESS_ARBITRUM_ZK,
         },
-        requirements::{
-            SystemRequirementsChecker, TSystemRequirementsChecker, CARGO_STYLUS_REQUIREMENT,
-        },
+        constants::CARGO_STYLUS_REQUIREMENT,
     },
     infrastructure::{
         nargo::{Nargo, TNargo},
@@ -16,6 +14,7 @@ use crate::{
         stylus::{Stylus, TStylus},
         system::{System, TSystem},
         terminal::print_instructions,
+        requirements::{SystemRequirementsChecker, TSystemRequirementsChecker},
     },
     print_error, print_warning, AppContext, AppError,
 };
@@ -53,7 +52,7 @@ impl DeployCommand {
     ) -> Result<(), AppError> {
         self.system_requirements_checker
             .check(vec![CARGO_STYLUS_REQUIREMENT])
-            .map_err(|_| AppError::MissingDependencies())?;
+            .map_err(|e| AppError::MissingDependencies(e))?;
 
         let root = match package {
             Some(package) => self

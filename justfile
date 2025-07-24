@@ -64,15 +64,38 @@ deploy-contract contract constructor_signature="" *constructor_args="":
 
 # Tests
 
-test-ultrahonk:
-  #  ark-ec/only-arithmetic-backend panics if we attempt to do arithmetic outside of the G1ArithmeticBackend
-  cargo test -p ultrahonk --features ark-ec/only-arithmetic-backend -- --test-threads=1 
+test-cli:
+  cargo test -p nsv --bin nsv
 
 test-integration:
-  cargo run -p integration -- --rpc-url {{rpc_url}} --priv-key {{private_key}}
+  #!/usr/bin/env bash
+  set -euo pipefail
 
-test-cli:
-  cargo test -p nsv -- --test-threads=1 
+  just nitro-testnode-up
+
+  cleanup() {
+    echo "Shutting down testnode..."
+    just nitro-testnode-down
+  }
+  trap cleanup EXIT
+
+  status=0
+
+  # just test-cli-integration || status=1
+  just test-ultrahonk-integration || status=1
+  # just test-contracts-integration || status=1
+
+  exit $status
+  
+test-cli-integration:
+  cargo test -p nsv --tests
+
+test-ultrahonk-integration:
+  #  ark-ec/only-arithmetic-backend panics if we attempt to do arithmetic outside of the G1ArithmeticBackend
+  cargo test -p ultrahonk --features ark-ec/only-arithmetic-backend 
+
+test-contracts-integration:
+  cargo run -p integration -- --rpc-url {{rpc_url}} --priv-key {{private_key}}
 
 verify-proof verifier_address test_vector_name zk="false":
   #!/usr/bin/env bash
@@ -96,7 +119,7 @@ get-verifier-addresses verifier_address:
 
 # Miscellaneous
 
-check-pr: fmt lint test-ultrahonk test-integration
+check-pr: fmt lint test-integration
 
 nitro-testnode-up:
   ./scripts/nitro-testnode.sh --detach

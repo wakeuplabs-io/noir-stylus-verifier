@@ -1,9 +1,12 @@
-use crate::infrastructure::system::{System, TSystem};
+use crate::infrastructure::{
+    system::{System, TSystem},
+    utils::sha256sum,
+};
 use regex::Regex;
 use semver::Version;
 use std::{fmt, process::Command};
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 #[allow(dead_code)]
 pub(crate) enum Comparison {
     Equal,
@@ -14,55 +17,27 @@ pub(crate) enum Comparison {
     Installed,
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub(crate) struct Requirement<'a> {
     pub(crate) program: &'a str,
     pub(crate) version_arg: &'a str,
-    pub(crate) required_version: &'a str,
+    pub(crate) required_version: Option<&'a str>,
+    pub(crate) required_hash: Option<&'a str>,
     pub(crate) required_comparator: Comparison,
 }
 
 #[cfg_attr(test, mockall::automock)]
 pub(crate) trait TSystemRequirementsChecker: Send + Sync {
     fn check<'a>(&self, requirements: Vec<Requirement<'a>>) -> Result<(), String>;
+
+    fn check_by_hash<'a>(&self, requirements: Vec<Requirement<'a>>) -> Result<(), String>;
+
+    fn check_by_version<'a>(&self, requirements: Vec<Requirement<'a>>) -> Result<(), String>;
 }
 
 pub(crate) struct SystemRequirementsChecker {
     system: Box<dyn TSystem>,
 }
-
-// requirements constants ======================================
-
-pub(crate) const CARGO_STYLUS_REQUIREMENT: Requirement = Requirement {
-    program: "cargo-stylus",
-    version_arg: "--version",
-    required_version: "0.1.0",
-    required_comparator: Comparison::GreaterThanOrEqual,
-};
-pub(crate) const BB_UP_REQUIREMENT: Requirement = Requirement {
-    program: "bbup",
-    version_arg: "",
-    required_version: "",
-    required_comparator: Comparison::Installed,
-};
-pub(crate) const BB_REQUIREMENT: Requirement = Requirement {
-    program: "bb",
-    version_arg: "--version",
-    required_version: "0.86.0",
-    required_comparator: Comparison::Equal,
-};
-pub(crate) const NOIRUP_REQUIREMENT: Requirement = Requirement {
-    program: "noirup",
-    version_arg: "",
-    required_version: "",
-    required_comparator: Comparison::Installed,
-};
-pub(crate) const NOIR_REQUIREMENT: Requirement = Requirement {
-    program: "noir",
-    version_arg: "--version",
-    required_version: "1.0.0-beta.6",
-    required_comparator: Comparison::Equal,
-};
 
 // implementations =============================================
 
@@ -89,7 +64,47 @@ impl Default for SystemRequirementsChecker {
 
 impl TSystemRequirementsChecker for SystemRequirementsChecker {
     fn check(&self, requirements: Vec<Requirement>) -> Result<(), String> {
-        let re = Regex::new(r"(\d+\.\d+\.\d+)").expect("Failed to compile regex");
+        // hash has priority over version as some programs don't have a version command
+        let version_requirements: Vec<_> = requirements
+            .iter()
+            .filter(|r| r.required_version.is_some() && r.required_hash.is_none())
+            .cloned()
+            .collect();
+        let hash_requirements: Vec<_> = requirements
+            .iter()
+            .filter(|r| r.required_hash.is_some())
+            .cloned()
+            .collect();
+
+        self.check_by_version(version_requirements)?;
+        self.check_by_hash(hash_requirements)?;
+
+        Ok(())
+    }
+
+    fn check_by_hash(&self, requirements: Vec<Requirement>) -> Result<(), String> {
+        for requirement in requirements.iter() {
+            let path = self
+                .system
+                .which(requirement.program)
+                .ok_or(format!("{} not found", requirement.program))?;
+            let hash = sha256sum(&path)
+                .map_err(|_| format!("Failed to calculate hash for {}", requirement.program))?;
+
+            if hash != requirement.required_hash.unwrap() {
+                return Err(format!(
+                    "Hash {} does not match required hash {}",
+                    hash,
+                    requirement.required_hash.unwrap()
+                ));
+            }
+        }
+
+        Ok(())
+    }
+
+    fn check_by_version(&self, requirements: Vec<Requirement>) -> Result<(), String> {
+        let re = Regex::new(r"(\d+\.\d+\.\d+(?:-[a-z]+\.\d+)?)").expect("Failed to compile regex");
 
         for requirement in requirements.iter() {
             let mut installed = true;
@@ -120,7 +135,7 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
                         .ok_or(format!("Failed to parse version from output: {output}"))?[1],
                 )
                 .expect("Failed to parse version");
-                required_version = Version::parse(requirement.required_version).unwrap();
+                required_version = Version::parse(requirement.required_version.unwrap()).unwrap();
             }
 
             match requirement.required_comparator {
@@ -128,7 +143,8 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
                     if version != required_version {
                         return Err(format!(
                             "Version {} does not equal required version {}",
-                            version, requirement.required_version
+                            version,
+                            requirement.required_version.unwrap()
                         ));
                     }
                 }
@@ -136,7 +152,8 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
                     if version < required_version {
                         return Err(format!(
                             "Version {} is not greater than or equal to required version {}",
-                            version, requirement.required_version
+                            version,
+                            requirement.required_version.unwrap()
                         ));
                     }
                 }
@@ -144,7 +161,8 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
                     if version > required_version {
                         return Err(format!(
                             "Version {} is not less than or equal to required version {}",
-                            version, requirement.required_version
+                            version,
+                            requirement.required_version.unwrap()
                         ));
                     }
                 }
@@ -152,7 +170,8 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
                     if version <= required_version {
                         return Err(format!(
                             "Version {} is not greater than required version {}",
-                            version, requirement.required_version
+                            version,
+                            requirement.required_version.unwrap()
                         ));
                     }
                 }
@@ -160,7 +179,8 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
                     if version >= required_version {
                         return Err(format!(
                             "Version {} is not less than required version {}",
-                            version, requirement.required_version
+                            version,
+                            requirement.required_version.unwrap()
                         ));
                     }
                 }
@@ -182,18 +202,16 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::config::requirements::Comparison;
-    use crate::config::requirements::Requirement;
-    use crate::config::requirements::SystemRequirementsChecker;
     use crate::infrastructure::system::MockTSystem;
 
     #[test]
-    fn test_check() {
+    fn test_check_by_version() {
         let requirements = vec![Requirement {
             program: "rustc",
             version_arg: "--version",
-            required_version: "1.0.0",
+            required_version: Some("1.0.0"),
             required_comparator: Comparison::GreaterThanOrEqual,
+            required_hash: None,
         }];
 
         let mut mock_system = MockTSystem::new();
@@ -211,12 +229,13 @@ mod tests {
     }
 
     #[test]
-    fn test_check_fails() {
+    fn test_check_by_version_fails() {
         let requirements = vec![Requirement {
             program: "rustc",
             version_arg: "--version",
-            required_version: "1.0.0",
+            required_version: Some("1.0.0"),
             required_comparator: Comparison::GreaterThanOrEqual,
+            required_hash: None,
         }];
 
         let mut mock_system = MockTSystem::new();
@@ -232,4 +251,6 @@ mod tests {
 
         assert!(result.is_err());
     }
+
+    // TODO: test check by hash
 }

@@ -51,8 +51,8 @@ impl NewCommand {
             self.system.write_file(&root.join(file.path), file.content)
         }
 
-        spinner.finish_with_message(format!("{} Created {name}\n", "✅ Success!".green()));
-
+        spinner.finish_and_clear();
+        println!("{} Created {name}\n", "✅ Success!".green());
         print_instructions(&["generate", "check", "deploy"]);
 
         Ok(())

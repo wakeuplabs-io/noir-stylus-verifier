@@ -7,3 +7,5 @@ pub(crate) mod stylus;
 pub(crate) mod system;
 pub(crate) mod templates;
 pub(crate) mod terminal;
+pub(crate) mod utils;
+pub(crate) mod requirements;

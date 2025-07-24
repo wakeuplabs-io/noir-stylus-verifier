@@ -1,11 +1,6 @@
 use crate::{
-    config::{
-        constants::DEFAULT_RPC_URL,
-        requirements::{
-            SystemRequirementsChecker, TSystemRequirementsChecker, BB_REQUIREMENT,
-            BB_UP_REQUIREMENT,
-        },
-    },
+    config::constants::{DEFAULT_RPC_URL, BB_REQUIREMENT},
+    infrastructure::requirements::{SystemRequirementsChecker, TSystemRequirementsChecker},
     infrastructure::{
         bb::{Bb, TBb},
         progress::create_spinner,
@@ -54,8 +49,8 @@ impl VerifyCommand {
     ) -> Result<(), AppError> {
         // verify dependencies
         self.system_requirements_checker
-            .check(vec![BB_UP_REQUIREMENT])
-            .map_err(|_| AppError::Other("Failed to verify dependencies"))?;
+            .check(vec![BB_REQUIREMENT])
+            .map_err(|e| AppError::MissingDependencies(e))?;
 
         let root = self.system.current_dir();
         let proof = PathBuf::from(proof);
@@ -64,19 +59,18 @@ impl VerifyCommand {
 
         // defaults to target folder
         if !self.system.exists(&proof) {
-            return Err(AppError::Other("Proof not found"));
+            return Err(AppError::FileNotFound(proof));
         }
         if !self.system.exists(&public_input) {
-            return Err(AppError::Other("Public input not found"));
+            return Err(AppError::FileNotFound(public_input));
         }
         if !self.system.exists(&vk) {
-            return Err(AppError::Other("VK not found"));
+            return Err(AppError::FileNotFound(vk));
         }
 
         // All good, let's verify the proof
-
         let spinner = create_spinner(&format!("⏳ Verifying proof at {}...", proof.display()));
-
+        
         match verifier_address {
             Some(address) => {
                 // call the verifier contract with the proof and public inputs
@@ -96,35 +90,22 @@ impl VerifyCommand {
                     .map_err(|e| AppError::RpcError(e.to_string()))?;
 
                 if result._0 {
-                    spinner.finish_with_message(format!(
-                        "{} Proof verified onchain\n",
-                        "✅ Success!".green(),
-                    ));
+                    spinner.finish_and_clear();
+                    println!("{} Proof verified onchain\n", "✅ Success!".green());
                 } else {
-                    spinner.finish_with_message(format!(
-                        "{} Proof verification failed onchain\n",
-                        "❌ Error!".red(),
-                    ));
+                    spinner.finish_and_clear();
+                    println!("{} Proof verification failed onchain\n", "❌ Error!".red());
                 }
             }
             None => {
-                self.bb
-                    .setup(BB_REQUIREMENT.required_version)
-                    .map_err(|_| AppError::Other("Failed to setup bb"))?;
-
                 match self.bb.verify(&root, &proof, &public_input, &vk, zk) {
                     Ok(_) => {
-                        spinner.finish_with_message(format!(
-                            "{} Proof verified at {}\n",
-                            "✅ Success!".green(),
-                            root.join("target").join("proof").display()
-                        ));
+                        spinner.finish_and_clear();
+                        println!("{} Proof verified locally\n", "✅ Success!".green());
                     }
                     Err(e) => {
-                        spinner.finish_with_message(format!(
-                            "{} Failed to verify proof\n",
-                            "❌ Error!".red()
-                        ));
+                        spinner.finish_and_clear();
+                        println!("{} Failed to verify proof\n", "❌ Error!".red());
                         print_error!("{e}");
                     }
                 }

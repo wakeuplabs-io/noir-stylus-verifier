@@ -3,7 +3,6 @@ mod config;
 mod infrastructure;
 
 use std::path::PathBuf;
-
 use clap::{Parser, Subcommand};
 use colored::Colorize;
 use commands::{
@@ -12,7 +11,6 @@ use commands::{
 use dotenv::dotenv;
 use log::{Level, LevelFilter};
 use thiserror::Error;
-
 use crate::{
     commands::{prove::ProveCommand, verify::VerifyCommand},
     config::constants::DEFAULT_RPC_URL,
@@ -43,6 +41,13 @@ enum Commands {
     Generate {
         #[arg(short, long, help = "Package name containing the circuit")]
         package: Option<String>,
+        #[arg(long, help = "Path to the bytecode to use for the proof generation")]
+        bytecode_path: Option<String>,
+        #[arg(
+            long,
+            help = "Path to the verification key to use for the proof generation"
+        )]
+        vk_path: Option<String>,
     },
     /// Check if the generated contract is compatible with Stylus, and how much it costs to deploy
     Check {
@@ -81,6 +86,16 @@ enum Commands {
             help = "Name of the prover to use for the proof generation"
         )]
         prover_name: String,
+        #[arg(
+            long,
+            default_value = "target/proof",
+            help = "Path to the proof to generate"
+        )]
+        output_path: String,
+        #[arg(long, help = "Path to the witness to use for the proof generation")]
+        witness_path: Option<String>,
+        #[arg(long, help = "Path to the bytecode to use for the proof generation")]
+        bytecode_path: Option<String>,
         #[arg(long, default_value_t = false, help = "Enable zk-flavored proof")]
         zk: bool,
     },
@@ -122,16 +137,18 @@ enum Commands {
 
 #[derive(Error, Debug, PartialEq, Eq)]
 pub(crate) enum AppError {
-    #[error("We can't find your contracts at {0}. Please run generate first.")]
+    #[error("We can't find your contracts at {0}. If they exist, try specifying the package with -p <package> or run nsv generate first")]
     ContractsNotFound(PathBuf),
-    #[error("Missing dependencies")]
-    MissingDependencies(),
+    #[error("Missing dependencies: {0}")]
+    MissingDependencies(String),
     #[error("Stylus error: {0}")]
     StylusError(String),
     #[error("Package not found")]
     PackageNotFound,
     #[error("RPC error: {0}")]
     RpcError(String),
+    #[error("File not found: {0}")]
+    FileNotFound(PathBuf),
     #[error("Other error: {0}")]
     Other(&'static str),
     #[error("Compile error")]
@@ -186,17 +203,36 @@ async fn main() {
     // run commands
     if let Err(e) = match args.cmd {
         Commands::New { target } => NewCommand::default().run(&ctx, &target).await,
-        Commands::Generate { package } => GenerateCommand::default().run(&ctx, package).await,
+        Commands::Generate {
+            package,
+            bytecode_path,
+            vk_path,
+        } => {
+            GenerateCommand::default()
+                .run(&ctx, package, bytecode_path, vk_path)
+                .await
+        }
         Commands::Check { package, rpc_url } => {
             CheckCommand::default().run(&ctx, package, rpc_url).await
         }
         Commands::Prove {
             package,
             prover_name,
+            output_path,
+            witness_path,
+            bytecode_path,
             zk,
         } => {
             ProveCommand::default()
-                .run(&ctx, package, prover_name, zk)
+                .run(
+                    &ctx,
+                    package,
+                    prover_name,
+                    output_path,
+                    witness_path,
+                    bytecode_path,
+                    zk,
+                )
                 .await
         }
         Commands::Verify {
