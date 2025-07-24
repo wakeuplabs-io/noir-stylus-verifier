@@ -20,12 +20,12 @@ use thiserror::Error;
 #[derive(Parser)]
 #[clap(name = "nsv")]
 #[clap(version = "0.1.0")]
-#[clap(about = "Generate and deploy zk verifiers in stylus.", long_about = None)]
+#[clap(about = "Generate and deploy verifiers in stylus from noir circuits.", long_about = None)]
 struct Args {
     #[command(subcommand)]
     cmd: Commands,
 
-    /// Suppress logging output
+    /// Show verbose output
     #[arg(short, long, default_value_t = false)]
     verbose: bool,
 }

@@ -8,13 +8,7 @@ You can override the following global variables:
 * `rpc_url`: the RPC endpoint to interact with.
 * `private_key`: the private key used for signing transactions.
 
-By default, these point to a local testnode started with:
-
-```bash
-just nitro-testnode-up
-```
-
-To override them, use:
+By default, these point to a local testnode. To override them, use:
 
 ```bash
 just --set rpc_url {your_rpc_url} --set private_key {your_private_key} {your_command}
@@ -36,92 +30,39 @@ Stylus allows only **one contract per WASM file**. To keep all contracts within 
 Use the appropriate one depending on your target logic.
 
 
-### Build and Profile
+###  Available recipes
 
-Scripts to build and analyze the project.
+```bash
+just --summary
 
-* `just build-all`:
-  Build all packages in the project.
+# Available recipes:
+#     build-cli-linux                         # Build and package the cli binary for linux
+#     build-cli-macos                         # Build and package the cli binary for macos
+#     build-cli-windows                       # Build and package the cli binary for windows
+#     build-contract contract                 # Build the contracts in wasm for stylus. "Contract" is the feature flag within the contracts crate.
+#     build-ultrahonk                         # Build the ultrahonk library for wasm target with only-arithmetic-backend feature.
+#     check-contract contract                 # Check the contracts for deployment using stylus. "Contract" is the feature flag within the contracts crate.
+#     check-pr                                # Check the pr.
+#     clean-cli-linux                         # Clean the cli binary for linux
+#     clean-cli-macos                         # Clean the cli binary for macos
+#     clean-cli-windows                       # Clean the cli binary for windows
+#     deploy-contract contract constructor_signature="" *constructor_args="" # Deploy the contracts using stylus. "Contract" is the feature flag within the contracts crate. Pass constructor_signature and constructor_args to deploy with a constructor.
+#     fmt                                     # Check formatting issues
+#     fmt-fix                                 # Format the code and fix the errors.
+#     get-verifier-addresses verifier_address # Get the verifier addresses for the global verifier.
+#     lint                                    # Check linting issues
+#     lint-fix                                # Fix linting issues
+#     nitro-testnode-down                     # Quit the nitro testnode.
+#     nitro-testnode-up                       # Spin up the nitro testnode.
+#     profile-contract contract               # Profile the contracts using twiggy. "Contract" is the feature flag within the contracts crate.
+#     test-cli                                # Test the cli unit tests
+#     test-cli-integration                    # Run the cli integration tests.
+#     test-contracts-integration              # Run the contracts integration tests.
+#     test-integration                        # Run the integration tests. Spin up devnode and run. We'll exit with 0 if all tests pass, 1 otherwise, but still run them all.
+#     test-ultrahonk-integration              # Run the ultrahonk integration tests.
+#     verify-proof verifier_address test_vector_name zk="false" # Verify a proof from the test vectors with cast. Intended for global verifier only.
+```
 
-* `just build-ultrahonk`:
-  Build the `ultrahonk` package.
-
-* `just build-contract {contract}`:
-  Build the Stylus contract with the given `{contract}` feature enabled.
-  The generated WASM file will be renamed accordingly.
-
-* `just profile-contract {contract}`:
-  Analyze the built WASM using `twiggy`.
-
-  > ⚠️ Make sure to:
-  >
-  > * Run the build step first (`just build-contract {contract}`).
-  > * Set `strip = "none"` in your `Cargo.toml` `[profile.release]` section to preserve symbol information.
-  >   The output will be saved to `profile/{contract}...`.
-
-
-### Tests
-
-Scripts for testing the project and verifying proofs.
-
-* `just test-integration`:
-  Runs integration tests.
-
-  > Requires either:
-  >
-  > * A local Nitro testnode (`just nitro-testnode-up`), or
-  > * Specifying `rpc_url` and `private_key` for an Arbitrum testnet/mainnet.
-
-* `just test-ultrahonk`:
-  Runs tests for the `ultrahonk` package.
-
-* `just verify-proof {verifier-address} {test-vector}`:
-  Calls the on-chain verifier at `{verifier-address}` using the `vk`, `proof`, and `public_inputs` from:
-
-  ```bash
-  test_vectors/{test-vector}/kat/...
-  ```
-
-* `just get-verifier-addresses {verifier_address}`:
-  Retrieves derived addresses for the `shplemini` and `sumcheck` verifiers based on `{verifier_address}`.
-
-
-### Deployments
-
-Scripts for checking and deploying contracts.
-
-* `just check-contract {contract}`:
-  Verifies that the contract is valid using `cargo stylus` and a Sepolia RPC endpoint.
-
-* `just deploy-contract {contract} {constructor-signature} {constructor-args}`:
-  Builds and deploys the specified Stylus contract with the given constructor.
-  Example:
-
-  ```bash
-  just deploy-contract zk-verifier "constructor(address)" 0xabc123...
-  ```
-
-### Miscellaneous
-
-Utility commands for development and local testing.
-
-* `just nitro-testnode-up`:
-  Spin up a local Nitro testnode for development.
-
-* `just nitro-testnode-down`:
-  Shut down the local Nitro testnode.
-
-* `fmt`:
-  Check code formatting (uses `cargo fmt` in check mode).
-
-* `fmt-fix`:
-  Automatically fix formatting issues.
-
-* `lint`:
-  Run `clippy` to check for linter warnings and best practices.
-
-* `lint-fix`:
-  Apply automatic `clippy` fixes where possible.
 
 ## How Can I Contribute?
 

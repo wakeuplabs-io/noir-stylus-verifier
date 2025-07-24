@@ -2,6 +2,17 @@
 
 ## Folder Structure
 
+* **`cli/`**
+  Command line interface for generating and deploying verifier contracts from Noir circuits.
+  See `docs/cli.md` for detailed usage instructions.
+  Key commands:
+  - `nsv new` - Create new project
+  - `nsv generate` - Generate verifier contract
+  - `nsv check` - Check contract compatibility
+  - `nsv deploy` - Deploy to chain
+  - `nsv prove` - Generate proof
+  - `nsv verify` - Verify proof
+
 * **`contracts/`**
   Contains Stylus verifier contracts.
 

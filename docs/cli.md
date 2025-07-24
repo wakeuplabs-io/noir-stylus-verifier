@@ -12,6 +12,28 @@ You can also download already compiled binaries from the github releases at [noi
 
 ## Commands
 
+```
+nsv --help
+
+Generate and deploy verifiers in stylus from noir circuits.
+
+Usage: nsv [OPTIONS] <COMMAND>
+
+Commands:
+  new       Create a new project
+  generate  Generate a verifier contract from a noir circuit
+  check     Check if the generated contract is compatible with Stylus, and how much it costs to deploy
+  deploy    Deploy the generated contract to the blockchain
+  prove     Generate a proof for a circuit. Useful for testing
+  verify    Verify a proof for a circuit. Useful for testing
+  help      Print this message or the help of the given subcommand(s)
+
+Options:
+  -v, --verbose  Suppress logging output
+  -h, --help     Print help
+  -V, --version  Print version
+```
+
 ### `new`
 
 ```
@@ -38,8 +60,10 @@ Generate a verifier contract from a noir circuit
 Usage: nsv generate [OPTIONS]
 
 Options:
-  -p, --package <PACKAGE>  Package name containing the circuit
-  -h, --help               Print help
+  -p, --package <PACKAGE>              Package name containing the circuit
+      --bytecode-path <BYTECODE_PATH>  Path to the bytecode to use for the proof generation
+      --vk-path <VK_PATH>              Path to the verification key to use for the proof generation
+  -h, --help 
 ```
 
 ### `check`
@@ -91,10 +115,13 @@ Generate a proof for a circuit. Useful for testing
 Usage: nsv prove [OPTIONS]
 
 Options:
-  -p, --package <PACKAGE>          Package name containing the circuit
-      --prover-name <PROVER_NAME>  Name of the prover to use for the proof generation [default: Prover.toml]
-      --zk                         Enable zk-flavored proof
-  -h, --help                       Print help
+  -p, --package <PACKAGE>              Package name containing the circuit
+      --prover-name <PROVER_NAME>      Name of the prover to use for the proof generation [default: Prover.toml]
+      --output-path <OUTPUT_PATH>      Path to the proof to generate [default: target/proof]
+      --witness-path <WITNESS_PATH>    Path to the witness to use for the proof generation
+      --bytecode-path <BYTECODE_PATH>  Path to the bytecode to use for the proof generation
+      --zk                             Enable zk-flavored proof
+  -h, --help                           Print help
 ```
 
 ### `verify`
@@ -129,7 +156,25 @@ To build the cli binary for distribution first add the necessary rust targets:
 
 ```bash
 brew install mingw-w64
+cargo install --locked cargo-zigbuild
+
 rustup target add x86_64-apple-darwin
 rustup target add x86_64-pc-windows-gnu
 rustup target add x86_64-unknown-linux-musl
+```
+
+Available just recipes:
+
+```bash
+just --summary
+
+# Available recipes:
+#     build-cli-linux                         # Build and package the cli binary for linux
+#     build-cli-macos                         # Build and package the cli binary for macos
+#     build-cli-windows                       # Build and package the cli binary for windows
+#     clean-cli-linux                         # Clean the cli binary for linux
+#     clean-cli-macos                         # Clean the cli binary for macos
+#     clean-cli-windows                       # Clean the cli binary for windows
+#     test-cli                                # Test the cli unit tests
+#     test-cli-integration                    # Run the cli integration tests.
 ```
