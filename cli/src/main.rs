@@ -2,7 +2,11 @@ mod commands;
 mod config;
 mod infrastructure;
 
-use std::path::PathBuf;
+use crate::{
+    commands::{prove::ProveCommand, verify::VerifyCommand},
+    config::constants::DEFAULT_RPC_URL,
+    infrastructure::terminal::print_app_title,
+};
 use clap::{Parser, Subcommand};
 use colored::Colorize;
 use commands::{
@@ -10,12 +14,8 @@ use commands::{
 };
 use dotenv::dotenv;
 use log::{Level, LevelFilter};
+use std::path::PathBuf;
 use thiserror::Error;
-use crate::{
-    commands::{prove::ProveCommand, verify::VerifyCommand},
-    config::constants::DEFAULT_RPC_URL,
-    infrastructure::terminal::print_app_title,
-};
 
 #[derive(Parser)]
 #[clap(name = "nsv")]

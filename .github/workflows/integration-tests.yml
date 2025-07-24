@@ -38,8 +38,14 @@ jobs:
       - name: Install build tools
         run: sudo apt-get update && sudo apt-get install -y build-essential gcc lld
       
-      - name: Install tests dependencies TODO: add bbup and noirup
-        run: cargo install cargo-stylus@0.6.0
+      - name: Install tests dependencies 
+        run: |
+          cargo install cargo-stylus@0.6.0
+          curl -L https://raw.githubusercontent.com/noir-lang/noirup/refs/heads/main/install | bash
+          noirup -v 1.0.0-beta.6
+          curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/heads/master/barretenberg/bbup/install | bash
+          bbup -v 0.86.0
+
       
       - name: Install just
         uses: extractions/setup-just@v3

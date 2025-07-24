@@ -81,9 +81,9 @@ test-integration:
 
   status=0
 
-  # just test-cli-integration || status=1
+  just test-cli-integration || status=1
   just test-ultrahonk-integration || status=1
-  # just test-contracts-integration || status=1
+  just test-contracts-integration || status=1
 
   exit $status
   

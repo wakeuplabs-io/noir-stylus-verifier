@@ -8,7 +8,12 @@ use std::{
 pub(crate) trait TNargo {
     fn find_package_root(&self, package: &str) -> Result<PathBuf, Box<dyn std::error::Error>>;
     fn read_package_name(&self, root: &Path) -> Result<String, Box<dyn std::error::Error>>;
-    fn execute(&self, root: &Path, package_name: &str, prover_name: &str) -> Result<(), Box<dyn std::error::Error>>;
+    fn execute(
+        &self,
+        root: &Path,
+        package_name: &str,
+        prover_name: &str,
+    ) -> Result<(), Box<dyn std::error::Error>>;
     fn compile(
         &self,
         root: &Path,

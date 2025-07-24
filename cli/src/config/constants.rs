@@ -8,7 +8,6 @@ pub const VERIFIER_ADDRESS_ARBITRUM_SEPOLIA_ZK: &str = "0xdcaaed24c926bc718984ea
 pub const CHAIN_ID_ARBITRUM: u64 = 42161;
 pub const CHAIN_ID_ARBITRUM_SEPOLIA: u64 = 421614;
 
-
 pub(crate) const CARGO_STYLUS_REQUIREMENT: Requirement = Requirement {
     program: "cargo-stylus",
     version_arg: "--version",

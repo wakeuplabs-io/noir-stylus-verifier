@@ -1,5 +1,5 @@
+use crate::infrastructure::system::{System, TSystem};
 use std::{path::Path, process::Command};
-use crate::infrastructure::{system::{System, TSystem}};
 
 pub(crate) struct Bb {
     system: Box<dyn TSystem>,
@@ -80,9 +80,9 @@ impl TBb for Bb {
         command
             .arg("prove")
             .arg("-b")
-            .arg(&bytecode)
+            .arg(bytecode)
             .arg("-w")
-            .arg(&witness)
+            .arg(witness)
             .arg("-o")
             .arg(root.join("target"))
             .arg("--scheme")

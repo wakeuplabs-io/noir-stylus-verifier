@@ -1,5 +1,5 @@
 use crate::{
-    config::constants::{DEFAULT_RPC_URL, BB_REQUIREMENT},
+    config::constants::{BB_REQUIREMENT, DEFAULT_RPC_URL},
     infrastructure::requirements::{SystemRequirementsChecker, TSystemRequirementsChecker},
     infrastructure::{
         bb::{Bb, TBb},
@@ -50,7 +50,7 @@ impl VerifyCommand {
         // verify dependencies
         self.system_requirements_checker
             .check(vec![BB_REQUIREMENT])
-            .map_err(|e| AppError::MissingDependencies(e))?;
+            .map_err(AppError::MissingDependencies)?;
 
         let root = self.system.current_dir();
         let proof = PathBuf::from(proof);
@@ -70,7 +70,7 @@ impl VerifyCommand {
 
         // All good, let's verify the proof
         let spinner = create_spinner(&format!("⏳ Verifying proof at {}...", proof.display()));
-        
+
         match verifier_address {
             Some(address) => {
                 // call the verifier contract with the proof and public inputs
@@ -97,19 +97,17 @@ impl VerifyCommand {
                     println!("{} Proof verification failed onchain\n", "❌ Error!".red());
                 }
             }
-            None => {
-                match self.bb.verify(&root, &proof, &public_input, &vk, zk) {
-                    Ok(_) => {
-                        spinner.finish_and_clear();
-                        println!("{} Proof verified locally\n", "✅ Success!".green());
-                    }
-                    Err(e) => {
-                        spinner.finish_and_clear();
-                        println!("{} Failed to verify proof\n", "❌ Error!".red());
-                        print_error!("{e}");
-                    }
+            None => match self.bb.verify(&root, &proof, &public_input, &vk, zk) {
+                Ok(_) => {
+                    spinner.finish_and_clear();
+                    println!("{} Proof verified locally\n", "✅ Success!".green());
                 }
-            }
+                Err(e) => {
+                    spinner.finish_and_clear();
+                    println!("{} Failed to verify proof\n", "❌ Error!".red());
+                    print_error!("{e}");
+                }
+            },
         }
 
         Ok(())

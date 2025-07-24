@@ -46,7 +46,7 @@ impl GenerateCommand {
         // check system requirements for this command
         self.system_requirements_checker
             .check(vec![BB_REQUIREMENT, NARGO_REQUIREMENT])
-            .map_err(|e| AppError::MissingDependencies(e))?;
+            .map_err(AppError::MissingDependencies)?;
 
         // find package root
         let root = match package {
@@ -64,6 +64,19 @@ impl GenerateCommand {
             .read_package_name(&root)
             .map_err(|_| AppError::PackageNotFound)?;
 
+        // verify that the provided bytecode and vk files exist
+        if bytecode_path.is_some()
+            && !self
+                .system
+                .exists(&root.join(bytecode_path.as_ref().unwrap()))
+        {
+            return Err(AppError::FileNotFound(
+                root.join(bytecode_path.as_ref().unwrap()),
+            ));
+        } else if vk_path.is_some() && !self.system.exists(&root.join(vk_path.as_ref().unwrap())) {
+            return Err(AppError::FileNotFound(root.join(vk_path.as_ref().unwrap())));
+        }
+
         // all good, we can start generating the verifier contract
         let spinner = create_spinner(&format!(
             "⏳ Generating verifier contract for {}...",
@@ -79,7 +92,7 @@ impl GenerateCommand {
                 // Using provided bytecode, just copy it to the target path
                 spinner.set_message("Using provided bytecode...");
                 self.system
-                    .copy_file(&Path::new(&bytecode_path), &target_bytecode_path);
+                    .copy_file(Path::new(&bytecode_path), &target_bytecode_path);
             }
             None => {
                 // Compile circuit
@@ -95,7 +108,7 @@ impl GenerateCommand {
             Some(vk_path) => {
                 // Using provided vk, just copy it to the target path
                 spinner.set_message("Using provided vk...");
-                self.system.copy_file(&Path::new(&vk_path), &target_vk_path);
+                self.system.copy_file(Path::new(&vk_path), &target_vk_path);
             }
             None => {
                 // We need to generate the vk
@@ -120,7 +133,11 @@ impl GenerateCommand {
         }
 
         spinner.finish_and_clear();
-        println!("{} Generated at {}\n", "✅ Success!".green(), contracts_root.display());
+        println!(
+            "{} Generated at {}\n",
+            "✅ Success!".green(),
+            contracts_root.display()
+        );
         print_instructions(&["check", "deploy"]);
 
         Ok(())

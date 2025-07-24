@@ -40,7 +40,7 @@ impl CheckCommand {
     ) -> Result<(), AppError> {
         self.system_requirements_checker
             .check(vec![CARGO_STYLUS_REQUIREMENT])
-            .map_err(|e| AppError::MissingDependencies(e))?;
+            .map_err(AppError::MissingDependencies)?;
 
         // find package root
         let root = match package {
@@ -74,12 +74,22 @@ impl CheckCommand {
         match self.stylus.check(&contracts_root, &rpc_url) {
             Ok(result) => {
                 progress.finish_and_clear();
-                println!("{} Checked contract for package {} at {}\n", "✅ Success!".green(), package_name, root.display());
+                println!(
+                    "{} Checked contract for package {} at {}\n",
+                    "✅ Success!".green(),
+                    package_name,
+                    root.display()
+                );
                 println!("{result}");
             }
             Err(e) => {
                 progress.finish_and_clear();
-                println!("{} Checked contract for package {} at {}\n", "❌ Error!".red(), package_name, root.display());
+                println!(
+                    "{} Checked contract for package {} at {}\n",
+                    "❌ Error!".red(),
+                    package_name,
+                    root.display()
+                );
                 return Err(AppError::StylusError(e.to_string()));
             }
         }

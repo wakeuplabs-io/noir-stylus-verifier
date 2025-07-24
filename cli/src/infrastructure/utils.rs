@@ -1,6 +1,9 @@
-use std::{fs::File, io::{BufReader, Read}, path::Path};
-use sha2::{Sha256, Digest};
-
+use sha2::{Digest, Sha256};
+use std::{
+    fs::File,
+    io::{BufReader, Read},
+    path::Path,
+};
 
 pub(crate) fn sha256sum<P: AsRef<Path>>(path: P) -> std::io::Result<String> {
     let file = File::open(path)?;

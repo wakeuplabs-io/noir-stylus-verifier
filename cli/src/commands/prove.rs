@@ -33,6 +33,7 @@ impl Default for ProveCommand {
 }
 
 impl ProveCommand {
+    #[allow(clippy::too_many_arguments)]
     pub(crate) async fn run(
         &self,
         _ctx: &AppContext,
@@ -46,7 +47,7 @@ impl ProveCommand {
         // verify dependencies
         self.system_requirements_checker
             .check(vec![BB_REQUIREMENT, NARGO_REQUIREMENT])
-            .map_err(|e| AppError::MissingDependencies(e))?;
+            .map_err(AppError::MissingDependencies)?;
 
         // find package root
         let root = match package {
@@ -86,8 +87,8 @@ impl ProveCommand {
                 return Err(AppError::Other("Bytecode file does not exist"));
             }
 
-            witness = PathBuf::from(root.join(&witness_path.unwrap()));
-            bytecode = PathBuf::from(root.join(&bytecode_path.unwrap()));
+            witness = root.join(witness_path.unwrap());
+            bytecode = root.join(bytecode_path.unwrap());
         } else {
             // execute circuit to generate the witness
             spinner.set_message("Generating witness...");
@@ -106,7 +107,11 @@ impl ProveCommand {
             .map_err(|_| AppError::Other("Failed to generate proof"))?;
 
         spinner.finish_and_clear();
-        println!("{} Proof generated at: \n\t{}\n", "✅ Success!".green(), root.join(output_path).display());
+        println!(
+            "{} Proof generated at: \n\t{}\n",
+            "✅ Success!".green(),
+            root.join(output_path).display()
+        );
         print_instructions(&["verify"]);
 
         Ok(())

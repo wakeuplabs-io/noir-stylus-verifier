@@ -27,7 +27,7 @@ fn happy_path() {
         .child("Nargo.toml")
         .assert(predicate::path::exists());
     project_dir
-        .child("src/main.rs")
+        .child("src/main.nr")
         .assert(predicate::path::exists());
     project_dir
         .child("package.json")
