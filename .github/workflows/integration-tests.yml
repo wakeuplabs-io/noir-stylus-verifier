@@ -46,10 +46,11 @@ jobs:
           toolchain: 1.0.0-beta.6
 
       - name: Install bbup
+        shell: bash
         run: |
           curl -fsSL https://raw.githubusercontent.com/AztecProtocol/aztec-packages/master/barretenberg/bbup/install | bash
-          echo "$HOME/.bbup/bin" >> $GITHUB_PATH
-          bbup -v 0.86.0
+          echo "$HOME/.bbup/bin" >> "$GITHUB_PATH"
+          "$HOME/.bbup/bin/bbup" -v 0.86.0
           
       - name: Install just
         run: cargo install just
