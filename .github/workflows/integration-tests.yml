@@ -52,8 +52,9 @@ jobs:
           echo "${HOME}/.bbup/bin" >> $GITHUB_PATH
 
       - name: Run bbup
-        run: |
-          ${{ github.action_path }/bbup -v 0.86.0
+        shell: bash
+        run: 
+           ${{ github.action_path }}/bbup -v 0.86.0
           
       - name: Install just
         run: cargo install just

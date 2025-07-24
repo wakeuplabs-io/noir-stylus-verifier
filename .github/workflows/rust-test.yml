@@ -21,8 +21,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        - cmd: cargo test -p nsv --bin nsv --profile ci-dev
-        - cmd: cargo test -p ultrahonk --features ark-ec/only-arithmetic-backend --lib --profile ci-dev
+        package:
+          - name: nsv
+            cmd: cargo test -p nsv --bin nsv --profile ci-dev
+          - name: ultrahonk
+            cmd: cargo test -p ultrahonk --features ark-ec/only-arithmetic-backend --lib --profile ci-dev
       
     steps:
       - uses: actions/checkout@v4
@@ -43,4 +46,4 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y build-essential gcc lld
 
       - name: Test ${{ matrix.package.name }}
-        run: cargo test -p ${{ matrix.package.name }} --profile ci-dev ${{ matrix.package.features }}  
+        run: ${{ matrix.package.cmd }}
