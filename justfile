@@ -80,6 +80,10 @@ deploy-contract contract constructor_signature="" *constructor_args="":
 test-cli:
   cargo test -p nsv --bin nsv
 
+# Test the ultrahonk unit tests
+test-ultrahonk:
+  cargo test -p ultrahonk --features ark-ec/only-arithmetic-backend --lib
+
 # Run the integration tests. Spin up devnode and run. We'll exit with 0 if all tests pass, 1 otherwise, but still run them all.
 test-integration:
   #!/usr/bin/env bash

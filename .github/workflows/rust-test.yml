@@ -21,12 +21,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        package:
-          - name: ultrahonk
-            features: --features ark-ec/only-arithmetic-backend # ark-ec/only-arithmetic-backend panics if we attempt to do arithmetic outside of the G1ArithmeticBackend
-          - name: nsv
-            features: ""
-
+        - cmd: cargo test -p nsv --bin nsv --profile ci-dev
+        - cmd: cargo test -p ultrahonk --features ark-ec/only-arithmetic-backend --lib --profile ci-dev
+      
     steps:
       - uses: actions/checkout@v4
         with:
