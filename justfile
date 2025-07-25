@@ -1,7 +1,6 @@
 rpc_url := "http://localhost:8547"
 private_key := "0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659"
 macos_target := "x86_64-apple-darwin"
-windows_target := "x86_64-pc-windows-gnu"
 linux_target := "x86_64-unknown-linux-musl"
 version := "0.1.0"
 
@@ -17,14 +16,6 @@ build-ultrahonk:
 build-contract contract:
   cargo build -p contracts --target wasm32-unknown-unknown --release --features {{contract}} -Z unstable-options -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort && \
   mv ./target/wasm32-unknown-unknown/release/contracts.wasm ./target/wasm32-unknown-unknown/release/{{contract}}.wasm
-
-# Build and package the cli binary for windows
-build-cli-windows: clean-cli-windows
-	cargo zigbuild --target={{windows_target}} --release -p nsv
-	(cd target/{{windows_target}}/release && \
-	mkdir nsv-v{{version}}-{{windows_target}} && \
-	mv nsv.exe nsv-v{{version}}-{{windows_target}} && \
-	zip -r nsv-v{{version}}-{{windows_target}}.zip nsv-v{{version}}-{{windows_target}})
 
 # Build and package the cli binary for linux
 build-cli-linux: clean-cli-linux
@@ -179,7 +170,3 @@ clean-cli-macos:
 # Clean the cli binary for linux
 clean-cli-linux:
 	rm -rf target/{{linux_target}}/release/nsv-v{{version}}-{{linux_target}}
-
-# Clean the cli binary for windows
-clean-cli-windows:
-	rm -rf target/{{windows_target}}/release/nsv-v{{version}}-{{windows_target}}
