@@ -5,7 +5,7 @@
 Install with cargo:
 
 ```bash
-cargo install --git https://github.com/wakeuplabs-io/noir-stylus-verifier --bin nsv --branch develop
+cargo install --git https://github.com/wakeuplabs-io/noir-stylus-verifier --bin nsv --branch develop nsv
 ```
 
 You can also download already compiled binaries from the github releases at [noir-stylus-verifier](https://github.com/wakeuplabs-io/noir-stylus-verifier)

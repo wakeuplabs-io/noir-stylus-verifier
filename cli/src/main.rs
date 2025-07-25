@@ -19,7 +19,7 @@ use thiserror::Error;
 
 #[derive(Parser)]
 #[clap(name = "nsv")]
-#[clap(version = "0.1.0")]
+#[clap(version = env!("CARGO_PKG_VERSION"))]
 #[clap(about = "Generate and deploy verifiers in stylus from noir circuits.", long_about = None)]
 struct Args {
     #[command(subcommand)]
