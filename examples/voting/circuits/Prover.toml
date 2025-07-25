@@ -1,0 +1,11 @@
+hash_path = [
+  "0x1efa9d6bb4dfdf86063cc77efdec90eb9262079230f1898049efad264835b6c8",
+  "0x2a653551d87767c545a2a11b29f0581a392b4e177a87c8e3eb425c51a26a8c77"
+]
+index = "0"
+proposalId = "0"
+root = "0x215597bacd9c7e977dfc170f320074155de974be494579d2586e5b268fa3b629"
+salt = "0xabc123" 
+secret = "1"
+vote_commitment = "0x07ebfbf4df29888c6cd6dca13d4bb9d1a923013ddbbcbdc3378ab8845463297b" 
+vote_opening = "1"
