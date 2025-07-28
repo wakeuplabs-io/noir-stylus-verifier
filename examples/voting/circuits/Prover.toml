@@ -1,8 +1,10 @@
-direction_selector = [""]
-nullifier = ""
-path = [""]
-priv_key = ""
-proposal_id = ""
-root = ""
-secret = ""
-vote = ""
+root = "0x0bb2a4de600a5d7d1d571a13e25fbec9ad0b62b4a94c39a55c77e885c2ab08"
+path = ["0x0b63a53787021a4a962a452c2921b3663aff1ffd8d5510540f8e659e782956f1", "0x0e34ac2c09f45a503d2908bcb12f1cbae5fa4065759c88d501c097506a8b2290"]
+direction_selector = [false, false]
+nullifier = "0x06a75be67dd5934d3df485e41c9b44a197c7fd8f4822a927258e9e4c0cab8e3a"
+priv_key = "0x075bcd15"
+proposal_id = "0x01"
+secret = "0x3ade68b1"
+vote = "0x01"
+
+

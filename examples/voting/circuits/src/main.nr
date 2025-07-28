@@ -134,7 +134,7 @@ fn test_invalid_merkle_proof() {
     let proposal_id = 1;
     let vote = 1;
     
-    let note_commitment = definitions::commitment(priv_key, secret);
+    // let note_commitment = definitions::commitment(priv_key, secret);
     let sibling = definitions::commitment(0, 0);
     
     // Create a tree where the commitment is NOT included

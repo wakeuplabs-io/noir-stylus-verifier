@@ -6,50 +6,28 @@
 extern crate alloc;
 
 use alloc::{string::String, vec::Vec};
-use alloy_primitives::{Address, B256};
-use alloy_sol_types::{sol, SolCall, SolType};
+use alloy_primitives::Address;
+use alloy_sol_types::sol;
+use alloy_sol_types::SolCall;
 use stylus_sdk::{
     abi::Bytes,
     alloy_primitives::U256,
-    call::static_call,
     prelude::*,
-    storage::{StorageAddress, StorageBool, StorageMap, StorageString, StorageU256, StorageVec},
+    storage::{StorageAddress, StorageBool, StorageMap, StorageString, StorageU256},
+    stylus_core::calls::context::Call,
 };
 
-#[allow(deprecated)]
-use stylus_sdk::call::Call as InterfaceCall;
-
 sol! {
-    // interface IUltraVerifier {
-        function verify(bytes memory proof, bytes memory input) external view returns (bool);
-    // }
-}
+    function verify(bytes memory proof, bytes memory input) external view returns (bool);
 
-sol! {
-    #[derive(Debug, AbiType)]
+    #[derive(Debug)]
     struct Proposal {
         string description;
         uint256 deadline;
         uint256 for_votes;
         uint256 against_votes;
+        uint256 voters_root;
     }
-
-    #[derive(Debug)]
-    error ProposalNotFound();
-    #[derive(Debug)]
-    error VotingPeriodOver();
-    #[derive(Debug)]
-    error ProofAlreadySubmitted();
-    #[derive(Debug)]
-    error InvalidProof();
-}
-
-#[derive(SolidityError, Debug)]
-pub enum VotingErrors {
-    ProposalNotFound(ProposalNotFound),
-    VotingPeriodOver(VotingPeriodOver),
-    ProofAlreadySubmitted(ProofAlreadySubmitted),
-    InvalidProof(InvalidProof),
 }
 
 #[storage]
@@ -59,12 +37,12 @@ struct StorageProposal {
     for_votes: StorageU256,
     against_votes: StorageU256,
     started: StorageBool,
+    voters_root: StorageU256,
 }
 
 #[storage]
 #[entrypoint]
 struct Voting {
-    merkle_root: StorageU256,
     verifier: StorageAddress,
     proposal_count: StorageU256,
     proposals: StorageMap<U256, StorageProposal>,
@@ -74,13 +52,31 @@ struct Voting {
 #[public]
 impl Voting {
     #[constructor]
-    pub fn constructor(&mut self, merkle_root: U256, verifier: Address) {
-        self.merkle_root.set(merkle_root);
+    pub fn constructor(&mut self, verifier: Address) {
         self.verifier.set(verifier);
         self.proposal_count.set(U256::ZERO);
     }
 
-    pub fn propose(&mut self, description: String, deadline: U256) -> U256 {
+    pub fn get_verifier(&self) -> Address {
+        self.verifier.get()
+    }
+
+    pub fn get_proposal(&self, proposal_id: U256) -> Result<(String, U256, U256, U256, U256), Vec<u8>> {
+        let proposal = self.proposals.get(proposal_id);
+        if !proposal.started.get() {
+            return Err(b"Proposal not found".to_vec());
+        }
+
+        Ok((
+            proposal.description.get_string(),
+            proposal.deadline.get(),
+            proposal.for_votes.get(),
+            proposal.against_votes.get(),
+            proposal.voters_root.get(),
+        ))
+    }
+
+    pub fn propose(&mut self, description: String, deadline: U256, voters_root: U256) -> U256 {
         let proposal_id = self.proposal_count.get();
 
         // store the proposal in the storage
@@ -95,6 +91,10 @@ impl Voting {
             .against_votes
             .set(U256::ZERO);
         self.proposals.setter(proposal_id).started.set(true);
+        self.proposals
+            .setter(proposal_id)
+            .voters_root
+            .set(voters_root);
 
         // increment the proposal count and return the id
         self.proposal_count.set(proposal_id + U256::from(1));
@@ -107,49 +107,34 @@ impl Voting {
         proposal_id: U256,
         vote: U256,
         nullifier_hash: U256,
-    ) -> Result<bool, VotingErrors> {
+    ) -> Result<bool, Vec<u8>> {
         // Check if the proposal exists and is started
         let proposal = self.proposals.get(proposal_id);
         if !proposal.started.get() {
-            return Err(VotingErrors::ProposalNotFound(ProposalNotFound {}));
+            return Err(b"Proposal not found".to_vec());
         }
 
         // Check if the voting period is over
         if U256::from(self.vm().block_timestamp()) >= proposal.deadline.get() {
-            return Err(VotingErrors::VotingPeriodOver(VotingPeriodOver {}));
+            return Err(b"Voting period over".to_vec());
         }
 
         // Check if the nullifier hash has already been used
         if self.nullifiers.get(nullifier_hash) {
-            return Err(VotingErrors::ProofAlreadySubmitted(
-                ProofAlreadySubmitted {},
-            ));
+            return Err(b"Proof already submitted".to_vec());
         }
         self.nullifiers.insert(nullifier_hash, true);
 
-        // format public inputs
-        let mut public_inputs = Vec::new();
-        public_inputs.extend_from_slice(&self.merkle_root.get().to_be_bytes::<32>());
-        public_inputs.extend_from_slice(&proposal_id.to_be_bytes::<32>());
-        public_inputs.extend_from_slice(&vote.to_be_bytes::<32>());
-        public_inputs.extend_from_slice(&nullifier_hash.to_be_bytes::<32>());
-
-        // verify the proof. TODO: fix regarding mocks
-        // if !IUltraVerifier::new(self.verifier.get())
-        //     .verify(
-        //         #[allow(deprecated)]
-        //         InterfaceCall::new(),
-        //         proof.to_vec().into(),
-        //         public_inputs.into(),
-        //     )
-        //     .unwrap()
-        // {
-        //     return Err(VotingErrors::InvalidProof(InvalidProof {}));
-        // }
-        // IUltraVerifier::new(self.verifier.get()).verify(self.vm(), proof.to_vec().into(), public_inputs.into());
-        // static_call_helper::<verify>(self, self.verifier.get(), (proof.into(), public_inputs.into()))
-        // .map(|res| res._0)?;
-        // static_call(&*self, self.verifier.get(), &vec![1,2,3,4]).unwrap();
+        // verify the proof
+        if !self.call_verify(
+            proof,
+            proposal.voters_root.get(),
+            proposal_id,
+            vote,
+            nullifier_hash,
+        ) {
+            return Err(b"Invalid proof".to_vec());
+        }
 
         // Update the vote counts
         let current_for_votes = proposal.for_votes.get();
@@ -168,23 +153,55 @@ impl Voting {
 
         Ok(true)
     }
-}
 
-// #[allow(deprecated)]
-// pub fn static_call_helper<C: SolCall>(
-//     storage: &impl TopLevelStorage,
-//     address: Address,
-//     args: <C::Parameters<'_> as SolType>::RustType,
-// ) -> Result<C::Return, Vec<u8>> {
-//     let calldata = C::new(args).abi_encode();
-//     let res = static_call(storage, address, &calldata)?;
-//     C::abi_decode_returns(&res, false /* validate */).map_err(|_| b"Demo".to_vec())
-// }
+    fn call_verify(
+        &self,
+        proof: Bytes,
+        proposal_root: U256,
+        proposal_id: U256,
+        vote: U256,
+        nullifier_hash: U256,
+    ) -> bool {
+        let calldata = verifyCall {
+            proof: proof.to_vec().into(),
+            input: Vec::from(
+                [
+                    proposal_root.to_be_bytes::<32>(),
+                    nullifier_hash.to_be_bytes::<32>(),
+                    proposal_id.to_be_bytes::<32>(),
+                    vote.to_be_bytes::<32>(),
+                ]
+                .concat(),
+            )
+            .into(),
+        }
+        .abi_encode();
+
+        let res = self
+            .vm()
+            .static_call(&Call::new(), self.verifier.get(), &calldata);
+
+        if let Ok(output) = res {
+            if let Ok(decoded) = verifyCall::abi_decode_returns(&output, true) {
+                return decoded._0;
+            }
+        }
+
+        false
+    }
+}
 
 #[cfg(test)]
 mod test {
     use super::*;
     use alloy_primitives::address;
+    use alloy_sol_types::SolCall;
+
+    sol! {
+        function verify(bytes memory proof, bytes memory input) external view returns (bool);
+    }
+
+    const MOCK_VERIFIER: Address = address!("0x0000000000000000000000000000000000000001");
 
     #[test]
     fn test_propose_returns_proposal_id() {
@@ -192,7 +209,8 @@ mod test {
         let vm = TestVM::default();
         let mut contract = Voting::from(&vm);
 
-        let proposal_id = contract.propose("Test Proposal".to_string(), U256::from(1000));
+        let proposal_id =
+            contract.propose("Test Proposal".to_string(), U256::from(1000), U256::from(1));
         assert_eq!(proposal_id, U256::from(0));
     }
 
@@ -202,8 +220,10 @@ mod test {
         let vm = TestVM::default();
         let mut contract = Voting::from(&vm);
 
-        let proposal_id = contract.propose("Test Proposal".to_string(), U256::from(1000));
+        let proposal_id =
+            contract.propose("Test Proposal".to_string(), U256::from(1000), U256::from(1));
         let proposal = contract.proposals.get(proposal_id);
+
         assert_eq!(proposal.description.get_string(), "Test Proposal");
         assert_eq!(proposal.deadline.get(), U256::from(1000));
         assert_eq!(proposal.for_votes.get(), U256::ZERO);
@@ -216,36 +236,79 @@ mod test {
         use stylus_sdk::testing::*;
         let vm = TestVM::default();
         let mut contract = Voting::from(&vm);
-        contract
-            .verifier
-            .set(address!("0x0000000000000000000000000000000000000001"));
+        contract.verifier.set(MOCK_VERIFIER);
+        let voters_root = U256::from(1);
 
         // propose a proposal
-        let proposal_id = contract.propose("Test Proposal".to_string(), U256::from(1000));
+        let proposal_id =
+            contract.propose("Test Proposal".to_string(), U256::from(1000), voters_root);
 
         // mock proofs and validation call
-        let proof = Bytes::from(vec![1u8, 2, 3, 4]);
+        let proof = vec![1u8, 2, 3, 4];
         let vote = U256::from(1);
         let nullifier_hash = U256::from(5);
 
-        // format public inputs the same way as in cast_vote
-        let mut calldata = Vec::new();
-        calldata.extend_from_slice(&[0xf7, 0xe8, 0x3a, 0xee]);
-        calldata.extend_from_slice(&proof.to_vec());
-        calldata.extend_from_slice(&contract.merkle_root.get().to_be_bytes::<32>());
-        calldata.extend_from_slice(&proposal_id.to_be_bytes::<32>());
-        calldata.extend_from_slice(&vote.to_be_bytes::<32>());
-        calldata.extend_from_slice(&nullifier_hash.to_be_bytes::<32>());
+        // build calldata for mock
+        let calldata = verifyCall {
+            proof: proof.clone().into(),
+            input: Vec::from(
+                [
+                    voters_root.to_be_bytes::<32>(),
+                    nullifier_hash.to_be_bytes::<32>(),
+                    proposal_id.to_be_bytes::<32>(),
+                    vote.to_be_bytes::<32>(),
+                ]
+                .concat(),
+            )
+            .into(),
+        }
+        .abi_encode();
+        let return_data = verifyCall::abi_encode_returns(&(true,));
+        vm.mock_static_call(contract.verifier.get(), calldata, Ok(return_data));
 
-        vm.mock_static_call(
-            // contract.verifier.get(),
-            address!("0x0000000000000000000000000000000000000001"),
-            vec![1,2,3,4], // empty calldata for mock
-            Ok(vec![1]),
-        );
-
-        let result = contract.cast_vote(proof, proposal_id, U256::from(1), U256::from(5));
+        let result = contract.cast_vote(proof.into(), proposal_id, U256::from(1), U256::from(5));
         assert_eq!(result.is_ok(), true);
         assert_eq!(result.unwrap(), true);
     }
+
+    #[test]
+    fn test_cast_vote_invalid_proof() {
+        use stylus_sdk::testing::*;
+        let vm = TestVM::default();
+        let mut contract = Voting::from(&vm);
+        contract.verifier.set(MOCK_VERIFIER);
+        let voters_root = U256::from(1);
+
+        // propose a proposal
+        let proposal_id =
+            contract.propose("Test Proposal".to_string(), U256::from(1000), voters_root);
+
+        // mock proofs and validation call
+        let proof = vec![1u8, 2, 3, 4];
+        let vote = U256::from(1);
+        let nullifier_hash = U256::from(5);
+
+        // build calldata for mock
+        let calldata = verifyCall {
+            proof: proof.clone().into(),
+            input: Vec::from(
+                [
+                    voters_root.to_be_bytes::<32>(),
+                    nullifier_hash.to_be_bytes::<32>(),
+                    proposal_id.to_be_bytes::<32>(),
+                    vote.to_be_bytes::<32>(),
+                ]
+                .concat(),
+            )
+            .into(),
+        }
+        .abi_encode();
+        let return_data = verifyCall::abi_encode_returns(&(false,));
+        vm.mock_static_call(contract.verifier.get(), calldata, Ok(return_data));
+
+        let result = contract.cast_vote(proof.into(), proposal_id, vote, nullifier_hash);
+        assert_eq!(result.is_err(), true);
+        assert_eq!(result.err().unwrap(), b"Invalid proof".to_vec());
+    }
 }
+
