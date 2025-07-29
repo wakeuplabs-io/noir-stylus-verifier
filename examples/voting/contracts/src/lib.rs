@@ -259,7 +259,6 @@ mod test {
         let mut contract = Voting::from(&vm);
 
         contract.propose("Test Proposal".to_string(), U256::from(1000), U256::from(1));
-        let proposal = contract.proposals.get(U256::from(0));
 
         assert_eq!(contract.get_proposal_description(U256::from(0)), "Test Proposal");
         assert_eq!(contract.get_proposal_deadline(U256::from(0)), U256::from(1000));
