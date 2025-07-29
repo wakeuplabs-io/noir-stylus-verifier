@@ -1,0 +1,11 @@
+{
+  "title": "Consolidate Idle USDC to the ATMC’s Stablecoin Balance",
+  "body": "This proposal aims to move funds to yield-bearing accounts and optimize treasury management.\n\nKey points:\n- Transfer 2025 Events Budget (~1.04M USDC) to yield-bearing account\n- Move remaining ARDC v2 funds (~1.5M USDC) to treasury\n- Reallocate ADPC Security Subsidies funds\n\nTimeline:\n- Forum post: July 14th\n- Vote period: July 24th - July 31st\n- Implementation: By August 7th",
+  "deadline": "2025-08-28T12:00:00.000Z",
+  "voters": [
+    "0xe2a4e34530465f4b4948eb8e26ba5ba6594039f4880df9c9e0d3997e25facc3",
+    "0x1892e50556e7f04afa78a3cf885d2869d13a2c585635a6defba85fbe193c8f2b",
+    "0x1fc254f6a6b59487d5a99f6f5ca1b934ab83f932e80bcc0bdf8cba3e9c0c3d6c",
+    "0x113f7b9584757af9d1ee884f4e0f58865f0153a5b5f26607bcab980652650b7f"
+  ]
+}

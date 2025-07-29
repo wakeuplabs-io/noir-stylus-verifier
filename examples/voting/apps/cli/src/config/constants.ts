@@ -1,0 +1,9 @@
+export const DEPTH = 2;
+export const ZERO_LEAF = BigInt(0);
+export const ACCOUNT_MESSAGE = "Access your voting account";
+export const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS as `0x${string}`;
+export const DEFAULT_RPC_URL = process.env.RPC_URL || "";
+export const DEFAULT_PRIVATE_KEY = process.env.PRIVATE_KEY as `0x${string}`;
+export const DEFAULT_RELAYER_PRIVATE_KEY = process.env.RELAYER_PRIVATE_KEY as `0x${string}`;
+export const IPFS_PINATA_JWT = process.env.IPFS_PINATA_JWT || "";
+export const IPFS_GATEWAY_URL = process.env.IPFS_GATEWAY_URL || "";

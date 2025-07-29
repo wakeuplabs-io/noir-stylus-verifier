@@ -21,14 +21,14 @@ use stylus_sdk::{
 sol! {
     #[derive(Debug)]
     struct Proposal {
-        string description;
+        string metadata; // cid to ipfs metadata
+        uint256 voters_root;
         uint256 deadline;
         uint256 for_votes;
         uint256 against_votes;
-        uint256 voters_root;
     }
 
-    event ProposalCreated(uint256 indexed proposal_id, string description, uint256 deadline, uint256 voters_root);
+    event ProposalCreated(uint256 indexed id, string metadata, uint256 voters_root, uint256 timestamp, uint256 deadline);
 
     function verify(bytes memory proof, bytes memory input) external view returns (bool);
 }
@@ -41,7 +41,7 @@ sol_interface! {
 
 #[storage]
 struct StorageProposal {
-    description: StorageString,
+    metadata: StorageString,
     deadline: StorageU256,
     for_votes: StorageU256,
     against_votes: StorageU256,
@@ -73,17 +73,17 @@ impl Voting {
     }
 
     /// Propose a new proposal
-    /// @param description - The description of the proposal
+    /// @param metadata - The ipfs cid containing the metadata of the proposal
     /// @param deadline - The deadline of the proposal
     /// @param voters_root - The merkle root containing the voters
-    pub fn propose(&mut self, description: String, deadline: U256, voters_root: U256) {
+    pub fn propose(&mut self, metadata: String, deadline: U256, voters_root: U256) {
         let proposal_id = self.proposal_count.get();
 
         // store the proposal in the storage
         self.proposals
             .setter(proposal_id)
-            .description
-            .set_str(&description);
+            .metadata
+            .set_str(&metadata);
         self.proposals.setter(proposal_id).deadline.set(deadline);
         self.proposals.setter(proposal_id).for_votes.set(U256::ZERO);
         self.proposals
@@ -100,14 +100,23 @@ impl Voting {
         self.proposal_count.set(proposal_id + U256::from(1));
 
         // log the proposal created event so frontend can retrieve id
-        log(self.vm(), ProposalCreated { proposal_id, description, deadline, voters_root });
+        log(
+            self.vm(),
+            ProposalCreated {
+                id: proposal_id,
+                metadata,
+                voters_root,
+                timestamp: U256::from(self.vm().block_timestamp()),
+                deadline,
+            },
+        );
     }
 
-    /// Get the description of a proposal
+    /// Get the metadata of a proposal
     /// @param proposal_id - The id of the proposal
-    /// @return The description of the proposal
-    pub fn get_proposal_description(&self, proposal_id: U256) -> String {
-        self.proposals.get(proposal_id).description.get_string()
+    /// @return The metadata of the proposal
+    pub fn get_proposal_metadata(&self, proposal_id: U256) -> String {
+        self.proposals.get(proposal_id).metadata.get_string()
     }
 
     /// Get the deadline of a proposal
@@ -249,7 +258,6 @@ mod test {
 
         // check we incremented the proposal count
         assert_eq!(contract.proposal_count.get(), U256::from(1));
-
     }
 
     #[test]
@@ -258,13 +266,22 @@ mod test {
         let vm = TestVM::default();
         let mut contract = Voting::from(&vm);
 
-        contract.propose("Test Proposal".to_string(), U256::from(1000), U256::from(1));
+        contract.propose("cid".to_string(), U256::from(1000), U256::from(1));
 
-        assert_eq!(contract.get_proposal_description(U256::from(0)), "Test Proposal");
-        assert_eq!(contract.get_proposal_deadline(U256::from(0)), U256::from(1000));
+        assert_eq!(contract.get_proposal_metadata(U256::from(0)), "cid");
+        assert_eq!(
+            contract.get_proposal_deadline(U256::from(0)),
+            U256::from(1000)
+        );
         assert_eq!(contract.get_proposal_for_votes(U256::from(0)), U256::ZERO);
-        assert_eq!(contract.get_proposal_against_votes(U256::from(0)), U256::ZERO);
-        assert_eq!(contract.get_proposal_voters_root(U256::from(0)), U256::from(1));
+        assert_eq!(
+            contract.get_proposal_against_votes(U256::from(0)),
+            U256::ZERO
+        );
+        assert_eq!(
+            contract.get_proposal_voters_root(U256::from(0)),
+            U256::from(1)
+        );
     }
 
     #[test]
@@ -276,7 +293,7 @@ mod test {
         let voters_root = U256::from(1);
 
         // propose a proposal
-        contract.propose("Test Proposal".to_string(), U256::from(1000), voters_root);
+        contract.propose("cid".to_string(), U256::from(1000), voters_root);
 
         // mock proofs and validation call
         let proof = vec![1u8, 2, 3, 4];
@@ -315,7 +332,7 @@ mod test {
         let voters_root = U256::from(1);
 
         // propose a proposal
-        contract.propose("Test Proposal".to_string(), U256::from(1000), voters_root);
+        contract.propose("cid".to_string(), U256::from(1000), voters_root);
 
         // mock proofs and validation call
         let proof = vec![1u8, 2, 3, 4];

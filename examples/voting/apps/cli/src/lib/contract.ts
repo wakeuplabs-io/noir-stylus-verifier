@@ -31,51 +31,65 @@ export class VotingContract {
     });
   }
 
-  async propose(description: string, deadline: bigint, votersRoot: bigint) {
+  async propose(metadata: string, deadline: bigint, votersRoot: bigint) {
     if (!this.privateKey) {
       throw new Error("Private key not found");
     }
 
-    const tx = await this.walletClient.writeContract({
+    try {
+      const tx = await this.walletClient.writeContract({
+        address: this.address,
+        abi: VotingContractAbi,
+        functionName: "propose",
+        args: [metadata, deadline, votersRoot],
+        account: privateKeyToAccount(this.privateKey),
+        chain: null,
+      });
+
+      // extract the proposal id from the tx
+      const receipt = await this.publicClient.waitForTransactionReceipt({
+        hash: tx,
+      });
+      const [proposalCreatedTopic] = encodeEventTopics({
+        abi: VotingContractAbi,
+        eventName: "ProposalCreated",
+      });
+
+      // Find and decode the matching log
+      const log = receipt.logs.find(
+        (log) => log.topics[0] === proposalCreatedTopic
+      );
+      if (!log) throw new Error("Log not found");
+
+      const decoded = decodeEventLog({
+        abi: VotingContractAbi,
+        data: log.data,
+        topics: log.topics,
+      });
+
+      return { id: decoded.args.id, tx: tx };
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  }
+
+  async getProposalMetadata(proposalId: number) {
+    return this.publicClient.readContract({
       address: this.address,
       abi: VotingContractAbi,
-      functionName: "propose",
-      args: [description, deadline, votersRoot],
-      account: privateKeyToAccount(this.privateKey),
-      chain: null,
+      functionName: "getProposalMetadata",
+      args: [BigInt(proposalId)],
     });
-
-    // extract the proposal id from the tx
-    const receipt = await this.publicClient.waitForTransactionReceipt({
-      hash: tx,
-    });
-    const [proposalCreatedTopic] = encodeEventTopics({
-      abi: VotingContractAbi,
-      eventName: "ProposalCreated",
-    });
-
-    // Find and decode the matching log
-    const log = receipt.logs.find(
-      (log) => log.topics[0] === proposalCreatedTopic
-    );
-    if (!log) throw new Error("Log not found");
-
-    const decoded = decodeEventLog({
-      abi: VotingContractAbi,
-      data: log.data,
-      topics: log.topics,
-    });
-
-    return { id: decoded.args.proposal_id, tx: tx };
   }
 
   async getProposal(proposalId: number) {
-    const [description, deadline, votersRoot, forVotes, againstVotes] =
+    const [metadata, deadline, votersRoot, forVotes, againstVotes] =
       await Promise.all([
         this.publicClient.readContract({
           address: this.address,
           abi: VotingContractAbi,
-          functionName: "getProposalDescription",
+          functionName: "getProposalMetadata",
           args: [BigInt(proposalId)],
         }),
         this.publicClient.readContract({
@@ -105,7 +119,7 @@ export class VotingContract {
       ]);
 
     return {
-      description: description,
+      metadata: metadata,
       deadline: deadline,
       forVotes: forVotes,
       againstVotes: againstVotes,
