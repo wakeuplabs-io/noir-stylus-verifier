@@ -29,6 +29,7 @@ sol! {
     }
 
     event ProposalCreated(uint256 indexed id, string metadata, uint256 voters_root, uint256 timestamp, uint256 deadline);
+    event NullifierUsed(uint256 indexed nullifier_hash);
 
     function verify(bytes memory proof, bytes memory input) external view returns (bool);
 }
@@ -214,6 +215,8 @@ impl Voting {
                 .against_votes
                 .set(current_against_votes + U256::from(1));
         }
+
+        log(self.vm(), NullifierUsed { nullifier_hash });
 
         Ok(true)
     }

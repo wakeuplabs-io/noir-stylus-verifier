@@ -70,155 +70,134 @@ export const Route = createFileRoute("/proposals/$id")({
 function Index() {
   return (
     <div className="">
-      <div className="max-w-5xl mx-auto border-x min-h-screen w-full">
-        <div className="flex border-b items-center justify-between h-[72px] px-6">
-          <BackButton to="/" />
+      <div className="flex border-b items-center justify-between h-[72px] px-6">
+        <BackButton to="/" />
 
-          <button className="flex items-center gap-2 rounded-full border h-[46px] px-4 shrink-0">
+        <button className="flex items-center gap-2 rounded-full border h-[46px] px-4 shrink-0">
+          <img
+            src="https://cdn.stamp.fyi/avatar/0x9D39B627E6769B0b77f03825C118Ec48c84A8fbD?s=36"
+            alt="avatar"
+            className="w-[18px] h-[18px] rounded-full"
+          />
+          <span className="text-sm">
+            {shortenAddress("0x9D39B627E6769B0b77f03825C118Ec48c84A8fbD")}
+          </span>
+        </button>
+      </div>
+
+      <div className="flex divide-x">
+        <div className="p-6 pb-20">
+          <h1 className="text-[40px] leading-[1.1em] break-words font-bold mb-4">
+            Consolidate Idle USDC to the ATMC’s Stablecoin Balance
+          </h1>
+
+          <div className="flex items-center gap-2 rounded-full mb-6 text-white bg-green-500 px-2 pr-3 py-1 w-min">
+            <RadioIcon className="w-4 h-4" />
+            <span className="text-sm">Active</span>
+          </div>
+
+          <div className="flex items-center gap-2 py-4 mb-6">
             <img
               src="https://cdn.stamp.fyi/avatar/0x9D39B627E6769B0b77f03825C118Ec48c84A8fbD?s=36"
               alt="avatar"
-              className="w-[18px] h-[18px] rounded-full"
+              className="w-[32px] h-[32px] rounded-full"
             />
-            <span className="text-sm">
-              {shortenAddress("0x9D39B627E6769B0b77f03825C118Ec48c84A8fbD")}
-            </span>
-          </button>
-        </div>
-
-        <div className="flex divide-x">
-          <div className="p-6 pb-20">
-            <h1 className="text-[40px] leading-[1.1em] break-words font-bold mb-4">
-              Consolidate Idle USDC to the ATMC’s Stablecoin Balance
-            </h1>
-
-            <div className="flex items-center gap-2 rounded-full mb-6 text-white bg-green-500 px-2 pr-3 py-1 w-min">
-              <RadioIcon className="w-4 h-4" />
-              <span className="text-sm">Active</span>
-            </div>
-
-            <div className="flex items-center gap-2 py-4 mb-6">
-              <img
-                src="https://cdn.stamp.fyi/avatar/0x9D39B627E6769B0b77f03825C118Ec48c84A8fbD?s=36"
-                alt="avatar"
-                className="w-[32px] h-[32px] rounded-full"
-              />
-              <div>
-                <div className="text-sm">
-                  {shortenAddress("0x9D39B627E6769B0b77f03825C118Ec48c84A8fbD")}
-                </div>
-                <div className="text-xs text-muted-foreground space-x-2">
-                  5 days ago · #1
-                </div>
+            <div>
+              <div className="text-sm">
+                {shortenAddress("0x9D39B627E6769B0b77f03825C118Ec48c84A8fbD")}
               </div>
-            </div>
-
-            <div className="prose">
-              <Markdown>{MOCK_MD}</Markdown>
+              <div className="text-xs text-muted-foreground space-x-2">
+                5 days ago · #1
+              </div>
             </div>
           </div>
 
-          <div className="w-[600px] p-6 pb-20">
-            {/* Cast your vote */}
-            <div className="mb-6">
-              <div className="flex items-center gap-2 mb-3 text-gray-800">
-                <MousePointer2Icon className="h-4 w-4" />
+          <div className="prose">
+            <Markdown>{MOCK_MD}</Markdown>
+          </div>
+        </div>
 
-                <span className="uppercase font-semibold text-sm">
-                  Cast your vote
-                </span>
-              </div>
+        <div className="w-[600px] p-6 pb-20">
+          {/* Cast your vote */}
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-3 text-gray-800">
+              <MousePointer2Icon className="h-4 w-4" />
 
-              <div>
-                <div className="flex items-center gap-2 mb-3 text-muted-foreground text-sm">
-                  <span>Voting Power: 0</span>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <HelpCircleIcon className="w-4 h-4" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>
-                        If 0 you are not part of the voters array or you have
-                        already voted. Don't worry, only you can see this. If 1
-                        means you still can vote!
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button className="h-12 w-12 rounded-full border flex items-center justify-center text-green-400 border-green-500">
-                        <CheckIcon className="h-5 w-5" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>For</p>
-                    </TooltipContent>
-                  </Tooltip>
-
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button className="h-12 w-12 rounded-full border flex items-center justify-center text-red-400 border-red-400">
-                        <XIcon className="h-5 w-5" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Against</p>
-                    </TooltipContent>
-                  </Tooltip>
-
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button className="h-12 w-12 rounded-full border flex items-center justify-center text-gray-400 border-gray-400">
-                        <MinusIcon className="h-5 w-5" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Abstain</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
-              </div>
+              <span className="uppercase font-semibold text-sm">
+                Cast your vote
+              </span>
             </div>
 
-            {/* Results */}
             <div>
-              <div className="flex items-center gap-2 mb-3 text-gray-800">
-                <SquareChartGanttIcon className="h-4 w-4" />
-
-                <span className="uppercase font-semibold text-sm">Results</span>
+              <div className="flex items-center gap-2 mb-3 text-muted-foreground text-sm">
+                <span>Voting Power: 0</span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircleIcon className="w-4 h-4" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      If 0 you are not part of the voters array or you have
+                      already voted. Don't worry, only you can see this. If 1
+                      means you still can vote!
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
 
-              <div className="space-y-2">
-                <div className="text-gray-900 border border-green-500 py-3 px-4 flex gap-2 rounded-md items-center bg-green-50 font-medium">
-                  <div className="flex items-center justify-center w-4 h-4 rounded-full bg-green-600 text-white shrink-0">
-                    <CheckIcon className="w-3 h-3" />
-                  </div>
-                  <span className="w-full ">For</span>
-                  <span className="">500</span>
-                  <span className="">50%</span>
-                </div>
+              <div className="flex items-center gap-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="h-12 w-12 rounded-full border flex items-center justify-center text-green-400 border-green-500">
+                      <CheckIcon className="h-5 w-5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>For</p>
+                  </TooltipContent>
+                </Tooltip>
 
-                <div className="text-gray-900 border border-red-500 py-3 px-4 flex gap-2 rounded-md items-center font-medium">
-                  <div className="flex items-center justify-center w-4 h-4 rounded-full bg-red-600 text-white shrink-0">
-                    <XIcon className="w-3 h-3" />
-                  </div>
-                  <span className="w-full ">Against</span>
-                  <span className="">500</span>
-                  <span className="">50%</span>
-                </div>
-
-                <div className="text-gray-900 border border-gray-500 py-3 px-4 flex gap-2 rounded-md items-center font-medium">
-                  <div className="flex items-center justify-center w-4 h-4 rounded-full bg-gray-600 text-white shrink-0">
-                    <MinusIcon className="w-3 h-3" />
-                  </div>
-                  <span className="w-full ">Abstain</span>
-                  <span className="">500</span>
-                  <span className="">50%</span>
-                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button className="h-12 w-12 rounded-full border flex items-center justify-center text-red-400 border-red-400">
+                      <XIcon className="h-5 w-5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Against</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
+            </div>
+          </div>
+
+          {/* Results */}
+          <div>
+            <div className="flex items-center gap-2 mb-3 text-gray-800">
+              <SquareChartGanttIcon className="h-4 w-4" />
+
+              <span className="uppercase font-semibold text-sm">Results</span>
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-gray-900 border border-green-500 py-3 px-4 flex gap-2 rounded-md items-center bg-green-50 font-medium">
+                <div className="flex items-center justify-center w-4 h-4 rounded-full bg-green-600 text-white shrink-0">
+                  <CheckIcon className="w-3 h-3" />
+                </div>
+                <span className="w-full ">For</span>
+                <span className="">500</span>
+                <span className="">50%</span>
+              </div>
+
+              <div className="text-gray-900 border border-red-500 py-3 px-4 flex gap-2 rounded-md items-center font-medium">
+                <div className="flex items-center justify-center w-4 h-4 rounded-full bg-red-600 text-white shrink-0">
+                  <XIcon className="w-3 h-3" />
+                </div>
+                <span className="w-full ">Against</span>
+                <span className="">500</span>
+                <span className="">50%</span>
+              </div>
+
             </div>
           </div>
         </div>

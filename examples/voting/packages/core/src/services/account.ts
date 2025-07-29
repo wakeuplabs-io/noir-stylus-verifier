@@ -7,13 +7,13 @@ export class ZkAccount {
     const hash = keccak256(signature);
 
     const seed = BigInt(hash);
-    const priv_key = poseidon2Hash([seed, 0n]);
+    const privateKey = poseidon2Hash([seed, 0n]);
     const secret = poseidon2Hash([seed, 1n]);
-    const commitment = poseidon2Hash([priv_key, secret]);
+    const address = poseidon2Hash([privateKey, secret]);
 
     return {
-      commitment,
-      priv_key,
+      address,
+      privateKey,
       secret,
     };
   }

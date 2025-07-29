@@ -13,7 +13,7 @@ import { Link } from "@tanstack/react-router";
 export const ProposalCard: React.FC<{
   proposal: Proposal;
 }> = ({ proposal }) => {
-  const totalVotes = proposal.for + proposal.against + proposal.abstain;
+  const totalVotes = proposal.for + proposal.against;
 
   const forPercentage = useMemo(() => {
     return (proposal.for / totalVotes) * 100;
@@ -22,10 +22,6 @@ export const ProposalCard: React.FC<{
   const againstPercentage = useMemo(() => {
     return (proposal.against / totalVotes) * 100;
   }, [proposal.against, totalVotes]);
-
-  const abstainPercentage = useMemo(() => {
-    return (proposal.abstain / totalVotes) * 100;
-  }, [proposal.abstain, totalVotes]);
 
   const timeString = useMemo(() => {
     // TODO: if active, time left, else, time passed
@@ -59,7 +55,7 @@ export const ProposalCard: React.FC<{
       </Link>
 
       {proposal.status === "active" ? (
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <Tooltip>
             <TooltipTrigger asChild>
               <button className="h-10 w-10 rounded-full border flex items-center justify-center text-green-400 border-green-500">
@@ -81,17 +77,6 @@ export const ProposalCard: React.FC<{
               <p>Against</p>
             </TooltipContent>
           </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button className="h-10 w-10 rounded-full border flex items-center justify-center text-gray-400 border-gray-400">
-                <MinusIcon className="h-5 w-5" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Abstain</p>
-            </TooltipContent>
-          </Tooltip>
         </div>
       ) : (
         <div>
@@ -103,10 +88,6 @@ export const ProposalCard: React.FC<{
             <div
               className="h-full bg-red-400"
               style={{ width: `${againstPercentage}%` }}
-            ></div>
-            <div
-              className="h-full bg-gray-400"
-              style={{ width: `${abstainPercentage}%` }}
             ></div>
           </div>
         </div>

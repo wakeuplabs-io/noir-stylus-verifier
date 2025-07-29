@@ -3,28 +3,34 @@
 import "dotenv/config";
 import fs from "fs";
 import { Command } from "commander";
-import { MerkleTree } from "./lib/merkle-tree";
-import { VotingContract } from "./lib/contract";
-import { UltraHonkBackend } from "@aztec/bb.js";
-import { Noir } from "@noir-lang/noir_js";
-import { ZkAccount } from "./lib/account";
-import { poseidon2Hash } from "@zkpassport/poseidon2";
-import { toHex } from "viem";
 import {
+  MerkleTree,
+  VotingContract,
+  ZkAccount,
+  Ipfs,
+  ProposalMetadata,
   ACCOUNT_MESSAGE,
-  CONTRACT_ADDRESS,
   DEPTH,
-  DEFAULT_PRIVATE_KEY,
   ZERO_LEAF,
-  DEFAULT_RPC_URL,
-} from "./config/constants";
+  VotingCircuit,
+} from "@voting/core";
+import { toHex } from "viem";
 import * as prompts from "@clack/prompts";
 import color from "picocolors";
-import { Ipfs } from "./lib/ipfs";
-import { ProposalMetadata } from "./types/proposal";
 import { z } from "zod";
 
+// load env variables from .env file
+export const DEFAULT_RPC_URL = process.env.RPC_URL || "";
+export const DEFAULT_PRIVATE_KEY = process.env.PRIVATE_KEY as `0x${string}`;
+export const DEFAULT_RELAYER_PRIVATE_KEY = process.env
+  .RELAYER_PRIVATE_KEY as `0x${string}`;
+export const IPFS_PINATA_JWT = process.env.IPFS_PINATA_JWT || "";
+export const IPFS_GATEWAY_URL = process.env.IPFS_GATEWAY_URL || "";
+export const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS as `0x${string}`;
+
 const program = new Command();
+
+const ipfs = new Ipfs(IPFS_PINATA_JWT, IPFS_GATEWAY_URL);
 
 program.name("cli").description("Zero Knowledge Voting").version("0.1.0");
 
@@ -52,8 +58,8 @@ program
     prompts.outro(`Your zk account:
 
     EVM Private key: ${options.privateKey}
-    ZK Address: 0x${zkAccount.commitment.toString(16)}
-    ZK Private key: 0x${zkAccount.priv_key.toString(16)}
+    ZK Address: 0x${zkAccount.address.toString(16)}
+    ZK Private key: 0x${zkAccount.privateKey.toString(16)}
     ZK Secret: 0x${zkAccount.secret.toString(16)}
     `);
   });
@@ -112,7 +118,9 @@ program
     );
 
     spinner.start("Uploading metadata to IPFS...");
-    const metadata = await Ipfs.uploadJSON(proposal);
+
+    const metadata = await ipfs.uploadJSON(proposal);
+    
     spinner.stop(`Metadata uploaded to IPFS: ${metadata}`);
 
     spinner.start("Creating proposal...");
@@ -187,7 +195,7 @@ program
     );
 
     const metadata = await contract.getProposalMetadata(options.proposalId);
-    const proposal = (await Ipfs.downloadJSON(metadata)) as ProposalMetadata;
+    const proposal = (await ipfs.downloadJSON(metadata)) as ProposalMetadata;
 
     spinner.stop(`Got proposal ${options.proposalId} details`);
 
@@ -201,7 +209,7 @@ program
 
     // check account is in the voters tree
     const isVoter = proposal.voters.find(
-      (voter: string) => BigInt(voter) === zkAccount.commitment
+      (voter: string) => BigInt(voter) === zkAccount.address
     );
     if (!isVoter) {
       prompts.cancel("You are not a voter for this proposal");
@@ -218,50 +226,39 @@ program
     }
     const root = await tree.getRoot();
     const { path, directionSelector } = await tree.getProof(
-      BigInt(zkAccount.commitment)
+      BigInt(zkAccount.address)
     );
 
-    const circuit = JSON.parse(
-      fs.readFileSync(
-        __dirname + "/../../../circuits/contracts/assets/bytecode.json",
-        "utf8"
-      )
-    );
-    const noir = new Noir(circuit);
-    const backend = new UltraHonkBackend(circuit.bytecode);
-
-    const nullifierHash = poseidon2Hash([
+    const nullifier = await VotingCircuit.generateNullifier(
       root,
-      zkAccount.priv_key,
-      BigInt(options.proposalId),
-    ]);
-    const { witness } = await noir.execute({
-      root: `0x${root.toString(16)}`,
-      path: path.map((p) => `0x${p.toString(16)}`),
-      direction_selector: directionSelector,
-      secret: `0x${zkAccount.secret.toString(16)}`,
-      priv_key: `0x${zkAccount.priv_key.toString(16)}`,
-      nullifier: `0x${nullifierHash.toString(16)}`,
-      proposal_id: `0x${options.proposalId.toString(16)}`,
-      vote: options.vote,
-    });
-    const { proof } = await backend.generateProof(witness, {
-      keccak: true,
-    });
+      zkAccount.privateKey,
+      BigInt(options.proposalId)
+    );
+
+    const proof = await VotingCircuit.generateProof(
+      options.proposalId,
+      options.vote,
+      root,
+      path,
+      directionSelector,
+      zkAccount.privateKey,
+      zkAccount.secret,
+      nullifier
+    );
 
     spinner.stop("Proof built successfully");
 
     spinner.start("Casting vote...");
 
-    // cast vote
     const tx = await contract.castVote(
       `0x${Array.from(proof, (byte) => byte.toString(16).padStart(2, "0")).join(
         ""
       )}`,
       options.proposalId,
       options.vote,
-      nullifierHash
+      nullifier
     );
+
     spinner.stop(`Vote casted successfully at ${tx}`);
 
     prompts.outro(`You're all set!`);

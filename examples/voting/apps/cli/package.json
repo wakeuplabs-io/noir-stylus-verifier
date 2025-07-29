@@ -9,15 +9,11 @@
   "license": "ISC",
   "packageManager": "pnpm@10.6.5",
   "dependencies": {
-    "@aztec/bb.js": "0.86.0",
     "@clack/prompts": "^0.11.0",
-    "@noir-lang/noir_js": "1.0.0-beta.6",
-    "@zkpassport/poseidon2": "^0.6.2",
+    "@voting/core": "workspace:*",
     "commander": "^14.0.0",
     "dotenv": "^17.2.1",
-    "msgpackr": "^1.11.0",
     "picocolors": "^1.1.1",
-    "pinata": "^2.4.9",
     "viem": "^2.33.1",
     "zod": "^4.0.13"
   },

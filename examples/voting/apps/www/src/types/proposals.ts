@@ -6,7 +6,6 @@ export type Proposal = {
     author: string;
     for: number;
     against: number;
-    abstain: number;
     status: ProposalStatus;
     createdAt: Date;
 }
