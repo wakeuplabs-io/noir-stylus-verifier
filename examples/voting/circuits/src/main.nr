@@ -24,6 +24,7 @@ fn main(
         note_commitment,
         "Commitment not in Merkle Tree",
     );
+
     assert(nullifier == definitions::nullifier(root, priv_key, proposal_id), "Invalid nullifier");
     assert(vote <= 1, "Invalid vote");
 }

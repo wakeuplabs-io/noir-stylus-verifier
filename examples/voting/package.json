@@ -14,6 +14,7 @@
     "@noir-lang/noir_js": "1.0.0-beta.6",
     "@zkpassport/poseidon2": "^0.6.2",
     "commander": "^14.0.0",
+    "msgpackr": "^1.11.0",
     "viem": "^2.33.1"
   },
   "devDependencies": {

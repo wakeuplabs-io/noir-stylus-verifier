@@ -4,30 +4,33 @@ import fs from "fs";
 import { Command } from "commander";
 import { MerkleTree } from "./lib/merkle-tree";
 import { VotingContract } from "./lib/contract";
-import { arbitrumSepolia } from "viem/chains";
-// import { UltraHonkBackend } from "@aztec/bb.js";
+import { UltraHonkBackend } from "@aztec/bb.js";
 import { Noir } from "@noir-lang/noir_js";
 import { ZkAccount } from "./lib/account";
 import { poseidon2Hash } from "@zkpassport/poseidon2";
+import { toHex } from "viem";
+import {
+  ACCOUNT_MESSAGE,
+  CONTRACT_ADDRESS,
+  DEFAULT_RPC_URL,
+  DEPTH,
+  ZERO_LEAF,
+} from "./config/constants";
 
 const program = new Command();
 
-const DEPTH = 12;
-const ZERO_LEAF = BigInt(0);
-const CHAIN = arbitrumSepolia;
-const CONTRACT_ADDRESS = "0x0000000000000000000000000000000000000000";
-const DEFAULT_RPC_URL = "https://sepolia-rollup.arbitrum.io/rpc";
-const ACCOUNT_MESSAGE = "Create ZK Account";
-
-program.name("cli").description("Cli for voting management").version("0.1.0");
+program.name("cli").description("Zero Knowledge Voting").version("0.1.0");
 
 program
-  .command("account") 
+  .command("account")
   .option("-p, --private-key <private-key>", "Private key")
   .description("Build a zk account")
   .action(async (options) => {
-    const zkAccount = await ZkAccount.buildFromPrivateKey(options.privateKey, ACCOUNT_MESSAGE);
-    
+    const zkAccount = await ZkAccount.buildFromPrivateKey(
+      options.privateKey,
+      ACCOUNT_MESSAGE
+    );
+
     console.log("Commitment:", "0x" + zkAccount.commitment.toString(16));
     console.log("Private key:", "0x" + zkAccount.priv_key.toString(16));
     console.log("Secret:", "0x" + zkAccount.secret.toString(16));
@@ -35,35 +38,46 @@ program
 
 program
   .command("propose")
-  .requiredOption("-v, --voters <voters>", "File containing the voters")
-  .requiredOption("-d, --description <description>", "Description is required")
-  .requiredOption("-t, --deadline <deadline>", "Deadline is required")
-  .requiredOption("-p, --private-key <private-key>", "Private key")
-  .option("-r, --rpc-url <rpc-url>", "RPC URL")
+  .requiredOption(
+    "--voters <voters>",
+    "File containing the voters",
+    "voters.json"
+  )
+  .requiredOption("--description <description>", "Description of the proposal")
+  .requiredOption(
+    "--deadline <deadline>",
+    "When the proposal will be closed. ISO 8601 timestamp like 2025-07-28T12:00:005Z, you can help yourself with https://www.timestamp-converter.com/"
+  )
+  .requiredOption("--private-key <private-key>", "Private key")
+  .option("--rpc-url <rpc-url>", "RPC URL")
   .description("Propose a new proposal for voting")
   .action(async (options) => {
-    // build the merkle tree from the voters
     const voters = JSON.parse(fs.readFileSync(options.voters, "utf8"));
-    const tree = new MerkleTree(DEPTH, ZERO_LEAF);
+    const votersTree = new MerkleTree(DEPTH, ZERO_LEAF);
     for (const voter of voters) {
-      await tree.addCommitment(BigInt(voter));
+      await votersTree.addCommitment(BigInt(voter));
       console.log(`Added commitment for voter ${voter}`);
     }
-    const root = await tree.getRoot();
+    const root = await votersTree.getRoot();
 
-    console.log(`Proposing a new proposal with root: 0x${root.toString(16)}`);
+    const deadline = new Date(options.deadline);
+    const now = new Date();
+    if (deadline < now) {
+      throw new Error("Deadline must be in the future");
+    }
+
+    console.log(`Creating proposal with root: 0x${root.toString(16)}`);
     const contract = new VotingContract(
       CONTRACT_ADDRESS,
-      CHAIN,
       options.rpcUrl,
       options.privateKey
     );
     const tx = await contract.propose(
       options.description,
-      options.deadline,
+      BigInt(Math.floor(deadline.getTime() / 1000)),
       root
     );
-    console.log(`Proposal created at ${tx}`);
+    console.log(`Proposal created with id ${tx.id} at ${tx.tx}`);
   });
 
 program
@@ -71,36 +85,42 @@ program
   .option("-r, --rpc-url <rpc-url>", "RPC URL", DEFAULT_RPC_URL)
   .description("Get a proposal")
   .action(async (proposalId, options) => {
-    const contract = new VotingContract(
-      CONTRACT_ADDRESS,
-      CHAIN,
-      options.rpcUrl
-    );
+    const contract = new VotingContract(CONTRACT_ADDRESS, options.rpcUrl);
     const proposal = await contract.getProposal(proposalId);
 
-    console.log(`Proposal ${proposalId} details:`);
+    console.log(`Proposal ${proposalId} details\n`);
     console.log(`Description: ${proposal.description}`);
-    console.log(`Deadline: ${proposal.deadline}`);
-    console.log(`Root: ${proposal.votersRoot}`);
+    console.log(
+      `Deadline: ${new Date(Number(proposal.deadline) * 1000).toISOString()}`
+    );
+    console.log(`Root: ${toHex(proposal.votersRoot)}`);
     console.log(`For Votes: ${proposal.forVotes}`);
     console.log(`Against Votes: ${proposal.againstVotes}`);
   });
 
 program
-  .command("cast-vote <proposal-id> <vote>")
-  .option("-r, --rpc-url <rpc-url>", "RPC URL", DEFAULT_RPC_URL)
-  .option("-v, --voters <voters>", "File containing the voters")
-  .option("-p, --private-key <private-key>", "Private key")
+  .command("cast-vote")
+  .option("--rpc-url <rpc-url>", "RPC URL", DEFAULT_RPC_URL)
+  .option("--voters <voters>", "File containing the voters", "voters.json")
+  .requiredOption("--proposal-id <proposal-id>", "Proposal ID")
+  .requiredOption("--vote <vote>", "Vote 1 in favor, 0 against")
+  .requiredOption("--private-key <private-key>", "Private key")
+  .option(
+    "--relayer-private-key <relayer-private-key>",
+    "Relayer private key. By default it will use the private key of the voter"
+  )
   .description("Cast a vote for a proposal")
-  .action(async (proposalId, vote, options) => {
+  .action(async (options) => {
     console.log(
-      `👋 Casting vote for proposal ${proposalId} with vote ${vote} from ${options.rpcUrl}`
+      `Casting vote for proposal ${options.proposalId} with vote ${options.vote} from ${options.rpcUrl}`
     );
-
     const voters = JSON.parse(fs.readFileSync(options.voters, "utf8"));
 
     // derive secret and private key for user
-    const zkAccount = await ZkAccount.buildFromPrivateKey(options.privateKey, ACCOUNT_MESSAGE);
+    const zkAccount = await ZkAccount.buildFromPrivateKey(
+      options.privateKey,
+      ACCOUNT_MESSAGE
+    );
 
     // rebuild the tree
     const tree = new MerkleTree(DEPTH, ZERO_LEAF);
@@ -108,45 +128,52 @@ program
       await tree.addCommitment(BigInt(voter));
     }
     const root = await tree.getRoot();
-    const { path, directionSelector } = await tree.getProof(BigInt(voters[0]));
+    const { path, directionSelector } = await tree.getProof(
+      BigInt(zkAccount.commitment)
+    );
 
     // build proof
     const circuit = JSON.parse(
-      fs.readFileSync("../circuits/contracts/assets/bytecode.json", "utf8")
+      fs.readFileSync(
+        __dirname + "/../circuits/contracts/assets/bytecode.json",
+        "utf8"
+      )
     );
     const noir = new Noir(circuit);
     const backend = new UltraHonkBackend(circuit.bytecode);
+
+    // build proof
+    const nullifierHash = poseidon2Hash([
+      root,
+      zkAccount.priv_key,
+      BigInt(options.proposalId),
+    ]);
     const { witness } = await noir.execute({
-      root: root.toString(16),
-      path: path.map((p) => p.toString(16)),
-      directionSelector,
-      secret: zkAccount.secret.toString(16),
-      priv_key: zkAccount.priv_key.toString(16),
-      nullifier: zkAccount.commitment.toString(16),
-      proposal_id: proposalId.toString(16),
-      vote: vote,
+      root: `0x${root.toString(16)}`,
+      path: path.map((p) => `0x${p.toString(16)}`),
+      direction_selector: directionSelector,
+      secret: `0x${zkAccount.secret.toString(16)}`,
+      priv_key: `0x${zkAccount.priv_key.toString(16)}`,
+      nullifier: `0x${nullifierHash.toString(16)}`,
+      proposal_id: `0x${options.proposalId.toString(16)}`,
+      vote: options.vote,
     });
     const { proof } = await backend.generateProof(witness, {
       keccak: true,
     });
 
-    // build nullifier hash
-    const nullifierHash = poseidon2Hash([root, zkAccount.priv_key, proposalId]);
-
     // cast vote
     const contract = new VotingContract(
       CONTRACT_ADDRESS,
-      CHAIN,
       options.rpcUrl,
-      options.privateKey
+      options.relayerPrivateKey ?? options.privateKey
     );
     const tx = await contract.castVote(
-      "0x" +
-        Array.from(proof, (byte) => byte.toString(16).padStart(2, "0")).join(
-          ""
-        ),
-      proposalId,
-      vote,
+      `0x${Array.from(proof, (byte) => byte.toString(16).padStart(2, "0")).join(
+        ""
+      )}`,
+      options.proposalId,
+      options.vote,
       nullifierHash
     );
     console.log("Vote casted successfully at", tx);

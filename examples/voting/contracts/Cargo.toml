@@ -10,7 +10,6 @@ description = "Stylus hello world example"
 
 [workspace]
 
-
 [dependencies]
 alloy-primitives = "=0.8.20"
 alloy-sol-types = "=0.8.20"
