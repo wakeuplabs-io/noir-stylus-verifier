@@ -1,6 +1,6 @@
 import { ProposalCard } from "@/components/proposal-card";
 import { shortenAddress } from "@/lib/utils";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { PenBoxIcon, SearchIcon } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -41,9 +41,9 @@ function Index() {
             <span className="text">Any</span>
           </div>
 
-          <button className="flex items-center gap-2 rounded-full border h-[46px] w-[46px] shrink-0 justify-center">
+          <Link to="/proposals/new" className="flex items-center gap-2 rounded-full border h-[46px] w-[46px] shrink-0 justify-center">
             <PenBoxIcon className="h-4 w-4" />
-          </button>
+          </Link>
         </div>
 
         <div>

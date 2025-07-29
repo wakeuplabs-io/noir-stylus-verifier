@@ -1,3 +1,4 @@
+import { BackButton } from "@/components/back-button";
 import {
   Tooltip,
   TooltipContent,
@@ -7,14 +8,11 @@ import { shortenAddress } from "@/lib/utils";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowLeftIcon,
-  ChartPieIcon,
   CheckIcon,
   HelpCircleIcon,
   MinusIcon,
-  MousePointer2,
   MousePointer2Icon,
   RadioIcon,
-  SquareChartGantt,
   SquareChartGanttIcon,
   XIcon,
 } from "lucide-react";
@@ -74,9 +72,7 @@ function Index() {
     <div className="">
       <div className="max-w-5xl mx-auto border-x min-h-screen w-full">
         <div className="flex border-b items-center justify-between h-[72px] px-6">
-          <Link to="/" className="flex items-center gap-4 w-full">
-            <ArrowLeftIcon className="w-4 h-4" />
-          </Link>
+          <BackButton to="/" />
 
           <button className="flex items-center gap-2 rounded-full border h-[46px] px-4 shrink-0">
             <img
