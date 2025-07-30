@@ -16,7 +16,11 @@ export const useZkAccount = () => {
         return { address: null, secret: null, privateKey: null };
       }
 
-      return JSON.parse(zkAccount);
+      return JSON.parse(zkAccount) as {
+        address: `0x${string}`;
+        secret: `0x${string}` ;
+        privateKey: `0x${string}`;
+      };
     },
     initialData: { address: null, secret: null, privateKey: null },
     refetchInterval: false,

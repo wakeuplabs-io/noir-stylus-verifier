@@ -8,12 +8,16 @@ export class MerkleTree {
   private depth: number;
   private maxLeaves: number;
 
-  constructor(depth: number, zeroLeaf: bigint) {
+  constructor(depth: number, zeroLeaf: bigint, initialLeaves: bigint[] = []) {
     this.depth = depth;
     this.zeroLeaf = zeroLeaf;
     this.maxLeaves = 2 ** depth;
     this.leaves = new Array(this.maxLeaves).fill(zeroLeaf);
     this.nextIndex = 0;
+
+    for (const leaf of initialLeaves) {
+      this.addCommitment(leaf);
+    }
   }
 
   async addCommitment(commitment: bigint) {

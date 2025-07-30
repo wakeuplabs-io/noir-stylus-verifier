@@ -7,19 +7,22 @@ import {
 } from "@/components/ui/tooltip";
 import { shortenAddress } from "@/lib/utils";
 import { useProposal } from "@/lib/queries/proposal";
+import {
+  useCastVote,
+  useVotingPower as useAvailableVotes,
+} from "@/lib/queries/voting";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   CheckIcon,
   ClockIcon,
   HelpCircleIcon,
-  MousePointer2Icon,
-  MousePointerClick,
   MousePointerClickIcon,
   SquareChartGanttIcon,
   XIcon,
 } from "lucide-react";
 import Markdown from "react-markdown";
 import { StatusBadge } from "@/components/status-badge";
+import { useMemo } from "react";
 
 export const Route = createFileRoute("/proposals/$id")({
   component: Index,
@@ -28,8 +31,31 @@ export const Route = createFileRoute("/proposals/$id")({
 function Index() {
   const { id } = Route.useParams();
   const { data: proposal, isLoading } = useProposal(Number(id));
+  const { data: availableVotes } = useAvailableVotes(Number(id));
+  const { mutate: castVote, isPending } = useCastVote(Number(id));
 
-  if (isLoading || !proposal) return <div>Loading...</div>;
+  const voteCount = useMemo(() => {
+    if (!proposal) return 0;
+    return proposal.for + proposal.against;
+  }, [proposal]);
+
+  const forPercentage = useMemo(() => {
+    if (!proposal) return 0;
+    return (proposal.for / (proposal.for + proposal.against)) * 100;
+  }, [proposal]);
+
+  const againstPercentage = useMemo(() => {
+    if (!proposal) return 0;
+    return (proposal.against / (proposal.for + proposal.against)) * 100;
+  }, [proposal]);
+
+  if (isLoading || !proposal)
+    return (
+      <div className="flex items-center justify-center h-screen w-screen">
+        Loading...
+      </div>
+    );
+
   return (
     <div className="">
       <div className="flex border-b items-center justify-between h-[72px] px-6">
@@ -78,16 +104,16 @@ function Index() {
 
             <div>
               <div className="flex items-center gap-2 mb-3 text-muted-foreground text-sm">
-                <span>Voting Power: 0</span>
+                <span>Available votes: {availableVotes}</span>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <HelpCircleIcon className="w-4 h-4" />
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>
-                      If 0 you are not part of the voters array or you have
-                      already voted. Don't worry, only you can see this. If 1
-                      means you still can vote!
+                      {availableVotes === 0
+                        ? "You are not part of the voters array or you have already voted. Don't worry, only you can see this."
+                        : "You have 1 vote left."}
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -96,7 +122,11 @@ function Index() {
               <div className="flex items-center gap-2">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button className="h-12 w-12 rounded-full border flex items-center justify-center text-green-400 border-green-500">
+                    <button
+                      disabled={availableVotes === 0}
+                      onClick={() => castVote(true)}
+                      className="h-12 w-12 rounded-full border flex items-center justify-center text-green-400 border-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
                       <CheckIcon className="h-5 w-5" />
                     </button>
                   </TooltipTrigger>
@@ -107,7 +137,11 @@ function Index() {
 
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <button className="h-12 w-12 rounded-full border flex items-center justify-center text-red-400 border-red-400">
+                    <button
+                      disabled={availableVotes === 0}
+                      onClick={() => castVote(false)}
+                      className="h-12 w-12 rounded-full border flex items-center justify-center text-red-400 border-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
                       <XIcon className="h-5 w-5" />
                     </button>
                   </TooltipTrigger>
@@ -134,7 +168,9 @@ function Index() {
                 </div>
                 <span className="w-full ">For</span>
                 <span className="">{proposal.for}</span>
-                <span className="">50%</span>
+                {voteCount > 0 && (
+                  <span className="">{forPercentage.toFixed(2)}%</span>
+                )}
               </div>
 
               <div className="text-gray-900 border border-red-500 py-3 px-4 flex gap-2 rounded-md items-center font-medium">
@@ -143,7 +179,9 @@ function Index() {
                 </div>
                 <span className="w-full ">Against</span>
                 <span className="">{proposal.against}</span>
-                <span className="">50%</span>
+                {voteCount > 0 && (
+                  <span className="">{againstPercentage.toFixed(2)}%</span>
+                )}
               </div>
             </div>
           </div>

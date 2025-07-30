@@ -87,7 +87,7 @@ export const useProposals = () => {
     queryFn: async ({ pageParam }) => {
       const count = await contract.getProposalCount();
 
-      const pageStart = Math.max(Number(count) - pageParam * PAGE_SIZE - 1, 0);
+      const pageStart = Math.max(Number(count) - (pageParam + 1) * PAGE_SIZE -1, 0);
       const pageEnd = Math.min(pageStart + PAGE_SIZE, Number(count));
 
       const proposals = await Promise.all(

@@ -1,6 +1,7 @@
 import { UltraHonkBackend } from "@aztec/bb.js";
 import { Noir } from "@noir-lang/noir_js";
 import { poseidon2Hash } from "@zkpassport/poseidon2";
+import circuit from "../config/bytecode.json";
 
 export class VotingCircuit {
   static async generateProof(
@@ -13,14 +14,11 @@ export class VotingCircuit {
     secret: bigint,
     nullifier: bigint
   ) {
-    const circuit = JSON.parse(
-      await import(
-        __dirname + "/../../../circuits/contracts/assets/bytecode.json"
-      )
-    );
-    const noir = new Noir(circuit);
+    console.log("ABS 1")
+    const noir = new Noir(circuit as any);
+    console.log("ABS 2")
     const backend = new UltraHonkBackend(circuit.bytecode);
-
+    console.log("ABS 3")
     const { witness } = await noir.execute({
       root: `0x${root.toString(16)}`,
       path: path.map((p) => `0x${p.toString(16)}`),
@@ -29,12 +27,13 @@ export class VotingCircuit {
       priv_key: `0x${priv_key.toString(16)}`,
       nullifier: `0x${nullifier.toString(16)}`,
       proposal_id: `0x${proposal_id.toString(16)}`,
-      vote: vote,
+      vote: vote ? 1 : 0,
     });
+    console.log("ABS 4")
     const { proof } = await backend.generateProof(witness, {
       keccak: true,
     });
-
+    console.log("ABS 5")
     return proof;
   }
 

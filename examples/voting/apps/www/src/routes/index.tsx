@@ -3,7 +3,7 @@ import { ProposalCard } from "@/components/proposal-card";
 import { useProposals } from "@/lib/queries/proposal";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PenBoxIcon, SearchIcon } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -13,6 +13,10 @@ function Index() {
   const loadMoreRef = useRef(null);
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useProposals();
+
+  const sortedProposals = useMemo(() => {
+    return data?.pages.flatMap((page) => page.proposals).sort((a, b) => b.id - a.id) ?? [];
+  }, [data]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -65,11 +69,9 @@ function Index() {
         </div>
 
         <div className="divide-y mx-6">
-          {data?.pages.map((page) =>
-            page.proposals.map((proposal, id) => (
-              <ProposalCard key={id} proposal={proposal} />
-            ))
-          )}
+          {sortedProposals.map((proposal, id) => (
+            <ProposalCard key={id} proposal={proposal} />
+          ))}
 
           <div ref={loadMoreRef} className="py-4">
             {isFetchingNextPage

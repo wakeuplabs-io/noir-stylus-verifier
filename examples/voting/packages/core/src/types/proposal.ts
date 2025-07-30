@@ -34,6 +34,7 @@ export const proposalSchema = z.object({
   for: z.number().int().min(0),
   against: z.number().int().min(0),
   status: proposalStatusSchema,
+  root: z.string().regex(/^0x[a-fA-F0-9]{64}$/, "Invalid root"),
 });
 
 // Address validation schema (reusable)

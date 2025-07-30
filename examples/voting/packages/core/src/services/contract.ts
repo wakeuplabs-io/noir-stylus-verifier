@@ -159,11 +159,17 @@ export class VotingContract {
   }
 
   async getProposal(proposalId: number): Promise<Proposal> {
-    const [metadataCid, deadline, forVotes, againstVotes, createdAt, author] =
+    const [root, metadataCid, deadline, forVotes, againstVotes, createdAt, author] =
       await this.publicClient
         .multicall({
           multicallAddress: MULTICALL_ADDRESS[this.chainId],
           contracts: [
+            {
+              address: this.address,
+              abi: VotingContractAbi,
+              functionName: "getProposalVotersRoot",
+              args: [BigInt(proposalId)],
+            },
             {
               address: this.address,
               abi: VotingContractAbi,
@@ -215,6 +221,7 @@ export class VotingContract {
 
     return {
       id: proposalId,
+      root: root.toString(),
       metadata,
       deadline: new Date(Number(deadline) * 1000),
       for: Number(forVotes),
@@ -234,15 +241,15 @@ export class VotingContract {
     userAddress: `0x${string}`,
     proof: `0x${string}`,
     proposalId: number,
-    vote: number,
-    nullifierHash: bigint
+    vote: boolean,
+    nullifier: bigint
   ) {
     const txRequest = await this.publicClient.prepareTransactionRequest({
       to: this.address,
       data: encodeFunctionData({
         abi: VotingContractAbi,
         functionName: "castVote",
-        args: [proof, BigInt(proposalId), BigInt(vote), nullifierHash],
+        args: [proof, BigInt(proposalId), BigInt(vote ? 1 : 0), nullifier],
       }),
       value: 0n,
       chain: null,
