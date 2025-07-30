@@ -17,7 +17,8 @@
     "@zkpassport/poseidon2": "^0.6.2",
     "msgpackr": "^1.11.0",
     "pinata": "^2.4.9",
-    "viem": "^2.33.1"
+    "viem": "^2.33.1",
+    "zod": "^4.0.13"
   },
   "devDependencies": {
     "@types/node": "^24.1.0"

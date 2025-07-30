@@ -1,7 +1,6 @@
 import { UltraHonkBackend } from "@aztec/bb.js";
 import { Noir } from "@noir-lang/noir_js";
 import { poseidon2Hash } from "@zkpassport/poseidon2";
-import fs from "fs";
 
 export class VotingCircuit {
   static async generateProof(

@@ -4,11 +4,20 @@ import ReactDOM from "react-dom/client";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { routeTree } from "./routeTree.gen";
-import { config } from "./lib/wagmi-config";
-import { WagmiProvider } from "wagmi";
+import { http, createConfig, WagmiProvider } from "wagmi";
+import { arbitrumSepolia } from "wagmi/chains";
+import { metaMask } from "wagmi/connectors";
 
 const router = createRouter({ routeTree });
 const queryClient = new QueryClient();
+
+const wagmiConfig = createConfig({
+  chains: [arbitrumSepolia],
+  transports: {
+    [arbitrumSepolia.id]: http(),
+  },
+  connectors: [metaMask()],
+});
 
 declare module "@tanstack/react-router" {
   interface Register {
@@ -21,7 +30,7 @@ if (!rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
     <StrictMode>
-      <WagmiProvider config={config}> 
+      <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
           <RouterProvider router={router} />
         </QueryClientProvider>

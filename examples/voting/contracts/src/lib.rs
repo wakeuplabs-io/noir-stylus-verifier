@@ -23,12 +23,14 @@ sol! {
     struct Proposal {
         string metadata; // cid to ipfs metadata
         uint256 voters_root;
-        uint256 deadline;
         uint256 for_votes;
         uint256 against_votes;
+        address author;
+        uint256 deadline;
+        uint256 created_at;
     }
 
-    event ProposalCreated(uint256 indexed id, string metadata, uint256 voters_root, uint256 timestamp, uint256 deadline);
+    event ProposalCreated(uint256 indexed id);
     event NullifierUsed(uint256 indexed nullifier_hash);
 
     function verify(bytes memory proof, bytes memory input) external view returns (bool);
@@ -43,11 +45,13 @@ sol_interface! {
 #[storage]
 struct StorageProposal {
     metadata: StorageString,
-    deadline: StorageU256,
     for_votes: StorageU256,
     against_votes: StorageU256,
     started: StorageBool,
     voters_root: StorageU256,
+    author: StorageAddress,
+    created_at: StorageU256,
+    deadline: StorageU256,
 }
 
 #[storage]
@@ -73,19 +77,33 @@ impl Voting {
         self.verifier.get()
     }
 
+    /// Get the number of proposals
+    /// @return The number of proposals
+    pub fn get_proposal_count(&self) -> U256 {
+        self.proposal_count.get()
+    }
+
+    /// Weather or not a nullifier has been used
+    /// @param nullifier_hash - The hash of the nullifier
+    /// @return True if the nullifier has been used, false otherwise
+    pub fn is_nullifier_used(&self, nullifier_hash: U256) -> bool {
+        self.nullifiers.get(nullifier_hash)
+    }
+
     /// Propose a new proposal
     /// @param metadata - The ipfs cid containing the metadata of the proposal
     /// @param deadline - The deadline of the proposal
     /// @param voters_root - The merkle root containing the voters
     pub fn propose(&mut self, metadata: String, deadline: U256, voters_root: U256) {
         let proposal_id = self.proposal_count.get();
+        let created_at = U256::from(self.vm().block_timestamp().clone());
+        let author = self.vm().msg_sender();
 
         // store the proposal in the storage
         self.proposals
             .setter(proposal_id)
             .metadata
             .set_str(&metadata);
-        self.proposals.setter(proposal_id).deadline.set(deadline);
         self.proposals.setter(proposal_id).for_votes.set(U256::ZERO);
         self.proposals
             .setter(proposal_id)
@@ -96,22 +114,21 @@ impl Voting {
             .setter(proposal_id)
             .voters_root
             .set(voters_root);
+        self.proposals.setter(proposal_id).deadline.set(deadline);
+        self.proposals.setter(proposal_id).author.set(author);
+        self.proposals
+            .setter(proposal_id)
+            .created_at
+            .set(created_at);
 
         // increment the proposal count and return the id
         self.proposal_count.set(proposal_id + U256::from(1));
 
         // log the proposal created event so frontend can retrieve id
-        log(
-            self.vm(),
-            ProposalCreated {
-                id: proposal_id,
-                metadata,
-                voters_root,
-                timestamp: U256::from(self.vm().block_timestamp()),
-                deadline,
-            },
-        );
+        log(self.vm(), ProposalCreated { id: proposal_id });
     }
+
+    /// FIXME: returning Proposal as a struct seems to be not quite working as of stylus 0.9.0. Revising when updating to 0.10.0.
 
     /// Get the metadata of a proposal
     /// @param proposal_id - The id of the proposal
@@ -146,6 +163,20 @@ impl Voting {
     /// @return The voters root for the proposal
     pub fn get_proposal_voters_root(&self, proposal_id: U256) -> U256 {
         self.proposals.get(proposal_id).voters_root.get()
+    }
+
+    /// Get the author of a proposal
+    /// @param proposal_id - The id of the proposal
+    /// @return The author of the proposal
+    pub fn get_proposal_author(&self, proposal_id: U256) -> Address {
+        self.proposals.get(proposal_id).author.get()
+    }
+
+    /// Get the created at timestamp of a proposal
+    /// @param proposal_id - The id of the proposal
+    /// @return The created at timestamp of the proposal
+    pub fn get_proposal_created_at(&self, proposal_id: U256) -> U256 {
+        self.proposals.get(proposal_id).created_at.get()
     }
 
     /// Cast a vote for a proposal

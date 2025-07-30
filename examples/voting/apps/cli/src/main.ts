@@ -7,14 +7,15 @@ import {
   MerkleTree,
   VotingContract,
   ZkAccount,
-  Ipfs,
-  ProposalMetadata,
   ACCOUNT_MESSAGE,
   DEPTH,
   ZERO_LEAF,
   VotingCircuit,
+  SupportedChainId,
+  PinataIpfs,
 } from "@voting/core";
-import { toHex } from "viem";
+import { createWalletClient, http, toHex } from "viem";
+import { privateKeyToAccount, privateKeyToAddress } from "viem/accounts";
 import * as prompts from "@clack/prompts";
 import color from "picocolors";
 import { z } from "zod";
@@ -29,8 +30,6 @@ export const IPFS_GATEWAY_URL = process.env.IPFS_GATEWAY_URL || "";
 export const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS as `0x${string}`;
 
 const program = new Command();
-
-const ipfs = new Ipfs(IPFS_PINATA_JWT, IPFS_GATEWAY_URL);
 
 program.name("cli").description("Zero Knowledge Voting").version("0.1.0");
 
@@ -117,31 +116,34 @@ program
       `Voters tree built successfully with root: 0x${root.toString(16)}`
     );
 
-    spinner.start("Uploading metadata to IPFS...");
-
-    const metadata = await ipfs.uploadJSON(proposal);
-    
-    spinner.stop(`Metadata uploaded to IPFS: ${metadata}`);
-
     spinner.start("Creating proposal...");
 
     const contract = new VotingContract(
+      SupportedChainId.ARBITRUM_SEPOLIA,
+      new PinataIpfs(IPFS_PINATA_JWT, IPFS_GATEWAY_URL),
       CONTRACT_ADDRESS,
-      options.rpcUrl,
-      options.privateKey
+      options.rpcUrl
     );
-    const tx = await contract.propose(
-      metadata,
+    const txRequest = await contract.preparePropose(
+      privateKeyToAddress(options.privateKey),
+      proposal,
       BigInt(Math.floor(proposal.deadline.getTime() / 1000)),
       root
     );
-    spinner.stop(`Proposal created in tx ${tx.tx}`);
+    const tx = await createWalletClient({
+      transport: http(options.rpcUrl),
+      account: privateKeyToAccount(options.privateKey),
+    }).sendTransaction(txRequest);
 
-    prompts.outro(`Your proposal is ready:
+    spinner.stop(`Proposal created in tx ${tx}`);
 
-    Proposal ID: ${tx.id}
-    Proposal Metadata CID: ${metadata}
-    `);
+    spinner.start("Recovering proposal id...");
+
+    const proposalId = await contract.recoverProposalId(tx);
+
+    spinner.stop(`Proposal id recovered: ${proposalId}`);
+
+    prompts.outro(`Your proposal is ready: ${proposalId}`);
   });
 
 program
@@ -154,15 +156,20 @@ program
     const spinner = prompts.spinner();
     spinner.start("Getting proposal from the blockchain...");
 
-    const contract = new VotingContract(CONTRACT_ADDRESS, options.rpcUrl);
+    const contract = new VotingContract(
+      SupportedChainId.ARBITRUM_SEPOLIA,
+      new PinataIpfs(IPFS_PINATA_JWT, IPFS_GATEWAY_URL),
+      CONTRACT_ADDRESS,
+      options.rpcUrl
+    );
     const proposal = await contract.getProposal(proposalId);
 
     spinner.stop(`Got proposal ${proposalId} votes`);
 
     prompts.outro(`Proposal ${proposalId} votes\n
 
-    For Votes: ${proposal.forVotes}
-    Against Votes: ${proposal.againstVotes}
+    For Votes: ${proposal.for}
+    Against Votes: ${proposal.against}
     `);
   });
 
@@ -189,13 +196,13 @@ program
     spinner.start("Getting proposal from the blockchain...");
 
     const contract = new VotingContract(
+      SupportedChainId.ARBITRUM_SEPOLIA,
+      new PinataIpfs(IPFS_PINATA_JWT, IPFS_GATEWAY_URL),
       CONTRACT_ADDRESS,
-      options.rpcUrl,
-      options.relayerPrivateKey ?? options.privateKey
+      options.rpcUrl
     );
 
-    const metadata = await contract.getProposalMetadata(options.proposalId);
-    const proposal = (await ipfs.downloadJSON(metadata)) as ProposalMetadata;
+    const proposal = await contract.getProposal(options.proposalId);
 
     spinner.stop(`Got proposal ${options.proposalId} details`);
 
@@ -208,7 +215,7 @@ program
     );
 
     // check account is in the voters tree
-    const isVoter = proposal.voters.find(
+    const isVoter = proposal.metadata.voters.find(
       (voter: string) => BigInt(voter) === zkAccount.address
     );
     if (!isVoter) {
@@ -221,7 +228,7 @@ program
     spinner.start("Building proof...");
 
     const tree = new MerkleTree(DEPTH, ZERO_LEAF);
-    for (const voter of proposal.voters) {
+    for (const voter of proposal.metadata.voters) {
       await tree.addCommitment(BigInt(voter));
     }
     const root = await tree.getRoot();
@@ -250,7 +257,8 @@ program
 
     spinner.start("Casting vote...");
 
-    const tx = await contract.castVote(
+    const txRequest = await contract.prepareCastVote(
+      privateKeyToAddress(options.privateKey),
       `0x${Array.from(proof, (byte) => byte.toString(16).padStart(2, "0")).join(
         ""
       )}`,
@@ -258,6 +266,10 @@ program
       options.vote,
       nullifier
     );
+    const tx = await createWalletClient({
+      transport: http(options.rpcUrl),
+      account: privateKeyToAccount(options.privateKey),
+    }).sendTransaction(txRequest);
 
     spinner.stop(`Vote casted successfully at ${tx}`);
 

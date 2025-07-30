@@ -1,6 +1,11 @@
 import { PinataSDK } from "pinata";
 
-export class Ipfs {
+export interface IpfsClient {
+  uploadJSON(json: Object): Promise<string>;
+  downloadJSON(cid: string): Promise<Object>;
+}
+
+export class PinataIpfs implements IpfsClient {
   private client: PinataSDK;
 
   constructor(pinataJwt: string, pinataGateway: string) {

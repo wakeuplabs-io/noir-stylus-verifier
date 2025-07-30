@@ -1,14 +1,33 @@
 import { Account } from "@/components/account";
 import { ProposalCard } from "@/components/proposal-card";
-import { shortenAddress } from "@/lib/utils";
+import { useProposals } from "@/lib/queries/proposal";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PenBoxIcon, SearchIcon } from "lucide-react";
+import { useEffect, useRef } from "react";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
 function Index() {
+  const loadMoreRef = useRef(null);
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useProposals();
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    if (loadMoreRef.current) observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage]);
+
   return (
     <div className="">
       <div className="flex border-b items-center justify-between h-[72px] px-6">
@@ -45,30 +64,21 @@ function Index() {
           Proposals
         </div>
 
-        <ul className="divide-y mx-6">
-          <ProposalCard
-            proposal={{
-              id: "1",
-              title: "Proposal 1",
-              author: "0x9D39B627E6769B0b77f03825C118Ec48c84A8fbD",
-              for: 100,
-              against: 200,
-              status: "active",
-              createdAt: new Date(),
-            }}
-          />
-          <ProposalCard
-            proposal={{
-              id: "1",
-              title: "Proposal 2",
-              author: "0x9D39B627E6769B0b77f03825C118Ec48c84A8fbD",
-              for: 100,
-              against: 200,
-              status: "passed",
-              createdAt: new Date(),
-            }}
-          />
-        </ul>
+        <div className="divide-y mx-6">
+          {data?.pages.map((page) =>
+            page.proposals.map((proposal, id) => (
+              <ProposalCard key={id} proposal={proposal} />
+            ))
+          )}
+
+          <div ref={loadMoreRef} className="py-4">
+            {isFetchingNextPage
+              ? "Loading more..."
+              : hasNextPage
+              ? "Load more"
+              : "No more items"}
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,80 +1,102 @@
 import {
   Address,
-  Chain,
   checksumAddress,
   createPublicClient,
-  createWalletClient,
   decodeEventLog,
   encodeEventTopics,
-  getAbiItem,
+  encodeFunctionData,
   http,
   PublicClient,
-  WalletClient,
 } from "viem";
 import { VotingContractAbi } from "../config/abi";
-import { privateKeyToAccount } from "viem/accounts";
+import { Proposal, ProposalMetadata } from "../types/proposal";
+import {
+  CONTRACT_ADDRESS,
+  DEFAULT_RPC_URL,
+  MULTICALL_ADDRESS,
+  SupportedChainId,
+} from "../config/constants";
+import { IpfsClient } from "../infrastructure/ipfs";
 
 export class VotingContract {
   private address: Address;
-  private privateKey: `0x${string}` | undefined;
+  private chainId: SupportedChainId;
   private publicClient: PublicClient;
-  private walletClient: WalletClient;
+  private ipfsClient: IpfsClient;
 
-  constructor(address: Address, rpcUrl: string, privateKey?: `0x${string}`) {
-    this.address = checksumAddress(address);
-    this.privateKey = privateKey;
+  constructor(
+    chainId: SupportedChainId,
+    ipfsClient: IpfsClient,
+    address?: `0x${string}`,
+    rpcUrl?: string
+  ) {
+    this.address = checksumAddress(address ?? CONTRACT_ADDRESS[chainId]);
+    this.chainId = chainId;
+    this.ipfsClient = ipfsClient;
+
     this.publicClient = createPublicClient({
-      transport: http(rpcUrl),
-    });
-    this.walletClient = createWalletClient({
-      transport: http(rpcUrl),
+      transport: http(rpcUrl ?? DEFAULT_RPC_URL[chainId]),
     });
   }
 
-  async propose(metadata: string, deadline: bigint, votersRoot: bigint) {
-    if (!this.privateKey) {
-      throw new Error("Private key not found");
-    }
+  async isNullifierUsed(nullifierHash: bigint): Promise<boolean> {
+    return this.publicClient.readContract({
+      address: this.address,
+      abi: VotingContractAbi,
+      functionName: "isNullifierUsed",
+      args: [nullifierHash],
+    });
+  }
 
-    try {
-      const tx = await this.walletClient.writeContract({
-        address: this.address,
+  async preparePropose(
+    userAddress: `0x${string}`,
+    metadata: ProposalMetadata,
+    deadline: bigint,
+    votersRoot: bigint
+  ) {
+    const metadataCid = await this.ipfsClient.uploadJSON(metadata);
+
+    const txRequest = await this.publicClient.prepareTransactionRequest({
+      to: this.address,
+      data: encodeFunctionData({
         abi: VotingContractAbi,
         functionName: "propose",
-        args: [metadata, deadline, votersRoot],
-        account: privateKeyToAccount(this.privateKey),
-        chain: null,
-      });
+        args: [metadataCid, deadline, votersRoot],
+      }),
+      value: 0n,
+      chain: null,
+      account: userAddress,
+    });
 
-      // extract the proposal id from the tx
-      const receipt = await this.publicClient.waitForTransactionReceipt({
-        hash: tx,
-      });
-      const [proposalCreatedTopic] = encodeEventTopics({
-        abi: VotingContractAbi,
-        eventName: "ProposalCreated",
-      });
-
-      // Find and decode the matching log
-      const log = receipt.logs.find(
-        (log) => log.topics[0] === proposalCreatedTopic
-      );
-      if (!log) throw new Error("Log not found");
-
-      const decoded = decodeEventLog({
-        abi: VotingContractAbi,
-        data: log.data,
-        topics: log.topics,
-      });
-
-      return { id: decoded.args.id, tx: tx };
-    } catch (error) {
-      console.error(error);
-      throw error;
-    }
+    return txRequest;
   }
 
-  async getProposalMetadata(proposalId: number) {
+  async recoverProposalId(hash: `0x${string}`): Promise<number> {
+    // extract the proposal id from the tx
+    const receipt = await this.publicClient.waitForTransactionReceipt({
+      hash: hash,
+    });
+    const [proposalCreatedTopic] = encodeEventTopics({
+      abi: VotingContractAbi,
+      eventName: "ProposalCreated",
+    });
+
+    // Find and decode the matching log
+    const log = receipt.logs.find(
+      (log) => log.topics[0] === proposalCreatedTopic
+    );
+    if (!log) throw new Error("Log not found");
+
+    const decoded = decodeEventLog({
+      abi: VotingContractAbi,
+      data: log.data,
+      topics: log.topics,
+    });
+
+    return (decoded.args as any).id;
+  }
+
+  async getProposalMetadata(proposalId: number): Promise<string> {
     return this.publicClient.readContract({
       address: this.address,
       abi: VotingContractAbi,
@@ -83,68 +105,150 @@ export class VotingContract {
     });
   }
 
-  async getProposal(proposalId: number) {
-    const [metadata, deadline, votersRoot, forVotes, againstVotes] =
-      await Promise.all([
-        this.publicClient.readContract({
-          address: this.address,
-          abi: VotingContractAbi,
-          functionName: "getProposalMetadata",
-          args: [BigInt(proposalId)],
-        }),
-        this.publicClient.readContract({
-          address: this.address,
-          abi: VotingContractAbi,
-          functionName: "getProposalDeadline",
-          args: [BigInt(proposalId)],
-        }),
-        this.publicClient.readContract({
-          address: this.address,
-          abi: VotingContractAbi,
-          functionName: "getProposalVotersRoot",
-          args: [BigInt(proposalId)],
-        }),
-        this.publicClient.readContract({
-          address: this.address,
-          abi: VotingContractAbi,
-          functionName: "getProposalForVotes",
-          args: [BigInt(proposalId)],
-        }),
-        this.publicClient.readContract({
-          address: this.address,
-          abi: VotingContractAbi,
-          functionName: "getProposalAgainstVotes",
-          args: [BigInt(proposalId)],
-        }),
-      ]);
+  async getProposalCount(): Promise<bigint> {
+    return this.publicClient.readContract({
+      address: this.address,
+      abi: VotingContractAbi,
+      functionName: "getProposalCount",
+    });
+  }
+
+  async getProposalDeadline(proposalId: number): Promise<bigint> {
+    return this.publicClient.readContract({
+      address: this.address,
+      abi: VotingContractAbi,
+      functionName: "getProposalDeadline",
+      args: [BigInt(proposalId)],
+    });
+  }
+
+  async getProposalForVotes(proposalId: number): Promise<bigint> {
+    return this.publicClient.readContract({
+      address: this.address,
+      abi: VotingContractAbi,
+      functionName: "getProposalForVotes",
+      args: [BigInt(proposalId)],
+    });
+  }
+
+  async getProposalAgainstVotes(proposalId: number): Promise<bigint> {
+    return this.publicClient.readContract({
+      address: this.address,
+      abi: VotingContractAbi,
+      functionName: "getProposalAgainstVotes",
+      args: [BigInt(proposalId)],
+    });
+  }
+
+  async getProposalCreatedAt(proposalId: number): Promise<bigint> {
+    return this.publicClient.readContract({
+      address: this.address,
+      abi: VotingContractAbi,
+      functionName: "getProposalCreatedAt",
+      args: [BigInt(proposalId)],
+    });
+  }
+
+  async getProposalAuthor(proposalId: number): Promise<string> {
+    return this.publicClient.readContract({
+      address: this.address,
+      abi: VotingContractAbi,
+      functionName: "getProposalAuthor",
+      args: [BigInt(proposalId)],
+    });
+  }
+
+  async getProposal(proposalId: number): Promise<Proposal> {
+    const [metadataCid, deadline, forVotes, againstVotes, createdAt, author] =
+      await this.publicClient
+        .multicall({
+          multicallAddress: MULTICALL_ADDRESS[this.chainId],
+          contracts: [
+            {
+              address: this.address,
+              abi: VotingContractAbi,
+              functionName: "getProposalMetadata",
+              args: [BigInt(proposalId)],
+            },
+            {
+              address: this.address,
+              abi: VotingContractAbi,
+              functionName: "getProposalDeadline",
+              args: [BigInt(proposalId)],
+            },
+            {
+              address: this.address,
+              abi: VotingContractAbi,
+              functionName: "getProposalForVotes",
+              args: [BigInt(proposalId)],
+            },
+            {
+              address: this.address,
+              abi: VotingContractAbi,
+              functionName: "getProposalAgainstVotes",
+              args: [BigInt(proposalId)],
+            },
+            {
+              address: this.address,
+              abi: VotingContractAbi,
+              functionName: "getProposalCreatedAt",
+              args: [BigInt(proposalId)],
+            },
+            {
+              address: this.address,
+              abi: VotingContractAbi,
+              functionName: "getProposalAuthor",
+              args: [BigInt(proposalId)],
+            },
+          ],
+        })
+        .then((results) =>
+          results.map((r) => {
+            if (r.error) throw new Error(r.error.message);
+            return r.result;
+          })
+        );
+
+    const metadata = (await this.ipfsClient.downloadJSON(
+      metadataCid as string
+    )) as ProposalMetadata;
 
     return {
-      metadata: metadata,
-      deadline: deadline,
-      forVotes: forVotes,
-      againstVotes: againstVotes,
-      votersRoot: votersRoot,
+      id: proposalId,
+      metadata,
+      deadline: new Date(Number(deadline) * 1000),
+      for: Number(forVotes),
+      against: Number(againstVotes),
+      createdAt: new Date(Number(createdAt) * 1000),
+      author: author as string,
+      status:
+        new Date(Number(deadline) * 1000) > new Date()
+          ? "active"
+          : forVotes > againstVotes
+          ? "passed"
+          : "rejected",
     };
   }
 
-  async castVote(
+  async prepareCastVote(
+    userAddress: `0x${string}`,
     proof: `0x${string}`,
     proposalId: number,
     vote: number,
     nullifierHash: bigint
   ) {
-    if (!this.privateKey) {
-      throw new Error("Private key not found");
-    }
-
-    const tx = await this.walletClient.writeContract({
-      address: this.address,
-      abi: VotingContractAbi,
-      functionName: "castVote",
-      args: [proof, BigInt(proposalId), BigInt(vote), nullifierHash],
-      account: privateKeyToAccount(this.privateKey),
+    const txRequest = await this.publicClient.prepareTransactionRequest({
+      to: this.address,
+      data: encodeFunctionData({
+        abi: VotingContractAbi,
+        functionName: "castVote",
+        args: [proof, BigInt(proposalId), BigInt(vote), nullifierHash],
+      }),
+      value: 0n,
       chain: null,
+      account: userAddress,
     });
-    return tx;
+
+    return txRequest;
   }
 }

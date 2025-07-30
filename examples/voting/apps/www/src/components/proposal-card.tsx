@@ -1,14 +1,13 @@
 import { shortenAddress } from "@/lib/utils";
-import type { Proposal } from "@/types/proposals";
+import type { Proposal } from "@voting/core";
 import {
   CheckIcon,
-  MinusIcon,
-  RadioIcon,
   XIcon,
 } from "lucide-react";
 import { useMemo } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { Link } from "@tanstack/react-router";
+import { StatusIcon } from "./status-badge";
 
 export const ProposalCard: React.FC<{
   proposal: Proposal;
@@ -30,22 +29,12 @@ export const ProposalCard: React.FC<{
 
   return (
     <div className="flex items-center justify-between w-full gap-2 py-[14px]">
-      <Link to="/proposals/$id" params={{ id: proposal.id }}>
+      <Link to="/proposals/$id" params={{ id: proposal.id.toString() }}>
         <div className="flex items-center gap-2">
-          {proposal.status === "active" && (
-            <RadioIcon className="w-[18px] h-[18px] text-green-500" />
-          )}
-          {proposal.status === "passed" && (
-            <div className="w-[14px] h-[14px] rounded-full bg-gray-900 flex items-center justify-center">
-              <CheckIcon className="w-2 h-2 text-white" />
-            </div>
-          )}
-          {proposal.status === "rejected" && (
-            <div className="w-[14px] h-[14px] rounded-full bg-gray-900 flex items-center justify-center">
-              <XIcon className="w-2 h-2 text-white" />
-            </div>
-          )}
-          <span className="text-lg font-bold my-1">{proposal.title}</span>
+          <StatusIcon status={proposal.status} />
+          <span className="text-lg font-bold my-1">
+            {proposal.metadata.title}
+          </span>
         </div>
 
         <div className="text-muted-foreground text-sm">

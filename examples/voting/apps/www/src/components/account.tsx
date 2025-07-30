@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeftIcon, Check, Copy, WalletIcon, XIcon } from "lucide-react";
 import { useAccount, useConnect, useDisconnect, type Connector } from "wagmi";
 import { Button } from "./ui/button";
+import { ACCOUNT_MESSAGE } from "@voting/core";
 
 type Step = "connect" | "sign";
 
@@ -65,7 +66,7 @@ export const Account: React.FC = () => {
         {zkAddress ? (
           <>
             <img
-              src="https://cdn.stamp.fyi/avatar/0x9D39B627E6769B0b77f03825C118Ec48c84A8fbD?s=36"
+              src="/avatar.webp"
               alt="avatar"
               className="w-[18px] h-[18px] rounded-full"
             />
@@ -210,7 +211,7 @@ export const Account: React.FC = () => {
 
                   <div className="bg-muted rounded-xl p-4 mb-6">
                     <div className="text-sm text-muted-foreground">
-                      Sign this message to continue
+                      {ACCOUNT_MESSAGE}
                     </div>
                   </div>
 
