@@ -1,16 +1,7 @@
-import { Account } from "@/components/account";
+import { AccountManager } from "@/components/account";
 import { BackButton } from "@/components/back-button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { shortenAddress } from "@/lib/utils";
-import { useProposal } from "@/lib/queries/proposal";
-import {
-  useCastVote,
-  useVotingPower as useAvailableVotes,
-} from "@/lib/queries/voting";
+import { cn, shortenAddress } from "@/lib/utils";
+import { useProposal } from "@/hooks/proposal";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   CheckIcon,
@@ -23,6 +14,8 @@ import {
 import Markdown from "react-markdown";
 import { StatusBadge } from "@/components/status-badge";
 import { useMemo } from "react";
+import { CastVote } from "@/components/cast-vote";
+import { Tooltip } from "react-tooltip";
 
 export const Route = createFileRoute("/proposals/$id")({
   component: Index,
@@ -30,9 +23,8 @@ export const Route = createFileRoute("/proposals/$id")({
 
 function Index() {
   const { id } = Route.useParams();
-  const { data: proposal, isLoading } = useProposal(Number(id));
-  const { data: availableVotes } = useAvailableVotes(Number(id));
-  const { mutate: castVote, isPending } = useCastVote(Number(id));
+  const { data: { proposal, isEligible, alreadyVoted } = {}, isPending } =
+    useProposal(Number(id));
 
   const voteCount = useMemo(() => {
     if (!proposal) return 0;
@@ -49,19 +41,19 @@ function Index() {
     return (proposal.against / (proposal.for + proposal.against)) * 100;
   }, [proposal]);
 
-  if (isLoading || !proposal)
+  if (isPending || !proposal)
     return (
-      <div className="flex items-center justify-center h-screen w-screen">
+      <div className="flex items-center justify-center h-full w-full p-10">
         Loading...
       </div>
     );
 
   return (
-    <div className="">
+    <div>
       <div className="flex border-b items-center justify-between h-[72px] px-6">
         <BackButton to="/" />
 
-        <Account />
+        <AccountManager />
       </div>
 
       <div className="flex divide-x">
@@ -72,6 +64,7 @@ function Index() {
 
           <StatusBadge status={proposal.status} />
 
+          {/* Author */}
           <div className="flex items-center gap-2 py-4 mb-6">
             <img
               src="/avatar.webp"
@@ -102,54 +95,29 @@ function Index() {
               </span>
             </div>
 
-            <div>
+            <div className="text-muted-foreground text-sm">
               <div className="flex items-center gap-2 mb-3 text-muted-foreground text-sm">
-                <span>Available votes: {availableVotes}</span>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <HelpCircleIcon className="w-4 h-4" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>
-                      {availableVotes === 0
-                        ? "You are not part of the voters array or you have already voted. Don't worry, only you can see this."
-                        : "You have 1 vote left."}
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
+                <span>
+                  Available votes: {isEligible && !alreadyVoted ? 1 : 0}
+                </span>
+
+                <HelpCircleIcon
+                  className="w-4 h-4"
+                  data-tooltip-id="vote-tooltip"
+                />
+                <Tooltip
+                  id="vote-tooltip"
+                  content={
+                    !isEligible
+                      ? "You are not part of the voters array."
+                      : alreadyVoted
+                      ? "You have already voted."
+                      : "You have 1 vote left."
+                  }
+                />
               </div>
 
-              <div className="flex items-center gap-2">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      disabled={availableVotes === 0}
-                      onClick={() => castVote(true)}
-                      className="h-12 w-12 rounded-full border flex items-center justify-center text-green-400 border-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <CheckIcon className="h-5 w-5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>For</p>
-                  </TooltipContent>
-                </Tooltip>
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      disabled={availableVotes === 0}
-                      onClick={() => castVote(false)}
-                      className="h-12 w-12 rounded-full border flex items-center justify-center text-red-400 border-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <XIcon className="h-5 w-5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Against</p>
-                  </TooltipContent>
-                </Tooltip>
-              </div>
+              <CastVote proposalId={Number(id)} />
             </div>
           </div>
 
@@ -161,27 +129,41 @@ function Index() {
               <span className="uppercase font-semibold text-sm">Results</span>
             </div>
 
-            <div className="space-y-2">
-              <div className="text-gray-900 border border-green-500 py-3 px-4 flex gap-2 rounded-md items-center bg-green-50 font-medium">
-                <div className="flex items-center justify-center w-4 h-4 rounded-full bg-green-600 text-white shrink-0">
+            <div
+              className={cn(
+                "flex flex-col gap-2",
+                proposal.for < proposal.against && "flex-col-reverse"
+              )}
+            >
+              <div
+                className={cn(
+                  "text-gray-900 border border-success py-3 px-4 flex gap-2 rounded-md items-center font-medium",
+                  proposal.for > proposal.against && "bg-success/10"
+                )}
+              >
+                <div className="flex items-center justify-center w-4 h-4 rounded-full bg-success text-white shrink-0">
                   <CheckIcon className="w-3 h-3" />
                 </div>
                 <span className="w-full ">For</span>
-                <span className="">{proposal.for}</span>
-                {voteCount > 0 && (
-                  <span className="">{forPercentage.toFixed(2)}%</span>
-                )}
+                <span className="text-sm shrink-0 font-semibold">
+                  {proposal.for} - {voteCount > 0 && forPercentage.toFixed(2)}%
+                </span>
               </div>
 
-              <div className="text-gray-900 border border-red-500 py-3 px-4 flex gap-2 rounded-md items-center font-medium">
-                <div className="flex items-center justify-center w-4 h-4 rounded-full bg-red-600 text-white shrink-0">
+              <div
+                className={cn(
+                  "text-gray-900 border border-danger py-3 px-4 flex gap-2 rounded-md items-center font-medium",
+                  proposal.for < proposal.against && "bg-danger/10"
+                )}
+              >
+                <div className="flex items-center justify-center w-4 h-4 rounded-full bg-danger text-white shrink-0">
                   <XIcon className="w-3 h-3" />
                 </div>
                 <span className="w-full ">Against</span>
-                <span className="">{proposal.against}</span>
-                {voteCount > 0 && (
-                  <span className="">{againstPercentage.toFixed(2)}%</span>
-                )}
+                <span className="shrink-0 text-sm font-semibold">
+                  {proposal.against} -{" "}
+                  {voteCount > 0 && againstPercentage.toFixed(2)}%
+                </span>
               </div>
             </div>
           </div>
@@ -209,14 +191,24 @@ function Index() {
                 <div className="mb-3 last:mb-0 h-[44px]">
                   <h4 className="font-medium">Created</h4>
                   <div className="flex gap-2 items-center text-muted-foreground">
-                    <div>{proposal.createdAt.toDateString()}</div>
+                    <div>
+                      {proposal.createdAt.toLocaleString(undefined, {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })}
+                    </div>
                   </div>
                 </div>
 
                 <div className="mb-3 last:mb-0 h-[44px]">
                   <h4 className=" font-medium">End</h4>
                   <div className="flex gap-2 items-center text-muted-foreground">
-                    <div>{proposal.deadline.toDateString()}</div>
+                    <div>
+                      {proposal.deadline.toLocaleString(undefined, {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })}
+                    </div>
                   </div>
                 </div>
               </div>

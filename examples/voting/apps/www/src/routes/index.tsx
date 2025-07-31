@@ -1,15 +1,20 @@
-import { Account } from "@/components/account";
+import { AccountManager } from "@/components/account";
 import { ProposalCard } from "@/components/proposal-card";
-import { useProposals } from "@/lib/queries/proposal";
+import { useZkAccount } from "@/hooks/account";
+import { useProposals } from "@/hooks/proposal";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { PenBoxIcon, SearchIcon } from "lucide-react";
+import {  AudioWaveformIcon, PenBoxIcon } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
+import { Tooltip } from "react-tooltip";
+
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
 function Index() {
+  const { account } = useZkAccount();
+
   const loadMoreRef = useRef(null);
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useProposals();
@@ -33,34 +38,26 @@ function Index() {
   }, [fetchNextPage, hasNextPage]);
 
   return (
-    <div className="">
+    <div>
       <div className="flex border-b items-center justify-between h-[72px] px-6">
         <div className="flex items-center gap-4 w-full">
-          <SearchIcon className="w-4 h-4" />
-          <input
-            type="text"
-            placeholder="Search for a proposal"
-            className="w-full h-full outline-none"
-          />
+          <AudioWaveformIcon className="w-4 h-4" />
+          <h1 className="text-xl font-bold">ZK Voting Noir Stylus</h1>
         </div>
 
-        <Account />
+        <AccountManager />
       </div>
 
-      <div className="p-6 flex items-center justify-between">
-        <div className="relative border rounded-full h-[46px] px-4 flex items-center min-w-20">
-          <span className="absolute left-3 top-0 translate-y-[-50%] text-xs text-gray-500 bg-white px-1">
-            Status
-          </span>
-          <span className="text">Any</span>
-        </div>
-
+      <div className="p-6 flex items-center justify-end">
         <Link
           to="/proposals/new"
           className="flex items-center gap-2 rounded-full border h-[46px] w-[46px] shrink-0 justify-center"
+          disabled={!account}
+          data-tooltip-id="new-proposal-tooltip"
         >
           <PenBoxIcon className="h-4 w-4" />
         </Link>
+        {!account && <Tooltip id="new-proposal-tooltip" content="Connect wallet to create a new proposal" />}
       </div>
 
       <div>

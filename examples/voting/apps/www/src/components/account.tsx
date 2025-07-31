@@ -1,8 +1,4 @@
-import {
-  useZkConnect,
-  useZkAccount,
-  useZkDisconnect,
-} from "@/lib/queries/account";
+import { useZkAccount } from "@/hooks/account";
 import { shortenAddress } from "@/lib/utils";
 import {
   Dialog,
@@ -13,21 +9,31 @@ import {
 } from "./ui/dialog";
 import { useEffect, useState } from "react";
 import { ArrowLeftIcon, Check, Copy, WalletIcon, XIcon } from "lucide-react";
-import { useAccount, useConnect, useDisconnect, type Connector } from "wagmi";
+import {
+  useAccount as useEvmAccount,
+  useConnect as useEvmConnect,
+  useDisconnect as useEvmDisconnect,
+  type Connector,
+} from "wagmi";
 import { Button } from "./ui/button";
 import { ACCOUNT_MESSAGE } from "@voting/core";
 
 type Step = "connect" | "sign";
 
-export const Account: React.FC = () => {
-  const { connect, connectors, isPending: isConnecting } = useConnect();
+export const AccountManager: React.FC = () => {
+  const { address: addressEvm } = useEvmAccount();
+  const { disconnect: disconnectEvm } = useEvmDisconnect();
   const {
-    data: { address: zkAddress },
+    connect: connectEvm,
+    connectors: connectorsEvm,
+    isPending: isConnectingEvm,
+  } = useEvmConnect();
+  const {
+    connect: connectZk,
+    isPending: isConnectingZk,
+    account: accountZk,
+    disconnect: disconnectZk,
   } = useZkAccount();
-  const { address } = useAccount();
-  const { mutate: zkConnect, isPending: isZkConnecting } = useZkConnect();
-  const { mutate: zkDisconnect } = useZkDisconnect();
-  const { disconnect } = useDisconnect();
 
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState<Step>("connect");
@@ -36,7 +42,7 @@ export const Account: React.FC = () => {
   const [evmAccountCopied, setEvmAccountCopied] = useState(false);
 
   const onBack = () => {
-    if (isConnecting) {
+    if (isConnectingEvm) {
       setStep("connect");
       setConnector(null);
     }
@@ -44,18 +50,18 @@ export const Account: React.FC = () => {
 
   const onSignOut = () => {
     setIsOpen(false);
-    zkDisconnect();
-    disconnect();
+    disconnectEvm();
+    disconnectZk();
   };
 
   useEffect(() => {
-    if (!address) {
+    if (!addressEvm) {
       setStep("connect");
       setConnector(null);
-    } else if (address && !zkAddress) {
+    } else if (addressEvm && !accountZk) {
       setStep("sign");
     }
-  }, [address, zkAddress, isOpen]);
+  }, [addressEvm, accountZk, isOpen]);
 
   return (
     <>
@@ -63,14 +69,14 @@ export const Account: React.FC = () => {
         onClick={() => setIsOpen(true)}
         className="flex items-center gap-2 rounded-full border h-[46px] px-4 shrink-0"
       >
-        {zkAddress ? (
+        {accountZk ? (
           <>
             <img
               src="/avatar.webp"
               alt="avatar"
               className="w-[18px] h-[18px] rounded-full"
             />
-            <span className="text-sm">{shortenAddress(zkAddress)}</span>
+            <span className="text-sm">{shortenAddress(accountZk.address)}</span>
           </>
         ) : (
           <span className="text-sm">Connect wallet</span>
@@ -80,7 +86,7 @@ export const Account: React.FC = () => {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent className="w-[360px] rounded-3xl p-4 gap-0 pb-10">
           <div className=" mb-4 w-full flex justify-between">
-            {step !== "connect" && !zkAddress ? (
+            {step !== "connect" && !accountZk ? (
               <button
                 onClick={onBack}
                 className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 rounded-full bg-muted h-4 w-4 flex items-center justify-center"
@@ -97,14 +103,14 @@ export const Account: React.FC = () => {
             </DialogClose>
           </div>
 
-          {zkAddress ? (
+          {accountZk ? (
             <>
               <DialogTitle className="text-center font-medium text-base mb-6">
                 Your ZK account is ready
               </DialogTitle>
 
               <DialogDescription className="text-sm text-muted-foreground text-center mb-6">
-                Share your ZK account address to be included in the voting.
+                Share your ZK account address to be included in the voting. As per your EVM wallet, you'll need it to pay for gas, but feel free to change it from your provider.
               </DialogDescription>
 
               <div className="bg-muted rounded-md px-4 py-3 mb-2 flex items-center justify-between relative pt-6">
@@ -112,12 +118,12 @@ export const Account: React.FC = () => {
                   ZK account
                 </span>
                 <div className="text-sm text-muted-foreground">
-                  {shortenAddress(zkAddress)}
+                  {shortenAddress(accountZk.address)}
                 </div>
                 <button
                   disabled={zkAccountCopied}
                   onClick={() => {
-                    navigator.clipboard.writeText(zkAddress);
+                    navigator.clipboard.writeText(accountZk.address);
                     setZkAccountCopied(true);
                     setTimeout(() => {
                       setZkAccountCopied(false);
@@ -138,12 +144,12 @@ export const Account: React.FC = () => {
                   EVM account
                 </span>
                 <div className="text-sm text-muted-foreground">
-                  {shortenAddress(address ?? "")}
+                  {shortenAddress(addressEvm ?? "")}
                 </div>
                 <button
                   disabled={evmAccountCopied}
                   onClick={() => {
-                    navigator.clipboard.writeText(address ?? "");
+                    navigator.clipboard.writeText(addressEvm ?? "");
                     setEvmAccountCopied(true);
                     setTimeout(() => {
                       setEvmAccountCopied(false);
@@ -165,7 +171,7 @@ export const Account: React.FC = () => {
             </>
           ) : (
             <>
-              {step === "connect" && !isConnecting && (
+              {step === "connect" && !isConnectingEvm && (
                 <>
                   <DialogTitle className="text-center font-medium text-base mb-6">
                     Create or recover your ZK account
@@ -177,12 +183,12 @@ export const Account: React.FC = () => {
                   </DialogDescription>
 
                   <div className="flex flex-col gap-2">
-                    {connectors.map((connector) => (
+                    {connectorsEvm.map((connector) => (
                       <button
                         key={connector.id}
                         onClick={() => {
                           setConnector(connector);
-                          connect({ connector });
+                          connectEvm({ connector });
                         }}
                         className="border rounded-xl px-4 py-3 flex items-center gap-2 w-full"
                       >
@@ -198,7 +204,7 @@ export const Account: React.FC = () => {
                 </>
               )}
 
-              {step === "sign" && !isZkConnecting && (
+              {step === "sign" && !isConnectingZk && (
                 <>
                   <DialogTitle className="text-center font-medium text-base mb-6">
                     Sign message
@@ -218,15 +224,15 @@ export const Account: React.FC = () => {
                   <Button
                     size="lg"
                     className="w-full"
-                    onClick={() => zkConnect()}
-                    disabled={isZkConnecting}
+                    onClick={() => connectZk()}
+                    disabled={isConnectingZk}
                   >
                     Sign and continue
                   </Button>
                 </>
               )}
 
-              {(isConnecting || isZkConnecting) && (
+              {(isConnectingEvm || isConnectingZk) && (
                 <div className="flex flex-col items-center">
                   {connector?.icon ? (
                     <img

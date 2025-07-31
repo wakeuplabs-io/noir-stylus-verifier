@@ -48,7 +48,7 @@ export const StatusBadge: React.FC<{
     <div
       className={cn(
         "flex items-center gap-2 rounded-full mb-6 text-white px-2 pr-3 py-1 w-min",
-        status === "active" ? "bg-green-500" : "bg-gray-900",
+        status === "active" ? "bg-success" : "bg-gray-900",
         className
       )}
     >

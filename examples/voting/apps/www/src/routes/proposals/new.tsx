@@ -12,21 +12,15 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { ChevronDownIcon } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useCreateProposal } from "@/lib/queries/proposal";
+import { useCreateProposal } from "@/hooks/proposal";
 import { proposalMetadataSchema, zkAddressSchema } from "@voting/core";
+import { Tooltip } from "react-tooltip";
 
 export const Route = createFileRoute("/proposals/new")({
   component: Index,
 });
 
 function Index() {
-  const navigate = useNavigate();
-
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [preview, setPreview] = useState(false);
@@ -35,6 +29,7 @@ function Index() {
   const [address, setAddress] = useState("");
   const [voters, setVoters] = useState<string[]>([]);
 
+  const navigate = useNavigate();
   const { mutateAsync: createProposal, isPending: isCreatingProposal } =
     useCreateProposal();
 
@@ -99,23 +94,19 @@ function Index() {
       <div className="flex border-b items-center justify-between h-[72px] px-6">
         <BackButton to="/" />
 
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              disabled={!validation.isValid || isCreatingProposal}
-              onClick={onCreateProposal}
-              className="flex items-center gap-2 rounded-full border h-[46px] px-4 shrink-0 bg-black text-white disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span>{isCreatingProposal ? "Creating..." : "Publish"}</span>
-              <SendHorizontalIcon className="w-4 h-4" />
-            </button>
-          </TooltipTrigger>
-          {!validation.isValid && (
-            <TooltipContent side="bottom" className="max-w-[300px]">
-              {errorMessage}
-            </TooltipContent>
-          )}
-        </Tooltip>
+        <button
+          disabled={!validation.isValid || isCreatingProposal}
+          onClick={onCreateProposal}
+          className="flex items-center gap-2 rounded-full border h-[46px] px-4 shrink-0 bg-black text-white disabled:opacity-50 disabled:cursor-not-allowed"
+          data-tooltip-id="error-tooltip"
+        >
+          <span>{isCreatingProposal ? "Creating..." : "Publish"}</span>
+          <SendHorizontalIcon className="w-4 h-4" />
+        </button>
+
+        {!validation.isValid && (
+          <Tooltip id="error-tooltip" content={errorMessage} />
+        )}
       </div>
 
       <div className="flex divide-x min-h-screen">
@@ -176,9 +167,16 @@ function Index() {
                 <input
                   type="time"
                   id="time-picker"
-                  step="1"
-                  defaultValue="10:30:00"
-                  className="w-full outline-none mt-4 appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+                  value={deadline.toTimeString().slice(0, 5)}
+                  onChange={(e) => {
+                    const [hours, minutes] = e.target.value
+                      .split(":")
+                      .map(Number);
+                    const newDeadline = new Date(deadline);
+                    newDeadline.setHours(hours, minutes, 0);
+                    setDeadline(newDeadline);
+                  }}
+                  className="w-full outline-none mt-4 pr-4 appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
                 />
               </div>
             </div>
