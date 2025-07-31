@@ -9,10 +9,10 @@ import { arbitrumSepolia } from "wagmi/chains";
 import { metaMask } from "wagmi/connectors";
 import { ZkAccountProvider } from "@/hooks/account";
 
-const router = createRouter({ routeTree });
-const queryClient = new QueryClient();
+export const router = createRouter({ routeTree });
+export const queryClient = new QueryClient();
 
-const wagmiConfig = createConfig({
+export const wagmiConfig = createConfig({
   chains: [arbitrumSepolia],
   transports: {
     [arbitrumSepolia.id]: http(),

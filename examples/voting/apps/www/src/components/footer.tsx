@@ -6,13 +6,14 @@ export const Footer = () => {
       <a
         href="https://wakeuplabs.io"
         target="_blank"
-        className="text-sm flex items-center"
+        className="text-sm flex items-center gap-2"
       >
-        Powered by Wakeup Labs
+        <span>Powered by Wakeup Labs</span>
+        <img src="/favicon.svg" alt="Wakeuplabs" className="w-4 h-4" />
       </a>
 
       <a
-        href="https://wakeuplabs.xyz"
+        href="https://github.com/wakeuplabs-io/noir-stylus-verifier"
         target="_blank"
         rel="noopener noreferrer"
       >

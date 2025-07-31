@@ -10,12 +10,7 @@ import {
 } from "viem";
 import { VotingContractAbi } from "../config/abi";
 import { Proposal, ProposalMetadata } from "../types/proposal";
-import {
-  CONTRACT_ADDRESS,
-  DEFAULT_RPC_URL,
-  MULTICALL_ADDRESS,
-  SupportedChainId,
-} from "../config/constants";
+import { MULTICALL_ADDRESS, SupportedChainId } from "../config/constants";
 import { IpfsClient } from "../infrastructure/ipfs";
 
 export class VotingContract {
@@ -25,17 +20,18 @@ export class VotingContract {
   private ipfsClient: IpfsClient;
 
   constructor(
-    chainId: SupportedChainId,
     ipfsClient: IpfsClient,
-    address?: `0x${string}`,
-    rpcUrl?: string
+    chainId: SupportedChainId,
+    address: `0x${string}`,
+    rpcUrl: string
   ) {
-    this.address = checksumAddress(address ?? CONTRACT_ADDRESS[chainId]);
+    console.log("ipfsClient", address);
+    this.address = checksumAddress(address);
     this.chainId = chainId;
     this.ipfsClient = ipfsClient;
 
     this.publicClient = createPublicClient({
-      transport: http(rpcUrl ?? DEFAULT_RPC_URL[chainId]),
+      transport: http(rpcUrl),
     });
   }
 

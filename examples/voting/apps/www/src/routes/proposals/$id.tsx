@@ -111,11 +111,15 @@ function Index() {
                   <Tooltip
                     id="vote-tooltip"
                     content={
+                      proposal.status === "active" ? (
                       !isEligible
                         ? "You are not part of the voters array."
                         : alreadyVoted
                         ? "You have already voted."
                         : "You have 1 vote left."
+                      ) : (
+                        "This proposal is not active."
+                      )
                     }
                   />
                 </div>

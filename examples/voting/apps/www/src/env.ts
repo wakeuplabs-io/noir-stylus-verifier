@@ -1,8 +1,11 @@
 const IPFS_PINATA_JWT = import.meta.env.VITE_IPFS_PINATA_JWT;
 const IPFS_GATEWAY_URL = import.meta.env.VITE_IPFS_GATEWAY_URL;
+const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS;
+const CHAIN_ID = Number(import.meta.env.VITE_CHAIN_ID);
+const RPC_URL = import.meta.env.VITE_RPC_URL;
 
-if (!IPFS_PINATA_JWT || !IPFS_GATEWAY_URL) {
-  throw new Error("IPFS_PINATA_JWT and IPFS_GATEWAY_URL must be set");
+if (!IPFS_PINATA_JWT || !IPFS_GATEWAY_URL || !CONTRACT_ADDRESS || !RPC_URL || !CHAIN_ID) {
+  throw new Error("IPFS_PINATA_JWT, IPFS_GATEWAY_URL, CONTRACT_ADDRESS, RPC_URL and CHAIN_ID must be set");
 }
 
-export { IPFS_PINATA_JWT, IPFS_GATEWAY_URL };
+export { IPFS_PINATA_JWT, IPFS_GATEWAY_URL, CONTRACT_ADDRESS, RPC_URL, CHAIN_ID };

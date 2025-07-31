@@ -1,9 +1,10 @@
 {
-  "name": "voting",
+  "name": "@voting/cli",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "start": "tsx ./src/main.ts"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@types/commander": "^2.12.5",
-    "@types/node": "^24.1.0"
+    "@types/node": "^24.1.0",
+    "tsx": "^4.20.3"
   }
 }

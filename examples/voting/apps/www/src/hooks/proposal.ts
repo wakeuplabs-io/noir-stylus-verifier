@@ -8,39 +8,49 @@ import {
   DEPTH,
   MerkleTree,
   PinataIpfs,
-  SupportedChainId,
   VotingCircuit,
   VotingContract,
   ZERO_LEAF,
   type ProposalMetadata,
 } from "@voting/core";
-import {
-  useAccount,
-  useSendTransaction,
-  useAccount as useEvmAccount,
-} from "wagmi";
+import { useAccount, useAccount as useEvmAccount } from "wagmi";
 import { useState, useCallback } from "react";
 import { QueryKeyFactory } from "@/lib/queries";
-import { IPFS_GATEWAY_URL, IPFS_PINATA_JWT } from "@/env";
+import {
+  IPFS_GATEWAY_URL,
+  IPFS_PINATA_JWT,
+  CONTRACT_ADDRESS,
+  RPC_URL,
+  CHAIN_ID,
+} from "@/env";
 import { useZkAccount } from "./account";
+import { useChainId, useSendTransaction } from "wagmi";
 
 const PAGE_SIZE = 10;
 
 const votingContract = new VotingContract(
-  SupportedChainId.ARBITRUM_SEPOLIA,
   new PinataIpfs(IPFS_PINATA_JWT, IPFS_GATEWAY_URL),
-  undefined, // default contract address
-  undefined // default rpc url
+  CHAIN_ID,
+  CONTRACT_ADDRESS,
+  RPC_URL
 );
 
 export const useCreateProposal = () => {
+  const chainId = useChainId();
   const { address } = useAccount();
+  const queryClient = useQueryClient();
   const { sendTransactionAsync } = useSendTransaction();
 
   return useMutation({
     mutationFn: async (metadata: ProposalMetadata) => {
+      // We need an evm wallet to send the transaction, and we need to be on the correct chain
       if (!address) {
-        throw new Error("No account connected");
+        throw new Error("No EVM account connected");
+      }
+
+      // Some wallets like Metamask don't support chain switching, so we ask the user to do so manually
+      if (BigInt(chainId) !== BigInt(CHAIN_ID)) {
+        throw new Error(`Wrong chain, please switch to chain ${CHAIN_ID}`);
       }
 
       // Build the voters tree
@@ -61,8 +71,14 @@ export const useCreateProposal = () => {
       // Send the transaction
       const tx = await sendTransactionAsync(txRequest);
 
-      // TODO: invalidate proposal count query
-      // TODO: invalidate proposals query
+      await Promise.all([
+        queryClient.refetchQueries({
+          queryKey: QueryKeyFactory.proposalCount(),
+        }),
+        queryClient.refetchQueries({
+          queryKey: QueryKeyFactory.proposals(),
+        }),
+      ]);
 
       // Recover the proposal id
       const proposalId = await votingContract.recoverProposalId(tx);
@@ -144,10 +160,12 @@ export function useProposal(proposalId?: string | number) {
 
 export const useCastVote = (proposalId: number) => {
   const queryClient = useQueryClient();
+  const chainId = useChainId();
   const { account } = useZkAccount();
   const { address: evmAddress } = useEvmAccount();
   const { sendTransactionAsync } = useSendTransaction();
-  const { data: { proposal, isEligible, alreadyVoted } = {} } = useProposal(proposalId);
+  const { data: { proposal, isEligible, alreadyVoted } = {} } =
+    useProposal(proposalId);
 
   const [isGeneratingProof, setIsGeneratingProof] = useState(false);
   const [isSendingTransaction, setIsSendingTransaction] = useState(false);
@@ -155,15 +173,27 @@ export const useCastVote = (proposalId: number) => {
   const castVote = useCallback(
     async (vote: boolean) => {
       try {
+        // We need an evm wallet to send the transaction, and we need a zk account to generate the proof
         if (!evmAddress || !account?.address || !account?.privateKey) {
           throw new Error("Not connected");
         }
+
+        // Some wallets like Metamask don't support chain switching, so we ask the user to do so manually
+        if (BigInt(chainId) !== BigInt(CHAIN_ID)) {
+          throw new Error(`Wrong chain, please switch to chain ${CHAIN_ID}`);
+        }
+
+        // Check if the proposal exists
         if (!proposal) {
           throw new Error("Proposal not found");
         }
+
+        // Check if the user is eligible to vote
         if (!isEligible) {
           throw new Error("Not eligible to vote");
         }
+
+        // Check if the user has already voted
         if (alreadyVoted) {
           throw new Error("Already voted");
         }
@@ -227,5 +257,10 @@ export const useCastVote = (proposalId: number) => {
     [evmAddress, account, proposalId, proposal, isEligible, alreadyVoted]
   );
 
-  return { castVote, disabled: !isEligible || alreadyVoted, isGeneratingProof, isSendingTransaction };
+  return {
+    castVote,
+    disabled: !isEligible || alreadyVoted || proposal?.status !== "active",
+    isGeneratingProof,
+    isSendingTransaction,
+  };
 };

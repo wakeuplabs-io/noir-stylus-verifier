@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DEPTH } from "../config/constants";
 
 export const proposalStatusSchema = z.enum(["active", "passed", "rejected"]);
 
@@ -22,7 +23,7 @@ export const proposalMetadataSchema = z.object({
   voters: z
     .array(z.string().regex(/^0x[a-fA-F0-9]{64}$/, "Invalid ZK address format"))
     .min(1, "At least one voter is required")
-    .max(1000, "Maximum 1000 voters allowed"),
+    .max(DEPTH ** 2, `Maximum voters allowed is ${DEPTH ** 2}`),
 });
 
 export const proposalSchema = z.object({

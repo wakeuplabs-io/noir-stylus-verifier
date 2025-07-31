@@ -70,7 +70,9 @@ function Index() {
       navigate({ to: "/proposals/$id", params: { id: proposalId.toString() } });
     } catch (error) {
       console.error(error);
-      toast.error("Failed to create proposal");
+      toast.error("Failed to create proposal", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
     }
   }, [createProposal, navigate, title, body, deadline, voters]);
 
