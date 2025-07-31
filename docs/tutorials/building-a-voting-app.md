@@ -92,24 +92,12 @@ Eligible voters are stored in a merkle tree. To vote, users prove their commitme
 
 ### Prerequisites
 
-1. **Install required tools:**
-   ```bash
-   # Install Noir CLI
-   curl -L https://raw.githubusercontent.com/noir-lang/noirup/main/install | bash
-   noirup
-   
-   # Install Rust and Cargo
-   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-   
-   # Install cargo-stylus
-   cargo install cargo-stylus
-   
-   # Install Node.js and pnpm
-   curl -fsSL https://get.pnpm.io/install.sh | sh
-   ```
-
-2. **Install NSV CLI:**
-    The nsv cli allows you to generate and deploy verifier contracts in stylus for the noir circuits. Check out the latest install instructions at [https://github.com/wakeuplabs-io/noir-stylus-verifier/releases](https://github.com/wakeuplabs-io/noir-stylus-verifier/releases)
+- [noir 1.0.0-beta.6](https://github.com/noir-lang/noirup/tree/main)
+- [bb 0.86.0](hhttps://github.com/AztecProtocol/aztec-packages/blob/master/barretenberg/bbup/README.md)
+- [rust](https://www.rust-lang.org/tools/install) with nightly toolchain.
+- [cargo stylus](https://docs.arbitrum.io/stylus/quickstart#setting-up-your-development-environment) to build and deploy stylus contracts
+- [node](https://nodejs.org/en/download) with [pnpm](https://pnpm.io/es/)
+- [nsv](https://github.com/wakeuplabs-io/noir-stylus-verifier/releases) The nsv cli allows you to generate and deploy verifier contracts in stylus for the noir circuits
 
 ### Clone and Setup
 
@@ -145,13 +133,13 @@ fn main(
    );
    ```
 
-2. **Nullifier Check**: Ensures vote uniqueness
+2. **Nullifier Check**: Ensures the nullifier provided as a public input by the contract is linked to the private commitment.
    ```noir
    assert(nullifier == definitions::nullifier(root, priv_key, proposal_id), 
           "Invalid nullifier");
    ```
 
-3. **Vote Validation**: Ensures valid vote
+3. **Vote Validation**: Ensures valid vote (0: against, 1: for)
    ```noir
    assert(vote <= 1, "Invalid vote");
    ```
@@ -472,5 +460,5 @@ The voting app serves as a foundation for building more complex governance syste
 - Implement additional privacy features like vote encryption
 - Scale to support larger voter populations
 
-For more information, explore the codebase in `examples/voting/` and refer to the Noir, Stylus and Noir Stylus Verifier documentations for deeper technical details.
+For more information, explore the [codebase](https://github.com/wakeuplabs-io/noir-stylus-verifier) in `examples/voting` and refer to the [Noir](https://noir-lang.org/), [Arbitrum Stylus](https://arbitrum.io/stylus) and [Noir Stylus Verifier](https://github.com/wakeuplabs-io/noir-stylus-verifier) documentations for deeper technical details.
 
