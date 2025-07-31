@@ -1,4 +1,4 @@
-import { AccountManager } from "@/components/account";
+import { AccountManager } from "@/components/account-manager";
 import { BackButton } from "@/components/back-button";
 import { cn, shortenAddress } from "@/lib/utils";
 import { useProposal } from "@/hooks/proposal";
@@ -16,6 +16,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { useMemo } from "react";
 import { CastVote } from "@/components/cast-vote";
 import { Tooltip } from "react-tooltip";
+import { useZkAccount } from "@/hooks/account";
 
 export const Route = createFileRoute("/proposals/$id")({
   component: Index,
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/proposals/$id")({
 
 function Index() {
   const { id } = Route.useParams();
+  const { account } = useZkAccount();
   const { data: { proposal, isEligible, alreadyVoted } = {}, isPending } =
     useProposal(Number(id));
 
@@ -57,7 +59,7 @@ function Index() {
       </div>
 
       <div className="flex divide-x">
-        <div className="p-6 pb-20">
+        <div className="p-6 pb-20 w-full">
           <h1 className="text-[40px] leading-[1.1em] break-words font-bold mb-4">
             {proposal.metadata.title}
           </h1>
@@ -95,30 +97,36 @@ function Index() {
               </span>
             </div>
 
-            <div className="text-muted-foreground text-sm">
-              <div className="flex items-center gap-2 mb-3 text-muted-foreground text-sm">
-                <span>
-                  Available votes: {isEligible && !alreadyVoted ? 1 : 0}
-                </span>
+            {account ? (
+              <div className="text-muted-foreground text-sm">
+                <div className="flex items-center gap-2 mb-3 text-muted-foreground text-sm">
+                  <span>
+                    Available votes: {isEligible && !alreadyVoted ? 1 : 0}
+                  </span>
 
-                <HelpCircleIcon
-                  className="w-4 h-4"
-                  data-tooltip-id="vote-tooltip"
-                />
-                <Tooltip
-                  id="vote-tooltip"
-                  content={
-                    !isEligible
-                      ? "You are not part of the voters array."
-                      : alreadyVoted
-                      ? "You have already voted."
-                      : "You have 1 vote left."
-                  }
-                />
+                  <HelpCircleIcon
+                    className="w-4 h-4"
+                    data-tooltip-id="vote-tooltip"
+                  />
+                  <Tooltip
+                    id="vote-tooltip"
+                    content={
+                      !isEligible
+                        ? "You are not part of the voters array."
+                        : alreadyVoted
+                        ? "You have already voted."
+                        : "You have 1 vote left."
+                    }
+                  />
+                </div>
+
+                <CastVote proposalId={Number(id)} />
               </div>
-
-              <CastVote proposalId={Number(id)} />
-            </div>
+            ) : (
+              <div className="text-muted-foreground text-sm">
+                Connect wallet to cast your vote
+              </div>
+            )}
           </div>
 
           {/* Results */}

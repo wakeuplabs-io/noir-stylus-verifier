@@ -2,7 +2,8 @@ import { cn, shortenAddress } from "@/lib/utils";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { SendHorizontalIcon, UsersIcon, XIcon } from "lucide-react";
 import Markdown from "react-markdown";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useCallback } from "react";
 import { BackButton } from "@/components/back-button";
 import {
   Popover,
@@ -15,14 +16,15 @@ import { toast } from "sonner";
 import { useCreateProposal } from "@/hooks/proposal";
 import { proposalMetadataSchema, zkAddressSchema } from "@voting/core";
 import { Tooltip } from "react-tooltip";
+import { useZkAccount } from "@/hooks/account";
 
 export const Route = createFileRoute("/proposals/new")({
   component: Index,
 });
 
 function Index() {
-  const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [title, setTitle] = useState("");
   const [preview, setPreview] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [deadline, setDeadline] = useState<Date>(new Date());
@@ -30,6 +32,7 @@ function Index() {
   const [voters, setVoters] = useState<string[]>([]);
 
   const navigate = useNavigate();
+  const { account } = useZkAccount();
   const { mutateAsync: createProposal, isPending: isCreatingProposal } =
     useCreateProposal();
 
@@ -54,7 +57,7 @@ function Index() {
     setVoters(voters.filter((voter) => voter !== address));
   };
 
-  const onCreateProposal = async () => {
+  const onCreateProposal = useCallback(async () => {
     // submit is disabled if validation fails, so here we can assume it's valid
     try {
       const proposalId = await createProposal({
@@ -69,7 +72,7 @@ function Index() {
       console.error(error);
       toast.error("Failed to create proposal");
     }
-  };
+  }, [createProposal, navigate, title, body, deadline, voters]);
 
   const validation = useMemo(() => {
     const result = proposalMetadataSchema.safeParse({
@@ -88,6 +91,12 @@ function Index() {
   }, [title, body, deadline, voters]);
 
   const errorMessage = validation.errors[0];
+
+  useEffect(() => {
+    if (!account) {
+      navigate({ to: "/" });
+    }
+  }, [account]);
 
   return (
     <div className="">

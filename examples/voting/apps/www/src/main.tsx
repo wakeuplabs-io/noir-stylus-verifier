@@ -7,6 +7,7 @@ import { routeTree } from "./routeTree.gen";
 import { http, createConfig, WagmiProvider } from "wagmi";
 import { arbitrumSepolia } from "wagmi/chains";
 import { metaMask } from "wagmi/connectors";
+import { ZkAccountProvider } from "@/hooks/account";
 
 const router = createRouter({ routeTree });
 const queryClient = new QueryClient();
@@ -32,7 +33,9 @@ if (!rootElement.innerHTML) {
     <StrictMode>
       <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
-          <RouterProvider router={router} />
+          <ZkAccountProvider>
+            <RouterProvider router={router} />
+          </ZkAccountProvider>
         </QueryClientProvider>
       </WagmiProvider>
     </StrictMode>

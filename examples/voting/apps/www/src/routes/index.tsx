@@ -1,4 +1,4 @@
-import { AccountManager } from "@/components/account";
+import { AccountManager } from "@/components/account-manager";
 import { ProposalCard } from "@/components/proposal-card";
 import { useZkAccount } from "@/hooks/account";
 import { useProposals } from "@/hooks/proposal";

@@ -7,7 +7,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "./ui/dialog";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ArrowLeftIcon, Check, Copy, WalletIcon, XIcon } from "lucide-react";
 import {
   useAccount as useEvmAccount,
@@ -22,12 +22,12 @@ type Step = "connect" | "sign";
 
 export const AccountManager: React.FC = () => {
   const { address: addressEvm } = useEvmAccount();
-  const { disconnect: disconnectEvm } = useEvmDisconnect();
   const {
     connect: connectEvm,
     connectors: connectorsEvm,
     isPending: isConnectingEvm,
   } = useEvmConnect();
+  const { disconnect: disconnectEvm } = useEvmDisconnect();
   const {
     connect: connectZk,
     isPending: isConnectingZk,
@@ -41,18 +41,34 @@ export const AccountManager: React.FC = () => {
   const [zkAccountCopied, setZkAccountCopied] = useState(false);
   const [evmAccountCopied, setEvmAccountCopied] = useState(false);
 
-  const onBack = () => {
+  const onBack = useCallback(() => {
     if (isConnectingEvm) {
       setStep("connect");
       setConnector(null);
+    } else if (isConnectingZk) {
+      setStep("sign");
     }
-  };
+  }, [isConnectingEvm, isConnectingZk]);
 
-  const onSignOut = () => {
+  const onSignOut = useCallback(() => {
     setIsOpen(false);
     disconnectEvm();
     disconnectZk();
-  };
+  }, [disconnectEvm, disconnectZk]);
+
+  const onOpenChange = useCallback((open: boolean) => {
+    if (open) {
+      if (addressEvm && !accountZk) {
+        setStep("sign");
+      } else {
+        setStep("connect");
+      }
+
+      setIsOpen(true);
+    } else {
+      setIsOpen(false);
+    }
+  }, [addressEvm, accountZk, setStep, setIsOpen]);
 
   useEffect(() => {
     if (!addressEvm) {
@@ -66,7 +82,7 @@ export const AccountManager: React.FC = () => {
   return (
     <>
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={() => onOpenChange(true)}
         className="flex items-center gap-2 rounded-full border h-[46px] px-4 shrink-0"
       >
         {accountZk ? (
@@ -83,7 +99,7 @@ export const AccountManager: React.FC = () => {
         )}
       </button>
 
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <Dialog open={isOpen} onOpenChange={onOpenChange}>
         <DialogContent className="w-[360px] rounded-3xl p-4 gap-0 pb-10">
           <div className=" mb-4 w-full flex justify-between">
             {step !== "connect" && !accountZk ? (
@@ -110,7 +126,9 @@ export const AccountManager: React.FC = () => {
               </DialogTitle>
 
               <DialogDescription className="text-sm text-muted-foreground text-center mb-6">
-                Share your ZK account address to be included in the voting. As per your EVM wallet, you'll need it to pay for gas, but feel free to change it from your provider.
+                Share your ZK account address to be included in the voting. As
+                per your EVM wallet, you'll need it to pay for gas, but feel
+                free to change it from your provider.
               </DialogDescription>
 
               <div className="bg-muted rounded-md px-4 py-3 mb-2 flex items-center justify-between relative pt-6">

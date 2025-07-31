@@ -2,6 +2,20 @@ import { ZkAccount, ACCOUNT_MESSAGE } from "@voting/core";
 import { useAccount, useSignMessage } from "wagmi";
 import { toHex } from "viem";
 import { useCallback, useEffect, useState } from "react";
+import { createContext, useContext, type ReactNode } from "react";
+
+interface ZkAccountContextType {
+  account: ZkAccountDetails | null;
+  connect: () => Promise<ZkAccountDetails>;
+  disconnect: () => Promise<void>;
+  isPending: boolean;
+}
+
+const ZkAccountContext = createContext<ZkAccountContextType | undefined>(undefined);
+
+interface ZkAccountProviderProps {
+  children: ReactNode;
+}
 
 export type ZkAccountDetails = {
   address: `0x${string}`;
@@ -12,7 +26,7 @@ export type ZkAccountDetails = {
 // Local storage key for the ZK account
 const ZK_ACCOUNT_KEY = "zk-account";
 
-export const useZkAccount = () => {
+export const ZkAccountProvider = ({ children }: ZkAccountProviderProps) => {
   const { address: evmAddress } = useAccount();
   const { signMessageAsync } = useSignMessage();
 
@@ -44,7 +58,7 @@ export const useZkAccount = () => {
         message: ACCOUNT_MESSAGE,
       });
       const zkAccount = await ZkAccount.buildFromSignature(signedMessage);
-      
+
       const account: ZkAccountDetails = {
         address: toHex(zkAccount.address),
         secret: toHex(zkAccount.secret),
@@ -54,8 +68,9 @@ export const useZkAccount = () => {
       saveAccount(account);
       return account;
     } catch (error) {
-      setIsPending(false);
       throw error;
+    } finally {
+      setIsPending(false);
     }
   }, [evmAddress, signMessageAsync]);
 
@@ -68,10 +83,24 @@ export const useZkAccount = () => {
     recoverAccount().then(setAccount);
   }, [recoverAccount]);
 
-  return {
-    account,
-    connect,
-    disconnect,
-    isPending,
-  };
+  return (
+    <ZkAccountContext.Provider
+      value={{
+        account,
+        connect,
+        disconnect,
+        isPending,
+      }}
+    >
+      {children}
+    </ZkAccountContext.Provider>
+  );
+};
+
+export const useZkAccount = () => {
+  const context = useContext(ZkAccountContext);
+  if (context === undefined) {
+    throw new Error("useAccountContext must be used within an AccountProvider");
+  }
+  return context;
 };
