@@ -12,6 +12,7 @@ import {
   ZERO_LEAF,
   VotingCircuit,
   PinataIpfs,
+  proposalMetadataSchema,
 } from "@voting/core";
 import { createWalletClient, http } from "viem";
 import { privateKeyToAccount, privateKeyToAddress } from "viem/accounts";
@@ -24,8 +25,8 @@ import {
   IPFS_GATEWAY_URL,
   CONTRACT_ADDRESS,
   CHAIN_ID,
+  RELAYER_PRIVATE_KEY,
 } from "./env";
-import z from "zod";
 
 const contract = new VotingContract(
   new PinataIpfs(IPFS_PINATA_JWT, IPFS_GATEWAY_URL),
@@ -86,13 +87,8 @@ program
       ...proposalJSON,
       deadline: new Date(proposalJSON.deadline),
     };
-    const proposalSchema = z.object({
-      title: z.string(),
-      body: z.string(),
-      deadline: z.date(),
-      voters: z.array(z.string()),
-    });
-    const parsedProposal = proposalSchema.safeParse(proposal);
+
+    const parsedProposal = proposalMetadataSchema.safeParse(proposal);
     if (parsedProposal.error) {
       prompts.cancel(`Invalid proposal file: ${parsedProposal.error.message}`);
       return;
@@ -106,10 +102,11 @@ program
     const spinner = prompts.spinner();
     spinner.start("Building voters tree...");
 
-    const votersTree = new MerkleTree(DEPTH, ZERO_LEAF);
-    for (const voter of proposal.voters) {
-      await votersTree.addCommitment(BigInt(voter));
-    }
+    const votersTree = new MerkleTree(
+      DEPTH,
+      ZERO_LEAF,
+      proposal.voters.map((v: string) => BigInt(v))
+    );
     const root = await votersTree.getRoot();
 
     spinner.stop(
@@ -119,14 +116,14 @@ program
     spinner.start("Creating proposal...");
 
     const txRequest = await contract.preparePropose(
-      privateKeyToAddress(PRIVATE_KEY),
+      privateKeyToAddress(RELAYER_PRIVATE_KEY),
       proposal,
       BigInt(Math.floor(proposal.deadline.getTime() / 1000)),
       root
     );
     const tx = await walletClient.sendTransaction({
       ...txRequest,
-      account: privateKeyToAccount(PRIVATE_KEY),
+      account: privateKeyToAccount(RELAYER_PRIVATE_KEY),
     });
 
     spinner.stop(`Proposal created in tx ${tx}`);
@@ -183,6 +180,8 @@ program
       ACCOUNT_MESSAGE
     );
 
+    spinner.stop("Zk account recovered");
+
     // check account is in the voters tree
     const isVoter = proposal.metadata.voters.find(
       (voter: string) => BigInt(voter) === zkAccount.address
@@ -191,8 +190,6 @@ program
       prompts.cancel("You are not a voter for this proposal");
       return;
     }
-
-    spinner.stop("Zk account recovered");
 
     spinner.start("Building proof...");
 
@@ -213,8 +210,8 @@ program
     );
 
     const proof = await VotingCircuit.generateProof(
-      options.proposalId,
-      options.vote,
+      BigInt(options.proposalId),
+      options.vote === "1",
       root,
       path,
       directionSelector,
@@ -228,7 +225,7 @@ program
     spinner.start("Casting vote...");
 
     const txRequest = await contract.prepareCastVote(
-      privateKeyToAddress(PRIVATE_KEY),
+      privateKeyToAddress(RELAYER_PRIVATE_KEY),
       `0x${Array.from(proof, (byte) => byte.toString(16).padStart(2, "0")).join(
         ""
       )}`,
@@ -238,7 +235,7 @@ program
     );
     const tx = await walletClient.sendTransaction({
       ...txRequest,
-      account: privateKeyToAccount(PRIVATE_KEY),
+      account: privateKeyToAccount(RELAYER_PRIVATE_KEY),
     });
 
     spinner.stop(`Vote casted successfully at ${tx}`);

@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import Markdown from "react-markdown";
 import { StatusBadge } from "@/components/status-badge";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { CastVote } from "@/components/cast-vote";
 import { Tooltip } from "react-tooltip";
 import { useZkAccount } from "@/hooks/account";

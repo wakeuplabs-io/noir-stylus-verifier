@@ -14,7 +14,7 @@ import {
   type ProposalMetadata,
 } from "@voting/core";
 import { useAccount, useAccount as useEvmAccount } from "wagmi";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { QueryKeyFactory } from "@/lib/queries";
 import {
   IPFS_GATEWAY_URL,
@@ -129,7 +129,7 @@ export function useProposal(proposalId?: string | number) {
   const { account } = useZkAccount();
 
   return useQuery({
-    enabled: !!proposalId, // only depends on proposalId
+    enabled: proposalId != undefined, // only depends on proposalId
     queryKey: QueryKeyFactory.proposal(proposalId, account?.address ?? "0x0"),
     queryFn: async () => {
       const proposal = await votingContract.getProposal(Number(proposalId));

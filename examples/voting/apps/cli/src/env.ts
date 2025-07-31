@@ -27,7 +27,6 @@ const envSchema = z.object({
     .positive({ message: "CHAIN_ID must be a positive integer" }),
 });
 
-console.log(process.env.IPFS_GATEWAY_URL);
 const env = envSchema.parse(process.env);
 
 export const RPC_URL = env.RPC_URL;

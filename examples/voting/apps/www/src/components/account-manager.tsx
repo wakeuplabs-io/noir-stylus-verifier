@@ -56,19 +56,22 @@ export const AccountManager: React.FC = () => {
     disconnectZk();
   }, [disconnectEvm, disconnectZk]);
 
-  const onOpenChange = useCallback((open: boolean) => {
-    if (open) {
-      if (addressEvm && !accountZk) {
-        setStep("sign");
-      } else {
-        setStep("connect");
-      }
+  const onOpenChange = useCallback(
+    (open: boolean) => {
+      if (open) {
+        if (addressEvm && !accountZk) {
+          setStep("sign");
+        } else {
+          setStep("connect");
+        }
 
-      setIsOpen(true);
-    } else {
-      setIsOpen(false);
-    }
-  }, [addressEvm, accountZk, setStep, setIsOpen]);
+        setIsOpen(true);
+      } else {
+        setIsOpen(false);
+      }
+    },
+    [addressEvm, accountZk, setStep, setIsOpen]
+  );
 
   useEffect(() => {
     if (!addressEvm) {
@@ -210,11 +213,17 @@ export const AccountManager: React.FC = () => {
                         }}
                         className="border rounded-xl px-4 py-3 flex items-center gap-2 w-full"
                       >
-                        <img
-                          src={connector.icon}
-                          alt={connector.name}
-                          className="w-[18px] h-[18px]"
-                        />
+                        {connector?.icon ? (
+                          <img
+                            src={connector?.icon}
+                            alt={connector?.name}
+                            className="w-[18px] h-[18px]"
+                          />
+                        ) : (
+                          <div className="w-[18px] h-[18px] flex items-center justify-center bg-muted rounded-lg">
+                            <WalletIcon className="w-4 h-4" />
+                          </div>
+                        )}
                         <span className="text-sm">{connector.name}</span>
                       </button>
                     ))}

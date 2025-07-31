@@ -25,7 +25,6 @@ export class VotingContract {
     address: `0x${string}`,
     rpcUrl: string
   ) {
-    console.log("ipfsClient", address);
     this.address = checksumAddress(address);
     this.chainId = chainId;
     this.ipfsClient = ipfsClient;

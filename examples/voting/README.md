@@ -133,7 +133,7 @@ These are the available commands:
 **Example flow**
 
 
-Create a ZK account, by default it'll use your private key in `.env` remove it to create a new wallet as well or specify one as parameter:
+Create a ZK account, by default it'll use your private key in `.env`.
 
 ```bash
 ./src/main.ts account
