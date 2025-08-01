@@ -16,3 +16,5 @@ nitro-testnode/
 .DS_Store
 
 profile/
+
+.intentionally-empty-file.o
