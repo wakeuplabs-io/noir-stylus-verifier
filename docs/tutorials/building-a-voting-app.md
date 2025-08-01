@@ -1,0 +1,464 @@
+
+# Building a Zero-Knowledge Voting App with Noir and Arbitrum Stylus
+
+This comprehensive tutorial guides you through building a complete zero-knowledge voting application using Noir circuits and Arbitrum Stylus contracts. The voting system ensures privacy by allowing users to vote anonymously while preventing double voting through cryptographic nullifiers.
+
+> ⚠️ Disclaimer: This is an experimental project intended for research and educational purposes. It has not been audited, and should not be used in production or with real funds. Use at your own risk.
+
+## Table of Contents
+
+1. [Overview and Architecture](#overview-and-architecture)
+2. [Core Concepts](#core-concepts)
+3. [Setting up the Development Environment](#setting-up-the-development-environment)
+4. [Understanding the Circuits](#understanding-the-circuits)
+5. [Understanding the Contracts](#understanding-the-contracts)
+6. [Building and Deploying](#building-and-deploying)
+7. [Using the CLI](#using-the-cli)
+8. [Using the Web Interface](#using-the-web-interface)
+9. [Advanced Topics](#advanced-topics)
+
+## Overview and Architecture
+
+The ZK Voting app demonstrates a complete zero-knowledge voting system with the following components:
+
+### System Architecture
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Frontend      │    │   Circuits      │    │   Contracts     │
+│   (React/CLI)   │    │   (Noir)        │    │   (Stylus)      │
+├─────────────────┤    ├─────────────────┤    ├─────────────────┤
+│ • Proposal UI   │───▶│ • Vote Circuit  │───▶│ • Voting Logic  │
+│ • Vote Interface│    │ • Merkle Proofs │    │ • Verification  │
+│ • ZK Accounts   │    │ • Nullifiers    │    │ • State Storage │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### Key Features
+
+- **Privacy**: Votes are cast anonymously using zero-knowledge proofs
+- **Integrity**: Prevents double voting through cryptographic nullifiers  
+- **Transparency**: All proposals and vote counts are public
+- **Decentralization**: Runs on Arbitrum with on-chain verification
+
+## Core Concepts
+
+### Zero-Knowledge Proofs
+
+The system uses zero-knowledge proofs to enable private voting. When a user votes, they prove they:
+1. Are eligible to vote (their commitment is in the voters merkle tree)
+2. Are voting on a specific proposal 
+3. Are casting a valid vote (0 or 1)
+4. Haven't voted before (unique nullifier)
+
+### ZK Accounts
+
+
+ZK accounts are distinct from Ethereum addresses. We can't use standard EVM wallets directly because we require separate private keys and secrets that enable zero-knowledge proofs of inclusion—without revealing the identity of the user. Prior attempts to repurpose EVM wallets for this purpose ran into limitations, as discussed  [here](https://github.com/stealthdrop/stealthdrop?tab=readme-ov-file) and [here](https://x.com/0xPARC/status/1493704577002049537?s=20&t=X-5Bs1oWNjmbTASp2T82DA). For now, we rely on dedicated ZK wallets.
+
+Here’s how a ZK account is deterministically derived from an EVM signature:
+
+```typescript
+// 1. Sign a message with your EVM private key
+const account = privateKeyToAccount(evmPrivateKey);
+const signature = await account.signMessage({ message: "Unique message " });
+
+// 2. Use the signature as entropy to derive ZK credentials
+const hash = keccak256(signature);          // Hash the signature
+const seed = BigInt(hash);                  // Convert to BigInt seed
+
+// 3. Derive ZK credentials using Poseidon (ZK-friendly hash)
+const privateKey = poseidon2Hash([seed, 0n]);      // ZK private key
+const secret = poseidon2Hash([seed, 1n]);          // ZK secret  
+const address = poseidon2Hash([privateKey, secret]); // ZK address (commitment)
+```
+
+This approach provides:
+- **Deterministic Generation**: Same EVM key + message → Same ZK account
+- **Privacy**: ZK account is unlinkable to EVM address
+- **Security**: Signature entropy ensures unpredictable ZK credentials
+- **Circuit Compatibility**: All values are Poseidon hashes (field elements)
+
+### Commitments and Nullifiers
+
+- **Commitment**: `hash(privateKey, secret)` - Represents a voter in the registry. This is the user ZK address
+- **Nullifier**: `hash(root, privateKey, proposalId)` - Prevents double voting
+
+### Merkle Tree Registry
+
+Eligible voters are stored in a merkle tree. To vote, users prove their commitment is included in the tree without revealing which leaf is theirs.
+
+## Setting up the Development Environment
+
+### Prerequisites
+
+- [noir 1.0.0-beta.6](https://github.com/noir-lang/noirup/tree/main)
+- [bb 0.86.0](hhttps://github.com/AztecProtocol/aztec-packages/blob/master/barretenberg/bbup/README.md)
+- [rust](https://www.rust-lang.org/tools/install) with nightly toolchain.
+- [cargo stylus](https://docs.arbitrum.io/stylus/quickstart#setting-up-your-development-environment) to build and deploy stylus contracts
+- [node](https://nodejs.org/en/download) with [pnpm](https://pnpm.io/es/)
+- [nsv](https://github.com/wakeuplabs-io/noir-stylus-verifier/releases) The nsv cli allows you to generate and deploy verifier contracts in stylus for the noir circuits
+
+### Clone and Setup
+
+The tutorial code is available as a an example of the [Noir Stylus Verifier](https://github.com/wakeuplabs-io/noir-stylus-verifier) project at `examples/voting`. There you'll find a `README.md` with more instructions one how to run it all.
+
+## Understanding the Circuits
+
+The Noir circuit is the heart of the voting system, located in `circuits/src/main.nr`.
+
+### Circuit Inputs
+
+```noir
+fn main(
+    root: pub Field,              // Merkle root of eligible voters
+    path: [Field; DEPTH],         // Merkle proof path
+    direction_selector: [bool; DEPTH], // Merkle proof directions
+    secret: Field,                // Private secret
+    priv_key: Field,             // Private key
+    nullifier: pub Field,         // Prevents double voting
+    proposal_id: pub Field,       // Proposal being voted on
+    vote: pub u8,                // Vote choice (0 or 1)
+)
+```
+
+### Circuit Logic
+
+1. **Commitment Verification**: Verifies the voter is eligible
+   ```noir
+   let note_commitment = definitions::commitment(priv_key, secret);
+   merkle_tree::assert_merkle_inclusion(
+       root, path, direction_selector, note_commitment,
+       "Commitment not in Merkle Tree"
+   );
+   ```
+
+2. **Nullifier Check**: Ensures the nullifier provided as a public input by the contract is linked to the private commitment.
+   ```noir
+   assert(nullifier == definitions::nullifier(root, priv_key, proposal_id), 
+          "Invalid nullifier");
+   ```
+
+3. **Vote Validation**: Ensures valid vote (0: against, 1: for)
+   ```noir
+   assert(vote <= 1, "Invalid vote");
+   ```
+
+### Key Circuit Files
+
+- `main.nr`: Main voting circuit logic
+- `definitions.nr`: Just domain definitions like what a commitment and nullifier are.
+- `merkle_tree.nr`: Merkle tree verification
+
+## Understanding the Contracts
+
+The Stylus contract handles on-chain voting logic in `contracts/src/lib.rs`.
+
+The contracts manage the state of the proposals, they enforce voting rules without actually knowing who's voting. There're a bunch of functions in it but don't worry, the main concepts get through just 1 function, `cast_vote`, the rest is just storing and retrieving data. So let's take a look at `cast_vote`:
+
+```rust
+    /// Cast a vote for a proposal
+    /// @param proof - The proof of the vote
+    /// @param proposal_id - The id of the proposal
+    /// @param vote - The vote (1 for for, 0 for against)
+    /// @param nullifier_hash - The hash of the nullifier
+    /// @return True if the vote was cast successfully, false otherwise
+    pub fn cast_vote(
+        &mut self,
+        proof: Bytes,
+        proposal_id: U256,
+        vote: U256,
+        nullifier_hash: U256,
+    ) -> Result<bool, Vec<u8>> {
+        // Check if the proposal exists and is started
+        let proposal = self.proposals.get(proposal_id);
+        if !proposal.started.get() {
+            return Err(b"Proposal not found".to_vec());
+        }
+
+        // Check if the voting period is over
+        if U256::from(self.vm().block_timestamp()) >= proposal.deadline.get() {
+            return Err(b"Voting period over".to_vec());
+        }
+
+        // Check if the nullifier hash has already been used
+        if self.nullifiers.get(nullifier_hash) {
+            return Err(b"Proof already submitted".to_vec());
+        }
+        self.nullifiers.insert(nullifier_hash, true);
+
+        // verify the proof
+        if !static_call_helper::<verifyCall>(
+            self.vm(),
+            self.verifier.get(),
+            (
+                proof.to_vec().into(),
+                Vec::from(
+                    [
+                        proposal.voters_root.get().to_be_bytes::<32>(),
+                        nullifier_hash.to_be_bytes::<32>(),
+                        proposal_id.to_be_bytes::<32>(),
+                        vote.to_be_bytes::<32>(),
+                    ]
+                    .concat(),
+                )
+                .into(),
+            ),
+        )
+        .map(|res| res._0)?
+        {
+            return Err(b"Invalid proof".to_vec());
+        }
+
+        // Update the vote counts
+        let current_for_votes = proposal.for_votes.get();
+        let current_against_votes = proposal.against_votes.get();
+        if vote == U256::from(1) {
+            self.proposals
+                .setter(proposal_id)
+                .for_votes
+                .set(current_for_votes + U256::from(1));
+        } else {
+            self.proposals
+                .setter(proposal_id)
+                .against_votes
+                .set(current_against_votes + U256::from(1));
+        }
+
+        log(self.vm(), NullifierUsed { nullifier_hash });
+
+        Ok(true)
+    }
+```
+
+First we do the following checks:
+- Proposal exists. Basic, we use started true to differentiate for rust default.
+- Is the proposal active.
+- Has the nullifier been used. Key point here is there's one nullifier per voting user, just one, which does NOT give us any information as to who it is. So we can confirm if the user already voted without storing address or anything alike after they do.
+- But so I just came up with a random nullifier and can keep voting. Well no, that's what we use the proof for, we'll verify with the proof that the nullifier follows a specific formula that links it to some account that is included in the merkle tree. 
+
+And that's it, after all this we can confirm the user has a valid voting power so we just store his vote and log the spent nullifier.
+
+### Cavets
+
+Some details that may be of use:
+- If you use the `stable` toolchain you may find the contracts just don't fit within the stylus limits for contract size. To overcome this we switched to the `nightly` version (see `rust-toolchain.toml`) and added a bunch of optimizations for build in `Cargo.toml`.
+- We had some issues serializing the `Proposal` as a struct, that seems not to be a problem in newer versions of stylus but just in case you were wondering why split the read in multiple functions. 
+- As for the contracts tests you may be interested in mocking the calls to simulate true or false. We found this way, in conjunction with the `call_static_helper` to work quite well.
+
+    ```rust
+            // mock proofs and validation call
+            let proof = vec![1u8, 2, 3, 4];
+            let vote = U256::from(1);
+            let nullifier_hash = U256::from(5);
+
+            // build calldata for mock
+            let calldata = verifyCall {
+                proof: proof.clone().into(),
+                input: Vec::from(
+                    [
+                        voters_root.to_be_bytes::<32>(),
+                        nullifier_hash.to_be_bytes::<32>(),
+                        U256::from(0).to_be_bytes::<32>(),
+                        vote.to_be_bytes::<32>(),
+                    ]
+                    .concat(),
+                )
+                .into(),
+            }
+            .abi_encode();
+            let return_data = verifyCall::abi_encode_returns(&(true,));
+            vm.mock_static_call(contract.verifier.get(), calldata, Ok(return_data));
+    ```
+
+## Building and Deploying
+
+### 1. Generate and Deploy the Circuit
+
+```bash
+cd circuits
+
+# Generate the Noir circuit artifacts
+nsv generate
+
+# Check the circuit compiles correctly and is in accordance with all stylus requirements
+nsv check
+
+# Deploy to Arbitrum Sepolia
+nsv deploy \
+  --rpc-url https://sepolia-rollup.arbitrum.io/rpc \
+  --private-key "0x..."
+```
+
+### 2. Deploy the Voting Contract
+
+```bash
+cd contracts
+
+# Check the Stylus contract
+cargo stylus check
+
+# Deploy with verifier address from step 1
+cargo stylus deploy \
+  --no-verify \
+  --endpoint https://sepolia-rollup.arbitrum.io/rpc \
+  --private-key "0x..." \
+  --constructor-args "0xVERIFIER_ADDRESS"
+```
+
+### 3. Configure Environment
+
+Copy `.env.example` to `.env` in both `apps/cli` and `apps/www`.
+
+## Using the CLI
+
+The CLI provides a complete interface for interacting with the voting system.
+
+### 1. Create a ZK Account
+
+```bash
+cd apps/cli
+chmod +x ./src/main.ts
+
+# Create ZK account from your private key
+./src/main.ts account
+```
+
+This generates:
+- ZK Address: Used in proposal voter lists
+- Private Key: Used for generating proofs
+- Secret: Used for generating proofs
+
+### 2. Create a Proposal
+
+Edit `proposal.json` with your proposal details (remember `voters` are ZK addresses):
+
+```json
+{
+  "title": "Your Proposal Title",
+  "body": "Detailed proposal description in markdown...",
+  "deadline": "2025-08-28T12:00:00.000Z",
+  "voters": [
+    "0xe2a4e34530465f4b4948eb8e26ba5ba6594039f4880df9c9e0d3997e25facc3",
+    "0x1892e50556e7f04afa78a3cf885d2869d13a2c585635a6defba85fbe193c8f2b"
+  ]
+}
+```
+
+Submit the proposal:
+```bash
+./src/main.ts propose --proposal proposal.json
+```
+
+### 3. Cast a Vote
+
+```bash
+# Vote YES (1) on proposal 0
+./src/main.ts cast-vote --proposal-id 0 --vote 1
+
+# Vote NO (0) on proposal 0  
+./src/main.ts cast-vote --proposal-id 0 --vote 0
+```
+
+### 4. Check Proposal Status
+
+```bash
+./src/main.ts get-proposal 0
+```
+
+## Using the Web Interface
+
+Start the Web App
+
+```bash
+pnpm --filter=@voting/www dev
+```
+
+### Web Features
+
+1. **Connect Wallet**: Connect your Ethereum wallet
+2. **Create ZK Account**: Generate ZK credentials
+3. **Browse Proposals**: View all active and past proposals
+4. **Create Proposals**: Submit new proposals with voter lists
+5. **Cast Votes**: Vote privately on proposals you're eligible for
+6. **View Results**: See real-time vote counts
+
+### Key Web Components
+
+- **Account Creation**: Generates ZK accounts from wallet signatures
+- **Proposal Creation**: IPFS integration for metadata storage  
+- **Vote Interface**: Zero-knowledge proof generation and submission
+- **Results Display**: Real-time proposal status and vote counts
+
+### Cavets
+
+Some important details about the web integration for you to consider:
+1. Versions are important for compatibility with the generated verifier. In your project use these until new releases:
+    ```json
+    "@aztec/bb.js": "0.86.0",
+    "@noir-lang/noir_js": "1.0.0-beta.6",
+    ```
+2. Noir needs to load two WASM modules, but Vite doesn't include them by default in the bundle. We need to add the configuration below to `vite.config.js` to make it work. We also need to target ESNext since bb.js uses top-level await, which isn't supported in some browsers.
+
+    ```js
+      optimizeDeps: {
+        esbuildOptions: { target: "esnext" },
+        exclude: ['@noir-lang/noirc_abi', '@noir-lang/acvm_js', '@aztec/bb.js']
+      }
+    ```
+
+## Advanced Topics
+
+### Security Considerations
+
+1. **Private Key Management**: ZK private keys must be kept secure
+2. **Nullifier Uniqueness**: Each vote generates a unique nullifier  
+3. **Merkle Tree Integrity**: Voter registry must be tamper-proof
+4. **Proof Generation**: Done client-side to maintain privacy
+5. **Relayer**: Even tough users can manage this on their own, adding a Relayer will further improve users privacy by removing need of users to expose their evm wallets at voting.
+
+### Scalability Optimizations
+
+1. **Merkle Tree Depth**: Deeper trees support more voters, as per the example we just set this to 2 levels to keep things fast and simple
+2. **Proof Verification**: Gas-optimized on-chain verification
+3. **IPFS Storage**: Off-chain metadata storage
+4. **Batching**: Multiple operations in single transaction
+
+### Customization Options
+
+1. **Voting Schemes**: Extend beyond binary yes/no votes
+2. **Eligibility Criteria**: Custom voter registration logic
+3. **Proposal Types**: Different proposal categories
+4. **Time-based Rules**: Voting periods, proposal delays
+
+### Privacy Analysis
+
+The system provides:
+- **Vote Privacy**: No one can determine how you voted
+- **Voter Anonymity**: Your vote cannot be linked to your identity  
+- **Participation Privacy**: Others can't tell if you voted
+- **Forward Secrecy**: Past votes remain private even if keys are compromised
+
+## Conclusion
+
+This tutorial demonstrated building a complete zero-knowledge voting system using Noir and Arbitrum Stylus. The system provides strong privacy guarantees while maintaining transparency and preventing double voting.
+
+Key takeaways:
+- Zero-knowledge proofs enable private yet verifiable voting
+- Merkle trees efficiently represent large voter registries  
+- Stylus contracts provide gas-efficient on-chain verification
+- Proper nullifier schemes prevent double voting
+- Full-stack integration enables practical deployment
+
+The voting app serves as a foundation for building more complex governance systems, private polls, and other applications requiring anonymous participation with verifiable integrity.
+
+### Next Steps
+
+- Experiment with different voting schemes (ranked choice, quadratic voting)
+- Integrate with existing governance frameworks  
+- Explore cross-chain voting mechanisms
+- Implement additional privacy features like vote encryption
+- Scale to support larger voter populations
+
+For more information, explore the [codebase](https://github.com/wakeuplabs-io/noir-stylus-verifier) in `examples/voting` and refer to the [Noir](https://noir-lang.org/), [Arbitrum Stylus](https://arbitrum.io/stylus) and [Noir Stylus Verifier](https://github.com/wakeuplabs-io/noir-stylus-verifier) documentations for deeper technical details.
+

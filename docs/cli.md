@@ -10,6 +10,12 @@ cargo install --git https://github.com/wakeuplabs-io/noir-stylus-verifier --bin 
 
 You can also download already compiled binaries from the github releases at [noir-stylus-verifier](https://github.com/wakeuplabs-io/noir-stylus-verifier)
 
+System requirements: 
+- [noir 1.0.0-beta.6](https://github.com/noir-lang/noirup/tree/main)
+- [bb 0.86.0](hhttps://github.com/AztecProtocol/aztec-packages/blob/master/barretenberg/bbup/README.md)
+- [rust](https://www.rust-lang.org/tools/install).
+- [cargo stylus](https://docs.arbitrum.io/stylus/quickstart#setting-up-your-development-environment) to build and deploy stylus contracts
+
 ## Commands
 
 ```
