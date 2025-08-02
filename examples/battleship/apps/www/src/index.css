@@ -1,5 +1,7 @@
+@import url('https://fonts.cdnfonts.com/css/futura-std-4');
 @import "tailwindcss";
 @import "tw-animate-css";
+
 
 @custom-variant dark (&:is(.dark *));
 
@@ -40,7 +42,11 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
+  --color-hit: #BCBDC8;
+  --color-battleship: #D1D3DE;
   --color-player-1: #FF0055;
+
+  --font-futura: 'Futura Std', sans-serif;
 }
 
 :root {
