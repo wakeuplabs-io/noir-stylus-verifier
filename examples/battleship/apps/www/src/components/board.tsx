@@ -1,7 +1,7 @@
 import React from "react";
 import clsx from "clsx";
 import { cn } from "@/lib/utils";
-import { CrossIcon, DotIcon, XIcon } from "lucide-react";
+import { DotIcon, XIcon } from "lucide-react";
 import type { ShipPlacement } from "@/lib/board";
 import boatEnd from "@/assets/boat-end.svg";
 import boatMiddle from "@/assets/boat-middle.svg";
@@ -19,7 +19,7 @@ export const BattleshipBoard: React.FC<{
   return (
     <div
       className={cn(
-        "bg-[#699BF7] p-8 pl-2 rounded-2xl border-3 border-black shadow-[2px_2px_0px_#000]  space-y-2",
+        "p-8 pl-2 rounded-2xl border-2 border-black shadow-[2px_2px_0px_#000] space-y-2",
         className
       )}
     >
@@ -40,24 +40,42 @@ export const BattleshipBoard: React.FC<{
             {rowIndex + 1}
           </div>
           {row.map((cell, colIndex) => (
-            <div
-              key={colIndex}
-              className={clsx(
-                "w-10 h-10 flex items-center justify-center cursor-pointer shrink-0 relative text-black  border-2 border-black rounded-lg shadow-[2px_2px_0px_#000] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-transform duration-100",
-                {
-                  "bg-white": cell === "ship" || cell === "empty" || cell === "miss",
-                  "bg-[#F16858]": cell === "hit",
-                }
-              )}
+            <BattleshipBoardCell
+              state={cell}
+              ships={ships}
+              row={rowIndex}
+              col={colIndex}
               onClick={() => onCellClick?.(rowIndex, colIndex)}
-            >
-              {cell === "hit" && <XIcon className="w-6 h-6" />}
-              {cell === "miss" && <DotIcon className="w-10 h-10" />}
-              {cell === "ship" && getShipSegment(rowIndex, colIndex, ships)}
-            </div>
+              key={colIndex}
+            />
           ))}
         </div>
       ))}
+    </div>
+  );
+};
+
+export const BattleshipBoardCell: React.FC<{
+  row: number;
+  col: number;
+  state: CellState;
+  ships: ShipPlacement[];
+  onClick?: () => void;
+}> = ({ row, col, ships, state, onClick }) => {
+  return (
+    <div
+      className={clsx(
+        "w-10 h-10 flex items-center justify-center cursor-pointer shrink-0 relative text-black  border-2 border-black rounded-lg shadow-[2px_2px_0px_#000] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-transform duration-100",
+        {
+          "bg-white": state === "ship" || state === "empty" || state === "miss",
+          "bg-[#F16858]": state === "hit",
+        }
+      )}
+      onClick={onClick}
+    >
+      {state === "hit" && <XIcon className="w-6 h-6" />}
+      {state === "miss" && <DotIcon className="w-10 h-10" />}
+      {state === "ship" && getShipSegment(row, col, ships)}
     </div>
   );
 };

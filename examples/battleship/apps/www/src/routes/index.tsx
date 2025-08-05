@@ -17,7 +17,7 @@ function Index() {
           Stylus Verifier
         </p>
 
-        <button className="relative px-6 py-3 text-xl font-bold text-black bg-[#FF8577] border-3 border-black rounded-full shadow-[4px_4px_0px_#000] active:shadow-none active:translate-x-[6px] active:translate-y-[6px] transition-transform duration-100">
+        <button className="relative px-6 py-3 text-xl font-bold text-black bg-[#FF8577] border-2 border-black rounded-full shadow-[2px_2px_0px_#000] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-transform duration-100">
           Login <span className="ml-2">→</span>
         </button>
       </div>
