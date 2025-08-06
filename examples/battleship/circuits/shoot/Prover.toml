@@ -1,5 +1,6 @@
 board_hash = "0x0cf4157c9c686528efc9b5c573b4b80538780af478f0b41e3f7d69749231c352"
 nonce = "12345"
 ships = [[2, 2, 0], [4, 0, 1], [1, 0, 0], [5, 5, 1], [6, 3, 0]]
-shot_x = 1
-shot_y = 2
+x = 1
+y = 2
+hit = true

@@ -3,21 +3,28 @@ use common::{
     SHIP_DIRECTION_RIGHT, SHIP_LENGTHS, hash_board, 
 };
 
-fn main(nonce: Field, ships: [[u8; 3]; NUMBER_OF_SHIPS], board_hash: pub Field, shot_x: pub u8, shot_y: pub u8) {
+// This circuit checks if a shot is a hit or a miss
+// @param nonce: Field
+// @param ships: [x,y,direction:0=down,1=right]. These are ordered Carrier, Battleship, Cruiser, Submarine, Destroyer.
+// @param board_hash: pub Field
+// @param x: pub u8
+// @param y: pub u8
+// @param hit: pub bool
+fn main(nonce: Field, ships: [[u8; 3]; NUMBER_OF_SHIPS], board_hash: pub Field, x: pub u8, y: pub u8, hit: pub bool) {
     // validate the guess is actually valid
-    assert(shot_x >= 0 & shot_x < BOARD_SIZE as u8);
-    assert(shot_y >= 0 & shot_y < BOARD_SIZE as u8);
+    assert(x >= 0 & x < BOARD_SIZE as u8);
+    assert(y >= 0 & y < BOARD_SIZE as u8);
 
     // validate the inputted ships matches the public hash
     assert(board_hash == hash_board(nonce, ships));
 
     // check if it's a hit to any of the ships
-    let hit0 = is_hit(shot_x, shot_y, ships[0], SHIP_LENGTHS[0]);
-    let hit1 = is_hit(shot_x, shot_y, ships[1], SHIP_LENGTHS[1]);
-    let hit2 = is_hit(shot_x, shot_y, ships[2], SHIP_LENGTHS[2]);
-    let hit3 = is_hit(shot_x, shot_y, ships[3], SHIP_LENGTHS[3]);
-    let hit4 = is_hit(shot_x, shot_y, ships[4], SHIP_LENGTHS[4]);
-    assert(hit0 | hit1 | hit2 | hit3 | hit4);
+    let hit0 = is_hit(x, y, ships[0], SHIP_LENGTHS[0]);
+    let hit1 = is_hit(x, y, ships[1], SHIP_LENGTHS[1]);
+    let hit2 = is_hit(x, y, ships[2], SHIP_LENGTHS[2]);
+    let hit3 = is_hit(x, y, ships[3], SHIP_LENGTHS[3]);
+    let hit4 = is_hit(x, y, ships[4], SHIP_LENGTHS[4]);
+    assert(hit0 | hit1 | hit2 | hit3 | hit4 == hit);
 }
 
 fn is_hit(guess_x: u8, guess_y: u8, ship: [u8; 3], len: u8) -> bool {
@@ -42,8 +49,19 @@ fn test_hit() {
     let nonce = 12345;
     let ships = [[2, 2, 0], [4, 0, 1], [1, 0, 0], [5, 5, 1], [6, 3, 0]];
     let board_hash = 0x0cf4157c9c686528efc9b5c573b4b80538780af478f0b41e3f7d69749231c352;
-    let shot_x = 1;
-    let shot_y = 2;
+    let x = 1;
+    let y = 2;
 
-    main(nonce, ships, board_hash, shot_x, shot_y);
+    main(nonce, ships, board_hash, x, y, true);
+}
+
+#[test]
+fn test_miss() {
+    let nonce = 12345;
+    let ships = [[2, 2, 0], [4, 0, 1], [1, 0, 0], [5, 5, 1], [6, 3, 0]];
+    let board_hash = 0x0cf4157c9c686528efc9b5c573b4b80538780af478f0b41e3f7d69749231c352;
+    let x = 1;
+    let y = 3;
+
+    main(nonce, ships, board_hash, x, y, false);
 }

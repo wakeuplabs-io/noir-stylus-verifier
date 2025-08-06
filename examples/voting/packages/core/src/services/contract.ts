@@ -154,61 +154,68 @@ export class VotingContract {
   }
 
   async getProposal(proposalId: number): Promise<Proposal> {
-    const [root, metadataCid, deadline, forVotes, againstVotes, createdAt, author] =
-      await this.publicClient
-        .multicall({
-          multicallAddress: MULTICALL_ADDRESS[this.chainId],
-          contracts: [
-            {
-              address: this.address,
-              abi: VotingContractAbi,
-              functionName: "getProposalVotersRoot",
-              args: [BigInt(proposalId)],
-            },
-            {
-              address: this.address,
-              abi: VotingContractAbi,
-              functionName: "getProposalMetadata",
-              args: [BigInt(proposalId)],
-            },
-            {
-              address: this.address,
-              abi: VotingContractAbi,
-              functionName: "getProposalDeadline",
-              args: [BigInt(proposalId)],
-            },
-            {
-              address: this.address,
-              abi: VotingContractAbi,
-              functionName: "getProposalForVotes",
-              args: [BigInt(proposalId)],
-            },
-            {
-              address: this.address,
-              abi: VotingContractAbi,
-              functionName: "getProposalAgainstVotes",
-              args: [BigInt(proposalId)],
-            },
-            {
-              address: this.address,
-              abi: VotingContractAbi,
-              functionName: "getProposalCreatedAt",
-              args: [BigInt(proposalId)],
-            },
-            {
-              address: this.address,
-              abi: VotingContractAbi,
-              functionName: "getProposalAuthor",
-              args: [BigInt(proposalId)],
-            },
-          ],
+    const [
+      root,
+      metadataCid,
+      deadline,
+      forVotes,
+      againstVotes,
+      createdAt,
+      author,
+    ] = await this.publicClient
+      .multicall({
+        multicallAddress: MULTICALL_ADDRESS[this.chainId],
+        contracts: [
+          {
+            address: this.address,
+            abi: VotingContractAbi,
+            functionName: "getProposalVotersRoot",
+            args: [BigInt(proposalId)],
+          },
+          {
+            address: this.address,
+            abi: VotingContractAbi,
+            functionName: "getProposalMetadata",
+            args: [BigInt(proposalId)],
+          },
+          {
+            address: this.address,
+            abi: VotingContractAbi,
+            functionName: "getProposalDeadline",
+            args: [BigInt(proposalId)],
+          },
+          {
+            address: this.address,
+            abi: VotingContractAbi,
+            functionName: "getProposalForVotes",
+            args: [BigInt(proposalId)],
+          },
+          {
+            address: this.address,
+            abi: VotingContractAbi,
+            functionName: "getProposalAgainstVotes",
+            args: [BigInt(proposalId)],
+          },
+          {
+            address: this.address,
+            abi: VotingContractAbi,
+            functionName: "getProposalCreatedAt",
+            args: [BigInt(proposalId)],
+          },
+          {
+            address: this.address,
+            abi: VotingContractAbi,
+            functionName: "getProposalAuthor",
+            args: [BigInt(proposalId)],
+          },
+        ],
+      })
+      .then((results) =>
+        results.map((r) => {
+          if (r.error) throw new Error(r.error.message);
+          return r.result;
         })
-        .then((results) =>
-          results.map((r) => {
-            if (r.error) throw new Error(r.error.message);
-            return r.result;
-          })
-        );
+      );
 
     const metadata = (await this.ipfsClient.downloadJSON(
       metadataCid as string
@@ -234,7 +241,7 @@ export class VotingContract {
 
   async prepareCastVote(
     userAddress: `0x${string}`,
-    proof: `0x${string}`,
+    proof: Uint8Array<ArrayBufferLike>,
     proposalId: number,
     vote: boolean,
     nullifier: bigint
@@ -244,7 +251,14 @@ export class VotingContract {
       data: encodeFunctionData({
         abi: VotingContractAbi,
         functionName: "castVote",
-        args: [proof, BigInt(proposalId), BigInt(vote ? 1 : 0), nullifier],
+        args: [
+          `0x${Array.from(proof, (byte) =>
+            byte.toString(16).padStart(2, "0")
+          ).join("")}`,
+          BigInt(proposalId),
+          BigInt(vote ? 1 : 0),
+          nullifier,
+        ],
       }),
       value: 0n,
       chain: null,

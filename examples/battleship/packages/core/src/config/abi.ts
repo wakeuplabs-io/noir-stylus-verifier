@@ -1,0 +1,26 @@
+import { parseAbi } from "viem";
+
+export const BattleshipContractAbi = parseAbi([
+  "function getBoardVerifier() external view returns (address)",
+  "function getShotVerifier() external view returns (address)",
+  "function createGame(bytes calldata proof, uint256 board_hash, uint256 join_code) external",
+  "function joinGame(uint256 game_id, bytes calldata proof, uint256 board_hash, uint256 join_code) external",
+  "function shoot(uint256 game_id, bytes calldata previous_move_hit_proof, bool previous_move_hit, uint256 previous_move_x, uint256 previous_move_y, uint256 x, uint256 y) external",
+  "function getGamePlayers(uint256 game_id) external view returns (address, address)",
+  "function getGameBoardsHashes(uint256 game_id) external view returns (uint256, uint256)",
+  "function getGameMoveCount(uint256 game_id) external view returns (uint256)",
+  "function getGameMove(uint256 game_id, uint256 move_index) external view returns (uint256, uint256, bool)",
+  "error GameAlreadyJoined()",
+  "error GameNotFound()",
+  "error GameNotStarted()",
+  "error GameNotYourTurn()",
+  "error GameNotYourBoard()",
+  "error GameNotYourMove()",
+  "error GameNotYourShot()",
+  "error InvalidShot()",
+  "error InvalidProof()",
+  "error InvalidJoinCode()",
+  "event GameCreated(uint256 gameId, address creator)",
+  "event GameJoined(uint256 gameId, address player)",
+  "event MoveMade(uint256 gameId, uint256 moveIndex, uint256 x, uint256 y)",
+] as const);

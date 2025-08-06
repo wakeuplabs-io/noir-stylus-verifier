@@ -11,6 +11,7 @@ use common::{
     hash_board,
 };
 
+// This circuit checks if the board is valid
 // @param nonce: Field
 // @param ships: [x,y,direction:0=down,1=right]. These are ordered Carrier, Battleship, Cruiser, Submarine, Destroyer.
 fn main(nonce: Field, ships: [[u8; 3]; NUMBER_OF_SHIPS], board_hash: pub Field) {
