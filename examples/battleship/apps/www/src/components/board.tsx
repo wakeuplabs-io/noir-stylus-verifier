@@ -2,17 +2,21 @@ import React from "react";
 import clsx from "clsx";
 import { cn } from "@/lib/utils";
 import { DotIcon, XIcon } from "lucide-react";
-import type { ShipPlacement } from "@/lib/board";
 import boatEnd from "@/assets/boat-end.svg";
 import boatMiddle from "@/assets/boat-middle.svg";
+import {
+  BoardCellState,
+  Direction,
+  SHIP_LENGTHS,
+  ShipType,
+  type BoardShips,
+} from "@battleship/core";
 
 const letters = "ABCDEFGHIJ".split("");
 
-export type CellState = "empty" | "ship" | "hit" | "miss";
-
 export const BattleshipBoard: React.FC<{
-  board: CellState[][];
-  ships: ShipPlacement[];
+  board: BoardCellState[][];
+  ships?: BoardShips;
   onCellClick?: (row: number, col: number) => void;
   className?: string;
 }> = ({ board, ships, onCellClick, className }) => {
@@ -43,10 +47,10 @@ export const BattleshipBoard: React.FC<{
             <BattleshipBoardCell
               state={cell}
               ships={ships}
-              row={rowIndex}
-              col={colIndex}
-              onClick={() => onCellClick?.(rowIndex, colIndex)}
+              x={colIndex}
+              y={rowIndex}
               key={colIndex}
+              onClick={() => onCellClick?.(rowIndex, colIndex)}
             />
           ))}
         </div>
@@ -56,75 +60,74 @@ export const BattleshipBoard: React.FC<{
 };
 
 export const BattleshipBoardCell: React.FC<{
-  row: number;
-  col: number;
-  state: CellState;
-  ships: ShipPlacement[];
+  x?: number;
+  y?: number;
+  state: BoardCellState;
+  ships?: BoardShips;
   onClick?: () => void;
-}> = ({ row, col, ships, state, onClick }) => {
+}> = ({ x = 0, y = 0, ships, state, onClick }) => {
   return (
     <div
       className={clsx(
         "w-10 h-10 flex items-center justify-center cursor-pointer shrink-0 relative text-black  border-2 border-black rounded-lg shadow-[2px_2px_0px_#000] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-transform duration-100",
         {
-          "bg-white": state === "ship" || state === "empty" || state === "miss",
-          "bg-[#F16858]": state === "hit",
+          "bg-white":
+            state === BoardCellState.SHIP ||
+            state === BoardCellState.EMPTY ||
+            state === BoardCellState.MISS,
+          "bg-[#F16858]": state === BoardCellState.HIT,
         }
       )}
       onClick={onClick}
     >
-      {state === "hit" && <XIcon className="w-6 h-6" />}
-      {state === "miss" && <DotIcon className="w-10 h-10" />}
-      {state === "ship" && getShipSegment(row, col, ships)}
+      {state === BoardCellState.HIT && <XIcon className="w-6 h-6" />}
+      {state === BoardCellState.MISS && <DotIcon className="w-10 h-10" />}
+      {state === BoardCellState.SHIP && ships && getShipSegment(x, y, ships)}
     </div>
   );
 };
 
-const getShipSegment = (
-  row: number,
-  col: number,
-  shipPlacements: ShipPlacement[]
-) => {
-  for (const ship of shipPlacements) {
-    const { start, direction, size } = ship;
+const getShipSegment = (x: number, y: number, ships: BoardShips) => {
+  for (const shipType of Object.values(ShipType)) {
+    const ship = ships[shipType];
+    const size = SHIP_LENGTHS[shipType];
 
-    const dx = direction === "horizontal" ? 1 : 0;
+    const isStart = ship.x === x && ship.y === y;
 
-    for (let i = 0; i < size; i++) {
-      const segmentRow = start.row + (dx ? 0 : i);
-      const segmentCol = start.col + (dx ? i : 0);
+    const endX =
+      ship.direction === Direction.HORIZONTAL ? ship.x + size - 1 : ship.x;
+    const endY =
+      ship.direction === Direction.VERTICAL ? ship.y + size - 1 : ship.y;
+    const isEnd = endX === x && endY === y;
+    const isBody =
+      ship.direction === Direction.HORIZONTAL
+        ? x >= ship.x && x <= ship.x + size && y === ship.y
+        : x === ship.x && y >= ship.y && y <= ship.y + size;
 
-      if (segmentRow === row && segmentCol === col) {
-        const isStart = i === 0;
-        const isEnd = i === size - 1;
-        const rotation =
-          direction === "horizontal"
-            ? isStart
-              ? 180
-              : isEnd
-              ? 0
-              : 0
-            : isStart
-            ? 270
-            : isEnd
-            ? 90
-            : 90;
-
-        return isStart || isEnd ? (
-          <img
-            src={boatEnd}
-            className={cn("w-10 h-10")}
-            style={{ transform: `rotate(${rotation + 180}deg)` }}
-          />
-        ) : (
-          <img
-            src={boatMiddle}
-            className="w-10 h-10"
-            style={{ transform: `rotate(${rotation}deg)` }}
-          />
-        );
+    if (isStart || isEnd) {
+      let rotation = ship.direction === Direction.HORIZONTAL ? 0 : 90;
+      if (isEnd) {
+        rotation += 180;
       }
+
+      return (
+        <img
+          src={boatEnd}
+          className={cn("w-10 h-10")}
+          style={{ transform: `rotate(${rotation}deg)` }}
+        />
+      );
+    } else if (isBody) {
+      const rotation = ship.direction === Direction.HORIZONTAL ? 0 : 90;
+      return (
+        <img
+          src={boatMiddle}
+          className="w-10 h-10"
+          style={{ transform: `rotate(${rotation}deg)` }}
+        />
+      );
     }
+
   }
 
   return null;

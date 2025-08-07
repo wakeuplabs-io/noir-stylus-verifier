@@ -1,5 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import boardLanding from "@/assets/board-landing.svg";
+import { useAccount, useConnect } from "wagmi";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -7,6 +9,18 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const navigate = useNavigate();
+  const { address } = useAccount();
+  const { connect, connectors } = useConnect();
+
+  const onConnect = () => {
+    connect({ connector: connectors[0] });
+  };
+
+  useEffect(() => {
+    if (address) {
+      navigate({ to: "/board" });
+    }
+  }, [address]);
 
   return (
     <div className="h-screen w-screen relative">
@@ -17,7 +31,7 @@ function Index() {
           Stylus Verifier
         </p>
 
-        <button className="relative px-6 py-3 text-xl font-bold text-black bg-[#FF8577] border-2 border-black rounded-full shadow-[2px_2px_0px_#000] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-transform duration-100">
+        <button onClick={onConnect} className="relative px-6 py-3 text-xl font-bold text-black bg-[#FF8577] border-2 border-black rounded-full shadow-[2px_2px_0px_#000] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-transform duration-100">
           Login <span className="ml-2">→</span>
         </button>
       </div>

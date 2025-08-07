@@ -33,10 +33,14 @@ export class BattleshipContract {
     });
   }
 
+  getGameId(join_code: bigint): bigint {
+    return BigInt(keccak256(numberToBytes(join_code, { size: 32 })));
+  }
+
   async prepareCreateGame(
-    proof: Uint8Array<ArrayBufferLike>,
+    join_code: bigint,
     board_hash: bigint,
-    join_code: bigint
+    proof: Uint8Array<ArrayBufferLike>,
   ) {
     const txRequest = await this.publicClient.prepareTransactionRequest({
       to: this.address,
@@ -44,11 +48,11 @@ export class BattleshipContract {
         abi: BattleshipContractAbi,
         functionName: "createGame",
         args: [
+          this.getGameId(join_code), 
+          board_hash,
           `0x${Array.from(proof, (byte) =>
             byte.toString(16).padStart(2, "0")
           ).join("")}`,
-          board_hash,
-          BigInt(keccak256(numberToBytes(join_code, { size: 32 }))),
         ],
       }),
       value: 0n,
@@ -87,16 +91,14 @@ export class BattleshipContract {
 
   /**
    * Prepares a transaction to join a game
-   * @param gameId - The ID of the game to join
-   * @param proof - The proof of the board
+   * @param join_code - The join code, this hashed to create the game_id
    * @param board_hash - The hash of the board
-   * @param join_code - The join code
+   * @param proof - The proof of the board
    */
   async prepareJoinGame(
-    gameId: bigint,
-    proof: Uint8Array<ArrayBufferLike>,
+    join_code: bigint,
     board_hash: bigint,
-    join_code: bigint
+    proof: Uint8Array<ArrayBufferLike>,
   ) {
     const txRequest = await this.publicClient.prepareTransactionRequest({
       to: this.address,
@@ -104,7 +106,6 @@ export class BattleshipContract {
         abi: BattleshipContractAbi,
         functionName: "joinGame",
         args: [
-          BigInt(gameId),
           `0x${Array.from(proof, (byte) =>
             byte.toString(16).padStart(2, "0")
           ).join("")}`,

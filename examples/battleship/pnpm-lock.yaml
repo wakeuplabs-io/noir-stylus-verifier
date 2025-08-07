@@ -44,6 +44,9 @@ importers:
 
   apps/www:
     dependencies:
+      '@battleship/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@privy-io/react-auth':
         specifier: ^2.21.0
         version: 2.21.0(@solana/web3.js@1.98.4(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.3)(utf-8-validate@5.0.10))(@types/react@19.1.9)(bs58@6.0.0)(bufferutil@4.0.9)(lit@3.3.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(typescript@5.8.3)(use-sync-external-store@1.4.0(react@19.1.1))(utf-8-validate@5.0.10)(zod@3.25.76)

@@ -26,9 +26,9 @@ fn main(nonce: Field, ships: [[u8; 3]; NUMBER_OF_SHIPS], board_hash: pub Field) 
 
         // validate boats don't overflow off board
         if (ships[i][DIRECTION_INDEX] == SHIP_DIRECTION_DOWN) {
-            assert(ships[i][Y_INDEX] + length < BOARD_SIZE as u8);
+            assert(ships[i][Y_INDEX] + length - 1 < BOARD_SIZE as u8);
         } else if (ships[i][DIRECTION_INDEX] == SHIP_DIRECTION_RIGHT) {
-            assert(ships[i][X_INDEX] + length < BOARD_SIZE as u8);
+            assert(ships[i][X_INDEX] + length - 1 < BOARD_SIZE as u8);
         } else {
             assert(false, "Invalid direction");
         }

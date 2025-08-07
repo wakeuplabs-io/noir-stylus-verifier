@@ -4,31 +4,30 @@ import "dotenv/config";
 import { Command } from "commander";
 import {
   BattleshipContract,
+  Board,
   BoardCellState,
   BoardCircuit,
   ShootCircuit,
 } from "@battleship/core";
-import {
-  createWalletClient,
-  decodeErrorResult,
-  http,
-  toHex,
-} from "viem";
+import { createPublicClient, createWalletClient, http, toHex } from "viem";
 import { privateKeyToAccount, privateKeyToAddress } from "viem/accounts";
 import * as prompts from "@clack/prompts";
 import { RPC_URL, CONTRACT_ADDRESS, CHAIN_ID } from "./env";
 import fs from "fs";
-import { BattleshipContractAbi } from "@battleship/core/src/config/abi";
+import color from "picocolors";
+import { arbitrumSepolia } from "viem/chains";
 
 const contract = new BattleshipContract(CHAIN_ID, CONTRACT_ADDRESS, RPC_URL);
 
 export const walletClient = createWalletClient({
   transport: http(RPC_URL),
 });
+export const publicClient = createPublicClient({
+  chain: arbitrumSepolia,
+  transport: http(RPC_URL),
+});
 
 const program = new Command();
-
-// Basic interface for the battleship game, creates battleship.json file by default with
 
 program
   .name("cli")
@@ -42,88 +41,79 @@ program
   .option("-b, --board <path>", "Path to the board file", "board.json")
   .description("Create a new game")
   .action(async (options) => {
+    prompts.intro(color.inverse("ZK Battleship by Wakeup Labs ◌○●"));
+    const spinner = prompts.spinner();
+
     const board = JSON.parse(fs.readFileSync(options.board, "utf8"));
-    const nonce = BigInt(board.nonce);
-    const ships = board.ships.map((ship: [string, string, string]) =>
-      ship.map(Number)
+    const boardHash = BoardCircuit.hashBoard(BigInt(board.nonce), board.ships);
+
+    spinner.start("Generating board proof...");
+
+    const proof = await BoardCircuit.generateProof(
+      BigInt(board.nonce),
+      board.ships,
+      boardHash
     );
 
-    const boardHash = BoardCircuit.hashBoard(nonce, ships);
+    spinner.stop("Board proof generated");
 
-    const proof = await BoardCircuit.generateProof(nonce, ships, boardHash);
+    spinner.start("Creating game...");
 
     const tx = await contract.prepareCreateGame(
-      proof,
+      BigInt(options.joinCode),
       boardHash,
-      BigInt(options.joinCode)
+      proof
     );
 
-    console.log(`Creating game with board hash: ${toHex(boardHash)}`);
+    const txHash = await walletClient.sendTransaction({
+      ...tx,
+      account: privateKeyToAccount(options.privateKey),
+    });
+    const gameId = contract.getGameId(BigInt(options.joinCode));
+
+    spinner.stop(`Game created with ID: ${toHex(gameId)} in tx: ${txHash}`);
+
+    prompts.outro(`You're all set!`);
+  });
+
+program
+  .command("join")
+  .requiredOption("-j, --join-code <joinCode>", "Join code for the game")
+  .requiredOption("--private-key <privateKey>", "Private key for the player")
+  .option("-b, --board <path>", "Path to the board file", "board.json")
+  .description("Join a game")
+  .action(async (options) => {
+    prompts.intro(color.inverse("ZK Battleship by Wakeup Labs ◌○●"));
+    const spinner = prompts.spinner();
+
+    const joinCode = BigInt(options.joinCode);
+    const board = JSON.parse(fs.readFileSync(options.board, "utf8"));
+    const boardHash = BoardCircuit.hashBoard(BigInt(board.nonce), board.ships);
+
+    spinner.start("Generating board proof...");
+
+    const proof = await BoardCircuit.generateProof(
+      BigInt(board.nonce),
+      board.ships,
+      boardHash
+    );
+
+    spinner.stop("Board proof generated");
+
+    spinner.start(`Joining game...`);
+
+    const tx = await contract.prepareJoinGame(joinCode, boardHash, proof);
 
     const txHash = await walletClient.sendTransaction({
       ...tx,
       account: privateKeyToAccount(options.privateKey),
     });
 
-    console.log(`Game created in tx ${txHash}`);
+    const gameId = contract.getGameId(joinCode);
 
-    const gameId = await contract.recoverGameId(txHash);
+    spinner.stop(`Game joined in tx ${txHash} with ID: ${toHex(gameId)}`);
 
-    console.log(`Game created with ID: ${gameId}`);
-  });
-
-program
-  .command("join")
-  .argument("<gameId>", "Game ID")
-  .requiredOption("-j, --join-code <joinCode>", "Join code for the game")
-  .requiredOption("--private-key <privateKey>", "Private key for the player")
-  .option("-b, --board <path>", "Path to the board file", "board.json")
-  .description("Join a game")
-  .action(async (gameId, options) => {
-    gameId = BigInt(gameId);
-    const joinCode = BigInt(options.joinCode);
-    const board = JSON.parse(fs.readFileSync(options.board, "utf8"));
-    const nonce = BigInt(board.nonce);
-    const ships = board.ships.map((ship: [string, string, string]) =>
-      ship.map(Number)
-    );
-
-    const boardHash = BoardCircuit.hashBoard(nonce, ships);
-
-    console.log(`Board hash: ${toHex(boardHash)}`);
-
-    const proof = await BoardCircuit.generateProof(nonce, ships, boardHash);
-
-    const tx = await contract.prepareJoinGame(
-      gameId,
-      proof,
-      boardHash,
-      joinCode
-    );
-
-    console.log(`Joining game with ID: ${gameId}`);
-
-    try {
-      const txHash = await walletClient.sendTransaction({
-        ...tx,
-        account: privateKeyToAccount(options.privateKey),
-      });
-      console.log(`Game joined in tx ${txHash}`);
-    } catch (err: any) {
-      if (err?.data) {
-        try {
-          const decoded = decodeErrorResult({
-            abi: BattleshipContractAbi, // your contract's ABI
-            data: err.data,
-          });
-          console.error("Decoded error:", decoded);
-        } catch (decodeErr) {
-          console.error("Could not decode error:", err);
-        }
-      } else {
-        console.error("Unknown error:", err);
-      }
-    }
+    prompts.outro(`You're all set!`);
   });
 
 program
@@ -131,16 +121,26 @@ program
   .argument("<gameId>", "Game ID")
   .description("Get game state")
   .action(async (gameId) => {
+    prompts.intro(color.inverse("ZK Battleship by Wakeup Labs ◌○●"));
+    const spinner = prompts.spinner();
+
+    spinner.start("Getting game state...");
+
     gameId = BigInt(gameId);
     const { player1, player2 } = await contract.getGamePlayers(gameId);
-    console.log(`Player 1: ${player1}`);
-    console.log(`Player 2: ${player2}`);
     const { player1BoardHash, player2BoardHash } =
       await contract.getGameBoardsHashes(gameId);
-    console.log(`Player 1 board hash: ${toHex(player1BoardHash)}`);
-    console.log(`Player 2 board hash: ${toHex(player2BoardHash)}`);
     const moveCount = await contract.getGameMoveCount(gameId);
-    console.log(`Move count: ${moveCount}`);
+
+    spinner.stop(`Game state retrieved`);
+
+    prompts.outro(
+      `Retrieved game state:\n\tPlayer 1: ${player1}\n\tPlayer 2: ${player2}\n\tPlayer 1 board hash: ${toHex(
+        player1BoardHash
+      )}\n\tPlayer 2 board hash: ${toHex(
+        player2BoardHash
+      )}\n\tMove count: ${moveCount}`
+    );
   });
 
 program
@@ -150,15 +150,17 @@ program
   .option("-b, --board <path>", "Path to the original board file", "board.json")
   .description("Attack and defend the game")
   .action(async (gameId, options) => {
+    prompts.intro(color.inverse("ZK Battleship by Wakeup Labs ◌○●"));
+    const spinner = prompts.spinner();
+
     gameId = BigInt(gameId);
 
     // recover our private board
     const boardJson = JSON.parse(fs.readFileSync(options.board, "utf8"));
-    const nonce = BigInt(boardJson.nonce);
-    const ships = boardJson.ships.map((ship: [string, string, string]) =>
-      ship.map(Number)
+    const boardHash = await BoardCircuit.hashBoard(
+      BigInt(boardJson.nonce),
+      boardJson.ships
     );
-    const boardHash = await BoardCircuit.hashBoard(nonce, ships);
 
     // Recover game state, our board and shots
     let board: BoardCellState[][];
@@ -170,16 +172,20 @@ program
       board = gameState.ours;
       opponentBoard = gameState.opponent;
     } else {
-      board = BoardCircuit.buildBoard(ships);
-      opponentBoard = Array.from({ length: 10 }, () =>
-        Array.from({ length: 10 }, () => BoardCellState.EMPTY)
-      );
+      board = Board.fromShips(boardJson.ships);
+      opponentBoard = Board.empty();
     }
 
-    console.log(`Waiting for players to join...`);
+    for (const row of board) {
+      console.log(row.map((cell) => cell === BoardCellState.SHIP ? "S" : "E").join(" "));
+    }
+
+    spinner.start("Waiting for players to join...");
 
     const player = privateKeyToAddress(options.privateKey);
-    const { player1, player2 } = await contract.getGamePlayers(gameId);
+    const { player1, player2 } = await contract.waitForPlayersToJoin(gameId);
+
+    spinner.stop("Players joined");
 
     let isPlayer1 = false;
     if (player1 === player) {
@@ -194,12 +200,12 @@ program
     console.log(`Player 1${isPlayer1 ? " (you)" : ""}: ${player1}`);
     console.log(`Player 2${!isPlayer1 ? " (you)" : ""}: ${player2}`);
 
+    let opponentMoveIndex = -1;
     while (true) {
       console.log(`Waiting for your turn...`);
-      const opponentMoveIndex = await contract.waitForUserTurn(
-        gameId,
-        isPlayer1
-      );
+
+      // confirm our turn
+      opponentMoveIndex = await contract.waitForUserTurn(gameId, isPlayer1);
 
       let isPreviousMoveHit;
       let isPreviousMoveHitProof: Uint8Array<ArrayBufferLike>;
@@ -210,48 +216,31 @@ program
         isPreviousMoveHitProof = new Uint8Array(0);
         opponentMove = { x: 0n, y: 0n };
       } else {
-        // check our previous move
-        if (opponentMoveIndex !== 0) {
-          const ourMove = await contract.getGameMove(
-            gameId,
-            BigInt(opponentMoveIndex - 1)
-          );
-          if (ourMove.isHit) {
-            console.log("Our previous move was a hit");
-            opponentBoard[Number(ourMove.x)][Number(ourMove.y)] =
-              BoardCellState.HIT;
-          } else {
-            console.log("Our previous move was a miss");
-            opponentBoard[Number(ourMove.x)][Number(ourMove.y)] =
-              BoardCellState.MISS;
-          }
-        }
-
         // get opponent move from contract and certify
         opponentMove = await contract.getGameMove(
           gameId,
           BigInt(opponentMoveIndex as number)
         );
         const isHit =
-          board[Number(opponentMove.x)][Number(opponentMove.y)] ===
+          board[Number(opponentMove.y)][Number(opponentMove.x)] ===
           BoardCellState.SHIP;
 
         console.log(`Opponent move: ${opponentMove.x}, ${opponentMove.y}`);
         if (isHit) {
           console.log("This is a hit");
-          board[Number(opponentMove.x)][Number(opponentMove.y)] =
+          board[Number(opponentMove.y)][Number(opponentMove.x)] =
             BoardCellState.HIT;
           isPreviousMoveHit = true;
         } else {
           console.log("This is a miss");
-          board[Number(opponentMove.x)][Number(opponentMove.y)] =
+          board[Number(opponentMove.y)][Number(opponentMove.x)] =
             BoardCellState.MISS;
           isPreviousMoveHit = false;
         }
 
         isPreviousMoveHitProof = await ShootCircuit.generateProof(
-          nonce,
-          ships,
+          BigInt(boardJson.nonce),
+          boardJson.ships,
           boardHash,
           opponentMove.x,
           opponentMove.y,
@@ -299,8 +288,33 @@ program
         ...tx,
         account: privateKeyToAccount(options.privateKey),
       });
+      await publicClient.waitForTransactionReceipt({
+        hash: txHash,
+      });
 
       console.log(`Shot sent in tx ${txHash}`);
+
+      console.log("Waiting for opponent's response...");
+
+      // we're actually just waiting for a confirmation from the opponent
+      opponentMoveIndex = await contract.waitForUserTurn(gameId, isPlayer1);
+
+      // check our previous move
+      if (opponentMoveIndex > 0) {
+        const ourMove = await contract.getGameMove(
+          gameId,
+          BigInt(opponentMoveIndex - 1)
+        );
+        if (ourMove.isHit) {
+          console.log("Our previous move was a hit");
+          opponentBoard[Number(ourMove.x)][Number(ourMove.y)] =
+            BoardCellState.HIT;
+        } else {
+          console.log("Our previous move was a miss");
+          opponentBoard[Number(ourMove.x)][Number(ourMove.y)] =
+            BoardCellState.MISS;
+        }
+      }
 
       // store game state
       fs.writeFileSync(
@@ -317,4 +331,8 @@ program
     }
   });
 
-program.parse(process.argv);
+try {
+  program.parse(process.argv);
+} catch (error) {
+  console.error(error);
+}

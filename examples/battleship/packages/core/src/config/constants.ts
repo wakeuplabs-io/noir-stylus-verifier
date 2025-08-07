@@ -1,15 +1,6 @@
-// Depth of the merkle tree
-export const DEPTH = 2;
-
 export const NUMBER_OF_SHIPS = 5;
 
-export const SHIP_LENGTHS = [
-    5, // Carrier
-    4, // Battleship
-    3, // Cruiser
-    3, // Submarine
-    2, // Destroyer
-];
+export const BOARD_SIZE = 10;
 
 // Supported chain ids
 export enum SupportedChainId {
