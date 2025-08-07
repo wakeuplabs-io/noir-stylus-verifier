@@ -7,6 +7,7 @@ import {
   ArrowRightIcon,
   AudioWaveform,
   CheckIcon,
+  Shuffle,
   WalletIcon,
 } from "lucide-react";
 import {
@@ -303,7 +304,6 @@ function RouteComponent() {
     pollingInterval: 1000,
     onLogs: (events) => {
       for (const event of events) {
-        console.log("MoveMade event", event, boardId, event.args.gameId);
         if (BigInt(event.args.gameId ?? 0) !== boardId) {
           continue;
         }
@@ -330,7 +330,6 @@ function RouteComponent() {
     pollingInterval: 1000,
     onLogs: (events) => {
       for (const event of events) {
-        console.log("MoveMade event", event, boardId, event.args.gameId);
         if (BigInt(event.args.gameId ?? 0) !== boardId) {
           continue;
         }
@@ -357,7 +356,6 @@ function RouteComponent() {
     pollingInterval: 1000,
     onLogs: (events) => {
       for (const event of events) {
-        console.log("MoveMade event", event, boardId, event.args.gameId);
         if (BigInt(event.args.gameId ?? 0) !== boardId) {
           continue;
         }
@@ -505,6 +503,7 @@ function RouteComponent() {
               <a
                 href="https://github.com/wakeuplabs-io/noir-stylus-verifier"
                 target="_blank"
+                className="text-blue-500 underline"
               >
                 Noir Stylus Verifier
               </a>{" "}
@@ -563,13 +562,22 @@ function RouteComponent() {
                 Enter a session code to join a game or create a new one.
               </DialogDescription>
 
-              <div className="bg-muted rounded-xl mb-6">
+              <div className="bg-muted rounded-xl mb-6 relative">
                 <input
                   value={joinCode}
                   onChange={(e) => setJoinCode(e.target.value)}
                   className="text-sm text-muted-foreground p-4 border-none outline-none"
                   placeholder="Session code"
                 />
+
+                <button
+                  onClick={() =>
+                    setJoinCode(Math.floor(Math.random() * 1000000).toString())
+                  }
+                  className="absolute right-0 top-1/2 -translate-y-1/2 w-10 flex items-center justify-center"
+                >
+                  <Shuffle className="w-4 h-4" />
+                </button>
               </div>
 
               <div className="space-y-2">

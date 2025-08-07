@@ -1,7 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import boardLanding from "@/assets/board-landing.svg";
+import star from "@/assets/star.svg";
 import { useAccount, useConnect } from "wagmi";
 import { useEffect } from "react";
+import { ConnectWallet } from "@/components/connect-wallet";
+import { DialogTrigger } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -10,11 +13,6 @@ export const Route = createFileRoute("/")({
 function Index() {
   const navigate = useNavigate();
   const { address } = useAccount();
-  const { connect, connectors } = useConnect();
-
-  const onConnect = () => {
-    connect({ connector: connectors[0] });
-  };
 
   useEffect(() => {
     if (address) {
@@ -23,18 +21,28 @@ function Index() {
   }, [address]);
 
   return (
-    <div className="h-screen w-screen relative">
-      <div className="p-10">
-        <h1 className="text-7xl font-black mb-4">BATTLESHIP</h1>
-        <p className="text-2xl font-bold mb-6">
-          A multiplayer battleship game built <br /> with Noir, Stylus and Noir
-          Stylus Verifier
-        </p>
+    <div className="h-screen w-screen relative overflow-hidden">
+      <h1 className="text-9xl font-black mb-4 absolute left-28 top-20">
+        BATTLE
+        <br />
+        SHIP
+      </h1>
 
-        <button onClick={onConnect} className="relative px-6 py-3 text-xl font-bold text-black bg-[#FF8577] border-2 border-black rounded-full shadow-[2px_2px_0px_#000] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-transform duration-100">
-          Login <span className="ml-2">→</span>
-        </button>
-      </div>
+      <ConnectWallet>
+        <DialogTrigger asChild>
+          <button className="h-[500px] w-[500px] absolute left-14 bottom-0 flex items-center justify-center cursor-pointer hover:scale-105 transition-transform duration-300">
+            <img
+              src={star}
+              alt=""
+              className="h-[500px] w-[500px] translate-y-1/2"
+            />
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-16 text-3xl font-bold">
+              Connect Wallet
+            </div>
+          </button>
+        </DialogTrigger>
+      </ConnectWallet>
+
       <img
         src={boardLanding}
         alt=""
