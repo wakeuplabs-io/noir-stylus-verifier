@@ -36,6 +36,7 @@ import {
 } from "@battleship/core";
 import { CONTRACT_ADDRESS, RPC_URL } from "@/env";
 import { BattleshipContractAbi } from "@battleship/core/src/config/abi";
+import { toast } from "sonner";
 
 enum CreateBoardStep {
   JOIN = "join",
@@ -155,141 +156,178 @@ function RouteComponent() {
       console.error(error);
       setCreateBoardStep(CreateBoardStep.JOIN);
       setIsCreatingBoard(false);
+      toast.error("Error creating game", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
     }
   };
 
   const onJoinBoard = async (joinCode: bigint) => {
-    setIsCreatingBoard(true);
-    setCreateBoardStep(CreateBoardStep.PROOF);
+    try {
+      setIsCreatingBoard(true);
+      setCreateBoardStep(CreateBoardStep.PROOF);
 
-    const boardHash = BoardCircuit.hashBoard(nonce, userShips!);
-    const proof = await BoardCircuit.generateProof(
-      nonce,
-      userShips!,
-      boardHash
-    );
+      const boardHash = BoardCircuit.hashBoard(nonce, userShips!);
+      const proof = await BoardCircuit.generateProof(
+        nonce,
+        userShips!,
+        boardHash
+      );
 
-    setCreateBoardStep(CreateBoardStep.SIGN_AND_SEND);
+      setCreateBoardStep(CreateBoardStep.SIGN_AND_SEND);
 
-    const tx = await contract.prepareJoinGame(joinCode, boardHash, proof);
-    const txHash = await sendTransactionAsync({ ...tx });
-    await waitForTransactionReceipt(wagmiClient!, { hash: txHash });
+      const tx = await contract.prepareJoinGame(joinCode, boardHash, proof);
+      const txHash = await sendTransactionAsync({ ...tx });
+      await waitForTransactionReceipt(wagmiClient!, { hash: txHash });
 
-    const gameId = contract.getGameId(joinCode);
-    setBoardId(gameId);
-    await contract.waitForPlayersToJoin(gameId); // just ensuring, we should not need this
+      const gameId = contract.getGameId(joinCode);
+      setBoardId(gameId);
+      await contract.waitForPlayersToJoin(gameId); // just ensuring, we should not need this
 
-    setCreateBoardStep(CreateBoardStep.SUCCESS);
+      setCreateBoardStep(CreateBoardStep.SUCCESS);
 
-    setCurrentBoard("opponent");
-    setIsCreatingBoard(false);
-    setIsPlayer1(false);
+      setCurrentBoard("opponent");
+      setIsCreatingBoard(false);
+      setIsPlayer1(false);
+    } catch (error) {
+      console.error(error);
+      setCreateBoardStep(CreateBoardStep.JOIN);
+      setIsCreatingBoard(false);
+      toast.error("Error joining game", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
   };
 
   const onAttack = async (y: bigint, x: bigint) => {
-    if (x < 0n || x > 9n || y < 0n || y > 9n) {
-      throw new Error("Shot out of bounds");
-    } else if (opponentBoard[Number(x)][Number(y)] !== BoardCellState.EMPTY) {
-      throw new Error("You already shot here");
-    }
+    try {
+      if (x < 0n || x > 9n || y < 0n || y > 9n) {
+        throw new Error("Shot out of bounds");
+      } else if (opponentBoard[Number(x)][Number(y)] !== BoardCellState.EMPTY) {
+        throw new Error("You already shot here");
+      }
 
-    setIsAttacking(true);
-    setAttackStep(AttackStep.WAITING_FOR_TURN);
+      setIsAttacking(true);
+      setAttackStep(AttackStep.WAITING_FOR_TURN);
 
-    let opponentMoveIndex = await contract.waitForUserTurn(boardId!, isPlayer1);
-
-    setAttackStep(AttackStep.PROOF);
-
-    let isPreviousMoveHit;
-    let isPreviousMoveHitProof: Uint8Array<ArrayBufferLike>;
-    let opponentMove: { x: bigint; y: bigint };
-    if (opponentMoveIndex < 0) {
-      // first move
-      isPreviousMoveHit = false;
-      isPreviousMoveHitProof = new Uint8Array(0);
-      opponentMove = { x: 0n, y: 0n };
-    } else {
-      // get opponent move from contract and certify
-      opponentMove = await contract.getGameMove(
+      let opponentMoveIndex = await contract.waitForUserTurn(
         boardId!,
-        BigInt(opponentMoveIndex as number)
+        isPlayer1
       );
-      const isHit =
-        userBoard![Number(opponentMove.y)][Number(opponentMove.x)] ===
-        BoardCellState.SHIP;
 
-      console.log(`Opponent move: ${opponentMove.x}, ${opponentMove.y}`);
-      if (isHit) {
-        console.log("This is a hit");
-        userBoard![Number(opponentMove.y)][Number(opponentMove.x)] =
-          BoardCellState.HIT;
-        isPreviousMoveHit = true;
-      } else {
-        console.log("This is a miss");
-        userBoard![Number(opponentMove.y)][Number(opponentMove.x)] =
-          BoardCellState.MISS;
+      setAttackStep(AttackStep.PROOF);
+
+      let isPreviousMoveHit;
+      let isPreviousMoveHitProof: Uint8Array<ArrayBufferLike>;
+      let opponentMove: { x: bigint; y: bigint };
+      if (opponentMoveIndex < 0) {
+        // first move
         isPreviousMoveHit = false;
-      }
-
-      isPreviousMoveHitProof = await ShootCircuit.generateProof(
-        nonce,
-        userShips!,
-        boardHash,
-        opponentMove.x,
-        opponentMove.y,
-        isPreviousMoveHit
-      );
-    }
-
-    setAttackStep(AttackStep.SIGN_AND_SEND);
-
-    const txHash = await sendTransactionAsync(
-      contract.prepareShoot(
-        boardId!,
-        isPreviousMoveHitProof,
-        isPreviousMoveHit,
-        opponentMove.x,
-        opponentMove.y,
-        x,
-        y
-      )
-    );
-    await waitForTransactionReceipt(wagmiClient!, { hash: txHash });
-
-    setAttackStep(AttackStep.WAITING_FOR_CONFIRMATION);
-
-    // we're actually just waiting for a confirmation from the opponent
-    opponentMoveIndex = await contract.waitForUserTurn(boardId!, isPlayer1);
-
-    // check our previous move.
-    if (opponentMoveIndex > 0) {
-      const ourMove = await contract.getGameMove(
-        boardId!,
-        BigInt(opponentMoveIndex - 1)
-      );
-      if (ourMove.isHit) {
-        console.log("Our previous move was a hit");
-        opponentBoard[Number(ourMove.y)][Number(ourMove.x)] =
-          BoardCellState.HIT;
+        isPreviousMoveHitProof = new Uint8Array(0);
+        opponentMove = { x: 0n, y: 0n };
       } else {
-        console.log("Our previous move was a miss");
-        opponentBoard[Number(ourMove.y)][Number(ourMove.x)] =
-          BoardCellState.MISS;
-      }
-    }
+        // get opponent move from contract and certify
+        opponentMove = await contract.getGameMove(
+          boardId!,
+          BigInt(opponentMoveIndex as number)
+        );
+        const isHit = [BoardCellState.HIT, BoardCellState.MISS].includes(
+          userBoard![Number(opponentMove.y)][Number(opponentMove.x)]
+        );
 
-    setAttackStep(AttackStep.SUCCESS);
-    setIsAttacking(false);
+        console.log(`Opponent move: ${opponentMove.x}, ${opponentMove.y}`);
+        if (isHit) {
+          console.log("This is a hit");
+          userBoard![Number(opponentMove.y)][Number(opponentMove.x)] =
+            BoardCellState.HIT;
+          isPreviousMoveHit = true;
+        } else {
+          console.log("This is a miss");
+          userBoard![Number(opponentMove.y)][Number(opponentMove.x)] =
+            BoardCellState.MISS;
+          isPreviousMoveHit = false;
+        }
+
+        isPreviousMoveHitProof = await ShootCircuit.generateProof(
+          nonce,
+          userShips!,
+          boardHash,
+          opponentMove.x,
+          opponentMove.y,
+          isPreviousMoveHit
+        );
+      }
+
+      setAttackStep(AttackStep.SIGN_AND_SEND);
+
+      const txHash = await sendTransactionAsync(
+        contract.prepareShoot(
+          boardId!,
+          isPreviousMoveHitProof,
+          isPreviousMoveHit,
+          opponentMove.x,
+          opponentMove.y,
+          x,
+          y
+        )
+      );
+      await waitForTransactionReceipt(wagmiClient!, { hash: txHash });
+
+      setAttackStep(AttackStep.WAITING_FOR_CONFIRMATION);
+
+      // we're actually just waiting for a confirmation from the opponent
+      opponentMoveIndex = await contract.waitForUserTurn(boardId!, isPlayer1);
+
+      // check our previous move.
+      if (opponentMoveIndex > 0) {
+        const ourMove = await contract.getGameMove(
+          boardId!,
+          BigInt(opponentMoveIndex - 1)
+        );
+        if (ourMove.isHit) {
+          console.log("Our previous move was a hit");
+          opponentBoard[Number(ourMove.y)][Number(ourMove.x)] =
+            BoardCellState.HIT;
+        } else {
+          console.log("Our previous move was a miss");
+          opponentBoard[Number(ourMove.y)][Number(ourMove.x)] =
+            BoardCellState.MISS;
+        }
+
+        setLogs((logs) => [
+          {
+            type: "attack",
+            from: address!,
+            txHash: txHash,
+            args: {
+              x,
+              y,
+              hit: ourMove.isHit
+            },
+          },
+          ...logs,
+        ]);
+      }
+
+      setAttackStep(AttackStep.SUCCESS);
+      setIsAttacking(false);
+    } catch (error) {
+      console.error(error);
+      setAttackStep(AttackStep.WAITING_FOR_TURN);
+      setIsAttacking(false);
+      toast.error("Error attacking", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
   };
 
-  // TODO:
   const onOpenChangeCreateBoard = (open: boolean) => {
     if (!open) {
       setIsCreatingBoard(false);
+      setCreateBoardStep(CreateBoardStep.JOIN);
     }
   };
 
-  // TODO:
   const onOpenChangeAttack = (open: boolean) => {
     if (!open) {
       setIsAttacking(false);
@@ -357,6 +395,10 @@ function RouteComponent() {
     onLogs: (events) => {
       for (const event of events) {
         if (BigInt(event.args.gameId ?? 0) !== boardId) {
+          continue;
+        }
+
+        if (event.args.player === address) {
           continue;
         }
 

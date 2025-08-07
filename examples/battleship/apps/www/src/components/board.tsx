@@ -12,8 +12,6 @@ import {
   type BoardShips,
 } from "@battleship/core";
 
-const letters = "ABCDEFGHIJ".split("");
-
 export const BattleshipBoard: React.FC<{
   board: BoardCellState[][];
   ships?: BoardShips;
@@ -32,7 +30,7 @@ export const BattleshipBoard: React.FC<{
         <div></div>
         {Array.from({ length: 10 }, (_, i) => (
           <div key={i} className="text-center font-bold text-sm text-black">
-            {letters[i]}
+            {"ABCDEFGHIJ"[i]}
           </div>
         ))}
       </div>
@@ -41,7 +39,7 @@ export const BattleshipBoard: React.FC<{
       {board.map((row, rowIndex) => (
         <div key={rowIndex} className="grid grid-cols-11 gap-x-2">
           <div className="flex items-center justify-end pr-2 font-bold text-sm text-black">
-            {rowIndex + 1}
+            {rowIndex}
           </div>
           {row.map((cell, colIndex) => (
             <BattleshipBoardCell
@@ -101,8 +99,8 @@ const getShipSegment = (x: number, y: number, ships: BoardShips) => {
     const isEnd = endX === x && endY === y;
     const isBody =
       ship.direction === Direction.HORIZONTAL
-        ? x >= ship.x && x <= ship.x + size && y === ship.y
-        : x === ship.x && y >= ship.y && y <= ship.y + size;
+        ? y === ship.y && x >= ship.x && x <= ship.x + size - 1
+        : x === ship.x && y >= ship.y && y <= ship.y + size - 1;
 
     if (isStart || isEnd) {
       let rotation = ship.direction === Direction.HORIZONTAL ? 0 : 90;
@@ -127,7 +125,6 @@ const getShipSegment = (x: number, y: number, ships: BoardShips) => {
         />
       );
     }
-
   }
 
   return null;

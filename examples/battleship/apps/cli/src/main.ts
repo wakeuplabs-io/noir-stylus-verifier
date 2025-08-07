@@ -192,7 +192,7 @@ program
       throw new Error("You are not a player in this game");
     }
 
-    console.log(`Game ID: ${gameId}`);
+    console.log(`Game ID: ${toHex(gameId)}`);
     console.log(`Player 1${isPlayer1 ? " (you)" : ""}: ${player1}`);
     console.log(`Player 2${!isPlayer1 ? " (you)" : ""}: ${player2}`);
 
@@ -223,7 +223,11 @@ program
           board[Number(opponentMove.y)][Number(opponentMove.x)] ===
           BoardCellState.SHIP;
 
-        console.log(`Opponent move: ${opponentMove.x}, ${opponentMove.y}`);
+        console.log(
+          `Opponent move: ${"ABCDEFGHIJ"[Number(opponentMove.x)]}${
+            Number(opponentMove.y)
+          }`
+        );
         if (isHit) {
           console.log("This is a hit");
           board[Number(opponentMove.y)][Number(opponentMove.x)] =
@@ -297,7 +301,7 @@ program
       // we're actually just waiting for a confirmation from the opponent
       opponentMoveIndex = await contract.waitForUserTurn(gameId, isPlayer1);
 
-      // check our previous move. TODO: does it skip first move for player 1?
+      // check our previous move.
       if (opponentMoveIndex > 0) {
         const ourMove = await contract.getGameMove(
           gameId,
