@@ -1,47 +1,69 @@
-# BattleSnark: Building ZK Battleship with Noir and Stylus
+# Building ZK Battleship with Noir and Stylus
 
-I've been exploring zero-knowledge proofs recently, and took it as an opportunity to build out a fun project. This post walks through building a Battleship smart contract using zk-SNARKs, Noir circuits, and Stylus contracts on Arbitrum.
+This tutorial demonstrates how to build an end-to-end zero-knowledge game using:
+- **Noir** for writing ZK circuits
+- **Stylus** for efficient smart contracts on Arbitrum
+- **Noir Stylus Verifier** for generating Stylus-based proof verifiers
 
-As a little background: Zero knowledge proofs let you prove a statement is true without revealing any additional information about the statement. In practice, this might look like showing you are credit worthy without handing over your bank statements, or validating nuclear disarmament without revealing state secrets. Typically, zero knowledge proofs involve repeatedly asking questions in order to validate the statement, but this is infeasible on the blockchain. zk-SNARK is a class of zero knowledge proofs that don't require interaction - which makes them a great fit for transactional use cases.
+Zero-knowledge proofs allow you to prove a statement is true without revealing additional information. In blockchain gaming, this enables players to prove the validity of their moves without revealing private game state. zk-SNARKs are particularly well-suited for blockchain applications as they don't require interaction between the prover and verifier.
 
-Thinking through the games I've played where we rely on other players not to cheat, Battleship stood out (who hasn't had an opponent move ships around during the game, or not even place all of their ships on the board!). The rules of battleship are pretty straightforward: Each player places 5 ships on their secret board (ensuring they are non-overlapping), and then players take turn guessing coordinates where their opponent's ships might be. The first person to guess all the coordinates of the other player's ships wins.
+This example implements Battleship, a game where players must trust that opponents follow the rules without revealing their board configuration. The game requires:
+1. Valid board setup
+2. Immutable board state throughout the game
+3. Private board configurations
+4. Honest reporting of hits/misses
 
-You can see the full source code at [noir-stylus-verifier/examples/battleship](https://github.com/wakeuplabs-io/noir-stylus-verifier/tree/main/examples/battleship).
+Source code: [noir-stylus-verifier/examples/battleship](https://github.com/wakeuplabs-io/noir-stylus-verifier/tree/main/examples/battleship)
 
-## Battleship
+## Architecture Overview
 
-Battleship involves trusting your opponent to set up a valid board, and record hits on their ships. Ideally there would be a way for a neutral 3rd party to validate the results without revealing any of the board state to the other player. The guarantees we need for a fair game are:
+The ZK Battleship implementation uses zero-knowledge proofs to ensure game integrity while maintaining privacy. The system consists of:
 
-1. Each player's board is valid
-2. Each player's board is unchanged throughout the game
-3. A player shouldn't be able to see their opponent's board
-4. A player can't lie about whether a guess is a hit or not
+**Noir Circuits:**
+- Board validation circuit - proves valid ship placement
+- Shot verification circuit - proves hit/miss results
 
-Building this in a centralized way is pretty straightforward: A "neutral" webserver/database can store the exact states secretly, and decide the results. As long as you trust the web host, you can trust the results aren't tampered with. Having this work on Ethereum is much more complicated though: Everything in the blockchain (smart contract data, transaction inputs, etc.) is public, so a player can't just send their ship locations in plain text for fear of their opponent seeing it. Let's see how zk-SNARK can help with this.
+**Stylus Contracts:**
+- Game state management
+- Proof verification via generated verifier contracts
+- Turn-based gameplay logic
 
-## zk-SNARK
+**Noir Stylus Verifier:**
+- Automatically generates Stylus verifier contracts from Noir circuits
+- Provides efficient on-chain proof verification
 
-A zk-SNARK is an arithmetic circuit which takes in a series of numerical signals and constraints, and derives a numerical output and a proof.
+## ZK Circuit Design
 
-There are two types of inputs that make up the circuit:
+The implementation requires two distinct circuits to handle different aspects of the game:
 
-1. **Public Inputs**: These are inputs that everyone knows (in Battleship, the guess coordinates are known to both parties so are public)
-2. **Private Inputs**: These are inputs that only the provider knows (in Battleship, the locations of all the ships are private to only 1 player, so should be treated as private)
+**1. Board Validation Circuit**
+- **Private inputs**: Ship positions, nonce (salt)
+- **Public inputs**: Board hash
+- **Purpose**: Proves that a board configuration is valid (no overlapping ships, within bounds)
 
-With a zk-SNARK, you can prove that a set of inputs generates an output, knowing only the public inputs and output. That seems to satisfy our criteria: We want a player to be able to have a private ship configuration, but still verifiably prove whether a public guess is a hit or not.
+**2. Shot Verification Circuit**
+- **Private inputs**: Ship positions, nonce
+- **Public inputs**: Board hash, shot coordinates (x,y), hit result
+- **Purpose**: Proves that a claimed hit/miss result is accurate for the given shot
 
-Based on our requirements above, we need two separate circuits:
+## Implementation Stack
 
-1. **Board Creation**: One that can generate a hash identifier for a set of ship positions (and validate they are all properly positioned!)
-2. **Move Validation**: One that can confirm/deny if a guess is a hit or not
+**Noir Circuits**
+- [Noir](https://noir-lang.org/) - Domain-specific language for ZK circuits
+- Rust-like syntax for easier development and maintenance
+- Built-in cryptographic primitives (Poseidon hashing)
 
-## Getting Started with Noir
+**Stylus Smart Contracts**
+- [Arbitrum Stylus](https://docs.arbitrum.io/stylus) - Rust-based smart contracts
+- WASM execution for gas efficiency
+- Native Rust development experience
 
-For this project, we're using [Noir](https://noir-lang.org/), a domain-specific language for writing zero-knowledge circuits. Unlike Circom, Noir provides a more developer-friendly syntax that resembles Rust, making it easier to write and maintain complex circuits.
+**Noir Stylus Verifier**
+- Generates Stylus verifier contracts from Noir circuits
+- Command-line tool: `nsv generate`, `nsv deploy`
+- Seamless integration between Noir and Stylus
 
 ### Project Structure
-
-Our Battleship implementation has the following structure:
 
 ```
 examples/battleship/
@@ -57,11 +79,11 @@ examples/battleship/
     └── core/           # Shared TypeScript library
 ```
 
-### Circuit 1: Board Creation
+## Noir Circuit Implementation
 
-For board creation, we need one private input to represent the position of the ships, and we'll need an output that verifies the hash is based on the positions of the ships.
+### Shared Constants and Utilities
 
-First, let's look at our common constants and utilities in `circuits/common/src/lib.nr`:
+The `circuits/common/src/lib.nr` module defines game constants and the board hashing function:
 
 ```noir
 use poseidon::poseidon2::Poseidon2::hash;
@@ -103,7 +125,9 @@ pub fn hash_board(nonce: Field, ships: [[u8; 3]; NUMBER_OF_SHIPS]) -> Field {
 }
 ```
 
-Now, the board validation circuit in `circuits/board/src/main.nr`:
+### Board Validation Circuit
+
+The board validation circuit (`circuits/board/src/main.nr`) ensures valid ship placement:
 
 ```noir
 use common::{
@@ -152,16 +176,15 @@ fn main(nonce: Field, ships: [[u8; 3]; NUMBER_OF_SHIPS], board_hash: pub Field) 
 }
 ```
 
-This circuit does several important things:
+**Key validations:**
+- Ship placement within board boundaries
+- No overlapping ships
+- Hash verification against ship configuration
+- Nonce-based protection against rainbow table attacks
 
-1. **Validates ship placement**: Ensures all ships are within the board boundaries
-2. **Prevents overlap**: Checks that no two ships occupy the same cell
-3. **Verifies hash**: Confirms the provided hash matches the actual ship configuration
-4. **Uses a nonce**: Prevents rainbow table attacks on ship configurations
+### Shot Verification Circuit
 
-### Circuit 2: Move Validation
-
-The second circuit validates whether a shot is a hit or miss. Here's `circuits/shoot/src/main.nr`:
+The shot verification circuit (`circuits/shoot/src/main.nr`) validates hit/miss claims:
 
 ```noir
 use common::{
@@ -212,16 +235,15 @@ fn is_hit(guess_x: u8, guess_y: u8, ship: [u8; 3], len: u8) -> bool {
 }
 ```
 
-This circuit:
+**Key validations:**
+- Shot coordinates within board bounds
+- Board integrity (ships unchanged since creation)
+- Accurate hit/miss calculation
+- Cryptographic proof of correctness
 
-1. **Validates coordinates**: Ensures the shot is within the board
-2. **Verifies board integrity**: Confirms the ships haven't changed since board creation
-3. **Calculates hit/miss**: Determines if the shot hits any ship
-4. **Proves correctness**: Generates a proof that the hit/miss claim is accurate
+## Stylus Smart Contract
 
-## Smart Contract Implementation
-
-Our smart contract is written in Rust using the [Stylus SDK](https://docs.arbitrum.io/stylus/stylus-gentle-introduction) and deployed on Arbitrum. Here are the key parts of `contracts/src/lib.rs`:
+The game logic is implemented in Rust using the Stylus SDK. Key components include:
 
 ```rust
 #[storage]
@@ -304,26 +326,40 @@ impl Battleship {
 }
 ```
 
-The smart contract:
+**Core functionality:**
+- Game state management (players, moves, scores)
+- ZK proof verification via generated verifier contracts
+- Turn-based game flow enforcement
+- Win condition detection
 
-1. **Stores game state**: Tracks players, board hashes, moves, and scores
-2. **Verifies proofs**: Calls the verifier contracts to validate ZK proofs
-3. **Enforces game rules**: Ensures proper turn order and valid moves
-4. **Manages game lifecycle**: Handles game creation, joining, and completion
+## Noir Stylus Verifier Integration
 
-## Proof Generation and Verification
+The `noir-stylus-verifier` tool bridges Noir circuits and Stylus contracts:
 
-### Generating Proofs
+### Circuit Compilation and Deployment
 
-The proof generation happens client-side using the compiled Noir circuits. The `noir-stylus-verifier` tool automatically:
+```bash
+# Generate Stylus verifier from Noir circuit
+cd circuits/board
+nsv generate
 
-1. Compiles Noir circuits to verification contracts
-2. Deploys them on Arbitrum
-3. Provides a simple interface for proof verification
+# Deploy verifier contract
+nsv deploy --rpc-url https://sepolia-rollup.arbitrum.io/rpc --private-key $PRIVATE_KEY
+```
 
-### Building the User Interface
+**Process:**
+1. Compiles Noir circuits to Stylus-compatible verifiers
+2. Generates Rust verifier contracts
+3. Deploys to Arbitrum with a single command
+4. Returns contract addresses for integration
 
-We built both a CLI tool and web application for interacting with the game:
+### Client-Side Proof Generation
+
+Applications generate proofs using the Noir.js library and submit them to the Stylus contract for verification.
+
+## User Interfaces
+
+The example includes both CLI and web interfaces:
 
 ```bash
 # Create a game
@@ -336,9 +372,9 @@ We built both a CLI tool and web application for interacting with the game:
 ./src/main.ts play --private-key $PRIVATE_KEY $GAME_ID
 ```
 
-## Deployment
+## Live Deployment
 
-The system is deployed on Arbitrum Sepolia:
+The complete system is deployed on Arbitrum Sepolia:
 
 | Contract | Address |
 |----------|---------|
@@ -346,37 +382,56 @@ The system is deployed on Arbitrum Sepolia:
 | ShootVerifier | `0x62965b4f17523b61a295788d7fa6f269c940c5a3` |
 | Battleship | `0xb3448a6f3958ac075182196dd717d5f574f81663` |
 
-Deployment process:
+### Deployment Workflow
 
 ```bash
-# Generate and deploy verifier contracts
-cd circuits/board && nsv generate && nsv deploy --rpc-url $RPC_URL --private-key $PRIVATE_KEY
-cd circuits/shoot && nsv generate && nsv deploy --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+# 1. Generate and deploy verifier contracts
+cd circuits/board
+nsv generate && nsv deploy --rpc-url $RPC_URL --private-key $PRIVATE_KEY
 
-# Deploy main contract
-cd contracts && cargo stylus deploy --endpoint $RPC_URL --private-key $PRIVATE_KEY
+cd ../shoot  
+nsv generate && nsv deploy --rpc-url $RPC_URL --private-key $PRIVATE_KEY
+
+# 2. Deploy main game contract with verifier addresses
+cd ../../contracts
+cargo stylus deploy --endpoint $RPC_URL --private-key $PRIVATE_KEY \
+  --constructor-args <BOARD_VERIFIER_ADDR> <SHOOT_VERIFIER_ADDR>
 ```
 
-## Key Innovations
+## Key Benefits
 
-This implementation showcases several important concepts:
+**Zero-Knowledge Gaming**
+- Trustless gameplay with hidden information
+- Cryptographic guarantees instead of trusted third parties
+- Privacy-preserving competitive gaming
 
-1. **Zero-Knowledge Gaming**: Demonstrates how ZK proofs enable trustless gaming with hidden information
-2. **Noir Integration**: Shows practical use of Noir for circuit development
-3. **Stylus Contracts**: Leverages Rust smart contracts on Arbitrum for efficiency
-4. **Noir In Stylus**: Take full advantage of stylus capabilities with [nsv](https://github.com/wakeuplabs-io/noir-stylus-verifier) by generating stylus verifiers for your circuits.
-4. **Modular Architecture**: Clean separation between circuits, contracts, and applications
+**Noir Circuit Development**
+- Rust-like syntax for familiar development experience
+- Built-in cryptographic primitives
+- Comprehensive testing framework
 
-## Conclusion
+**Stylus Smart Contracts**
+- Native Rust development for blockchain
+- WASM execution efficiency
+- Reduced gas costs compared to Solidity
 
-Building ZK Battleship demonstrates the power of zero-knowledge proofs for creating trustless applications with private state. The combination of Noir for circuit development and Stylus for smart contracts provides a powerful toolkit for building next-generation decentralized applications.
+**Noir Stylus Verifier Integration**
+- Seamless workflow from circuit to verifier contract
+- Single command deployment
+- Type-safe proof verification
 
-The key insight is that zero-knowledge proofs allow us to maintain the integrity of game rules while preserving the privacy that makes games like Battleship interesting. Players can prove their moves are valid without revealing their board configuration, creating a truly fair and trustless gaming experience.
+## Next Steps
 
-Whether you're building games, privacy-preserving applications, or exploring ZK technology, this project provides a practical example of how these cutting-edge cryptographic tools can be applied to real-world problems.
+This tutorial provides a foundation for building ZK applications with Noir and Stylus. Consider extending the implementation with:
 
-You can explore the full codebase and try the game yourself at the [noir-stylus-verifier repository](https://github.com/wakeuplabs-io/noir-stylus-verifier/tree/main/examples/battleship).
+- **Enhanced game features**: Multiple ship types, larger boards, power-ups
+- **Optimized circuits**: Batch verification, recursive proofs
+- **Advanced UI**: Real-time multiplayer, tournament modes
+- **Cross-chain deployment**: Multi-chain game state synchronization
 
----
+## Resources
 
-*This tutorial was created as part of the noir-stylus-verifier project, demonstrating how to build zero-knowledge applications on Arbitrum using Noir and Stylus.*
+- **Source Code**: [battleship example](https://github.com/wakeuplabs-io/noir-stylus-verifier/tree/main/examples/battleship)
+- **Noir Documentation**: [noir-lang.org](https://noir-lang.org/)
+- **Stylus Documentation**: [docs.arbitrum.io/stylus](https://docs.arbitrum.io/stylus)
+- **NSV Tool**: [noir-stylus-verifier](https://github.com/wakeuplabs-io/noir-stylus-verifier)
