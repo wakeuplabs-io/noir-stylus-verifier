@@ -21,7 +21,8 @@ export const BattleshipContractAbi = parseAbi([
   "error InvalidShot()",
   "error InvalidProof()",
   "error InvalidJoinCode()",
-  "event GameCreated(uint256 gameId, address creator)",
+  "event GameCreated(uint256 gameId, address player)",
   "event GameJoined(uint256 gameId, address player)",
-  "event MoveMade(uint256 gameId, uint256 moveIndex, uint256 x, uint256 y)",
+  "event MoveMade(uint256 gameId, address player, uint256 x, uint256 y)",
+  "event GameFinished(uint256 gameId, address winner)",
 ] as const);

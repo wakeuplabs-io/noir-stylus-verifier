@@ -14,6 +14,7 @@ import {
 import { BattleshipContractAbi } from "../config/abi";
 import { MULTICALL_ADDRESS, SupportedChainId } from "../config/constants";
 import { Move } from "../types/game";
+import { arbitrumSepolia } from "viem/chains";
 
 export class BattleshipContract {
   private address: Address;
@@ -40,7 +41,7 @@ export class BattleshipContract {
   async prepareCreateGame(
     join_code: bigint,
     board_hash: bigint,
-    proof: Uint8Array<ArrayBufferLike>,
+    proof: Uint8Array<ArrayBufferLike>
   ) {
     const txRequest = await this.publicClient.prepareTransactionRequest({
       to: this.address,
@@ -48,7 +49,7 @@ export class BattleshipContract {
         abi: BattleshipContractAbi,
         functionName: "createGame",
         args: [
-          this.getGameId(join_code), 
+          this.getGameId(join_code),
           board_hash,
           `0x${Array.from(proof, (byte) =>
             byte.toString(16).padStart(2, "0")
@@ -95,12 +96,12 @@ export class BattleshipContract {
    * @param board_hash - The hash of the board
    * @param proof - The proof of the board
    */
-  async prepareJoinGame(
+  prepareJoinGame(
     join_code: bigint,
     board_hash: bigint,
-    proof: Uint8Array<ArrayBufferLike>,
+    proof: Uint8Array<ArrayBufferLike>
   ) {
-    const txRequest = await this.publicClient.prepareTransactionRequest({
+    return {
       to: this.address,
       data: encodeFunctionData({
         abi: BattleshipContractAbi,
@@ -115,21 +116,19 @@ export class BattleshipContract {
       }),
       value: 0n,
       chain: null,
-    });
-
-    return txRequest;
+    };
   }
 
-  async prepareShoot(
+  prepareShoot(
     gameId: bigint,
     proof: Uint8Array<ArrayBufferLike>,
     previous_move_hit: boolean,
     previous_move_x: bigint,
     previous_move_y: bigint,
-    x: bigint,  
+    x: bigint,
     y: bigint
   ) {
-    const txRequest = await this.publicClient.prepareTransactionRequest({
+    return {
       to: this.address,
       data: encodeFunctionData({
         abi: BattleshipContractAbi,
@@ -147,10 +146,8 @@ export class BattleshipContract {
         ],
       }),
       value: 0n,
-      chain: null,
-    });
-
-    return txRequest;
+      chain: arbitrumSepolia,
+    };
   }
 
   /// Waits for the user turn to be reached and returns the opponents move index.

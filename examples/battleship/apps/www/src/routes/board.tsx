@@ -19,6 +19,7 @@ import {
   usePublicClient,
   useSendTransaction,
   useWatchContractEvent,
+  useDisconnect,
 } from "wagmi";
 import { waitForTransactionReceipt } from "viem/actions";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ import {
   Board,
   BoardCellState,
   BoardCircuit,
+  ShootCircuit,
   SupportedChainId,
   type BoardShips,
 } from "@battleship/core";
@@ -46,7 +48,7 @@ enum AttackStep {
   WAITING_FOR_TURN = "waiting-for-turn",
   PROOF = "proof",
   SIGN_AND_SEND = "signAndSend",
-  WAITING = "waiting",
+  WAITING_FOR_CONFIRMATION = "waiting-for-confirmation",
   SUCCESS = "success",
 }
 
@@ -73,6 +75,7 @@ function RouteComponent() {
   const { address, connector } = useAccount();
   const { sendTransactionAsync } = useSendTransaction();
   const wagmiClient = usePublicClient();
+  const { disconnect } = useDisconnect();
 
   // game id for current game
   const [boardId, setBoardId] = useState<bigint | null>(null);
@@ -92,8 +95,10 @@ function RouteComponent() {
   // user ships for proof generation, and boards for display and track of hits and misses
   const [isPlayer1, setIsPlayer1] = useState<boolean>(false);
   const [userShips, setUserShips] = useState<BoardShips>();
-  const [userBoard, setUserBoard] = useState<BoardCellState[][]>();
-  const [opponentBoard, setOpponentBoard] = useState<BoardCellState[][]>();
+  const [userBoard, setUserBoard] = useState<BoardCellState[][]>([[]]);
+  const [opponentBoard, setOpponentBoard] = useState<BoardCellState[][]>([[]]);
+  const [nonce, setNonce] = useState<bigint>(0n);
+  const [boardHash, setBoardHash] = useState<bigint>(0n);
 
   // logs for display of game events
   const [logs, setLogs] = useState<Log[]>([]);
@@ -103,13 +108,23 @@ function RouteComponent() {
     setCreateBoardStep(CreateBoardStep.JOIN);
   };
 
+  const shuffleBoard = () => {
+    const { ships, board } = Board.random();
+    const nonce = BigInt(Math.floor(Math.random() * 1000000));
+    const boardHash = BoardCircuit.hashBoard(nonce, ships);
+
+    setNonce(nonce);
+    setBoardHash(boardHash);
+    setUserShips(ships);
+    setUserBoard(board);
+    setOpponentBoard(Board.empty());
+  };
+
   const onCreateBoard = async (joinCode: bigint) => {
     try {
       setIsCreatingBoard(true);
       setCreateBoardStep(CreateBoardStep.PROOF);
 
-      const nonce = BigInt(Math.floor(Math.random() * 1000000));
-      const boardHash = BoardCircuit.hashBoard(nonce, userShips!);
       const proof = await BoardCircuit.generateProof(
         nonce,
         userShips!,
@@ -124,6 +139,7 @@ function RouteComponent() {
       await waitForTransactionReceipt(wagmiClient!, { hash: txHash });
 
       const gameId = contract.getGameId(joinCode);
+      setBoardId(gameId);
 
       setCreateBoardStep(CreateBoardStep.WAITING_JOIN);
 
@@ -132,8 +148,6 @@ function RouteComponent() {
       setCreateBoardStep(CreateBoardStep.SUCCESS);
 
       setCurrentBoard("opponent");
-      setBoardId(gameId);
-
       setIsCreatingBoard(false);
       setIsPlayer1(true);
     } catch (error) {
@@ -147,7 +161,6 @@ function RouteComponent() {
     setIsCreatingBoard(true);
     setCreateBoardStep(CreateBoardStep.PROOF);
 
-    const nonce = BigInt(Math.floor(Math.random() * 1000000));
     const boardHash = BoardCircuit.hashBoard(nonce, userShips!);
     const proof = await BoardCircuit.generateProof(
       nonce,
@@ -162,29 +175,122 @@ function RouteComponent() {
     await waitForTransactionReceipt(wagmiClient!, { hash: txHash });
 
     const gameId = contract.getGameId(joinCode);
+    setBoardId(gameId);
     await contract.waitForPlayersToJoin(gameId); // just ensuring, we should not need this
 
     setCreateBoardStep(CreateBoardStep.SUCCESS);
 
     setCurrentBoard("opponent");
-    setBoardId(boardId);
-
     setIsCreatingBoard(false);
     setIsPlayer1(false);
   };
 
-  const onAttack = async (row: number, col: number) => {
-    window.alert("Not implemented");
+  const onAttack = async (y: bigint, x: bigint) => {
+    if (x < 0n || x > 9n || y < 0n || y > 9n) {
+      throw new Error("Shot out of bounds");
+    } else if (opponentBoard[Number(x)][Number(y)] !== BoardCellState.EMPTY) {
+      throw new Error("You already shot here");
+    }
+
+    setIsAttacking(true);
+    setAttackStep(AttackStep.WAITING_FOR_TURN);
+
+    let opponentMoveIndex = await contract.waitForUserTurn(boardId!, isPlayer1);
+
+    setAttackStep(AttackStep.PROOF);
+
+    let isPreviousMoveHit;
+    let isPreviousMoveHitProof: Uint8Array<ArrayBufferLike>;
+    let opponentMove: { x: bigint; y: bigint };
+    if (opponentMoveIndex < 0) {
+      // first move
+      isPreviousMoveHit = false;
+      isPreviousMoveHitProof = new Uint8Array(0);
+      opponentMove = { x: 0n, y: 0n };
+    } else {
+      // get opponent move from contract and certify
+      opponentMove = await contract.getGameMove(
+        boardId!,
+        BigInt(opponentMoveIndex as number)
+      );
+      const isHit =
+        userBoard![Number(opponentMove.y)][Number(opponentMove.x)] ===
+        BoardCellState.SHIP;
+
+      console.log(`Opponent move: ${opponentMove.x}, ${opponentMove.y}`);
+      if (isHit) {
+        console.log("This is a hit");
+        userBoard![Number(opponentMove.y)][Number(opponentMove.x)] =
+          BoardCellState.HIT;
+        isPreviousMoveHit = true;
+      } else {
+        console.log("This is a miss");
+        userBoard![Number(opponentMove.y)][Number(opponentMove.x)] =
+          BoardCellState.MISS;
+        isPreviousMoveHit = false;
+      }
+
+      isPreviousMoveHitProof = await ShootCircuit.generateProof(
+        nonce,
+        userShips!,
+        boardHash,
+        opponentMove.x,
+        opponentMove.y,
+        isPreviousMoveHit
+      );
+    }
+
+    setAttackStep(AttackStep.SIGN_AND_SEND);
+
+    const txHash = await sendTransactionAsync(
+      contract.prepareShoot(
+        boardId!,
+        isPreviousMoveHitProof,
+        isPreviousMoveHit,
+        opponentMove.x,
+        opponentMove.y,
+        x,
+        y
+      )
+    );
+    await waitForTransactionReceipt(wagmiClient!, { hash: txHash });
+
+    setAttackStep(AttackStep.WAITING_FOR_CONFIRMATION);
+
+    // we're actually just waiting for a confirmation from the opponent
+    opponentMoveIndex = await contract.waitForUserTurn(boardId!, isPlayer1);
+
+    // check our previous move.
+    if (opponentMoveIndex > 0) {
+      const ourMove = await contract.getGameMove(
+        boardId!,
+        BigInt(opponentMoveIndex - 1)
+      );
+      if (ourMove.isHit) {
+        console.log("Our previous move was a hit");
+        opponentBoard[Number(ourMove.y)][Number(ourMove.x)] =
+          BoardCellState.HIT;
+      } else {
+        console.log("Our previous move was a miss");
+        opponentBoard[Number(ourMove.y)][Number(ourMove.x)] =
+          BoardCellState.MISS;
+      }
+    }
+
+    setAttackStep(AttackStep.SUCCESS);
+    setIsAttacking(false);
   };
 
+  // TODO:
   const onOpenChangeCreateBoard = (open: boolean) => {
     if (!open) {
       setIsCreatingBoard(false);
     }
   };
 
+  // TODO:
   const onOpenChangeAttack = (open: boolean) => {
-    if (!open && attackStep !== AttackStep.WAITING) {
+    if (!open) {
       setIsAttacking(false);
       setAttackStep(AttackStep.PROOF);
     }
@@ -194,18 +300,24 @@ function RouteComponent() {
     address: CONTRACT_ADDRESS,
     abi: BattleshipContractAbi,
     eventName: "GameCreated",
+    pollingInterval: 1000,
     onLogs: (events) => {
       for (const event of events) {
+        console.log("MoveMade event", event, boardId, event.args.gameId);
+        if (BigInt(event.args.gameId ?? 0) !== boardId) {
+          continue;
+        }
+
         setLogs((logs) => [
-          ...logs,
           {
             type: "create",
-            from: event.args.creator as `0x${string}`,
+            from: event.args.player as `0x${string}`,
             txHash: event.transactionHash,
             args: {
-              creator: event.args.creator as `0x${string}`,
+              player: event.args.player as `0x${string}`,
             },
           },
+          ...logs,
         ]);
       }
     },
@@ -215,10 +327,15 @@ function RouteComponent() {
     address: CONTRACT_ADDRESS,
     abi: BattleshipContractAbi,
     eventName: "GameJoined",
+    pollingInterval: 1000,
     onLogs: (events) => {
       for (const event of events) {
+        console.log("MoveMade event", event, boardId, event.args.gameId);
+        if (BigInt(event.args.gameId ?? 0) !== boardId) {
+          continue;
+        }
+
         setLogs((logs) => [
-          ...logs,
           {
             type: "join",
             from: event.args.player as `0x${string}`,
@@ -227,6 +344,7 @@ function RouteComponent() {
               player: event.args.player as `0x${string}`,
             },
           },
+          ...logs,
         ]);
       }
     },
@@ -236,20 +354,34 @@ function RouteComponent() {
     address: CONTRACT_ADDRESS,
     abi: BattleshipContractAbi,
     eventName: "MoveMade",
+    pollingInterval: 1000,
     onLogs: (events) => {
       for (const event of events) {
+        console.log("MoveMade event", event, boardId, event.args.gameId);
+        if (BigInt(event.args.gameId ?? 0) !== boardId) {
+          continue;
+        }
+
+        const isHit =
+          userBoard![Number(event.args.y)][Number(event.args.x)] ===
+          BoardCellState.SHIP;
+
+        userBoard![Number(event.args.y)][Number(event.args.x)] = isHit
+          ? BoardCellState.HIT
+          : BoardCellState.MISS;
+
         setLogs((logs) => [
-          ...logs,
           {
             type: "attack",
-            from: "0xTODO:",
+            from: event.args.player as `0x${string}`,
             txHash: event.transactionHash,
             args: {
               x: event.args.x,
               y: event.args.y,
-              hit: userBoard![Number(event.args.y)][Number(event.args.x)] === BoardCellState.SHIP,
+              hit: isHit,
             },
           },
+          ...logs,
         ]);
       }
     },
@@ -260,11 +392,7 @@ function RouteComponent() {
       return;
     }
 
-    const { ships, board } = Board.random();
-
-    setUserShips(ships);
-    setUserBoard(board);
-    setOpponentBoard(Board.empty());
+    shuffleBoard();
   }, []);
 
   if (!address) {
@@ -277,10 +405,10 @@ function RouteComponent() {
 
   return (
     <>
-      <div className="h-screen w-screen">
+      <div className="min-h-screen w-screen py-16">
         <div className="max-w-4xl mx-auto ">
           {currentBoard === "user" ? (
-            <div className="mb-14 mt-16 w-full flex justify-between items-center">
+            <div className="mb-14  w-full flex justify-between items-center">
               <h1 className="text-5xl font-extrabold">Your Board</h1>
 
               {boardId ? (
@@ -300,7 +428,7 @@ function RouteComponent() {
               )}
             </div>
           ) : (
-            <div className="mb-14 mt-16 w-full flex justify-between items-center">
+            <div className="mb-14 w-full flex justify-between items-center">
               <button
                 onClick={() => setCurrentBoard("user")}
                 className="relative px-4 py-2 text-lg font-bold text-black bg-player-1 border-2 border-black rounded-full shadow-[2px_2px_0px_#000] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-transform duration-100"
@@ -330,10 +458,22 @@ function RouteComponent() {
             <div className="flex-1 border-l-2 border-black p-8 relative">
               <div className="font-bold text-xl">Game Logs...</div>
 
-              <div className="mt-4 space-y-2">
+              <div className="mt-4 space-y-2 overflow-y-auto pb-10 max-h-[300px]">
                 {logs.map((log) => (
-                  <GameLog key={log.txHash} log={log}/>
+                  <GameLog key={log.txHash} log={log} />
                 ))}
+
+                <div className="text-sm ">
+                  Welcome to the game!{" "}
+                  <button
+                    className="text-blue-500 underline"
+                    onClick={shuffleBoard}
+                  >
+                    refresh
+                  </button>{" "}
+                  the board until you like what you see. Then create or join a
+                  game.
+                </div>
               </div>
 
               <div className="absolute bottom-0 left-0 right-0 p-8 bg-white border-t-2 border-black shadow-[0px_-8px_0px_rgba(0,0,0,0.08)]">
@@ -361,11 +501,48 @@ function RouteComponent() {
             </div>
 
             <div className="font-medium">
-              Lorem ipsum, dolor sit amet consectetur adipisicing elit. Expedita
-              rerum ipsa sunt totam aspernatur reiciendis! Ipsum nihil, at
-              maxime laudantium, nam fugiat nostrum aut totam omnis blanditiis,
-              obcaecati dolorum sunt.
+              This battleship game is a demo project for the{" "}
+              <a
+                href="https://github.com/wakeuplabs-io/noir-stylus-verifier"
+                target="_blank"
+              >
+                Noir Stylus Verifier
+              </a>{" "}
+              toolkit that allows{" "}
+              <a
+                href="https://noir-lang.org/"
+                target="_blank"
+                className="text-blue-500 underline"
+              >
+                {" "}
+                Noir
+              </a>{" "}
+              verifiers to live in{" "}
+              <a
+                href="https://arbitrum.io/stylus"
+                target="_blank"
+                className="text-blue-500 underline"
+              >
+                Arbitrum Stylus
+              </a>
+              . To start simply refresh the board until you like the position of
+              the ships. Then click on the "Create Or Join Game" button to
+              create or join a game. If you're creating a game generate a random
+              code and share it with your opponent to start the game. After the
+              game started do not leave or refresh the page. Enjoy!
             </div>
+          </div>
+
+          <div className="text-sm text-muted-foreground text-center mt-4">
+            Currently logged in as {shortenAddress(address)}{" "}
+            <button
+              onClick={() => {
+                disconnect();
+              }}
+              className="text-blue-500 underline"
+            >
+              Logout
+            </button>
           </div>
         </div>
       </div>
@@ -468,8 +645,8 @@ function RouteComponent() {
               </div>
 
               <div className="text-xs text-muted-foreground text-center">
-                Share the session code 1234 with your opponent to start the
-                game!
+                Share the session code {joinCode.toString()} with your opponent
+                to start the game!
               </div>
             </div>
           )}
@@ -536,34 +713,19 @@ function RouteComponent() {
             </div>
           )}
 
-          {attackStep === AttackStep.WAITING && (
+          {attackStep === AttackStep.WAITING_FOR_CONFIRMATION && (
             <div className="flex flex-col items-center">
               <div className="w-10 h-10 mb-4 flex items-center justify-center bg-muted rounded-full">
                 <CheckIcon className="w-4 h-4" />
               </div>
 
               <div className="font-medium text-center mb-1 max-w-[200px]">
-                Waiting for opponent to verify and attack...
+                Waiting for opponent to respond...
               </div>
 
               <div className="text-xs text-muted-foreground text-center">
-                Be patient, this may take a few seconds.
-              </div>
-            </div>
-          )}
-
-          {attackStep === AttackStep.SUCCESS && (
-            <div className="flex flex-col items-center">
-              <div className="w-10 h-10 mb-4 flex items-center justify-center bg-muted rounded-full">
-                <CheckIcon className="w-4 h-4" />
-              </div>
-
-              <div className="font-medium text-center mb-1">
-                Opponent responded!
-              </div>
-
-              <div className="text-xs text-muted-foreground text-center">
-                You sunk their ship at A1! And got hit at B2... Your turn now!
+                Be patient, this may take some time. You'll see the shot at the
+                logs.
               </div>
             </div>
           )}
@@ -612,7 +774,9 @@ export const GameLog: React.FC<{
   if (log.type === "attack") {
     return (
       <div className="space-x-2 text-sm">
-        {isUser ? "You" : shortenAddress(log.from)} attacked at {log.args.x}, {log.args.y} and {log.args.hit ? "hit" : "missed"} in txn:{" "}
+        {isUser ? "You" : shortenAddress(log.from)} attacked at{" "}
+        {"ABCDEFGHIJ"[log.args.x]}
+        {log.args.y} and {log.args.hit ? "hit" : "missed"} in txn:{" "}
         <a
           className="text-blue-500 underline"
           href={`https://sepolia.arbiscan.io/tx/${log.txHash}`}
@@ -620,6 +784,18 @@ export const GameLog: React.FC<{
         >
           {shortenAddress(log.txHash)}
         </a>
+      </div>
+    );
+  }
+
+  if (log.type === "lost") {
+    return <div className="space-x-2 text-sm">Sorry, you lost the game...</div>;
+  }
+
+  if (log.type === "win") {
+    return (
+      <div className="space-x-2 text-sm">
+        Congratulations, you won the game!
       </div>
     );
   }

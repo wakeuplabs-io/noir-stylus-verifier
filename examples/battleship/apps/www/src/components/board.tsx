@@ -17,7 +17,7 @@ const letters = "ABCDEFGHIJ".split("");
 export const BattleshipBoard: React.FC<{
   board: BoardCellState[][];
   ships?: BoardShips;
-  onCellClick?: (row: number, col: number) => void;
+  onCellClick?: (y: bigint, x: bigint) => void;
   className?: string;
 }> = ({ board, ships, onCellClick, className }) => {
   return (
@@ -50,7 +50,7 @@ export const BattleshipBoard: React.FC<{
               x={colIndex}
               y={rowIndex}
               key={colIndex}
-              onClick={() => onCellClick?.(rowIndex, colIndex)}
+              onClick={() => onCellClick?.(BigInt(rowIndex), BigInt(colIndex))}
             />
           ))}
         </div>

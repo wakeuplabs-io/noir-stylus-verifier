@@ -176,10 +176,6 @@ program
       opponentBoard = Board.empty();
     }
 
-    for (const row of board) {
-      console.log(row.map((cell) => cell === BoardCellState.SHIP ? "S" : "E").join(" "));
-    }
-
     spinner.start("Waiting for players to join...");
 
     const player = privateKeyToAddress(options.privateKey);
@@ -202,10 +198,12 @@ program
 
     let opponentMoveIndex = -1;
     while (true) {
-      console.log(`Waiting for your turn...`);
+      spinner.start(`Waiting for your turn...`);
 
       // confirm our turn
       opponentMoveIndex = await contract.waitForUserTurn(gameId, isPlayer1);
+
+      spinner.stop(`Your turn`);
 
       let isPreviousMoveHit;
       let isPreviousMoveHitProof: Uint8Array<ArrayBufferLike>;
@@ -299,7 +297,7 @@ program
       // we're actually just waiting for a confirmation from the opponent
       opponentMoveIndex = await contract.waitForUserTurn(gameId, isPlayer1);
 
-      // check our previous move
+      // check our previous move. TODO: does it skip first move for player 1?
       if (opponentMoveIndex > 0) {
         const ourMove = await contract.getGameMove(
           gameId,
