@@ -1,6 +1,8 @@
 
 # ZK Voting
 
+> 🚨 Disclaimer: This repository is for educational purposes only. It is not audited, may contain bugs, and is not production-ready. Use at your own risk.
+
 This example project shows how to develop a zero knowledge voting application using noir and arbitrum stylus, including the deployment of the noir verifier thought the noir stylus verifier cli.
 
 We showcase 2 apps, the both are basically interfaces around the core package in `packages/core`. If you're interested in seeing the core domain check that out.  
@@ -162,3 +164,7 @@ Confirm your vote:
 ```bash
 ./src/main.ts get-proposal 0
 ```
+
+## Credits
+
+The design for the web app is heavily based on a [snapshot.box](https://snapshot.box/#/) and is used here for educational purposes only. All rights and credit go to the original website and its creators.
