@@ -1,24 +1,7 @@
 ---
-title: Building a ZK Battleship Game
-description: Walkthrough building a ZK battleship game with Stylus and Noir
+title: Building ZK Battleship with Noir and Stylus
+description: This example implements Battleship, a game where players must trust that opponents follow the rules without revealing their board configuration.
 ---
-
-# Building ZK Battleship with Noir and Stylus
-
-This tutorial demonstrates how to build an end-to-end zero-knowledge game using:
-- **Noir** for writing ZK circuits
-- **Stylus** for efficient smart contracts on Arbitrum
-- **Noir Stylus Verifier** for generating Stylus-based proof verifiers
-
-Zero-knowledge proofs allow you to prove a statement is true without revealing additional information. In blockchain gaming, this enables players to prove the validity of their moves without revealing private game state. zk-SNARKs are particularly well-suited for blockchain applications as they don't require interaction between the prover and verifier.
-
-This example implements Battleship, a game where players must trust that opponents follow the rules without revealing their board configuration. The game requires:
-1. Valid board setup
-2. Immutable board state throughout the game
-3. Private board configurations
-4. Honest reporting of hits/misses
-
-Source code: [noir-stylus-verifier/examples/battleship](https://github.com/wakeuplabs-io/noir-stylus-verifier/tree/main/examples/battleship)
 
 > ⚠️ Disclaimer: This is an experimental project intended for research and educational purposes. It has not been audited, and should not be used in production or with real funds. Use at your own risk.
 
@@ -92,7 +75,7 @@ examples/battleship/
 
 The `circuits/common/src/lib.nr` module defines game constants and the board hashing function:
 
-```
+```rust
 use poseidon::poseidon2::Poseidon2::hash;
 
 pub global BOARD_SIZE: u32 = 10;
@@ -136,7 +119,7 @@ pub fn hash_board(nonce: Field, ships: [[u8; 3]; NUMBER_OF_SHIPS]) -> Field {
 
 The board validation circuit (`circuits/board/src/main.nr`) ensures valid ship placement:
 
-```
+```rust
 use common::{
     EMPTY_BOARD, NUMBER_OF_SHIPS, SHIP_LENGTHS, SHIP_DIRECTION_DOWN,
     SHIP_DIRECTION_RIGHT, X_INDEX, Y_INDEX, BOARD_SIZE, DIRECTION_INDEX, hash_board,
@@ -193,7 +176,7 @@ fn main(nonce: Field, ships: [[u8; 3]; NUMBER_OF_SHIPS], board_hash: pub Field) 
 
 The shot verification circuit (`circuits/shoot/src/main.nr`) validates hit/miss claims:
 
-```
+```rust
 use common::{
     X_INDEX, Y_INDEX, BOARD_SIZE, DIRECTION_INDEX, NUMBER_OF_SHIPS,
     SHIP_DIRECTION_DOWN, SHIP_DIRECTION_RIGHT, SHIP_LENGTHS, hash_board,
