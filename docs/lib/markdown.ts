@@ -125,6 +125,7 @@ function sluggify(text: string) {
 }
 
 function getDocsContentPath(slug: string) {
+  console.log(slug);
   return path.join(process.cwd(), "/contents/docs/", `${slug}/index.mdx`);
 }
 

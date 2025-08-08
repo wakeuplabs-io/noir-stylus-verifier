@@ -1,3 +1,8 @@
+---
+title: Building a ZK Battleship Game
+description: Walkthrough building a ZK battleship game with Stylus and Noir
+---
+
 # Building ZK Battleship with Noir and Stylus
 
 This tutorial demonstrates how to build an end-to-end zero-knowledge game using:
@@ -87,7 +92,7 @@ examples/battleship/
 
 The `circuits/common/src/lib.nr` module defines game constants and the board hashing function:
 
-```noir
+```
 use poseidon::poseidon2::Poseidon2::hash;
 
 pub global BOARD_SIZE: u32 = 10;
@@ -131,7 +136,7 @@ pub fn hash_board(nonce: Field, ships: [[u8; 3]; NUMBER_OF_SHIPS]) -> Field {
 
 The board validation circuit (`circuits/board/src/main.nr`) ensures valid ship placement:
 
-```noir
+```
 use common::{
     EMPTY_BOARD, NUMBER_OF_SHIPS, SHIP_LENGTHS, SHIP_DIRECTION_DOWN,
     SHIP_DIRECTION_RIGHT, X_INDEX, Y_INDEX, BOARD_SIZE, DIRECTION_INDEX, hash_board,
@@ -188,7 +193,7 @@ fn main(nonce: Field, ships: [[u8; 3]; NUMBER_OF_SHIPS], board_hash: pub Field) 
 
 The shot verification circuit (`circuits/shoot/src/main.nr`) validates hit/miss claims:
 
-```noir
+```
 use common::{
     X_INDEX, Y_INDEX, BOARD_SIZE, DIRECTION_INDEX, NUMBER_OF_SHIPS,
     SHIP_DIRECTION_DOWN, SHIP_DIRECTION_RIGHT, SHIP_LENGTHS, hash_board,

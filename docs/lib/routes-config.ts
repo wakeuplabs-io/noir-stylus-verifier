@@ -16,34 +16,23 @@ export const ROUTES: EachRoute[] = [
     items: [
       { title: "Introduction", href: "/introduction" },
       {
-        title: "Installation",
-        href: "/installation",
+        title: "CLI",
+        href: "/cli",
       },
-      { title: "Quick Start Guide", href: "/quick-start-guide" },
+      { title: "Deployments", href: "/deployments" },
       {
-        title: "Project Structure",
-        href: "/project-structure",
+        title: "Requirements",
+        href: "/requirements",
       },
-      {
-        title: "Components",
-        href: "/components",
-        items: [
-          { title: "Stepper", href: "/stepper" },
-          { title: "Tabs", href: "/tabs" },
-          { title: "Note", href: "/note" },
-          { title: "Code Block", href: "/code-block" },
-          { title: "Image & Link", href: "/image-link" },
-          { title: "File System", href: "/file-system", tag: "New" },
-          { title: "Custom", href: "/custom" },
-        ],
-      },
-      { title: "Internationalization", href: "/i18n" },
-      { title: "Algolia Search", href: "/algolia-search", tag: "New" },
-      { title: "Themes", href: "/themes" },
-      {
-        title: "Customize",
-        href: "/customize",
-      },
+    ],
+  },
+  {
+    title: "Guides",
+    href: "/guides",
+    noLink: true,
+    items: [
+      { title: "Building a Voting App", href: "/building-a-voting-app" },
+      { title: "Building a ZK Battleship Game", href: "/building-a-zk-battleship-game" },
     ],
   },
 ];

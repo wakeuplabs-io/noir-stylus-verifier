@@ -1,4 +1,6 @@
 ---
+title: Building a ZK Voting App
+description: Walkthrough building a ZK voting app with Stylus and Noir
 ---
 
 # Building a Zero-Knowledge Voting App with Noir and Arbitrum Stylus
@@ -111,7 +113,7 @@ The Noir circuit is the heart of the voting system, located in `circuits/src/mai
 
 ### Circuit Inputs
 
-```noir
+```
 fn main(
     root: pub Field,              // Merkle root of eligible voters
     path: [Field; DEPTH],         // Merkle proof path
@@ -127,7 +129,7 @@ fn main(
 ### Circuit Logic
 
 1. **Commitment Verification**: Verifies the voter is eligible
-   ```noir
+   ```
    let note_commitment = definitions::commitment(priv_key, secret);
    merkle_tree::assert_merkle_inclusion(
        root, path, direction_selector, note_commitment,
@@ -136,13 +138,13 @@ fn main(
    ```
 
 2. **Nullifier Check**: Ensures the nullifier provided as a public input by the contract is linked to the private commitment.
-   ```noir
+   ```
    assert(nullifier == definitions::nullifier(root, priv_key, proposal_id), 
           "Invalid nullifier");
    ```
 
 3. **Vote Validation**: Ensures valid vote (0: against, 1: for)
-   ```noir
+   ```
    assert(vote <= 1, "Invalid vote");
    ```
 
