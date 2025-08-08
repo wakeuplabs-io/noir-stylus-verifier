@@ -5,7 +5,7 @@
 Install with cargo:
 
 ```bash
-cargo install --git https://github.com/wakeuplabs-io/noir-stylus-verifier --bin nsv --branch develop
+cargo install --git https://github.com/wakeuplabs-io/noir-stylus-verifier --bin nsv --branch develop nsv
 ```
 
 You can also download already compiled binaries from the github releases at [noir-stylus-verifier](https://github.com/wakeuplabs-io/noir-stylus-verifier)
@@ -165,7 +165,6 @@ brew install mingw-w64
 cargo install --locked cargo-zigbuild
 
 rustup target add x86_64-apple-darwin
-rustup target add x86_64-pc-windows-gnu
 rustup target add x86_64-unknown-linux-musl
 ```
 
@@ -177,10 +176,8 @@ just --summary
 # Available recipes:
 #     build-cli-linux                         # Build and package the cli binary for linux
 #     build-cli-macos                         # Build and package the cli binary for macos
-#     build-cli-windows                       # Build and package the cli binary for windows
 #     clean-cli-linux                         # Clean the cli binary for linux
 #     clean-cli-macos                         # Clean the cli binary for macos
-#     clean-cli-windows                       # Clean the cli binary for windows
 #     test-cli                                # Test the cli unit tests
 #     test-cli-integration                    # Run the cli integration tests.
 ```

@@ -19,9 +19,6 @@ jobs:
             - os: ubuntu-latest
               target: x86_64-unknown-linux-musl
               build_command: cargo zigbuild --release --target=x86_64-unknown-linux-musl -p nsv
-            - os: windows-latest
-              target: x86_64-pc-windows-msvc
-              build_command: cargo build --release --target=x86_64-pc-windows-msvc -p nsv
             - os: macos-latest
               target: x86_64-apple-darwin
               build_command: cargo zigbuild --release --target=x86_64-apple-darwin -p nsv
@@ -50,13 +47,11 @@ jobs:
           run: brew install llvm
 
         - name: Install zig
-          if: runner.os == 'Linux' || runner.os == 'macOS'
           uses: goto-bus-stop/setup-zig@v2
           with:
             version: 0.13.0
         
         - name: Install cargo-zigbuild
-          if: runner.os == 'Linux' || runner.os == 'macOS'
           run: cargo install --locked cargo-zigbuild
 
         - name: Build CLI
@@ -73,19 +68,10 @@ jobs:
             output_dir="${binary_name}-${{ env.VERSION }}-${{ matrix.target }}"
 
             mkdir "$output_dir"
-            if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-              mv "target/${{ matrix.target }}/release/${binary_name}.exe" "$output_dir/"
-            else
-              mv "target/${{ matrix.target }}/release/${binary_name}" "$output_dir/"
-            fi
+            mv "target/${{ matrix.target }}/release/${binary_name}" "$output_dir/"
 
-            if [[ "${{ matrix.extension }}" == "zip" ]]; then
-              zip -r "${output_dir}.zip" "$output_dir"
-              echo "ASSET=${output_dir}.zip" >> $GITHUB_ENV
-            else
-              tar -czf "${output_dir}.tar.gz" "$output_dir"
-              echo "ASSET=${output_dir}.tar.gz" >> $GITHUB_ENV
-            fi
+            tar -czf "${output_dir}.tar.gz" "$output_dir"
+            echo "ASSET=${output_dir}.tar.gz" >> $GITHUB_ENV
   
         - name: Upload Release Asset
           uses: softprops/action-gh-release@v1

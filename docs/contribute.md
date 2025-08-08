@@ -38,14 +38,12 @@ just --summary
 # Available recipes:
 #     build-cli-linux                         # Build and package the cli binary for linux
 #     build-cli-macos                         # Build and package the cli binary for macos
-#     build-cli-windows                       # Build and package the cli binary for windows
 #     build-contract contract                 # Build the contracts in wasm for stylus. "Contract" is the feature flag within the contracts crate.
 #     build-ultrahonk                         # Build the ultrahonk library for wasm target with only-arithmetic-backend feature.
 #     check-contract contract                 # Check the contracts for deployment using stylus. "Contract" is the feature flag within the contracts crate.
 #     check-pr                                # Check the pr.
 #     clean-cli-linux                         # Clean the cli binary for linux
 #     clean-cli-macos                         # Clean the cli binary for macos
-#     clean-cli-windows                       # Clean the cli binary for windows
 #     deploy-contract contract constructor_signature="" *constructor_args="" # Deploy the contracts using stylus. "Contract" is the feature flag within the contracts crate. Pass constructor_signature and constructor_args to deploy with a constructor.
 #     fmt                                     # Check formatting issues
 #     fmt-fix                                 # Format the code and fix the errors.

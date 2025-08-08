@@ -28,5 +28,5 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "../../../battleship/apps/www/src/lib/wagmi.ts"]
+  "include": ["src"]
 }
