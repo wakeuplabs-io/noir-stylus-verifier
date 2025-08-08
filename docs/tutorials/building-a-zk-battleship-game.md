@@ -43,7 +43,7 @@ The implementation requires two distinct circuits to handle different aspects of
 
 **2. Shot Verification Circuit**
 - **Private inputs**: Ship positions, nonce
-- **Public inputs**: Board hash, shot coordinates (x,y), hit result
+- **Public inputs**: Board hash, opponent shot coordinates (x,y), hit result
 - **Purpose**: Proves that a claimed hit/miss result is accurate for the given shot
 
 ## Implementation Stack
@@ -424,10 +424,9 @@ cargo stylus deploy --endpoint $RPC_URL --private-key $PRIVATE_KEY \
 
 This tutorial provides a foundation for building ZK applications with Noir and Stylus. Consider extending the implementation with:
 
-- **Enhanced game features**: Multiple ship types, larger boards, power-ups
-- **Optimized circuits**: Batch verification, recursive proofs
-- **Advanced UI**: Real-time multiplayer, tournament modes
-- **Cross-chain deployment**: Multi-chain game state synchronization
+- **Enhanced game features**: Place ships manually, game sessions, moves timeouts, etc
+- **Incentives**: Make users compete for a prize, etc
+- **State persistence**: The demo does not currently persist, boards nor nonces, so if users leave of miss connection they are out of the game.
 
 ## Resources
 

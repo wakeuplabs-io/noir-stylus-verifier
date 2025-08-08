@@ -1,6 +1,8 @@
 
 # Battleships
 
+There's a guide for this example at [docs/tutorials/building-a-zk-battleship-game](../../docs/tutorials/building-a-zk-battleship-game.md). Check it out to know more about the project.
+
 ## Contracts
 
 Deployments:
@@ -39,7 +41,7 @@ pnpm dev
 ```
 
 
-## CLI
+## Cli
 
 Place yourself in `apps/cli` and create `.env` based on `.env.example`. Recommend you to create `DEV_PK` and `DEV_PK_2` env variables for private keys of the players. Both must be funded with sepolia eth. Then of course: `pnpm install` and run with:
 
