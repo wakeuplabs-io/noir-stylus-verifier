@@ -36,12 +36,6 @@ sol! {
     function verify(bytes memory proof, bytes memory input) external view returns (bool);
 }
 
-sol_interface! {
-    interface IUltraVerifier {
-        function verify(bytes memory proof, bytes memory input) external view returns (bool);
-    }
-}
-
 #[storage]
 struct StorageProposal {
     metadata: StorageString,

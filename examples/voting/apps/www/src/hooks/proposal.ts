@@ -231,9 +231,7 @@ export const useCastVote = (proposalId: number) => {
 
         const txRequest = await votingContract.prepareCastVote(
           evmAddress,
-          `0x${Array.from(proof, (byte) =>
-            byte.toString(16).padStart(2, "0")
-          ).join("")}`,
+          proof,
           proposalId,
           vote,
           nullifier

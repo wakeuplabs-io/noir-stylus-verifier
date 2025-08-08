@@ -1,5 +1,5 @@
 [workspace]
-members = [ "cli","contracts", "integration", "packages/ultrahonk"]
+members = [ "cli", "contracts", "integration", "packages/ultrahonk"]
 resolver = "2"
 
 [workspace.package]

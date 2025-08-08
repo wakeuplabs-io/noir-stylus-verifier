@@ -16,13 +16,13 @@ Locally
 just nitro-testnode-up
 
 # deploy
-just deploy-contract sumcheck-verifier 0x0da1ce0869bc64cb016393d07f07a85042cfaea3
-just deploy-contract shplemini-verifier 0x282f7538c862871bf1a0a9dd0f9a52e0d82eece1
+just deploy-contract sumcheck-verifier 
+just deploy-contract shplemini-verifier
 just deploy-contract verifier "constructor(address,address)" "{sumcheck-verifier}" "{shplemini-verifier}"
 
 # And verify with
-just get-verifier-addresses 0xc9734f5b18326a834e8c1179888ebb196fcd84af
-just verify-proof 0xc9734f5b18326a834e8c1179888ebb196fcd84af assert
+just get-verifier-addresses {verifier-address}
+just verify-proof {verifier-address} assert
 
 # Once done, shut down the devnet node
 just nitro-testnode-down

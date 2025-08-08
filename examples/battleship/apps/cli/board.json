@@ -1,0 +1,30 @@
+{
+  "nonce": 12345,
+  "ships": {
+    "carrier": {
+      "x": 4,
+      "y": 4,
+      "direction": "horizontal"
+    },
+    "battleship": {
+      "x": 6,
+      "y": 7,
+      "direction": "horizontal"
+    },
+    "cruiser": {
+      "x": 1,
+      "y": 3,
+      "direction": "horizontal"
+    },
+    "submarine": {
+      "x": 1,
+      "y": 8,
+      "direction": "horizontal"
+    },
+    "destroyer": {
+      "x": 3,
+      "y": 5,
+      "direction": "horizontal"
+    }
+  }
+}

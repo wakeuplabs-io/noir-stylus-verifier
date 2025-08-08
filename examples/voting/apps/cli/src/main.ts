@@ -226,9 +226,7 @@ program
 
     const txRequest = await contract.prepareCastVote(
       privateKeyToAddress(RELAYER_PRIVATE_KEY),
-      `0x${Array.from(proof, (byte) => byte.toString(16).padStart(2, "0")).join(
-        ""
-      )}`,
+      proof,
       options.proposalId,
       options.vote,
       nullifier
