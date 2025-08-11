@@ -38,7 +38,7 @@ ark-poly = { git = "https://github.com/wakeuplabs-io/noir-stylus-verifier", bran
 crunchy = { git = "https://github.com/eira-fransham/crunchy", rev = "ba7b86c" }
 
 [features]
-default = ["mini-alloc"]
+default = ["mini-alloc", "sumcheck-verifier"]
 export-abi = ["stylus-sdk/export-abi"]
 debug = ["stylus-sdk/debug"]
 mini-alloc = ["stylus-sdk/mini-alloc"]
