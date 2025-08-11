@@ -14,7 +14,7 @@ export const NAVLINKS = [
   },
   {
     title: "Guides",
-    href: "/docs/guides",
+    href: "/docs/guides/building-a-voting-app",
   },
   {
     title: "Examples",
