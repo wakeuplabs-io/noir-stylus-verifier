@@ -22,12 +22,6 @@ export const NAVLINKS = [
   },
 ];
 
-const algolia_props = {
-  appId: process.env.ALGOLIA_APP_ID!,
-  indexName: process.env.ALGOLIA_INDEX!,
-  apiKey: process.env.ALGOLIA_SEARCH_API_KEY!,
-};
-
 export function Navbar() {
   return (
     <nav className="w-full border-b h-16 sticky top-0 z-50 bg-background">
