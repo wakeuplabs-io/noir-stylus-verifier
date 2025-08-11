@@ -8,24 +8,37 @@ repository = "https://github.com/wakeuplabs-io/noir-stylus-verifier"
 keywords = ["arbitrum", "ethereum", "stylus", "alloy"]
 description = "Stylus noir verifier"
 
-[dependencies]
-alloy-primitives.workspace = true
-alloy-sol-types.workspace = true
-stylus-sdk.workspace = true
-ultrahonk = { path = "../packages/ultrahonk" }
-ark-ff.workspace = true
-# ark-bn254.workspace = true
+[workspace]
+members = ["."]
 
-[dev-dependencies]
-alloy.workspace = true
-alloy-primitives.workspace = true
-tokio = { version = "1.12.0", features = ["full"] }
-stylus-sdk = { workspace = true, features = ["stylus-test"] }
-rand.workspace = true
-eyre.workspace = true
+[dependencies]
+alloy-primitives = { version = "=0.8.20", default-features = false, features = [
+  "tiny-keccak",
+] }
+alloy-sol-types = { version = "=0.8.20", default-features = false }
+stylus-sdk = "=0.9.0"
+ultrahonk = { git = "https://github.com/wakeuplabs-io/noir-stylus-verifier", package = "ultrahonk", branch = "develop" }
+ark-ff = { version = "0.5.0" }
+
+# [dev-dependencies]
+# alloy.workspace = true
+# alloy-primitives.workspace = true
+# tokio = { version = "1.12.0", features = ["full"] }
+# stylus-sdk = { workspace = true, features = ["stylus-test"] }
+# rand.workspace = true
+# eyre.workspace = true
+
+[patch.crates-io]
+ark-ec = { git = "https://github.com/wakeuplabs-io/noir-stylus-verifier", branch = "develop", package = "ark-ec", version = "0.5.0" }
+ark-ff = { git = "https://github.com/wakeuplabs-io/noir-stylus-verifier", branch = "develop", package = "ark-ff", version = "0.5.0" }
+ark-ff-asm = { git = "https://github.com/wakeuplabs-io/noir-stylus-verifier", branch = "develop", package = "ark-ff-asm", version = "0.5.0" }
+ark-poly = { git = "https://github.com/wakeuplabs-io/noir-stylus-verifier", branch = "develop", package = "ark-poly", version = "0.5.0" }
+
+# By default pulls 0.2.3 which has https://github.com/eira-fransham/crunchy/issues/15
+crunchy = { git = "https://github.com/eira-fransham/crunchy", rev = "ba7b86c" }
 
 [features]
-default = ["mini-alloc"]
+default = ["mini-alloc", "verifier"]
 export-abi = ["stylus-sdk/export-abi"]
 debug = ["stylus-sdk/debug"]
 mini-alloc = ["stylus-sdk/mini-alloc"]
@@ -43,3 +56,29 @@ path = "src/main.rs"
 
 [lib]
 crate-type = ["lib", "cdylib"]
+
+
+[profile.release]
+strip = "none" # keep debug info for profiling
+# strip = true           # remove debug info
+debug = false            # no debug data
+codegen-units = 1        # prefer efficiency to compile time
+panic = "abort"          # use simple panics
+lto = "fat"
+rpath = false            # no run-time search path
+debug-assertions = false # prune debug assertions
+incremental = false      # no incremental builds
+opt-level = 'z'          # optimize for size
+
+# but do optimize all the other dependencies
+[profile.release.package."*"]
+codegen-units = 1 # better optimizations
+opt-level = "z"
+
+# This profile can be used for CI in pull requests.
+[profile.ci-dev]
+opt-level = 1
+inherits = "dev"
+incremental = false
+debug = true
+overflow-checks = false
