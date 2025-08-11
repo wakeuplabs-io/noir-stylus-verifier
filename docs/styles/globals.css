@@ -117,6 +117,10 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  .font-space-grotesk {
+    font-family: "Space Grotesk", sans-serif;
+  }
 }
 
 .prose {

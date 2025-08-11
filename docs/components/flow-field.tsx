@@ -86,7 +86,7 @@ export const FlowField: React.FC<{ className?: string }> = ({ className }) => {
     <div className={cn("relative w-full h-full", className)}>
       <canvas ref={canvasRef} className="w-full h-full block" />
       {/* Gradient overlay */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br dark:from-black from-white dark:to-black/50 via-white/80 to-white/60" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br dark:from-black dark:via-black/90 from-white dark:to-black/60 via-white/90 to-white/60" />
     </div>
   );
 }

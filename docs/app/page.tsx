@@ -5,7 +5,7 @@ import { FlowField } from "@/components/flow-field";
 
 export default function Home() {
   return (
-    <div className="flex flex-1 flex-col justify-center sm:py-8 py-14">
+    <div className="flex flex-1 flex-col justify-center sm:py-8 py-14 pb-8">
       <h1 className="text-[1.80rem] leading-8 md:leading-[4.5rem] font-bold mb-4 sm:text-6xl text-left">
         <span className="font-black">Generate and deploy</span> <br /> Stylus
         verifiers for your <br /> Noir ZK apps in minutes_

@@ -20,7 +20,7 @@ export const NAVLINKS = [
 
 export function Navbar() {
   return (
-    <nav className="w-full border-b h-16 sticky top-0 z-50 bg-background">
+    <nav className="w-full border-b h-16 sticky top-0 z-50 bg-background/70">
       <div className="sm:container mx-auto h-full flex items-center sm:justify-between md:gap-2">
         <div className="flex items-center sm:gap-5 gap-2.5">
           <SheetLeftbar />
@@ -50,7 +50,7 @@ export function Navbar() {
 export function Logo() {
   return (
     <Link href="/" className="flex items-center gap-2.5">
-      <h2 className="text-md font-bold font-code">Noir Stylus Verifier</h2>
+      <h2 className="text-md font-bold font-space-grotesk">Noir Stylus Verifier</h2>
     </Link>
   );
 }
