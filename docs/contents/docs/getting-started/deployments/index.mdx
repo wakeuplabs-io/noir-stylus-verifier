@@ -7,7 +7,9 @@ These are the defaults the `nsv` cli will take if you don't specify `verifier-ad
 
 | Flavor | Chain | Address |
 |--------|-------|---------|
+| UltraKeccakFlavor | Arbitrum Mainnet | 0x2f9f4741ab606632718f7bda0bf5c79e1dd03ac3 |
 | UltraKeccakFlavor | Arbitrum Sepolia | 0x951d400a88f98c2d3f6f8af7b502a59bf418ab76 |
+| UltraKeccakZkFlavor | Arbitrum Mainnet | 0x79693edb49473dc3522de16fbd047977c4999d5c |
 | UltraKeccakZkFlavor | Arbitrum Sepolia | 0xdcaaed24c926bc718984eaa4126e27b27d60379d |
 
 
@@ -41,6 +43,6 @@ just  --set rpc_url ... --set private_key ...  deploy-contract zk-verifier "cons
 
 
 # verify deployment
-just get-verifier-addresses {verifier-address}
-just verify-proof {verifier-address} assert
+just --set rpc_url ... get-verifier-addresses {verifier-address}
+just --set rpc_url ... verify-proof {verifier-address} assert
 ```

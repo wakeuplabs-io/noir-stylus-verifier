@@ -1,9 +1,9 @@
 use crate::infrastructure::requirements::{Comparison, Requirement};
 
 pub const DEFAULT_RPC_URL: &str = "https://sepolia-rollup.arbitrum.io/rpc";
-pub const VERIFIER_ADDRESS_ARBITRUM: &str = "0x0000000000000000000000000000000000000000";
+pub const VERIFIER_ADDRESS_ARBITRUM: &str = "0x2f9f4741ab606632718f7bda0bf5c79e1dd03ac3";
 pub const VERIFIER_ADDRESS_ARBITRUM_SEPOLIA: &str = "0x951d400a88f98c2d3f6f8af7b502a59bf418ab76";
-pub const VERIFIER_ADDRESS_ARBITRUM_ZK: &str = "0x0000000000000000000000000000000000000000";
+pub const VERIFIER_ADDRESS_ARBITRUM_ZK: &str = "0x79693edb49473dc3522de16fbd047977c4999d5c";
 pub const VERIFIER_ADDRESS_ARBITRUM_SEPOLIA_ZK: &str = "0xdcaaed24c926bc718984eaa4126e27b27d60379d";
 pub const CHAIN_ID_ARBITRUM: u64 = 42161;
 pub const CHAIN_ID_ARBITRUM_SEPOLIA: u64 = 421614;
