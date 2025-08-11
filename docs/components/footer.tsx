@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { buttonVariants } from "./ui/button";
+import { GithubIcon, TwitterIcon } from "lucide-react";
 
 export function Footer() {
   return (
@@ -10,18 +12,50 @@ export function Footer() {
             <Link
               className="px-1 underline underline-offset-2"
               href="https://github.com/wakeuplabs-io"
+              target="_blank"
             >
-              Wakeup Labs
+              WakeUp Labs
             </Link>
-            . The source code is available on{" "}
+            for
             <Link
               className="px-1 underline underline-offset-2"
-              href="https://github.com/wakeuplabs-io/noir-stylus-verifier"
+              href="https://arbitrum.io"
+              target="_blank"
             >
-              GitHub
+              Arbitrum
             </Link>
-            .
+            and{" "}
+            <Link
+              className="px-1 underline underline-offset-2"
+              href="https://noir-lang.org"
+              target="_blank"
+            >
+              Noir
+            </Link>
           </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Link
+            href="https://github.com/wakeuplabs-io/noir-stylus-verifier"
+            target="_blank"
+            className={buttonVariants({
+              variant: "ghost",
+              size: "icon",
+            })}
+          >
+            <GithubIcon className="h-[1.1rem] w-[1.1rem]" />
+          </Link>
+          <Link
+            href="https://x.com/wakeuplabs"
+            target="_blank"
+            className={buttonVariants({
+              variant: "ghost",
+              size: "icon",
+            })}
+          >
+            <TwitterIcon className="h-[1.1rem] w-[1.1rem]" />
+          </Link>
         </div>
       </div>
     </footer>

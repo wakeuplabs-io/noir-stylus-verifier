@@ -19,6 +19,7 @@ export default function SubLink({
   level,
   isSheet,
   tag,
+  className,
 }: EachRoute & { level: number; isSheet: boolean }) {
   const path = usePathname();
   const [isOpen, setIsOpen] = useState(level == 0);
@@ -31,6 +32,7 @@ export default function SubLink({
     <Anchor
       activeClassName="text-primary dark:font-medium font-semibold"
       href={href}
+      className={className}
     >
       {title}
       {tag && (
@@ -48,7 +50,7 @@ export default function SubLink({
       Comp
     )
   ) : (
-    <h4 className="font-medium sm:text-sm text-primary">
+    <h4 className="font-bold sm:text-sm text-primary">
       {title}
       {tag && (
         <span className="dark:bg-blue-700 bg-blue-500 rounded-md px-1.5 py-0.5 mx-2 text-xs text-white !font-normal">
@@ -59,7 +61,7 @@ export default function SubLink({
   );
 
   if (!items) {
-    return <div className="flex flex-col">{titleOrLink}</div>;
+    return <div className="flex flex-col hover:text-primary">{titleOrLink}</div>;
   }
 
   return (
@@ -82,7 +84,7 @@ export default function SubLink({
         <CollapsibleContent>
           <div
             className={cn(
-              "flex flex-col items-start sm:text-sm dark:text-stone-300/85 text-stone-800 ml-0.5 mt-2.5 gap-3",
+              "flex flex-col items-start sm:text-sm dark:text-stone-300/85 text-stone-800 ml-4 mt-2.5 gap-3",
               level > 0 && "pl-4 border-l ml-1.5"
             )}
           >

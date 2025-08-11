@@ -53,12 +53,11 @@ export default function TocObserver({ data }: Props) {
           <Link
             key={href + text + level + index}
             href={href}
-            className={clsx({
+            className={clsx("hover:text-primary", {
               "pl-0": level == 2,
               "pl-4": level == 3,
               "pl-8 ": level == 4,
-              "dark:font-medium font-semibold text-primary":
-                activeId == href.slice(1),
+              "font-bold text-primary": activeId == href.slice(1),
             })}
           >
             {text}
