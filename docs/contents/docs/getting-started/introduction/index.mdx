@@ -3,67 +3,51 @@ title: Introduction
 description: This section provides an overview of the Noir Stylus Verifier.
 ---
 
-## Introduction
-
 ### What this project is
 
 Noir Stylus Verifier (NSV) helps you generate and deploy Stylus-compatible verifier contracts for Noir circuits on Arbitrum Stylus. It automates:
 
-- Generating a verifier contract from a Noir circuit bytecode and verification key
-- Checking Stylus compatibility and deployment cost
-- Deploying the verifier to a Stylus chain
-- Creating and verifying proofs for testing (locally or onchain)
-
-If you are new to Noir tooling, install Noir (`nargo`) and the Barretenberg backend (`bb`) following Noir’s Quick Start. See: [Noir Quick Start](https://noir-lang.org/docs/getting_started/quick_start).
+- Generating a verifier contract from a Noir circuit.
+- Checking Stylus compatibility and deployment cost.
+- Deploying the verifier to a Stylus chain.
+- Creating and verifying proofs for testing (locally or onchain).
 
 ### Prerequisites
 
-- Rust and Cargo
 - Noir `nargo` 1.0.0-beta.6
 - Barretenberg `bb` 0.86.0
-- Cargo Stylus (to build/deploy Stylus contracts)
+- Rust 
+- Cargo Stylus 
 
-Install Noir and Barretenberg per Noir’s Quick Start:
+Install Noir and Barretenberg specific versions::
 
 ```bash
 # Install Noir (nargo)
 curl -L https://raw.githubusercontent.com/noir-lang/noirup/refs/heads/main/install | bash
-noirup
+noirup -v 1.0.0-beta.6
 
 # Install Barretenberg (bb)
 curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/heads/master/barretenberg/bbup/install | bash
-bbup
+bbup -v 0.86.0
 ```
-
-Reference: [Noir Quick Start](https://noir-lang.org/docs/getting_started/quick_start).
 
 Install Cargo Stylus and WebAssembly target:
 
 ```bash
-rustup target add wasm32-unknown-unknown
 cargo install cargo-stylus
-```
-
-Verify versions (must match the CLI’s requirements):
-
-```bash
-nargo --version     # expected 1.0.0-beta.6
-bb --version        # expected 0.86.0
-cargo stylus --version
+rustup target add wasm32-unknown-unknown
 ```
 
 ### Install the NSV CLI
 
-Install from releases or directly from Cargo (git):
-
-- From releases: download a prebuilt binary from [GitHub Releases](https://github.com/wakeuplabs-io/noir-stylus-verifier/releases) and place it in your PATH as `nsv`.
-- From Cargo (git):
+We strongly recommend going to the latest [GitHub Release](https://github.com/wakeuplabs-io/noir-stylus-verifier/releases) and following instructions from there.
+Alternatively you can do:
 
 ```bash
 cargo install --git https://github.com/wakeuplabs-io/noir-stylus-verifier --bin nsv --branch develop nsv
 ```
 
-Run `nsv --help` to see available commands.
+Run `nsv --help` to verify installation and see available commands.
 
 ### Quick start: from a fresh Noir project to a deployed Stylus verifier
 
@@ -94,15 +78,10 @@ What happens:
 - Writes the verification key with `bb write_vk` (unless you pass `--vk-path`)
 - Generates a Stylus verifier project at `contracts/`
 
-Useful flags:
 
-```bash
-nsv generate -p <package_name> \
-  --bytecode-path <path/to/bytecode.json> \
-  --vk-path <path/to/vk>
-```
+> Notice the generated verifier encodes your vk in a call to a global verifier. The cli already provides some default addresses for these but feel free to do your own deployment following [the repo instructions](https://github.com/wakeuplabs-io/noir-stylus-verifier) and specify that while deploying.
 
-4) Check Stylus compatibility and estimated cost
+4) Check Stylus compatibility and estimated cost of the generated verifier.
 
 ```bash
 nsv check --rpc-url https://sepolia-rollup.arbitrum.io/rpc
@@ -144,17 +123,21 @@ nsv prove -p <package_name> \
 - Locally (Barretenberg):
 
 ```bash
-nsv verify --vk contracts/assets/vk
+nsv verify 
 ```
 
-- Onchain (call deployed verifier):
+By default this will:
+- Take `proof` from `target/proof`, public inputs from `target/public_inputs` and `vk` from `contracts/assets/vk`
+
+- Onchain (calls the deployed verifier):
 
 ```bash
 nsv verify \
   --verifier-address <DEPLOYED_VERIFIER_ADDRESS> \
-  --rpc-url <RPC_URL> \
-  --vk contracts/assets/vk
+  --rpc-url <RPC_URL> 
 ```
+
+Check `nsv verify --help` for more options.
 
 ### Troubleshooting
 
@@ -164,6 +147,7 @@ nsv verify \
 
 ### Learn more
 
-- CLI reference: see `docs/cli.md`
-- Tutorials: `docs/tutorials/building-a-voting-app.md`, `docs/tutorials/building-a-zk-battleship-game.md`
-- Noir Quick Start for Noir and Barretenberg installation: [Noir Quick Start](https://noir-lang.org/docs/getting_started/quick_start)
+- [CLI reference](/docs/cli)
+- Tutorials: [Voting App](/docs/tutorials/building-a-voting-app), [Battleship Game](/docs/tutorials/building-a-zk-battleship-game)
+- [Noir](https://noir-lang.org/)
+- [Stylus](https://arbitrum.io/stylus)

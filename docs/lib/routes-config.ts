@@ -20,10 +20,6 @@ export const ROUTES: EachRoute[] = [
         href: "/cli",
       },
       { title: "Deployments", href: "/deployments" },
-      {
-        title: "Requirements",
-        href: "/requirements",
-      },
     ],
   },
   {

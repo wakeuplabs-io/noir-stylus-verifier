@@ -2,17 +2,18 @@
 
 ## Installation
 
-Install with cargo:
+We strongly recommend going to the latest [GitHub Release](https://github.com/wakeuplabs-io/noir-stylus-verifier/releases) and following instructions from there.
+Alternatively you can do:
 
 ```bash
 cargo install --git https://github.com/wakeuplabs-io/noir-stylus-verifier --bin nsv --branch develop nsv
 ```
 
-You can also download already compiled binaries from the github releases at [noir-stylus-verifier](https://github.com/wakeuplabs-io/noir-stylus-verifier)
+Run `nsv --help` to verify installation and see available commands.
 
 System requirements: 
 - [noir 1.0.0-beta.6](https://github.com/noir-lang/noirup/tree/main)
-- [bb 0.86.0](hhttps://github.com/AztecProtocol/aztec-packages/blob/master/barretenberg/bbup/README.md)
+- [bb 0.86.0](https://github.com/AztecProtocol/aztec-packages/blob/master/barretenberg/bbup/README.md)
 - [rust](https://www.rust-lang.org/tools/install).
 - [cargo stylus](https://docs.arbitrum.io/stylus/quickstart#setting-up-your-development-environment) to build and deploy stylus contracts
 
@@ -154,30 +155,4 @@ Options:
           Set if using a zk-flavored verifier and proof
   -h, --help
           Print help
-```
-
-## Development
-
-To build the cli binary for distribution first add the necessary rust targets:
-
-```bash
-brew install mingw-w64
-cargo install --locked cargo-zigbuild
-
-rustup target add x86_64-apple-darwin
-rustup target add x86_64-unknown-linux-musl
-```
-
-Available just recipes:
-
-```bash
-just --summary
-
-# Available recipes:
-#     build-cli-linux                         # Build and package the cli binary for linux
-#     build-cli-macos                         # Build and package the cli binary for macos
-#     clean-cli-linux                         # Clean the cli binary for linux
-#     clean-cli-macos                         # Clean the cli binary for macos
-#     test-cli                                # Test the cli unit tests
-#     test-cli-integration                    # Run the cli integration tests.
 ```
