@@ -28,7 +28,7 @@ export const ROUTES: EachRoute[] = [
     noLink: true,
     items: [
       { title: "Building a Voting App", href: "/building-a-voting-app" },
-      { title: "Building a ZK Battleship Game", href: "/building-a-zk-battleship-game" },
+      { title: "Building a ZK Battleship Game", href: "/building-a-battleship-game" },
     ],
   },
 ];

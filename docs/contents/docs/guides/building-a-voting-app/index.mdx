@@ -5,29 +5,21 @@ description: This comprehensive tutorial guides you through building a complete 
 
 > ⚠️ Disclaimer: This is an experimental project intended for research and educational purposes. It has not been audited, and should not be used in production or with real funds. Use at your own risk.
 
-## Overview and Architecture
+## What we're building
 
-The ZK Voting app demonstrates a complete zero-knowledge voting system with the following components:
-
-### System Architecture
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │    │   Circuits      │    │   Contracts     │
-│   (React/CLI)   │    │   (Noir)        │    │   (Stylus)      │
-├─────────────────┤    ├─────────────────┤    ├─────────────────┤
-│ • Proposal UI   │───▶│ • Vote Circuit  │───▶│ • Voting Logic  │
-│ • Vote Interface│    │ • Merkle Proofs │    │ • Verification  │
-│ • ZK Accounts   │    │ • Nullifiers    │    │ • State Storage │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-```
-
-### Key Features
-
+The ZK Voting app demonstrates a complete zero-knowledge voting system with these key features:
 - **Privacy**: Votes are cast anonymously using zero-knowledge proofs
 - **Integrity**: Prevents double voting through cryptographic nullifiers  
 - **Transparency**: All proposals and vote counts are public
 - **Decentralization**: Runs on Arbitrum with on-chain verification
+
+Demo videos can be found [here](https://github.com/wakeuplabs-io/noir-stylus-verifier/raw/develop/examples/voting/demos/www.mov) for the web interface and [here](https://github.com/wakeuplabs-io/noir-stylus-verifier/raw/develop/examples/voting/demos/cli.mov) for the cli counterpart. Code for the whole project can be found [here](https://github.com/wakeuplabs-io/noir-stylus-verifier/tree/develop/examples/voting)
+
+## Overview and Architecture
+
+### System Architecture
+
+Frontend (React/CLI) provides the proposal UI, vote interface, and ZK account management; Noir circuits implement the vote circuit, Merkle proofs, and nullifiers; Stylus contracts handle the voting logic, proof verification, and state storage.
 
 ## Core Concepts
 
@@ -41,10 +33,9 @@ The system uses zero-knowledge proofs to enable private voting. When a user vote
 
 ### ZK Accounts
 
+ZK accounts are distinct from Ethereum addresses. We can't use standard EVM wallets directly because we require separate private keys and secrets that enable zero-knowledge proofs of inclusion—without revealing the identity of the user. Prior attempts to repurpose EVM wallets for this ran into limitations, as discussed  [here](https://github.com/stealthdrop/stealthdrop?tab=readme-ov-file) and [here](https://x.com/0xPARC/status/1493704577002049537?s=20&t=X-5Bs1oWNjmbTASp2T82DA). For now, we rely on dedicated ZK wallets.
 
-ZK accounts are distinct from Ethereum addresses. We can't use standard EVM wallets directly because we require separate private keys and secrets that enable zero-knowledge proofs of inclusion—without revealing the identity of the user. Prior attempts to repurpose EVM wallets for this purpose ran into limitations, as discussed  [here](https://github.com/stealthdrop/stealthdrop?tab=readme-ov-file) and [here](https://x.com/0xPARC/status/1493704577002049537?s=20&t=X-5Bs1oWNjmbTASp2T82DA). For now, we rely on dedicated ZK wallets.
-
-Here’s how a ZK account is deterministically derived from an EVM signature:
+Here’s how we deterministically derive a ZK account from an EVM signature (for our demo this is enough, but you may want to research some more before running to production):
 
 ```typescript
 // 1. Sign a message with your EVM private key
@@ -74,7 +65,7 @@ This approach provides:
 
 ### Merkle Tree Registry
 
-Eligible voters are stored in a merkle tree. To vote, users prove their commitment is included in the tree without revealing which leaf is theirs.
+When the proposal is created the proposer creates a root with the commitments (zk addresses) of all voters and publishes it in the blockchain. To vote, users prove their commitment is included in the tree without revealing which leaf is theirs.
 
 ## Setting up the Development Environment
 
@@ -99,13 +90,13 @@ The Noir circuit is the heart of the voting system, located in `circuits/src/mai
 
 ```rust
 fn main(
-    root: pub Field,              // Merkle root of eligible voters
+    root: pub Field,              // Merkle root of eligible voters (contract provides from state)
     path: [Field; DEPTH],         // Merkle proof path
     direction_selector: [bool; DEPTH], // Merkle proof directions
-    secret: Field,                // Private secret
-    priv_key: Field,             // Private key
-    nullifier: pub Field,         // Prevents double voting
-    proposal_id: pub Field,       // Proposal being voted on
+    secret: Field,                // Private secret shared between commitment and nullifier
+    priv_key: Field,              // Private key
+    nullifier: pub Field,         // Prevents double voting (contract receives as param and later nullifies)
+    proposal_id: pub Field,       // Proposal being voted on (contract param)
     vote: pub u8,                // Vote choice (0 or 1)
 )
 ```
@@ -131,6 +122,8 @@ fn main(
    ```rust
    assert(vote <= 1, "Invalid vote");
    ```
+
+Here it's key the contract provides the public inputs and acts upon these, a proof may be perfectly valid but not linked to our contracts state.
 
 ### Key Circuit Files
 
@@ -158,7 +151,7 @@ The contracts manage the state of the proposals, they enforce voting rules witho
         vote: U256,
         nullifier_hash: U256,
     ) -> Result<bool, Vec<u8>> {
-        // Check if the proposal exists and is started
+           // Check if the proposal exists and is started
         let proposal = self.proposals.get(proposal_id);
         if !proposal.started.get() {
             return Err(b"Proposal not found".to_vec());
@@ -220,10 +213,8 @@ The contracts manage the state of the proposals, they enforce voting rules witho
 ```
 
 First we do the following checks:
-- Proposal exists. Basic, we use started true to differentiate for rust default.
-- Is the proposal active.
-- Has the nullifier been used. Key point here is there's one nullifier per voting user, just one, which does NOT give us any information as to who it is. So we can confirm if the user already voted without storing address or anything alike after they do.
-- But so I just came up with a random nullifier and can keep voting. Well no, that's what we use the proof for, we'll verify with the proof that the nullifier follows a specific formula that links it to some account that is included in the merkle tree. 
+- Proposal exists and it's active.
+- The nullifier hasn't been used yet. Key point here is there's one nullifier per voting user, just one, which does NOT give us any information as to who it is. So we can confirm if the user already voted without storing address or anything alike after they do. So If I just came up with a random nullifier I can keep voting. Well no, that's what we use the proof for, we'll verify with the proof that the nullifier follows a specific formula that links it to some account that is included in the merkle tree. 
 
 And that's it, after all this we can confirm the user has a valid voting power so we just store his vote and log the spent nullifier.
 
@@ -364,12 +355,12 @@ pnpm --filter=@voting/www dev
 
 ### Web Features
 
-1. **Connect Wallet**: Connect your Ethereum wallet
-2. **Create ZK Account**: Generate ZK credentials
-3. **Browse Proposals**: View all active and past proposals
-4. **Create Proposals**: Submit new proposals with voter lists
-5. **Cast Votes**: Vote privately on proposals you're eligible for
-6. **View Results**: See real-time vote counts
+- **Connect Wallet**: Connect your Ethereum wallet
+- **Create ZK Account**: Generate ZK credentials
+- **Browse Proposals**: View all active and past proposals
+- **Create Proposals**: Submit new proposals with voter lists
+- **Cast Votes**: Vote privately on proposals you're eligible for
+- **View Results**: See real-time vote counts
 
 ### Key Web Components
 
@@ -434,7 +425,7 @@ This tutorial demonstrated building a complete zero-knowledge voting system usin
 Key takeaways:
 - Zero-knowledge proofs enable private yet verifiable voting
 - Merkle trees efficiently represent large voter registries  
-- Stylus contracts provide gas-efficient on-chain verification
+- Stylus contracts provide gas-efficient on-chain verification and now you can deploy your noir verifiers in stylus!
 - Proper nullifier schemes prevent double voting
 - Full-stack integration enables practical deployment
 
@@ -448,5 +439,4 @@ The voting app serves as a foundation for building more complex governance syste
 - Implement additional privacy features like vote encryption
 - Scale to support larger voter populations
 
-For more information, explore the [codebase](https://github.com/wakeuplabs-io/noir-stylus-verifier) in `examples/voting` and refer to the [Noir](https://noir-lang.org/), [Arbitrum Stylus](https://arbitrum.io/stylus) and [Noir Stylus Verifier](https://github.com/wakeuplabs-io/noir-stylus-verifier) documentations for deeper technical details.
 

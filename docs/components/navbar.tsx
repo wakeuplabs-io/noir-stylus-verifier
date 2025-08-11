@@ -13,10 +13,6 @@ export const NAVLINKS = [
     href: `/docs${page_routes[0].href}`,
   },
   {
-    title: "Guides",
-    href: "/docs/guides/building-a-voting-app",
-  },
-  {
     title: "Examples",
     href: "https://github.com/wakeuplabs-io/noir-stylus-verifier/tree/develop/examples",
   },

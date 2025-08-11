@@ -3,19 +3,13 @@
 ## Installation
 
 We strongly recommend going to the latest [GitHub Release](https://github.com/wakeuplabs-io/noir-stylus-verifier/releases) and following instructions from there.
-Alternatively you can do:
-
-```bash
-cargo install --git https://github.com/wakeuplabs-io/noir-stylus-verifier --bin nsv --branch develop nsv
-```
-
-Run `nsv --help` to verify installation and see available commands.
+Then do run `nsv --help` to verify installation and see available commands.
 
 System requirements: 
 - [noir 1.0.0-beta.6](https://github.com/noir-lang/noirup/tree/main)
 - [bb 0.86.0](https://github.com/AztecProtocol/aztec-packages/blob/master/barretenberg/bbup/README.md)
-- [rust](https://www.rust-lang.org/tools/install).
-- [cargo stylus](https://docs.arbitrum.io/stylus/quickstart#setting-up-your-development-environment) to build and deploy stylus contracts
+- [rust](https://www.rust-lang.org/tools/install)
+- [cargo stylus](https://docs.arbitrum.io/stylus/quickstart#setting-up-your-development-environment)
 
 ## Commands
 
@@ -46,7 +40,7 @@ Options:
 ```
 > nsv new --help
 
-Create a new project
+Create a new project.
 
 Usage: nsv new <TARGET>
 
@@ -62,7 +56,7 @@ Options:
 ```
 > nsv generate --help
 
-Generate a verifier contract from a noir circuit
+Generate a verifier contract from a noir circuit.
 
 Usage: nsv generate [OPTIONS]
 
@@ -93,7 +87,7 @@ Options:
 ```
 > nsv deploy --help
 
-Deploy the generated contract to the blockchain
+Deploy the generated contract to the blockchain.
 
 Usage: nsv deploy [OPTIONS] --rpc-url <RPC_URL> --private-key <PRIVATE_KEY>
 
@@ -105,7 +99,7 @@ Options:
       --private-key <PRIVATE_KEY>
           Private key to sign the deployment transaction
       --verifier-address <VERIFIER_ADDRESS>
-          Address of the global verifier contract. Optional if using defaults (see `docs/deployments.md`).
+          Address of the global verifier contract. Optional if using defaults (see `https://nsv.wakeuplabs.link/docs/getting-started/deployments`).
       --zk
           Enable zk-flavored verifier
   -h, --help
@@ -117,7 +111,7 @@ Options:
 ```
 > nsv prove --help
 
-Generate a proof for a circuit. Useful for testing
+Generate a proof for a circuit. Useful for testing.
 
 Usage: nsv prove [OPTIONS]
 
@@ -136,7 +130,7 @@ Options:
 ```
 > nsv verify --help
 
-Verify a proof for a circuit. Useful for testing
+Verify a proof for a circuit. Useful for testing.
 
 Usage: nsv verify [OPTIONS]
 

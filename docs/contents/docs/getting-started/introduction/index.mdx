@@ -14,10 +14,11 @@ Noir Stylus Verifier (NSV) helps you generate and deploy Stylus-compatible verif
 
 ### Prerequisites
 
-- Noir `nargo` 1.0.0-beta.6
-- Barretenberg `bb` 0.86.0
+- Noir `nargo` `1.0.0-beta.6`
+- Barretenberg `bb` `0.86.0`
 - Rust 
 - Cargo Stylus 
+- Linux/MacOs. Currently Windows is not supported by Noir.
 
 Install Noir and Barretenberg specific versions::
 
@@ -31,6 +32,12 @@ curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/head
 bbup -v 0.86.0
 ```
 
+Install Rust
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
 Install Cargo Stylus and WebAssembly target:
 
 ```bash
@@ -41,13 +48,7 @@ rustup target add wasm32-unknown-unknown
 ### Install the NSV CLI
 
 We strongly recommend going to the latest [GitHub Release](https://github.com/wakeuplabs-io/noir-stylus-verifier/releases) and following instructions from there.
-Alternatively you can do:
-
-```bash
-cargo install --git https://github.com/wakeuplabs-io/noir-stylus-verifier --bin nsv --branch develop nsv
-```
-
-Run `nsv --help` to verify installation and see available commands.
+Then do run `nsv --help` to verify installation and see available commands.
 
 ### Quick start: from a fresh Noir project to a deployed Stylus verifier
 
@@ -79,7 +80,7 @@ What happens:
 - Generates a Stylus verifier project at `contracts/`
 
 
-> Notice the generated verifier encodes your vk in a call to a global verifier. The cli already provides some default addresses for these but feel free to do your own deployment following [the repo instructions](https://github.com/wakeuplabs-io/noir-stylus-verifier) and specify that while deploying.
+> Notice the generated verifier encodes your vk in a call to a global verifier. The cli already provides some default addresses for these but feel free to do your own deployment as per instructed [here](/docs/getting-started/deployments) and specify that while deploying.
 
 4) Check Stylus compatibility and estimated cost of the generated verifier.
 
@@ -106,17 +107,7 @@ nsv prove -p <package_name>
 By default this will:
 - Execute the circuit with Noir to produce a witness (unless `--witness-path` and `--bytecode-path` are provided)
 - Produce `target/proof` and `target/public_inputs`
-
-Useful flags:
-
-```bash
-nsv prove -p <package_name> \
-  --prover-name Prover.toml \
-  --output-path target \
-  --witness-path path/to/witness.gz \
-  --bytecode-path path/to/bytecode.json \
-  --zk
-```
+- Remember to add `--zk` if you're using the zk flavoured verifier.
 
 7) Verify the proof
 
@@ -137,7 +128,7 @@ nsv verify \
   --rpc-url <RPC_URL> 
 ```
 
-Check `nsv verify --help` for more options.
+Also, remember to set the `--zk` flag if you're using a zk flavoured verifier. Check `nsv verify --help` for more options.
 
 ### Troubleshooting
 
@@ -147,7 +138,7 @@ Check `nsv verify --help` for more options.
 
 ### Learn more
 
-- [CLI reference](/docs/cli)
-- Tutorials: [Voting App](/docs/tutorials/building-a-voting-app), [Battleship Game](/docs/tutorials/building-a-zk-battleship-game)
+- [CLI reference](/docs/getting-started/cli)
+- Guides: [Voting App](/docs/guides/building-a-voting-app), [Battleship Game](/docs/guides/building-a-battleship-game)
 - [Noir](https://noir-lang.org/)
 - [Stylus](https://arbitrum.io/stylus)

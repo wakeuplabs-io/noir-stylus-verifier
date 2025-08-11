@@ -70,7 +70,7 @@ enum Commands {
         private_key: String,
         #[arg(
             long,
-            help = "Address of the global verifier contract. Optional if using defaults (see `docs/deployments.md`)."
+            help = "Address of the global verifier contract. Optional if using defaults (see `https://nsv.wakeuplabs.link/docs/getting-started/deployments`)."
         )]
         verifier_address: Option<String>,
         #[arg(long, default_value_t = false, help = "Enable zk-flavored verifier")]

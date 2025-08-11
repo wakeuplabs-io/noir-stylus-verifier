@@ -3,7 +3,7 @@ title: Deployments
 description: Global Verifier Deployment details
 ---
 
-These are the defaults the `nsv` cli will take. 
+These are the defaults the `nsv` cli will take if you don't specify `verifier-address`
 
 | Flavor | Chain | Address |
 |--------|-------|---------|
@@ -15,13 +15,13 @@ You can still go ahead and deploy your own, just make sure to specify it when de
 
 ## How to deploy
 
-To deploy your own clone the [noir-stylus-verifier]() repo with:
+To deploy your own clone the [noir-stylus-verifier](https://github.com/wakeuplabs-io/noir-stylus-verifier) repo with:
 
 ```bash
-git clone https://github.com/wakeuplabs-io/noir-stylus-verifier
+git clone --recursive https://github.com/wakeuplabs-io/noir-stylus-verifier
 ```
 
-Follow instructions to setup your environment and depending on what you want do:
+Follow instructions at the `README.md` to setup your environment and depending on what you want do:
 
 ```bash
 # To start a local testnode

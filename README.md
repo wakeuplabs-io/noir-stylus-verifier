@@ -112,21 +112,10 @@ We currently support two Ultrahonk configurations, controlled via Cargo feature 
 
   - `zk-verifier`, `zk-sumcheck-verifier`, `zk-shplemini-verifier`
 
-## Packages
-
-- **`packages/ultrahonk/`**
-  Core logic for the Ultrahonk verifier.
-
-- **`vendor/algebra/`**
-  Forked from `arkworks/algebra`, modified to enable the `only-arithmetic-backend` feature.
-  Ensures elliptic curve operations (`ec_add`, `ec_scalar_mul`, `ec_pairing_check`, `msm`) route through Stylus adapters instead of directly through Arkworks.
-
-- **`integration/`**
-  CLI interface for orchestrating integration tests and deployments.
-
+  
 ## Requirements
 
-### Rust (1.89.0-nightly)
+### Rust (nightly-2025-06-12)
 
 Install the required nightly toolchain and WASM target:
 
