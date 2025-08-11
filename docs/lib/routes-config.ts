@@ -1,0 +1,54 @@
+// for page navigation & to sort on leftbar
+
+export type EachRoute = {
+  title: string;
+  href: string;
+  noLink?: true; // noLink will create a route segment (section) but cannot be navigated
+  items?: EachRoute[];
+  tag?: string;
+};
+
+export const ROUTES: EachRoute[] = [
+  {
+    title: "Getting Started",
+    href: "/getting-started",
+    noLink: true,
+    items: [
+      { title: "Introduction", href: "/introduction" },
+      {
+        title: "CLI",
+        href: "/cli",
+      },
+      { title: "Deployments", href: "/deployments" },
+      {
+        title: "Requirements",
+        href: "/requirements",
+      },
+    ],
+  },
+  {
+    title: "Guides",
+    href: "/guides",
+    noLink: true,
+    items: [
+      { title: "Building a Voting App", href: "/building-a-voting-app" },
+      { title: "Building a ZK Battleship Game", href: "/building-a-zk-battleship-game" },
+    ],
+  },
+];
+
+type Page = { title: string; href: string };
+
+function getRecurrsiveAllLinks(node: EachRoute) {
+  const ans: Page[] = [];
+  if (!node.noLink) {
+    ans.push({ title: node.title, href: node.href });
+  }
+  node.items?.forEach((subNode) => {
+    const temp = { ...subNode, href: `${node.href}${subNode.href}` };
+    ans.push(...getRecurrsiveAllLinks(temp));
+  });
+  return ans;
+}
+
+export const page_routes = ROUTES.map((it) => getRecurrsiveAllLinks(it)).flat();

@@ -1,21 +1,9 @@
-
-# Building a Zero-Knowledge Voting App with Noir and Arbitrum Stylus
-
-This comprehensive tutorial guides you through building a complete zero-knowledge voting application using Noir circuits and Arbitrum Stylus contracts. The voting system ensures privacy by allowing users to vote anonymously while preventing double voting through cryptographic nullifiers.
+---
+title: Building a Zero-Knowledge Voting App with Noir and Arbitrum Stylus
+description: This comprehensive tutorial guides you through building a complete zero-knowledge voting application using Noir circuits and Arbitrum Stylus contracts. The voting system ensures privacy by allowing users to vote anonymously while preventing double voting through cryptographic nullifiers.
+---
 
 > ⚠️ Disclaimer: This is an experimental project intended for research and educational purposes. It has not been audited, and should not be used in production or with real funds. Use at your own risk.
-
-## Table of Contents
-
-1. [Overview and Architecture](#overview-and-architecture)
-2. [Core Concepts](#core-concepts)
-3. [Setting up the Development Environment](#setting-up-the-development-environment)
-4. [Understanding the Circuits](#understanding-the-circuits)
-5. [Understanding the Contracts](#understanding-the-contracts)
-6. [Building and Deploying](#building-and-deploying)
-7. [Using the CLI](#using-the-cli)
-8. [Using the Web Interface](#using-the-web-interface)
-9. [Advanced Topics](#advanced-topics)
 
 ## Overview and Architecture
 
@@ -109,7 +97,7 @@ The Noir circuit is the heart of the voting system, located in `circuits/src/mai
 
 ### Circuit Inputs
 
-```noir
+```rust
 fn main(
     root: pub Field,              // Merkle root of eligible voters
     path: [Field; DEPTH],         // Merkle proof path
@@ -125,7 +113,7 @@ fn main(
 ### Circuit Logic
 
 1. **Commitment Verification**: Verifies the voter is eligible
-   ```noir
+   ```rust
    let note_commitment = definitions::commitment(priv_key, secret);
    merkle_tree::assert_merkle_inclusion(
        root, path, direction_selector, note_commitment,
@@ -134,13 +122,13 @@ fn main(
    ```
 
 2. **Nullifier Check**: Ensures the nullifier provided as a public input by the contract is linked to the private commitment.
-   ```noir
+   ```rust
    assert(nullifier == definitions::nullifier(root, priv_key, proposal_id), 
           "Invalid nullifier");
    ```
 
 3. **Vote Validation**: Ensures valid vote (0: against, 1: for)
-   ```noir
+   ```rust
    assert(vote <= 1, "Invalid vote");
    ```
 

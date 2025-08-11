@@ -1,6 +1,8 @@
 
 # Battleships
 
+> 🚨 Disclaimer: This repository is for educational purposes only. It is not audited, may contain bugs, and is not production-ready. Use at your own risk.
+
 There's a guide for this example at [docs/tutorials/building-a-zk-battleship-game](../../docs/tutorials/building-a-zk-battleship-game.md). Check it out to know more about the project.
 
 ## Contracts
@@ -64,3 +66,7 @@ Player 2
 # play 
 ./src/main.ts play --private-key $DEV_PK_2 0x76d5d16d3eb5d7ba5349ed8364e09f3c256efb72d87d52df05f71d053ccd77e9
 ```
+
+## Credits
+
+The design for the web app was sourced from the [Figma Community](https://www.figma.com/community/file/949373440973748315/battleship-game-interactive-components) and created by its respective author. All credit goes to the original designer.
