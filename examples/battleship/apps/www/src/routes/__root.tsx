@@ -5,7 +5,7 @@ export const Route = createRootRoute({
   component: () => (
     <div>
       <div className="lg:hidden h-screen w-screen flex items-center justify-center text-center">
-        Auth that's awkward. Mobile is still not supported.
+        This app is not supported in small screens. Try from a computer....
       </div>
       <div className="hidden lg:block">
         <Outlet />
