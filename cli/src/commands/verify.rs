@@ -19,7 +19,7 @@ use colored::*;
 use std::path::PathBuf;
 
 /// Command for verifying cryptographic proofs locally or on-chain.
-/// 
+///
 /// This command can verify proofs in two modes:
 /// - Local verification using Barretenberg's native verifier
 /// - On-chain verification using deployed Stylus verifier contracts
@@ -52,9 +52,9 @@ sol! {
 
 impl VerifyCommand {
     /// Executes the verify command to validate a cryptographic proof.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `_ctx` - Application context (currently unused)
     /// * `proof` - Path to the proof file to verify
     /// * `public_input` - Path to the public inputs file
@@ -62,14 +62,14 @@ impl VerifyCommand {
     /// * `verifier_address` - Optional on-chain verifier contract address. If None, verifies locally
     /// * `rpc_url` - Optional RPC URL for on-chain verification. Uses default if None
     /// * `zk` - Whether this is a zero-knowledge proof
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Returns `Ok(())` if verification succeeds (regardless of proof validity),
     /// or an `AppError` if verification cannot be performed.
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// This function will return an error if:
     /// - Required system dependencies (bb) are not installed
     /// - Proof, public input, or verification key files don't exist

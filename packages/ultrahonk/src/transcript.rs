@@ -30,7 +30,7 @@ use ark_ec::AffineRepr;
 use ark_ff::{BigInteger, PrimeField, Zero};
 
 /// Fiat-Shamir transcript for Ultra Honk verification.
-/// 
+///
 /// The transcript manages the verifier's state during proof verification,
 /// including proof data, challenge generation, and round management. It
 /// implements the Fiat-Shamir transformation to convert interactive protocols
@@ -75,9 +75,9 @@ impl Transcript {
     }
 
     /// Creates a new transcript for verification with the given proof data.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `proof` - The Ultra Honk proof containing all prover commitments and values
     pub fn new_verifier(proof: HonkProof) -> Self {
         Self {
@@ -92,9 +92,9 @@ impl Transcript {
     }
 
     /// Consumes the transcript and returns the accumulated proof data.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// The HonkProof containing all the data written to the transcript.
     pub fn get_proof(self) -> HonkProof {
         HonkProof::new(self.proof_data)
@@ -239,13 +239,13 @@ impl Transcript {
     }
 
     /// Generates a single cryptographic challenge using the Fiat-Shamir transformation.
-    /// 
+    ///
     /// # Type Parameters
-    /// 
+    ///
     /// * `H` - Hash backend used for challenge generation
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// A random field element derived from the current transcript state.
     pub fn get_challenge<H: HashBackend>(&mut self) -> ScalarField {
         let challenge = self.get_next_duplex_challenge_buffer::<H>(1)[0];
@@ -255,20 +255,20 @@ impl Transcript {
     }
 
     /// Generates multiple cryptographic challenges efficiently.
-    /// 
+    ///
     /// This method generates multiple challenges by splitting hash outputs,
     /// reducing the number of hash operations needed.
-    /// 
+    ///
     /// # Type Parameters
-    /// 
+    ///
     /// * `H` - Hash backend used for challenge generation
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `num_challenges` - Number of challenges to generate
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Vector of random field elements derived from the transcript state.
     pub(crate) fn get_challenges<H: HashBackend>(
         &mut self,

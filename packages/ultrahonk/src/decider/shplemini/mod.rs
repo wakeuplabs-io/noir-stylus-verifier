@@ -20,7 +20,7 @@ pub mod verifier;
 use crate::types::{G1Affine, ScalarField};
 
 /// A polynomial opening claim for Shplemini verification.
-/// 
+///
 /// This structure represents a claim that a set of polynomials evaluate to
 /// specific values at a challenge point, backed by their commitments.
 pub(crate) struct ShpleminiVerifierOpeningClaim {

@@ -1,7 +1,7 @@
 //! # NSV CLI
 //!
 //! A command-line interface for generating and deploying verifiers in Stylus from Noir circuits.
-//! 
+//!
 //! This CLI provides a complete workflow for working with Noir circuits and Stylus verifiers:
 //! - Create new projects with the `new` command
 //! - Generate verifier contracts from Noir circuits with `generate`
@@ -30,7 +30,7 @@ use std::path::PathBuf;
 use thiserror::Error;
 
 /// Command-line arguments for the NSV CLI application.
-/// 
+///
 /// This struct defines the top-level arguments and subcommands available
 /// in the NSV CLI tool.
 #[derive(Parser)]
@@ -48,7 +48,7 @@ struct Args {
 }
 
 /// Available CLI subcommands for the NSV tool.
-/// 
+///
 /// Each variant represents a different operation that can be performed
 /// with Noir circuits and Stylus verifiers.
 #[derive(Subcommand, Debug, Clone)]
@@ -157,7 +157,7 @@ enum Commands {
 }
 
 /// Application-specific error types for the NSV CLI.
-/// 
+///
 /// This enum defines all possible error conditions that can occur
 /// during CLI operation, with descriptive error messages for each case.
 #[derive(Error, Debug, PartialEq, Eq)]
@@ -189,7 +189,7 @@ pub(crate) enum AppError {
 }
 
 /// Application context for sharing state across CLI operations.
-/// 
+///
 /// Currently empty but provides a place for future shared application state
 /// such as configuration, caching, or other cross-cutting concerns.
 pub(crate) struct AppContext {}

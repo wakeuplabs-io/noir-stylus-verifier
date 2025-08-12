@@ -28,7 +28,7 @@ pub const CHAIN_ID_ARBITRUM: u64 = 42161;
 pub const CHAIN_ID_ARBITRUM_SEPOLIA: u64 = 421614;
 
 /// System requirement for cargo-stylus CLI tool
-/// 
+///
 /// cargo-stylus is required for checking and deploying Stylus contracts.
 /// Version 0.6.0 or higher is required.
 pub(crate) const CARGO_STYLUS_REQUIREMENT: Requirement = Requirement {
@@ -40,7 +40,7 @@ pub(crate) const CARGO_STYLUS_REQUIREMENT: Requirement = Requirement {
 };
 
 /// System requirement for Barretenberg (bb) CLI tool
-/// 
+///
 /// bb is the Barretenberg backend used for writing vk, proving and verifying locally.
 /// Exactly version 0.86.0 is required. Since bb doesn't have a reliable version
 /// command, we also verify by binary hash.
@@ -59,7 +59,7 @@ pub(crate) const BB_REQUIREMENT: Requirement = Requirement {
 };
 
 /// System requirement for Nargo CLI tool
-/// 
+///
 /// Nargo is the Noir language toolchain used for compiling circuits and
 /// executing them to generate witnesses. Exactly version 1.0.0-beta.6 is required.
 pub(crate) const NARGO_REQUIREMENT: Requirement = Requirement {

@@ -11,54 +11,54 @@ use std::{
 };
 
 /// Trait defining the interface for Nargo operations.
-/// 
+///
 /// This trait abstracts interactions with the Nargo CLI tool, enabling
 /// project management, compilation, and execution of Noir circuits.
 #[cfg_attr(test, mockall::automock)]
 pub(crate) trait TNargo {
     /// Finds the root directory of a Noir package by name.
-    /// 
+    ///
     /// Searches up the directory tree from the current working directory
     /// looking for a `Nargo.toml` file with a matching package name.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `package` - The name of the package to find
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Returns the path to the package root directory, or an error if
     /// the package is not found within the search scope.
     fn find_package_root(&self, package: &str) -> Result<PathBuf, Box<dyn std::error::Error>>;
-    
+
     /// Reads the package name from a Nargo.toml file.
-    /// 
+    ///
     /// Parses the TOML configuration file to extract the package name
     /// from the `[package]` section.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `root` - Path to the directory containing Nargo.toml
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Returns the package name as a string, or an error if the file
     /// cannot be read or the package name is not found.
     fn read_package_name(&self, root: &Path) -> Result<String, Box<dyn std::error::Error>>;
-    
+
     /// Executes a Noir circuit to generate a witness.
-    /// 
+    ///
     /// Runs `nargo execute` with the specified package and prover configuration,
     /// which evaluates the circuit with the provided inputs to generate a witness.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `root` - Project root directory for command execution
     /// * `package_name` - Name of the package to execute
     /// * `prover_name` - Name of the prover configuration to use
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Returns `Ok(())` if execution succeeds, or an error if the
     /// nargo command fails or the witness generation fails.
     fn execute(
@@ -67,20 +67,20 @@ pub(crate) trait TNargo {
         package_name: &str,
         prover_name: &str,
     ) -> Result<(), Box<dyn std::error::Error>>;
-    
+
     /// Compiles a Noir circuit to bytecode.
-    /// 
+    ///
     /// Runs `nargo compile` to generate circuit bytecode, which is then
     /// copied to the specified output path for use in proof generation.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `root` - Project root directory for command execution
     /// * `package_name` - Name of the package to compile
     /// * `bytecode_path` - Path where the compiled bytecode should be written
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Returns `Ok(())` if compilation succeeds, or an error if the
     /// nargo command fails or file operations fail.
     fn compile(
@@ -92,7 +92,7 @@ pub(crate) trait TNargo {
 }
 
 /// Nargo CLI integration for Noir circuit operations.
-/// 
+///
 /// This struct provides a wrapper around the Nargo command-line tool,
 /// enabling project discovery, compilation, and execution of Noir circuits.
 pub(crate) struct Nargo {
@@ -110,7 +110,7 @@ impl Default for Nargo {
 
 impl TNargo for Nargo {
     /// Implements package discovery by searching up the directory tree.
-    /// 
+    ///
     /// Starting from the current directory, searches up to 5 parent directories
     /// for a `Nargo.toml` file with a matching package name.
     fn find_package_root(&self, package: &str) -> Result<PathBuf, Box<dyn std::error::Error>> {
@@ -138,7 +138,7 @@ impl TNargo for Nargo {
     }
 
     /// Implements package name reading from Nargo.toml.
-    /// 
+    ///
     /// Parses the TOML file and extracts the package name from the
     /// `[package].name` field.
     fn read_package_name(&self, root: &Path) -> Result<String, Box<dyn std::error::Error>> {
@@ -157,7 +157,7 @@ impl TNargo for Nargo {
     }
 
     /// Implements circuit compilation using the nargo CLI.
-    /// 
+    ///
     /// Executes `nargo compile` to generate bytecode, then copies the
     /// resulting file from the target directory to the specified output path.
     fn compile(
@@ -178,7 +178,7 @@ impl TNargo for Nargo {
     }
 
     /// Implements circuit execution using the nargo CLI.
-    /// 
+    ///
     /// Executes `nargo execute` with the specified package and prover
     /// configuration to generate a witness from the circuit inputs.
     fn execute(

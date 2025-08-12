@@ -18,48 +18,48 @@ use crate::{
 };
 
 /// The main Ultra Honk verifier implementation.
-/// 
+///
 /// This struct provides the entry point for verifying Ultra Honk proofs. It coordinates
 /// the three-phase verification process:
 /// 1. **Oink**: Handles the initial verification setup and polynomial commitments
 /// 2. **Sumcheck**: Performs the interactive sumcheck protocol verification
 /// 3. **Shplemini**: Verifies the polynomial commitment scheme and final consistency
-/// 
+///
 /// The verifier is designed to work with pluggable backends for cryptographic operations,
 /// allowing it to run in different environments (e.g., native Rust, smart contracts).
 pub struct UltraHonk;
 
 impl UltraHonk {
     /// Verifies an Ultra Honk proof with the given public inputs and verification key.
-    /// 
+    ///
     /// This is the main verification entry point that orchestrates the complete
     /// Ultra Honk verification protocol. The verification process consists of three phases:
-    /// 
+    ///
     /// 1. **Oink Phase**: Verifies polynomial commitments and extracts challenges
-    /// 2. **Sumcheck Phase**: Performs the interactive sumcheck protocol to verify 
+    /// 2. **Sumcheck Phase**: Performs the interactive sumcheck protocol to verify
     ///    the constraint satisfaction
     /// 3. **Shplemini Phase**: Verifies the polynomial commitment scheme using the
     ///    KZG-style opening proofs
-    /// 
+    ///
     /// # Type Parameters
-    /// 
+    ///
     /// * `H` - Hash backend for transcript operations and Fiat-Shamir challenges
     /// * `P` - G1 arithmetic backend for elliptic curve operations and pairings
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `honk_proof` - The Ultra Honk proof to verify
-    /// * `public_inputs` - Public inputs to the circuit 
+    /// * `public_inputs` - Public inputs to the circuit
     /// * `vk` - Verification key containing circuit-specific parameters
     /// * `has_zk` - Whether this is a zero-knowledge proof (affects batch sizes)
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Returns `Ok(true)` if the proof is valid, `Ok(false)` if invalid, or an error
     /// if verification cannot be completed due to malformed inputs or cryptographic failures.
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// This function can return various `HonkProofError` variants if:
     /// - The proof is malformed or too small
     /// - Cryptographic operations fail (e.g., pairing checks)

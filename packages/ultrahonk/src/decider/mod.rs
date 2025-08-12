@@ -5,7 +5,7 @@
 //! scheme verification. It consists of two main components:
 //!
 //! ## Sumcheck Protocol
-//! 
+//!
 //! The [`sumcheck`] module implements the interactive sumcheck protocol verification,
 //! which reduces the verification of polynomial constraints to polynomial evaluations
 //! at a random point. This includes:

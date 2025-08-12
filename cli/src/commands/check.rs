@@ -20,7 +20,7 @@ use crate::{
 use colored::*;
 
 /// Command for checking Stylus contract compatibility and deployment costs.
-/// 
+///
 /// This command validates that a generated verifier contract is compatible with
 /// the Stylus runtime and provides estimates for deployment gas costs. It's an
 /// essential step before deploying contracts to ensure they will work correctly.
@@ -48,20 +48,20 @@ impl Default for CheckCommand {
 
 impl CheckCommand {
     /// Executes the check command to validate contract compatibility.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `_ctx` - Application context (currently unused)
     /// * `package` - Optional package name to check. If None, uses current directory
     /// * `rpc_url` - RPC URL for blockchain connection during validation
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Returns `Ok(())` if the contract passes all checks, or an `AppError` if
     /// validation fails or required files are missing.
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// This function will return an error if:
     /// - Required system dependencies (cargo-stylus) are not installed
     /// - The specified package cannot be found

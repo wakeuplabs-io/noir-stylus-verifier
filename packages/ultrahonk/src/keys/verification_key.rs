@@ -7,7 +7,7 @@
 use crate::types::{G1Affine, PrecomputedEntities};
 
 /// Ultra Honk verification key containing circuit-specific parameters.
-/// 
+///
 /// The verification key contains all the information needed to verify proofs
 /// for a specific circuit, including the circuit size, polynomial commitments
 /// for precomputed entities, and public input configuration.

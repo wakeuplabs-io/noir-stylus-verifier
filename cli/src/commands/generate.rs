@@ -22,7 +22,7 @@ use crate::{
 use colored::*;
 
 /// Command for generating Stylus verifier contracts from Noir circuits.
-/// 
+///
 /// This command orchestrates the complete process of converting a Noir circuit
 /// into a deployable Stylus verifier contract, including compilation, key generation,
 /// and Rust code generation.
@@ -53,20 +53,20 @@ impl Default for GenerateCommand {
 
 impl GenerateCommand {
     /// Executes the generate command to create a verifier contract.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `_ctx` - Application context (currently unused)
     /// * `package` - Optional package name to generate for. If None, uses current directory
     /// * `bytecode_path` - Optional path to pre-compiled bytecode. If None, compiles the circuit
     /// * `vk_path` - Optional path to verification key. If None, generates the key
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Returns `Ok(())` if generation succeeds, or an `AppError` if any step fails.
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// This function will return an error if:
     /// - Required system dependencies (bb, nargo) are not installed
     /// - The specified package cannot be found

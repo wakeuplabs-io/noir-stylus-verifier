@@ -21,7 +21,7 @@ use crate::{
 use colored::*;
 
 /// Command for generating cryptographic proofs from Noir circuits.
-/// 
+///
 /// This command handles the complete proof generation process, from circuit
 /// execution to witness generation and final proof creation using Barretenberg.
 pub(crate) struct ProveCommand {
@@ -48,9 +48,9 @@ impl Default for ProveCommand {
 
 impl ProveCommand {
     /// Executes the prove command to generate a cryptographic proof.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `_ctx` - Application context (currently unused)
     /// * `package` - Optional package name to prove for. If None, uses current directory
     /// * `prover_path` - Path to the prover configuration file (typically Prover.toml)
@@ -58,13 +58,13 @@ impl ProveCommand {
     /// * `witness_path` - Optional path to pre-existing witness. If None, executes circuit
     /// * `bytecode_path` - Optional path to pre-existing bytecode. If None, uses compiled bytecode
     /// * `zk` - Whether to generate a zero-knowledge proof
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Returns `Ok(())` if proof generation succeeds, or an `AppError` if any step fails.
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// This function will return an error if:
     /// - Required system dependencies (bb, nargo) are not installed
     /// - The specified package cannot be found

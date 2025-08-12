@@ -50,7 +50,7 @@ pub(crate) trait Relation {
 }
 
 /// Total number of subrelations across all constraint types.
-/// 
+///
 /// This constant represents the sum of all subrelations from each individual
 /// constraint relation. It's used to determine the number of alpha challenges
 /// needed in the sumcheck protocol.

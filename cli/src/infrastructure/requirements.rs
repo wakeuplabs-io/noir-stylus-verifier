@@ -13,7 +13,7 @@ use semver::Version;
 use std::{fmt, process::Command};
 
 /// Version comparison operators for requirement checking.
-/// 
+///
 /// These enum variants define how the installed version of a tool should
 /// be compared against the required version.
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -34,7 +34,7 @@ pub(crate) enum Comparison {
 }
 
 /// Specification for a system requirement.
-/// 
+///
 /// This struct defines all the information needed to verify that a particular
 /// external tool meets the requirements for NSV operation.
 #[derive(Debug, Eq, PartialEq, Clone)]
@@ -52,60 +52,60 @@ pub(crate) struct Requirement<'a> {
 }
 
 /// Trait defining the interface for system requirements checking.
-/// 
+///
 /// This trait provides methods to verify that external dependencies meet
 /// the specified requirements, using either version comparison or binary
 /// hash verification depending on the tool's capabilities.
 #[cfg_attr(test, mockall::automock)]
 pub(crate) trait TSystemRequirementsChecker: Send + Sync {
     /// Checks all requirements, automatically choosing version or hash verification.
-    /// 
+    ///
     /// This method intelligently routes requirements to the appropriate verification
     /// method based on whether hash verification is specified.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `requirements` - Vector of requirements to verify
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Returns `Ok(())` if all requirements are satisfied, or an error message
     /// describing the first requirement that fails.
     fn check<'a>(&self, requirements: Vec<Requirement<'a>>) -> Result<(), String>;
 
     /// Verifies requirements using binary hash comparison.
-    /// 
+    ///
     /// This method is used for tools that don't provide reliable version
     /// information. It computes SHA256 hashes of the binary files and
     /// compares them against known good hashes.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `requirements` - Vector of requirements with hash specifications
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Returns `Ok(())` if all hashes match, or an error describing mismatches.
     fn check_by_hash<'a>(&self, requirements: Vec<Requirement<'a>>) -> Result<(), String>;
 
     /// Verifies requirements using version comparison.
-    /// 
+    ///
     /// This method executes version commands and parses the output to compare
     /// against required versions using semantic version comparison.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `requirements` - Vector of requirements with version specifications
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Returns `Ok(())` if all version requirements are met, or an error
     /// describing version mismatches.
     fn check_by_version<'a>(&self, requirements: Vec<Requirement<'a>>) -> Result<(), String>;
 }
 
 /// System requirements checker implementation.
-/// 
+///
 /// This struct provides concrete implementation of system requirements checking,
 /// using system commands to verify tool installations and versions, and SHA256
 /// hashing for binary verification when version checking is unreliable.
@@ -142,7 +142,7 @@ impl Default for SystemRequirementsChecker {
 
 impl TSystemRequirementsChecker for SystemRequirementsChecker {
     /// Implements the main requirements checking logic.
-    /// 
+    ///
     /// Separates requirements into version-based and hash-based verification
     /// and processes each group with the appropriate method. Hash-based
     /// verification takes priority over version-based for tools that specify hashes.
@@ -166,7 +166,7 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
     }
 
     /// Implements binary hash verification for requirements.
-    /// 
+    ///
     /// For each requirement, locates the binary using `which`, computes its
     /// SHA256 hash, and verifies it matches one of the acceptable hashes.
     fn check_by_hash(&self, requirements: Vec<Requirement>) -> Result<(), String> {
@@ -193,7 +193,7 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
     }
 
     /// Implements version-based verification for requirements.
-    /// 
+    ///
     /// Executes version commands, parses the output using regex to extract
     /// semantic version numbers, and compares them according to the specified
     /// comparison operator.

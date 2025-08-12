@@ -17,7 +17,7 @@ use colored::*;
 use std::path::PathBuf;
 
 /// Command for creating new NSV projects with template files.
-/// 
+///
 /// This command scaffolds a complete NSV project structure including Noir circuit
 /// templates, configuration files, and development scripts. It provides everything
 /// needed to start developing with Noir circuits and Stylus verifiers.
@@ -39,18 +39,18 @@ impl Default for NewCommand {
 
 impl NewCommand {
     /// Executes the new command to create a project.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `_ctx` - Application context (currently unused)
     /// * `name` - Name of the project to create. Must follow cargo naming conventions
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Returns `Ok(())` if project creation succeeds, or an `AppError` if creation fails.
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// This function will return an error if:
     /// - The project name is invalid (doesn't follow cargo naming rules)
     /// - A directory with the same name already exists
@@ -90,23 +90,23 @@ impl NewCommand {
     }
 
     /// Validates project name according to cargo naming conventions.
-    /// 
+    ///
     /// Project names must follow the same rules as cargo package names:
     /// - Only alphanumeric characters, underscores, and hyphens
     /// - Cannot start with a hyphen
     /// - Maximum 64 characters
     /// - Cannot be empty
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `name` - The project name to validate
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Returns `Ok(())` if the name is valid, or an error describing the issue.
-    /// 
+    ///
     /// # Reference
-    /// 
+    ///
     /// Same validation as defined by cargo: https://doc.rust-lang.org/cargo/reference/manifest.html#the-name-field
     fn validate_name(&self, name: &str) -> Result<(), Box<dyn std::error::Error>> {
         if name.is_empty() {

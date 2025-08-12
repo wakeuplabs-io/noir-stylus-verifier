@@ -12,21 +12,21 @@ pub(crate) struct Bb {
 }
 
 /// Trait defining the interface for Barretenberg operations.
-/// 
+///
 /// This trait abstracts the core cryptographic operations provided by the
 /// Barretenberg backend, enabling easy testing and dependency injection.
 #[cfg_attr(test, mockall::automock)]
 pub(crate) trait TBb {
     /// Generates a verification key from compiled circuit bytecode.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `root` - Project root directory for command execution
     /// * `bytecode` - Path to the compiled circuit bytecode file
     /// * `output` - Path where the verification key should be written
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Returns `Ok(())` if the verification key is generated successfully,
     /// or an error if the bb command fails or file operations fail.
     fn write_vk(
@@ -35,19 +35,19 @@ pub(crate) trait TBb {
         bytecode: &Path,
         output: &Path,
     ) -> Result<(), Box<dyn std::error::Error>>;
-    
+
     /// Generates a cryptographic proof for a circuit.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `root` - Project root directory for command execution
     /// * `bytecode` - Path to the compiled circuit bytecode
     /// * `witness` - Path to the circuit witness file
     /// * `output` - Directory where proof and public inputs will be written
     /// * `zk` - Whether to generate a zero-knowledge proof
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Returns `Ok(())` if proof generation succeeds, or an error if the
     /// bb command fails or file operations fail.
     fn prove(
@@ -58,19 +58,19 @@ pub(crate) trait TBb {
         output: &Path,
         zk: bool,
     ) -> Result<(), Box<dyn std::error::Error>>;
-    
+
     /// Verifies a cryptographic proof locally using Barretenberg.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `root` - Project root directory for command execution
     /// * `proof` - Path to the proof file to verify
     /// * `public_input` - Path to the public inputs file
     /// * `vk` - Path to the verification key file
     /// * `zk` - Whether this is a zero-knowledge proof
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Returns `Ok(())` if verification completes successfully (regardless of
     /// proof validity), or an error if the bb command fails.
     fn verify(
@@ -93,7 +93,7 @@ impl Default for Bb {
 
 impl TBb for Bb {
     /// Implements verification key generation using the bb CLI.
-    /// 
+    ///
     /// Executes `bb write_vk` with the Ultra Honk scheme and keccak oracle hash.
     /// The verification key is first written to `target/vk` and then copied to
     /// the specified output path if different.
@@ -125,7 +125,7 @@ impl TBb for Bb {
     }
 
     /// Implements proof generation using the bb CLI.
-    /// 
+    ///
     /// Executes `bb prove` with the Ultra Honk scheme and keccak oracle hash.
     /// Optionally includes the `--zk` flag for zero-knowledge proofs. The proof
     /// and public inputs are generated in the target directory and copied to
@@ -177,7 +177,7 @@ impl TBb for Bb {
     }
 
     /// Implements local proof verification using the bb CLI.
-    /// 
+    ///
     /// Executes `bb verify` with the Ultra Honk scheme and keccak oracle hash.
     /// Optionally includes the `--zk` flag for zero-knowledge proof verification.
     /// The command will exit with a non-zero status if the proof is invalid.

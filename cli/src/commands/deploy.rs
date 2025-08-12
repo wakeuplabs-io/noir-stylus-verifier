@@ -27,7 +27,7 @@ use crate::{
 use colored::*;
 
 /// Command for deploying Stylus verifier contracts to the blockchain.
-/// 
+///
 /// This command deploys a previously generated verifier contract to a target
 /// blockchain network. It handles chain detection, verifier address resolution,
 /// and transaction signing automatically.
@@ -58,22 +58,22 @@ impl Default for DeployCommand {
 
 impl DeployCommand {
     /// Executes the deploy command to deploy a verifier contract.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `_ctx` - Application context (currently unused)
     /// * `package` - Optional package name to deploy. If None, uses current directory
     /// * `rpc_url` - RPC URL for the target blockchain network
     /// * `private_key` - Private key for signing the deployment transaction
     /// * `verifier_address` - Optional verifier contract address. If None, uses chain defaults
     /// * `zk_flavor` - Whether to use zk-flavored verifier contracts
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// Returns `Ok(())` if deployment succeeds, or an `AppError` if deployment fails.
-    /// 
+    ///
     /// # Errors
-    /// 
+    ///
     /// This function will return an error if:
     /// - Required system dependencies (cargo-stylus) are not installed
     /// - The specified package cannot be found

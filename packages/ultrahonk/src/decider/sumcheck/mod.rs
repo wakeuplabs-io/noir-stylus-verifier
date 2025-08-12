@@ -18,7 +18,7 @@ pub(crate) mod round_verifier;
 pub mod verifier;
 
 /// Output from the sumcheck verification process.
-/// 
+///
 /// This structure contains the results of sumcheck verification, including
 /// the multivariate challenge point and the verification status.
 pub struct SumcheckVerifierOutput {
