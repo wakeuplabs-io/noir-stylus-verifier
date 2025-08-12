@@ -1,3 +1,9 @@
+//! # System Requirements Checking
+//!
+//! This module provides functionality to verify that required external tools
+//! are installed and meet version requirements. It supports both version-based
+//! and hash-based verification for different types of dependencies.
+
 use crate::infrastructure::{
     system::{System, TSystem},
     utils::{Sha256Hasher, TSha256Hasher},
@@ -6,37 +12,107 @@ use regex::Regex;
 use semver::Version;
 use std::{fmt, process::Command};
 
+/// Version comparison operators for requirement checking.
+/// 
+/// These enum variants define how the installed version of a tool should
+/// be compared against the required version.
 #[derive(Debug, Eq, PartialEq, Clone)]
 #[allow(dead_code)]
 pub(crate) enum Comparison {
+    /// Exact version match required
     Equal,
+    /// Installed version must be greater than or equal to required version
     GreaterThanOrEqual,
+    /// Installed version must be less than or equal to required version
     LessThanOrEqual,
+    /// Installed version must be greater than required version
     GreaterThan,
+    /// Installed version must be less than required version
     LessThan,
+    /// Tool must simply be installed (no version check)
     Installed,
 }
 
+/// Specification for a system requirement.
+/// 
+/// This struct defines all the information needed to verify that a particular
+/// external tool meets the requirements for NSV operation.
 #[derive(Debug, Eq, PartialEq, Clone)]
 pub(crate) struct Requirement<'a> {
+    /// Name of the program to check
     pub(crate) program: &'a str,
+    /// Command-line argument to get version information
     pub(crate) version_arg: &'a str,
+    /// Required version string
     pub(crate) required_version: &'a str,
+    /// Optional list of acceptable binary hashes (for programs without reliable version output)
     pub(crate) required_hash: &'a [&'a str],
+    /// How to compare the installed version against the required version
     pub(crate) required_comparator: Comparison,
 }
 
+/// Trait defining the interface for system requirements checking.
+/// 
+/// This trait provides methods to verify that external dependencies meet
+/// the specified requirements, using either version comparison or binary
+/// hash verification depending on the tool's capabilities.
 #[cfg_attr(test, mockall::automock)]
 pub(crate) trait TSystemRequirementsChecker: Send + Sync {
+    /// Checks all requirements, automatically choosing version or hash verification.
+    /// 
+    /// This method intelligently routes requirements to the appropriate verification
+    /// method based on whether hash verification is specified.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `requirements` - Vector of requirements to verify
+    /// 
+    /// # Returns
+    /// 
+    /// Returns `Ok(())` if all requirements are satisfied, or an error message
+    /// describing the first requirement that fails.
     fn check<'a>(&self, requirements: Vec<Requirement<'a>>) -> Result<(), String>;
 
+    /// Verifies requirements using binary hash comparison.
+    /// 
+    /// This method is used for tools that don't provide reliable version
+    /// information. It computes SHA256 hashes of the binary files and
+    /// compares them against known good hashes.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `requirements` - Vector of requirements with hash specifications
+    /// 
+    /// # Returns
+    /// 
+    /// Returns `Ok(())` if all hashes match, or an error describing mismatches.
     fn check_by_hash<'a>(&self, requirements: Vec<Requirement<'a>>) -> Result<(), String>;
 
+    /// Verifies requirements using version comparison.
+    /// 
+    /// This method executes version commands and parses the output to compare
+    /// against required versions using semantic version comparison.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `requirements` - Vector of requirements with version specifications
+    /// 
+    /// # Returns
+    /// 
+    /// Returns `Ok(())` if all version requirements are met, or an error
+    /// describing version mismatches.
     fn check_by_version<'a>(&self, requirements: Vec<Requirement<'a>>) -> Result<(), String>;
 }
 
+/// System requirements checker implementation.
+/// 
+/// This struct provides concrete implementation of system requirements checking,
+/// using system commands to verify tool installations and versions, and SHA256
+/// hashing for binary verification when version checking is unreliable.
 pub(crate) struct SystemRequirementsChecker {
+    /// System interface for executing commands and file operations
     system: Box<dyn TSystem>,
+    /// SHA256 hasher for binary verification
     hasher: Box<dyn TSha256Hasher>,
 }
 
@@ -65,6 +141,11 @@ impl Default for SystemRequirementsChecker {
 }
 
 impl TSystemRequirementsChecker for SystemRequirementsChecker {
+    /// Implements the main requirements checking logic.
+    /// 
+    /// Separates requirements into version-based and hash-based verification
+    /// and processes each group with the appropriate method. Hash-based
+    /// verification takes priority over version-based for tools that specify hashes.
     fn check(&self, requirements: Vec<Requirement>) -> Result<(), String> {
         // hash has priority over version as some programs don't have a version command
         let version_requirements: Vec<_> = requirements
@@ -84,6 +165,10 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
         Ok(())
     }
 
+    /// Implements binary hash verification for requirements.
+    /// 
+    /// For each requirement, locates the binary using `which`, computes its
+    /// SHA256 hash, and verifies it matches one of the acceptable hashes.
     fn check_by_hash(&self, requirements: Vec<Requirement>) -> Result<(), String> {
         for requirement in requirements.iter() {
             let path = self
@@ -107,6 +192,11 @@ impl TSystemRequirementsChecker for SystemRequirementsChecker {
         Ok(())
     }
 
+    /// Implements version-based verification for requirements.
+    /// 
+    /// Executes version commands, parses the output using regex to extract
+    /// semantic version numbers, and compares them according to the specified
+    /// comparison operator.
     fn check_by_version(&self, requirements: Vec<Requirement>) -> Result<(), String> {
         let re = Regex::new(r"(\d+\.\d+\.\d+(?:-[a-z]+\.\d+)?)").expect("Failed to compile regex");
 

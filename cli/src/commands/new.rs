@@ -1,3 +1,9 @@
+//! # New Command
+//!
+//! The new command creates a new NSV project with all necessary template files
+//! and directory structure. It sets up a complete development environment for
+//! working with Noir circuits and Stylus verifiers.
+
 use crate::{
     infrastructure::{
         codegen::{Codegen, TCodegen},
@@ -10,8 +16,15 @@ use crate::{
 use colored::*;
 use std::path::PathBuf;
 
+/// Command for creating new NSV projects with template files.
+/// 
+/// This command scaffolds a complete NSV project structure including Noir circuit
+/// templates, configuration files, and development scripts. It provides everything
+/// needed to start developing with Noir circuits and Stylus verifiers.
 pub(crate) struct NewCommand {
+    /// System operations interface
     system: Box<dyn TSystem>,
+    /// Code generation interface for creating project templates
     codegen: Box<dyn TCodegen>,
 }
 
@@ -25,6 +38,24 @@ impl Default for NewCommand {
 }
 
 impl NewCommand {
+    /// Executes the new command to create a project.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `_ctx` - Application context (currently unused)
+    /// * `name` - Name of the project to create. Must follow cargo naming conventions
+    /// 
+    /// # Returns
+    /// 
+    /// Returns `Ok(())` if project creation succeeds, or an `AppError` if creation fails.
+    /// 
+    /// # Errors
+    /// 
+    /// This function will return an error if:
+    /// - The project name is invalid (doesn't follow cargo naming rules)
+    /// - A directory with the same name already exists
+    /// - Project template generation fails
+    /// - File system operations fail
     pub(crate) async fn run(&self, _ctx: &AppContext, name: &str) -> Result<(), AppError> {
         // validate name
         self.validate_name(name)
@@ -58,7 +89,25 @@ impl NewCommand {
         Ok(())
     }
 
-    /// Same as defined by cargo https://doc.rust-lang.org/cargo/reference/manifest.html#the-name-field
+    /// Validates project name according to cargo naming conventions.
+    /// 
+    /// Project names must follow the same rules as cargo package names:
+    /// - Only alphanumeric characters, underscores, and hyphens
+    /// - Cannot start with a hyphen
+    /// - Maximum 64 characters
+    /// - Cannot be empty
+    /// 
+    /// # Arguments
+    /// 
+    /// * `name` - The project name to validate
+    /// 
+    /// # Returns
+    /// 
+    /// Returns `Ok(())` if the name is valid, or an error describing the issue.
+    /// 
+    /// # Reference
+    /// 
+    /// Same validation as defined by cargo: https://doc.rust-lang.org/cargo/reference/manifest.html#the-name-field
     fn validate_name(&self, name: &str) -> Result<(), Box<dyn std::error::Error>> {
         if name.is_empty() {
             return Err("Name is required".into());

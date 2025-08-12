@@ -1,3 +1,9 @@
+//! # Prove Command
+//!
+//! The prove command generates cryptographic proofs for Noir circuits. It can either
+//! execute the circuit to generate a witness and then prove it, or use pre-existing
+//! witness and bytecode files for proof generation.
+
 use std::path::PathBuf;
 
 use crate::{
@@ -14,10 +20,18 @@ use crate::{
 };
 use colored::*;
 
+/// Command for generating cryptographic proofs from Noir circuits.
+/// 
+/// This command handles the complete proof generation process, from circuit
+/// execution to witness generation and final proof creation using Barretenberg.
 pub(crate) struct ProveCommand {
+    /// System operations interface
     system: Box<dyn TSystem>,
+    /// Barretenberg interface for proof generation
     bb: Box<dyn TBb>,
+    /// Nargo CLI interface for circuit execution
     nargo: Box<dyn TNargo>,
+    /// System requirements checker
     system_requirements_checker: Box<dyn TSystemRequirementsChecker>,
 }
 
@@ -33,6 +47,30 @@ impl Default for ProveCommand {
 }
 
 impl ProveCommand {
+    /// Executes the prove command to generate a cryptographic proof.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `_ctx` - Application context (currently unused)
+    /// * `package` - Optional package name to prove for. If None, uses current directory
+    /// * `prover_path` - Path to the prover configuration file (typically Prover.toml)
+    /// * `output_path` - Directory where proof and public inputs will be written
+    /// * `witness_path` - Optional path to pre-existing witness. If None, executes circuit
+    /// * `bytecode_path` - Optional path to pre-existing bytecode. If None, uses compiled bytecode
+    /// * `zk` - Whether to generate a zero-knowledge proof
+    /// 
+    /// # Returns
+    /// 
+    /// Returns `Ok(())` if proof generation succeeds, or an `AppError` if any step fails.
+    /// 
+    /// # Errors
+    /// 
+    /// This function will return an error if:
+    /// - Required system dependencies (bb, nargo) are not installed
+    /// - The specified package cannot be found
+    /// - Provided witness or bytecode files don't exist
+    /// - Circuit execution fails
+    /// - Proof generation fails
     #[allow(clippy::too_many_arguments)]
     pub(crate) async fn run(
         &self,

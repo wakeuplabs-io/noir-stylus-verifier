@@ -1,3 +1,15 @@
+//! # NSV CLI
+//!
+//! A command-line interface for generating and deploying verifiers in Stylus from Noir circuits.
+//! 
+//! This CLI provides a complete workflow for working with Noir circuits and Stylus verifiers:
+//! - Create new projects with the `new` command
+//! - Generate verifier contracts from Noir circuits with `generate`
+//! - Check contract compatibility and deployment costs with `check`
+//! - Deploy contracts to the blockchain with `deploy`
+//! - Generate proofs for testing with `prove`
+//! - Verify proofs locally or on-chain with `verify`
+
 mod commands;
 mod config;
 mod infrastructure;
@@ -17,11 +29,16 @@ use log::{Level, LevelFilter};
 use std::path::PathBuf;
 use thiserror::Error;
 
+/// Command-line arguments for the NSV CLI application.
+/// 
+/// This struct defines the top-level arguments and subcommands available
+/// in the NSV CLI tool.
 #[derive(Parser)]
 #[clap(name = "nsv")]
 #[clap(version = env!("CARGO_PKG_VERSION"))]
 #[clap(about = "Generate and deploy verifiers in stylus from noir circuits.", long_about = None)]
 struct Args {
+    /// The subcommand to execute
     #[command(subcommand)]
     cmd: Commands,
 
@@ -30,6 +47,10 @@ struct Args {
     verbose: bool,
 }
 
+/// Available CLI subcommands for the NSV tool.
+/// 
+/// Each variant represents a different operation that can be performed
+/// with Noir circuits and Stylus verifiers.
 #[derive(Subcommand, Debug, Clone)]
 enum Commands {
     /// Create a new project
@@ -135,6 +156,10 @@ enum Commands {
     },
 }
 
+/// Application-specific error types for the NSV CLI.
+/// 
+/// This enum defines all possible error conditions that can occur
+/// during CLI operation, with descriptive error messages for each case.
 #[derive(Error, Debug, PartialEq, Eq)]
 pub(crate) enum AppError {
     #[error("We can't find your contracts at {0}. If they exist, try specifying the package with -p <package> or run nsv generate first")]
@@ -163,6 +188,10 @@ pub(crate) enum AppError {
     NoDefaultVerifierAddress,
 }
 
+/// Application context for sharing state across CLI operations.
+/// 
+/// Currently empty but provides a place for future shared application state
+/// such as configuration, caching, or other cross-cutting concerns.
 pub(crate) struct AppContext {}
 
 #[tokio::main]

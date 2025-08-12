@@ -1,3 +1,9 @@
+//! # Verify Command
+//!
+//! The verify command validates cryptographic proofs either locally using Barretenberg
+//! or on-chain using deployed Stylus verifier contracts. It supports both standard
+//! and zero-knowledge proof verification.
+
 use crate::{
     config::constants::{BB_REQUIREMENT, DEFAULT_RPC_URL},
     infrastructure::requirements::{SystemRequirementsChecker, TSystemRequirementsChecker},
@@ -12,9 +18,17 @@ use alloy::{primitives::Bytes, providers::ProviderBuilder, sol};
 use colored::*;
 use std::path::PathBuf;
 
+/// Command for verifying cryptographic proofs locally or on-chain.
+/// 
+/// This command can verify proofs in two modes:
+/// - Local verification using Barretenberg's native verifier
+/// - On-chain verification using deployed Stylus verifier contracts
 pub(crate) struct VerifyCommand {
+    /// System operations interface
     system: Box<dyn TSystem>,
+    /// Barretenberg interface for local verification
     bb: Box<dyn TBb>,
+    /// System requirements checker
     system_requirements_checker: Box<dyn TSystemRequirementsChecker>,
 }
 
@@ -28,6 +42,7 @@ impl Default for VerifyCommand {
     }
 }
 
+// Solidity interface for the Stylus verifier contract
 sol! {
    #[sol(rpc)]
    contract Verifier {
@@ -36,6 +51,30 @@ sol! {
 }
 
 impl VerifyCommand {
+    /// Executes the verify command to validate a cryptographic proof.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `_ctx` - Application context (currently unused)
+    /// * `proof` - Path to the proof file to verify
+    /// * `public_input` - Path to the public inputs file
+    /// * `vk` - Path to the verification key file
+    /// * `verifier_address` - Optional on-chain verifier contract address. If None, verifies locally
+    /// * `rpc_url` - Optional RPC URL for on-chain verification. Uses default if None
+    /// * `zk` - Whether this is a zero-knowledge proof
+    /// 
+    /// # Returns
+    /// 
+    /// Returns `Ok(())` if verification succeeds (regardless of proof validity),
+    /// or an `AppError` if verification cannot be performed.
+    /// 
+    /// # Errors
+    /// 
+    /// This function will return an error if:
+    /// - Required system dependencies (bb) are not installed
+    /// - Proof, public input, or verification key files don't exist
+    /// - On-chain verification fails due to RPC errors
+    /// - Local verification encounters system errors
     #[allow(clippy::too_many_arguments)]
     pub(crate) async fn run(
         &self,

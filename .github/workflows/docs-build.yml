@@ -1,0 +1,25 @@
+name: Build Docs Website
+
+on:
+  push:
+    branches:
+      - develop
+    tags-ignore:
+      - v*
+  pull_request:
+
+jobs:
+  build:
+    name: Build Docs Website
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        working-directory: docs
+        run: pnpm install
+
+      - name: Build docs site
+        working-directory: docs
+        run: pnpm build 
