@@ -1,3 +1,25 @@
+//! # Serialization and Deserialization
+//!
+//! This module provides traits and implementations for serializing and deserializing
+//! Ultra Honk data structures to and from byte arrays. This is essential for
+//! cross-environment compatibility, particularly when interacting with smart contracts
+//! and other systems that require specific byte encodings.
+//!
+//! ## Supported Types
+//!
+//! The module implements serialization for:
+//! - Primitive types (bool, u32, u64)
+//! - Field elements and vectors
+//! - Elliptic curve points (G1, G2)
+//! - Ultra Honk specific structures (proofs, verification keys, transcripts)
+//!
+//! ## Format Compatibility
+//!
+//! Serialization formats are designed to be compatible with:
+//! - EVM precompiles for elliptic curve operations
+//! - Barretenberg's native serialization formats
+//! - Cross-language interoperability requirements
+
 use crate::{
     constants::{NUM_BYTES_FELT, NUM_U64S_FELT},
     decider::{

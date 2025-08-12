@@ -1,3 +1,19 @@
+//! # Cryptographic Backend Abstractions
+//!
+//! This module defines trait interfaces for the cryptographic operations needed
+//! by the Ultra Honk verifier. These abstractions allow the verifier to work
+//! with different backend implementations for different environments.
+//!
+//! ## Backends
+//!
+//! - [`HashBackend`]: Provides hashing functionality for transcript operations
+//! - [`G1ArithmeticBackend`]: Provides elliptic curve arithmetic and pairing operations
+//!
+//! This design enables the verifier to run in different contexts:
+//! - Native Rust using Arkworks for testing and development
+//! - Smart contract environments using precompiles for production
+//! - Hardware-accelerated implementations for performance
+
 use crate::{
     constants::HASH_OUTPUT_SIZE,
     types::{G1Affine, G2Affine, ScalarField},

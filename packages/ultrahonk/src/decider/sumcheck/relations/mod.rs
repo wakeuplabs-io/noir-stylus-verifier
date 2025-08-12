@@ -1,3 +1,20 @@
+//! # Constraint Relations
+//!
+//! This module contains the individual constraint relations that define the
+//! circuit constraints in Ultra Honk. Each relation implements specific
+//! constraint types that must be satisfied by a valid circuit execution.
+//!
+//! ## Relation Types
+//!
+//! - [`ultra_arithmetic_relation`]: Basic arithmetic constraints (addition, multiplication)
+//! - [`permutation_relation`]: Copy constraints between wire values
+//! - [`logderiv_lookup_relation`]: Lookup table constraints using logarithmic derivatives
+//! - [`delta_range_constraint_relation`]: Range constraints for wire values
+//! - [`elliptic_relation`]: Elliptic curve addition constraints
+//! - [`poseidon2_external_relation`]: Poseidon2 hash external round constraints
+//! - [`poseidon2_internal_relation`]: Poseidon2 hash internal round constraints
+//! - [`auxiliary_relation`]: Additional auxiliary constraints
+
 pub(crate) mod auxiliary_relation;
 pub(crate) mod delta_range_constraint_relation;
 pub(crate) mod elliptic_relation;
@@ -32,6 +49,11 @@ pub(crate) trait Relation {
     );
 }
 
+/// Total number of subrelations across all constraint types.
+/// 
+/// This constant represents the sum of all subrelations from each individual
+/// constraint relation. It's used to determine the number of alpha challenges
+/// needed in the sumcheck protocol.
 pub(crate) const NUM_SUBRELATIONS: usize = UltraArithmeticRelation::NUM_RELATIONS
     + UltraPermutationRelation::NUM_RELATIONS
     + DeltaRangeConstraintRelation::NUM_RELATIONS

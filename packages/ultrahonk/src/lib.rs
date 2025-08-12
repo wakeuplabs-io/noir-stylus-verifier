@@ -24,6 +24,10 @@ use crate::{
     types::ScalarField,
 };
 
+/// The number of alpha challenges used in the sumcheck protocol.
+/// 
+/// This is calculated as the total number of subrelations minus one,
+/// since the first subrelation doesn't need an alpha challenge.
 pub(crate) const NUM_ALPHAS: usize = decider::sumcheck::relations::NUM_SUBRELATIONS - 1;
 
 /// The log of the max circuit size assumed in order to achieve constant sized Honk proofs
@@ -37,11 +41,44 @@ pub(crate) const NUM_INTERLEAVING_CLAIMS: u32 = 2;
 pub(crate) struct Utils {}
 
 impl Utils {
+    /// Converts a slice of scalar field elements back to a single scalar field element.
+    /// 
+    /// This function expects exactly one scalar field element in the slice and returns it.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `src` - Slice containing exactly `NUM_SCALARFIELD_ELEMENTS` (1) elements
+    /// 
+    /// # Returns
+    /// 
+    /// The single scalar field element from the slice.
+    /// 
+    /// # Panics
+    /// 
+    /// Panics if the slice doesn't contain exactly `NUM_SCALARFIELD_ELEMENTS` elements.
     fn convert_scalarfield_back(src: &[ScalarField]) -> ScalarField {
         debug_assert_eq!(src.len(), NUM_SCALARFIELD_ELEMENTS);
         src[0].to_owned()
     }
 
+    /// Converts a slice of scalar field elements back to a base field element.
+    /// 
+    /// This function reconstructs a 254-bit base field element from two scalar field
+    /// elements by extracting the appropriate bit ranges and concatenating them.
+    /// The first element contributes the lower 136 bits, and the second element
+    /// contributes the upper 118 bits.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `src` - Slice containing exactly `NUM_BASEFIELD_ELEMENTS` (2) elements
+    /// 
+    /// # Returns
+    /// 
+    /// The reconstructed base field element.
+    /// 
+    /// # Panics
+    /// 
+    /// Panics if the slice doesn't contain exactly `NUM_BASEFIELD_ELEMENTS` elements.
     fn convert_basefield_back(src: &[Fr]) -> Fq {
         debug_assert_eq!(src.len(), NUM_BASEFIELD_ELEMENTS);
 

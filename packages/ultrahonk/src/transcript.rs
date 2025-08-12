@@ -1,3 +1,24 @@
+//! # Fiat-Shamir Transcript
+//!
+//! This module implements the Fiat-Shamir transcript used in Ultra Honk for
+//! generating cryptographic challenges from proof data. The transcript maintains
+//! the verifier's state during the interactive protocol simulation.
+//!
+//! ## Functionality
+//!
+//! The transcript provides:
+//! - Proof data management and reading
+//! - Challenge generation using cryptographic hashing
+//! - State management for multiple rounds of interaction
+//! - Serialization support for cross-environment compatibility
+//!
+//! ## Protocol Flow
+//!
+//! 1. Initialize with proof data
+//! 2. Read commitments and values from the proof
+//! 3. Generate challenges using Fiat-Shamir transformation
+//! 4. Maintain state across multiple verification rounds
+
 use crate::alloc::borrow::ToOwned;
 use crate::backends::HashBackend;
 use crate::constants::{NUM_BASEFIELD_ELEMENTS, NUM_SCALARFIELD_ELEMENTS};
@@ -8,15 +29,28 @@ use alloc::vec::Vec;
 use ark_ec::AffineRepr;
 use ark_ff::{BigInteger, PrimeField, Zero};
 
+/// Fiat-Shamir transcript for Ultra Honk verification.
+/// 
+/// The transcript manages the verifier's state during proof verification,
+/// including proof data, challenge generation, and round management. It
+/// implements the Fiat-Shamir transformation to convert interactive protocols
+/// into non-interactive ones.
 #[derive(Clone)]
 #[cfg_attr(test, derive(Debug, PartialEq, Eq))]
 pub struct Transcript {
+    /// The proof data containing all commitments and values from the prover
     pub(crate) proof_data: Vec<ScalarField>,
-    pub(crate) num_frs_written: usize, // the number of bb::frs written to proof_data by the prover or the verifier
-    pub(crate) num_frs_read: usize,    // the number of bb::frs read from proof_data by the verifier
+    /// Number of field elements written to the transcript
+    pub(crate) num_frs_written: usize,
+    /// Number of field elements read from the proof data
+    pub(crate) num_frs_read: usize,
+    /// Current round number in the protocol
     pub(crate) round_number: usize,
+    /// Whether this is the first challenge being generated
     pub(crate) is_first_challenge: bool,
+    /// Data accumulated in the current round for challenge generation
     pub(crate) current_round_data: Vec<ScalarField>,
+    /// The previous challenge value for chaining
     pub(crate) previous_challenge: ScalarField,
 }
 
@@ -27,6 +61,7 @@ impl Default for Transcript {
 }
 
 impl Transcript {
+    /// Creates a new empty transcript for proof generation.
     pub fn new() -> Self {
         Self {
             proof_data: Default::default(),
@@ -39,6 +74,11 @@ impl Transcript {
         }
     }
 
+    /// Creates a new transcript for verification with the given proof data.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `proof` - The Ultra Honk proof containing all prover commitments and values
     pub fn new_verifier(proof: HonkProof) -> Self {
         Self {
             proof_data: proof.inner(),
@@ -51,6 +91,11 @@ impl Transcript {
         }
     }
 
+    /// Consumes the transcript and returns the accumulated proof data.
+    /// 
+    /// # Returns
+    /// 
+    /// The HonkProof containing all the data written to the transcript.
     pub fn get_proof(self) -> HonkProof {
         HonkProof::new(self.proof_data)
     }
@@ -193,6 +238,15 @@ impl Transcript {
         new_challenges
     }
 
+    /// Generates a single cryptographic challenge using the Fiat-Shamir transformation.
+    /// 
+    /// # Type Parameters
+    /// 
+    /// * `H` - Hash backend used for challenge generation
+    /// 
+    /// # Returns
+    /// 
+    /// A random field element derived from the current transcript state.
     pub fn get_challenge<H: HashBackend>(&mut self) -> ScalarField {
         let challenge = self.get_next_duplex_challenge_buffer::<H>(1)[0];
         let res = challenge.to_owned();
@@ -200,6 +254,22 @@ impl Transcript {
         res
     }
 
+    /// Generates multiple cryptographic challenges efficiently.
+    /// 
+    /// This method generates multiple challenges by splitting hash outputs,
+    /// reducing the number of hash operations needed.
+    /// 
+    /// # Type Parameters
+    /// 
+    /// * `H` - Hash backend used for challenge generation
+    /// 
+    /// # Arguments
+    /// 
+    /// * `num_challenges` - Number of challenges to generate
+    /// 
+    /// # Returns
+    /// 
+    /// Vector of random field elements derived from the transcript state.
     pub(crate) fn get_challenges<H: HashBackend>(
         &mut self,
         num_challenges: usize,
