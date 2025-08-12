@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { buttonVariants } from "./ui/button";
-import { GithubIcon, TwitterIcon } from "lucide-react";
+import { GithubIcon } from "lucide-react";
 
 export function Footer() {
   return (
