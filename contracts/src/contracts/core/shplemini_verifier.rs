@@ -1,3 +1,6 @@
+//! Shplemini verifier contract, takes part of a big portion of the shplemini checks.
+//! For the ZK flavour the evaluations consistency check is done in the verifier contract.
+
 use crate::must_deser;
 use crate::utils::backends::{PrecompileG1ArithmeticBackend, PrecompileHashBackend};
 use alloc::vec::Vec;

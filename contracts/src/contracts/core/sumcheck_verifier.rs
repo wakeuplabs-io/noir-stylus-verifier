@@ -1,8 +1,9 @@
+//! Sumcheck verifier contract, takes part of the sumcheck checks.
+
 use crate::must_deser;
 use crate::utils::backends::PrecompileHashBackend;
 use alloc::vec::Vec;
 use stylus_sdk::{abi::Bytes, prelude::*};
-use ultrahonk::constants::{BATCHED_RELATION_PARTIAL_LENGTH, BATCHED_RELATION_PARTIAL_LENGTH_ZK};
 use ultrahonk::decider::sumcheck::verifier::{SumcheckVerifier, SumcheckVerifierMemory};
 use ultrahonk::oink::types::Challenges;
 use ultrahonk::serialize::BytesSerializable;
@@ -42,12 +43,12 @@ impl SumcheckVerifierContract {
             .verify_sumcheck::<PrecompileHashBackend, {
                 #[cfg(feature = "zk-sumcheck-verifier")]
                 {
-                    BATCHED_RELATION_PARTIAL_LENGTH_ZK
+                    ultrahonk::constants::BATCHED_RELATION_PARTIAL_LENGTH_ZK
                 }
 
                 #[cfg(not(feature = "zk-sumcheck-verifier"))]
                 {
-                    BATCHED_RELATION_PARTIAL_LENGTH
+                    ultrahonk::constants::BATCHED_RELATION_PARTIAL_LENGTH
                 }
             }>(
                 &mut transcript,

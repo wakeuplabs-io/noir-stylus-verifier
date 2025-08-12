@@ -1,16 +1,20 @@
+//! Verifier contract, entry point for the verifier. Calls the sumcheck and shplemini verifiers.
+
 use crate::must_deser;
 use crate::utils::backends::PrecompileHashBackend;
 use alloc::vec::Vec;
 use alloy_primitives::Address;
 use alloy_sol_types::sol;
 use stylus_sdk::{abi::Bytes, prelude::*};
-use ultrahonk::decider::shplemini::verifier::ShpleminiVerifier;
 use ultrahonk::keys::verification_key::VerifyingKey;
 use ultrahonk::oink::verifier::OinkVerifier;
 use ultrahonk::serialize::BytesSerializable;
 use ultrahonk::transcript::Transcript;
 use ultrahonk::types::{HonkProof, ScalarField};
 use ultrahonk::CONST_PROOF_SIZE_LOG_N;
+
+#[cfg(any(feature = "zk-verifier"))]
+use ultrahonk::decider::shplemini::verifier::ShpleminiVerifier;
 
 #[allow(deprecated)]
 use stylus_sdk::call::Call as InterfaceCall;

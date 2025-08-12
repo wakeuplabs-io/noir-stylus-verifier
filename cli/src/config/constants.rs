@@ -22,6 +22,7 @@ pub(crate) const BB_REQUIREMENT: Requirement = Requirement {
     required_version: "0.86.0",
     required_comparator: Comparison::Equal,
     required_hash: &[
+        // bb doesn't have a version command so we use the hash of the binary
         "0caa9112cd5e446ea336ef9476f0532366dd856f0b2c4ffbd0abd32635c10052", // amd64-darwin
         "f09a13bfba9797d9569da5a45380354176bdf4ada6409f710640a21ddd06ba40", // arm64-darwin
         "6a73c1d9e72ecc29c569b82012173837c1acb00c6759efe9b995ee0b2ee29c82", // arm64-linux

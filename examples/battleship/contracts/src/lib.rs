@@ -456,6 +456,78 @@ mod test {
         vm.mock_static_call(contract.board_verifier.get(), calldata, Ok(return_data));
     }
 
+    fn mock_invalid_board_proof(
+        vm: &TestVM,
+        contract: &mut Battleship,
+        proof: &[u8],
+        board_hash: u32,
+    ) {
+        // build calldata for mock
+        let calldata = verifyCall {
+            proof: proof.to_vec().into(),
+            input: Vec::from([U256::from(board_hash).to_be_bytes::<32>()].concat()).into(),
+        }
+        .abi_encode();
+        let return_data = verifyCall::abi_encode_returns(&(false,));
+        vm.mock_static_call(contract.board_verifier.get(), calldata, Ok(return_data));
+    }
+
+    fn mock_valid_shoot_proof(
+        vm: &TestVM,
+        contract: &mut Battleship,
+        proof: &[u8],
+        board_hash: u32,
+        hit: bool,
+        x: u32,
+        y: u32,
+    ) {
+        // build calldata for mock
+        let calldata = verifyCall {
+            proof: proof.to_vec().into(),
+            input: Vec::from(
+                [
+                    U256::from(board_hash).to_be_bytes::<32>(),
+                    U256::from(x).to_be_bytes::<32>(),
+                    U256::from(y).to_be_bytes::<32>(),
+                    if hit { U256::from(1) } else { U256::from(0) }.to_be_bytes::<32>(),
+                ]
+                .concat(),
+            )
+            .into(),
+        }
+        .abi_encode();
+        let return_data = verifyCall::abi_encode_returns(&(true,));
+        vm.mock_static_call(contract.shoot_verifier.get(), calldata, Ok(return_data));
+    }
+
+    fn mock_invalid_shoot_proof(
+        vm: &TestVM,
+        contract: &mut Battleship,
+        proof: &[u8],
+        board_hash: u32,
+        hit: bool,
+        x: u32,
+        y: u32,
+    ) {
+        // build calldata for mock
+        let calldata = verifyCall {
+            proof: proof.to_vec().into(),
+            input: Vec::from(
+                [
+                    U256::from(board_hash).to_be_bytes::<32>(),
+                    U256::from(x).to_be_bytes::<32>(),
+                    U256::from(y).to_be_bytes::<32>(),
+                    if hit { U256::from(1) } else { U256::from(0) }.to_be_bytes::<32>(),
+                ]
+                .concat(),
+            )
+            .into(),
+        }
+        .abi_encode();
+        let return_data = verifyCall::abi_encode_returns(&(false,));
+        vm.mock_static_call(contract.shoot_verifier.get(), calldata, Ok(return_data));
+    }
+
     #[test]
     fn test_create_game() {
         let vm = TestVM::default();
@@ -491,5 +563,472 @@ mod test {
         let (game_id, creator) = GameCreated::abi_decode_data(data, false).unwrap();
         assert_eq!(game_id, game_id);
         assert_eq!(creator, vm.msg_sender());
+    }
+
+    #[test]
+    fn test_create_game_invalid_proof() {
+        let vm = TestVM::default();
+        let mut contract = Battleship::from(&vm);
+        contract.constructor(MOCK_BOARD_VERIFIER, MOCK_SHOT_VERIFIER);
+
+        // mock invalid board proof
+        mock_invalid_board_proof(&vm, &mut contract, MOCK_PROOF, MOCK_BOARD_HASH);
+
+        let game_id = keccak(U256::from(MOCK_JOIN_CODE).to_be_bytes::<32>()).into();
+
+        // attempt to create game with invalid proof
+        let result = contract.create_game(
+            game_id,
+            U256::from(MOCK_BOARD_HASH),
+            Bytes::from(MOCK_PROOF.to_vec()),
+        );
+
+        // should fail with InvalidProof error
+        assert!(matches!(result, Err(BattleshipErrors::InvalidProof(_))));
+    }
+
+    #[test]
+    fn test_create_game_already_created() {
+        let vm = TestVM::default();
+        let mut contract = Battleship::from(&vm);
+        contract.constructor(MOCK_BOARD_VERIFIER, MOCK_SHOT_VERIFIER);
+
+        // mock valid board proof
+        mock_valid_board_proof(&vm, &mut contract, MOCK_PROOF, MOCK_BOARD_HASH);
+
+        let game_id = keccak(U256::from(MOCK_JOIN_CODE).to_be_bytes::<32>()).into();
+
+        // create game first time
+        contract
+            .create_game(
+                game_id,
+                U256::from(MOCK_BOARD_HASH),
+                Bytes::from(MOCK_PROOF.to_vec()),
+            )
+            .unwrap();
+
+        // attempt to create game again with same game_id
+        let result = contract.create_game(
+            game_id,
+            U256::from(MOCK_BOARD_HASH),
+            Bytes::from(MOCK_PROOF.to_vec()),
+        );
+
+        // should fail with GameAlreadyCreated error
+        assert!(matches!(result, Err(BattleshipErrors::GameAlreadyCreated(_))));
+    }
+
+    #[test]
+    fn test_join_game() {
+        let vm = TestVM::default();
+        let mut contract = Battleship::from(&vm);
+        contract.constructor(MOCK_BOARD_VERIFIER, MOCK_SHOT_VERIFIER);
+
+        // mock valid board proofs for both players
+        mock_valid_board_proof(&vm, &mut contract, MOCK_PROOF, MOCK_BOARD_HASH);
+        mock_valid_board_proof(&vm, &mut contract, MOCK_PROOF, MOCK_BOARD_HASH + 1);
+
+        let game_id = keccak(U256::from(MOCK_JOIN_CODE).to_be_bytes::<32>()).into();
+
+        // create game first
+        contract
+            .create_game(
+                game_id,
+                U256::from(MOCK_BOARD_HASH),
+                Bytes::from(MOCK_PROOF.to_vec()),
+            )
+            .unwrap();
+
+        // switch to different sender for joining
+        vm.set_sender(address!("0x0000000000000000000000000000000000000100"));
+
+        // join game
+        contract
+            .join_game(
+                Bytes::from(MOCK_PROOF.to_vec()),
+                U256::from(MOCK_BOARD_HASH + 1),
+                U256::from(MOCK_JOIN_CODE),
+            )
+            .unwrap();
+
+        // verify game state
+        let (player1, player2) = contract.get_game_players(game_id).unwrap();
+        assert_ne!(player1, Address::ZERO);
+        assert_ne!(player2, Address::ZERO);
+        assert_ne!(player1, player2);
+    }
+
+    #[test]
+    fn test_join_game_invalid_proof() {
+        let vm = TestVM::default();
+        let mut contract = Battleship::from(&vm);
+        contract.constructor(MOCK_BOARD_VERIFIER, MOCK_SHOT_VERIFIER);
+
+        // mock valid board proof for creator, invalid for joiner
+        mock_valid_board_proof(&vm, &mut contract, MOCK_PROOF, MOCK_BOARD_HASH);
+        mock_invalid_board_proof(&vm, &mut contract, MOCK_PROOF, MOCK_BOARD_HASH + 1);
+
+        let game_id = keccak(U256::from(MOCK_JOIN_CODE).to_be_bytes::<32>()).into();
+
+        // create game first
+        contract
+            .create_game(
+                game_id,
+                U256::from(MOCK_BOARD_HASH),
+                Bytes::from(MOCK_PROOF.to_vec()),
+            )
+            .unwrap();
+
+        // switch to different sender for joining
+        vm.set_sender(address!("0x0000000000000000000000000000000000000100"));
+
+        // attempt to join with invalid proof
+        let result = contract.join_game(
+            Bytes::from(MOCK_PROOF.to_vec()),
+            U256::from(MOCK_BOARD_HASH + 1),
+            U256::from(MOCK_JOIN_CODE),
+        );
+
+        // should fail with InvalidProof error
+        assert!(matches!(result, Err(BattleshipErrors::InvalidProof(_))));
+    }
+
+    #[test]
+    fn test_join_game_already_joined() {
+        let vm = TestVM::default();
+        let mut contract = Battleship::from(&vm);
+        contract.constructor(MOCK_BOARD_VERIFIER, MOCK_SHOT_VERIFIER);
+
+        // mock valid board proofs
+        mock_valid_board_proof(&vm, &mut contract, MOCK_PROOF, MOCK_BOARD_HASH);
+        mock_valid_board_proof(&vm, &mut contract, MOCK_PROOF, MOCK_BOARD_HASH + 1);
+        mock_valid_board_proof(&vm, &mut contract, MOCK_PROOF, MOCK_BOARD_HASH + 2);
+
+        let game_id = keccak(U256::from(MOCK_JOIN_CODE).to_be_bytes::<32>()).into();
+
+        // create game
+        contract
+            .create_game(
+                game_id,
+                U256::from(MOCK_BOARD_HASH),
+                Bytes::from(MOCK_PROOF.to_vec()),
+            )
+            .unwrap();
+
+        // join game with player 2
+        vm.set_sender(address!("0x0000000000000000000000000000000000000100"));
+        contract
+            .join_game(
+                Bytes::from(MOCK_PROOF.to_vec()),
+                U256::from(MOCK_BOARD_HASH + 1),
+                U256::from(MOCK_JOIN_CODE),
+            )
+            .unwrap();
+
+        // attempt to join again with player 3
+        vm.set_sender(address!("0x0000000000000000000000000000000000000200"));
+        let result = contract.join_game(
+            Bytes::from(MOCK_PROOF.to_vec()),
+            U256::from(MOCK_BOARD_HASH + 2),
+            U256::from(MOCK_JOIN_CODE),
+        );
+
+        // should fail with GameAlreadyJoined error
+        assert!(matches!(result, Err(BattleshipErrors::GameAlreadyJoined(_))));
+    }
+
+    #[test]
+    fn test_join_own_game() {
+        let vm = TestVM::default();
+        let mut contract = Battleship::from(&vm);
+        contract.constructor(MOCK_BOARD_VERIFIER, MOCK_SHOT_VERIFIER);
+
+        // mock valid board proof
+        mock_valid_board_proof(&vm, &mut contract, MOCK_PROOF, MOCK_BOARD_HASH);
+
+        let game_id = keccak(U256::from(MOCK_JOIN_CODE).to_be_bytes::<32>()).into();
+
+        // create game
+        contract
+            .create_game(
+                game_id,
+                U256::from(MOCK_BOARD_HASH),
+                Bytes::from(MOCK_PROOF.to_vec()),
+            )
+            .unwrap();
+
+        // attempt to join own game (same sender)
+        let result = contract.join_game(
+            Bytes::from(MOCK_PROOF.to_vec()),
+            U256::from(MOCK_BOARD_HASH + 1),
+            U256::from(MOCK_JOIN_CODE),
+        );
+
+        // should fail with GameAlreadyJoined error
+        assert!(matches!(result, Err(BattleshipErrors::GameAlreadyJoined(_))));
+    }
+
+    #[test]
+    fn test_shoot_first_move() {
+        let vm = TestVM::default();
+        let mut contract = Battleship::from(&vm);
+        contract.constructor(MOCK_BOARD_VERIFIER, MOCK_SHOT_VERIFIER);
+
+        // setup game
+        mock_valid_board_proof(&vm, &mut contract, MOCK_PROOF, MOCK_BOARD_HASH);
+        mock_valid_board_proof(&vm, &mut contract, MOCK_PROOF, MOCK_BOARD_HASH + 1);
+
+        let game_id = keccak(U256::from(MOCK_JOIN_CODE).to_be_bytes::<32>()).into();
+
+        // create and join game
+        contract
+            .create_game(
+                game_id,
+                U256::from(MOCK_BOARD_HASH),
+                Bytes::from(MOCK_PROOF.to_vec()),
+            )
+            .unwrap();
+
+        vm.set_sender(address!("0x0000000000000000000000000000000000000100"));
+        contract
+            .join_game(
+                Bytes::from(MOCK_PROOF.to_vec()),
+                U256::from(MOCK_BOARD_HASH + 1),
+                U256::from(MOCK_JOIN_CODE),
+            )
+            .unwrap();
+
+        // first move (no proof needed)
+        contract
+            .shoot(
+                game_id,
+                Bytes::from(b"dummy_proof".to_vec()),
+                false, // previous move hit (irrelevant for first move)
+                U256::from(0), // previous x (irrelevant)
+                U256::from(0), // previous y (irrelevant)
+                U256::from(5), // x
+                U256::from(5), // y
+            )
+            .unwrap();
+
+        // verify move was recorded
+        let move_count = contract.get_game_move_count(game_id).unwrap();
+        assert_eq!(move_count, U256::ONE);
+
+        let (x, y, hit) = contract.get_game_move(game_id, U256::ZERO).unwrap();
+        assert_eq!(x, U256::from(5));
+        assert_eq!(y, U256::from(5));
+        assert_eq!(hit, false); // will be set on next move
+    }
+
+    #[test]
+    fn test_shoot_with_valid_proof() {
+        let vm = TestVM::default();
+        let mut contract = Battleship::from(&vm);
+        contract.constructor(MOCK_BOARD_VERIFIER, MOCK_SHOT_VERIFIER);
+
+        // setup game
+        mock_valid_board_proof(&vm, &mut contract, MOCK_PROOF, MOCK_BOARD_HASH);
+        mock_valid_board_proof(&vm, &mut contract, MOCK_PROOF, MOCK_BOARD_HASH + 1);
+
+        let game_id = keccak(U256::from(MOCK_JOIN_CODE).to_be_bytes::<32>()).into();
+
+        // create and join game
+        contract
+            .create_game(
+                game_id,
+                U256::from(MOCK_BOARD_HASH),
+                Bytes::from(MOCK_PROOF.to_vec()),
+            )
+            .unwrap();
+
+        vm.set_sender(address!("0x0000000000000000000000000000000000000100"));
+        contract
+            .join_game(
+                Bytes::from(MOCK_PROOF.to_vec()),
+                U256::from(MOCK_BOARD_HASH + 1),
+                U256::from(MOCK_JOIN_CODE),
+            )
+            .unwrap();
+
+        // first move
+        contract
+            .shoot(
+                game_id,
+                Bytes::from(b"dummy_proof".to_vec()),
+                false,
+                U256::from(0),
+                U256::from(0),
+                U256::from(5),
+                U256::from(5),
+            )
+            .unwrap();
+
+        // mock valid shoot proof for second move
+        mock_valid_shoot_proof(&vm, &mut contract, b"shoot_proof", MOCK_BOARD_HASH + 1, true, 5, 5);
+
+        // second move with proof
+        contract
+            .shoot(
+                game_id,
+                Bytes::from(b"shoot_proof".to_vec()),
+                true, // previous move was a hit
+                U256::from(5), // previous x
+                U256::from(5), // previous y
+                U256::from(3), // new x
+                U256::from(3), // new y
+            )
+            .unwrap();
+
+        // verify second move was recorded
+        let move_count = contract.get_game_move_count(game_id).unwrap();
+        assert_eq!(move_count, U256::from(2));
+
+        // verify first move hit status was updated
+        let (_, _, hit) = contract.get_game_move(game_id, U256::ZERO).unwrap();
+        assert_eq!(hit, true);
+    }
+
+    #[test]
+    fn test_shoot_with_invalid_proof() {
+        let vm = TestVM::default();
+        let mut contract = Battleship::from(&vm);
+        contract.constructor(MOCK_BOARD_VERIFIER, MOCK_SHOT_VERIFIER);
+
+        // setup game
+        mock_valid_board_proof(&vm, &mut contract, MOCK_PROOF, MOCK_BOARD_HASH);
+        mock_valid_board_proof(&vm, &mut contract, MOCK_PROOF, MOCK_BOARD_HASH + 1);
+
+        let game_id = keccak(U256::from(MOCK_JOIN_CODE).to_be_bytes::<32>()).into();
+
+        // create and join game
+        contract
+            .create_game(
+                game_id,
+                U256::from(MOCK_BOARD_HASH),
+                Bytes::from(MOCK_PROOF.to_vec()),
+            )
+            .unwrap();
+
+        vm.set_sender(address!("0x0000000000000000000000000000000000000100"));
+        contract
+            .join_game(
+                Bytes::from(MOCK_PROOF.to_vec()),
+                U256::from(MOCK_BOARD_HASH + 1),
+                U256::from(MOCK_JOIN_CODE),
+            )
+            .unwrap();
+
+        // first move
+        contract
+            .shoot(
+                game_id,
+                Bytes::from(b"dummy_proof".to_vec()),
+                false,
+                U256::from(0),
+                U256::from(0),
+                U256::from(5),
+                U256::from(5),
+            )
+            .unwrap();
+
+        // mock invalid shoot proof for second move
+        mock_invalid_shoot_proof(&vm, &mut contract, b"bad_proof", MOCK_BOARD_HASH + 1, true, 5, 5);
+
+        // second move with invalid proof should fail
+        let result = contract.shoot(
+            game_id,
+            Bytes::from(b"bad_proof".to_vec()),
+            true,
+            U256::from(5),
+            U256::from(5),
+            U256::from(3),
+            U256::from(3),
+        );
+
+        // should fail with InvalidProof error
+        assert!(matches!(result, Err(BattleshipErrors::InvalidProof(_))));
+    }
+
+    #[test]
+    fn test_shoot_out_of_bounds() {
+        let vm = TestVM::default();
+        let mut contract = Battleship::from(&vm);
+        contract.constructor(MOCK_BOARD_VERIFIER, MOCK_SHOT_VERIFIER);
+
+        // setup game
+        mock_valid_board_proof(&vm, &mut contract, MOCK_PROOF, MOCK_BOARD_HASH);
+        mock_valid_board_proof(&vm, &mut contract, MOCK_PROOF, MOCK_BOARD_HASH + 1);
+
+        let game_id = keccak(U256::from(MOCK_JOIN_CODE).to_be_bytes::<32>()).into();
+
+        // create and join game
+        contract
+            .create_game(
+                game_id,
+                U256::from(MOCK_BOARD_HASH),
+                Bytes::from(MOCK_PROOF.to_vec()),
+            )
+            .unwrap();
+
+        vm.set_sender(address!("0x0000000000000000000000000000000000000100"));
+        contract
+            .join_game(
+                Bytes::from(MOCK_PROOF.to_vec()),
+                U256::from(MOCK_BOARD_HASH + 1),
+                U256::from(MOCK_JOIN_CODE),
+            )
+            .unwrap();
+
+        // attempt to shoot out of bounds
+        let result = contract.shoot(
+            game_id,
+            Bytes::from(b"dummy_proof".to_vec()),
+            false,
+            U256::from(0),
+            U256::from(0),
+            U256::from(10), // x >= BOARD_SIZE (10)
+            U256::from(5),
+        );
+
+        // should fail with InvalidShot error
+        assert!(matches!(result, Err(BattleshipErrors::InvalidShot(_))));
+
+        // test y out of bounds too
+        let result = contract.shoot(
+            game_id,
+            Bytes::from(b"dummy_proof".to_vec()),
+            false,
+            U256::from(0),
+            U256::from(0),
+            U256::from(5),
+            U256::from(10), // y >= BOARD_SIZE (10)
+        );
+
+        // should fail with InvalidShot error
+        assert!(matches!(result, Err(BattleshipErrors::InvalidShot(_))));
+    }
+
+    #[test]
+    fn test_shoot_game_not_found() {
+        let vm = TestVM::default();
+        let mut contract = Battleship::from(&vm);
+        contract.constructor(MOCK_BOARD_VERIFIER, MOCK_SHOT_VERIFIER);
+
+        let non_existent_game_id = U256::from(999);
+
+        // attempt to shoot in non-existent game
+        let result = contract.shoot(
+            non_existent_game_id,
+            Bytes::from(b"dummy_proof".to_vec()),
+            false,
+            U256::from(0),
+            U256::from(0),
+            U256::from(5),
+            U256::from(5),
+        );
+
+        // should fail with GameNotFound error
+        assert!(matches!(result, Err(BattleshipErrors::GameNotFound(_))));
     }
 }
