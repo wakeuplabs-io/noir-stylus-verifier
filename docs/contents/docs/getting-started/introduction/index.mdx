@@ -14,6 +14,8 @@ Noir Stylus Verifier (NSV) helps you generate and deploy Stylus-compatible verif
 
 ### Prerequisites
 
+If you don't have them install them, otherwise ensure specified versions
+
 - Noir `nargo` `1.0.0-beta.6`
 - Barretenberg `bb` `0.86.0`
 - Rust 
@@ -32,11 +34,7 @@ curl -L https://raw.githubusercontent.com/AztecProtocol/aztec-packages/refs/head
 bbup -v 0.86.0
 ```
 
-Install Rust
-
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
+Install Rust with rustup as per indicated [here](https://www.rust-lang.org/es/tools/install)
 
 Install Cargo Stylus and WebAssembly target:
 
@@ -52,18 +50,20 @@ Then do run `nsv --help` to verify installation and see available commands.
 
 ### Quick start: from a fresh Noir project to a deployed Stylus verifier
 
-1) Create a Noir project
+1) Create a Noir project 
+
+With `nsv`
+
+```bash
+nsv new hello_world
+cd hello_world
+```
+
+Or with nargo
 
 ```bash
 nargo new hello_world
 cd hello_world
-```
-
-2) Author your circuit in `src/main.nr`, then ensure it compiles or executes with Noir as needed:
-
-```bash
-nargo check              # compile
-nargo execute            # optional: executes and generates a witness in target/
 ```
 
 3) Generate the Stylus verifier contract
@@ -82,7 +82,7 @@ What happens:
 
 > Notice the generated verifier encodes your vk in a call to a global verifier. The cli already provides some default addresses for these but feel free to do your own deployment as per instructed [here](/docs/getting-started/deployments) and specify that while deploying.
 
-4) Check Stylus compatibility and estimated cost of the generated verifier.
+4) Check Stylus compatibility and estimated cost of the generated verifier. (It may take some time the first run as it downloads crates and compiles the contracts package)
 
 ```bash
 nsv check --rpc-url https://sepolia-rollup.arbitrum.io/rpc
@@ -101,7 +101,7 @@ Notes:
 6) Generate a proof for testing
 
 ```bash
-nsv prove -p <package_name>
+nsv prove
 ```
 
 By default this will:
