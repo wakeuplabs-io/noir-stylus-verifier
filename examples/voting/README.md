@@ -7,6 +7,8 @@ This example project shows how to develop a zero knowledge voting application us
 
 We showcase 2 apps, the both are basically interfaces around the core package in `packages/core`. If you're interested in seeing the core domain check that out.  
 
+There's a guide for this example at [nsv.wakeuplabs.link](https://nsv.wakeuplabs.link/docs/guides/building-a-voting-app). Check it out to know more about the project.
+
 ## How to run
 
 Install workspace dependencies:
@@ -39,7 +41,9 @@ cargo stylus deploy --no-verify --endpoint https://sepolia-rollup.arbitrum.io/rp
 
 Deployed address: `0x67bd3931388eb74506e41beb48a53335d6fce92c`
 
-Lastly copy `.env.example` to `.env` and replace with your values for both `www` and `cli`
+Lastly create `.env` files from their example versions and fill with your values:
+- CLI: `cp apps/cli/.env.example apps/cli/.env`
+- WWW: `cp apps/www/.env.local.example apps/www/.env.local`
 
 
 ###  Running the web

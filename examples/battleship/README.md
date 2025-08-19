@@ -3,7 +3,7 @@
 
 > 🚨 Disclaimer: This repository is for educational purposes only. It is not audited, may contain bugs, and is not production-ready. Use at your own risk.
 
-There's a guide for this example at [docs/tutorials/building-a-battleship-game](../../docs/tutorials/building-a-battleship-game.md). Check it out to know more about the project.
+There's a guide for this example at [nsv.wakeuplabs.link](https://nsv.wakeuplabs.link/docs/guides/building-a-battleship-game). Check it out to know more about the project.
 
 ## Contracts
 

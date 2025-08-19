@@ -103,16 +103,18 @@ impl GenerateCommand {
             .map_err(|_| AppError::PackageNotFound)?;
 
         // verify that the provided bytecode and vk files exist
-        if bytecode_path.is_some()
-            && !self
-                .system
-                .exists(&root.join(bytecode_path.as_ref().unwrap()))
-        {
-            return Err(AppError::FileNotFound(
-                root.join(bytecode_path.as_ref().unwrap()),
-            ));
-        } else if vk_path.is_some() && !self.system.exists(&root.join(vk_path.as_ref().unwrap())) {
-            return Err(AppError::FileNotFound(root.join(vk_path.as_ref().unwrap())));
+        if let Some(bytecode_path) = &bytecode_path {
+            let bytecode_full_path = root.join(bytecode_path);
+            if !self.system.exists(&bytecode_full_path) {
+                return Err(AppError::FileNotFound(bytecode_full_path));
+            }
+        }
+
+        if let Some(vk_path) = &vk_path {
+            let vk_full_path = root.join(vk_path);
+            if !self.system.exists(&vk_full_path) {
+                return Err(AppError::FileNotFound(vk_full_path));
+            }
         }
 
         // all good, we can start generating the verifier contract
@@ -176,7 +178,7 @@ impl GenerateCommand {
             "✅ Success!".green(),
             contracts_root.display()
         );
-        print_instructions(&["check", "deploy"]);
+        print_instructions(&["check", "deploy", "prove", "verify"]);
 
         Ok(())
     }

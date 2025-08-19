@@ -186,6 +186,8 @@ pub(crate) enum AppError {
     DirectoryAlreadyExists(String),
     #[error("No default verifier address found for chain")]
     NoDefaultVerifierAddress,
+    #[error("{0} is not a valid address")]
+    InvalidAddress(String),
 }
 
 /// Application context for sharing state across CLI operations.
@@ -196,6 +198,27 @@ pub(crate) struct AppContext {}
 
 #[tokio::main]
 async fn main() {
+    // Set up panic handler to print errors beautifully
+    std::panic::set_hook(Box::new(|panic_info| {
+        let raw_message = if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
+            s.to_string()
+        } else if let Some(s) = panic_info.payload().downcast_ref::<String>() {
+            s.clone()
+        } else {
+            "Unknown panic occurred".to_string()
+        };
+
+        // Extract meaningful error message from unwrap panics
+        let message = if raw_message.starts_with("called `Result::unwrap()` on an `Err` value: ") {
+            raw_message.replace("called `Result::unwrap()` on an `Err` value: ", "")
+        } else {
+            raw_message
+        };
+
+        print_error!(" Error: {message}");
+        std::process::exit(1);
+    }));
+
     dotenv().ok();
 
     let args = Args::parse();

@@ -112,6 +112,11 @@ impl VerifyCommand {
 
         match verifier_address {
             Some(address) => {
+                // check if the verifier address is a valid address
+                if !address.starts_with("0x") || address.len() != 42 {
+                    return Err(AppError::InvalidAddress(address));
+                }
+
                 // call the verifier contract with the proof and public inputs
                 let provider = ProviderBuilder::new().on_http(
                     rpc_url

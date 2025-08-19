@@ -92,8 +92,7 @@ impl NewCommand {
     /// Validates project name according to cargo naming conventions.
     ///
     /// Project names must follow the same rules as cargo package names:
-    /// - Only alphanumeric characters, underscores, and hyphens
-    /// - Cannot start with a hyphen
+    /// - Only alphanumeric characters and underscores
     /// - Maximum 64 characters
     /// - Cannot be empty
     ///
@@ -112,16 +111,8 @@ impl NewCommand {
         if name.is_empty() {
             return Err("Name is required".into());
         }
-        if !name
-            .chars()
-            .all(|c| c.is_alphanumeric() || c == '_' || c == '-')
-        {
-            return Err(
-                "Name can only contain alphanumeric characters, underscores, or hyphens".into(),
-            );
-        }
-        if name.starts_with('-') {
-            return Err("Name cannot start with a hyphen".into());
+        if !name.chars().all(|c| c.is_alphanumeric() || c == '_') {
+            return Err("Name can only contain alphanumeric characters or underscores".into());
         }
         if name.len() > 64 {
             return Err("Name cannot be longer than 64 characters".into());
@@ -144,16 +135,12 @@ mod tests {
             // Basic patterns
             ("hello", "simple name"),
             ("hello_world", "with underscore"),
-            ("hello-world", "with hyphen"),
             ("hello123", "with numbers"),
             ("123hello", "starting with numbers"),
             ("a", "single character"),
             // Complex patterns
             ("hello_world_123", "mixed underscores and numbers"),
-            ("hello-world-123", "mixed hyphens and numbers"),
-            ("hello_world-123", "mixed underscores and hyphens"),
             ("a_very_long_name_with_underscores", "long with underscores"),
-            ("a-very-long-name-with-hyphens", "long with hyphens"),
             // Edge cases
             (
                 "64_char_name_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
@@ -176,9 +163,10 @@ mod tests {
             ("", "empty string"),
             (" ", "single space"),
             ("  ", "multiple spaces"),
-            // Starting with hyphen
+            // Has Hyphen
             ("-hello", "starts with hyphen"),
             ("-", "just hyphen"),
+            ("hello-world", "ends with hyphen"),
             // Invalid characters
             ("hello world", "contains space"),
             ("hello.world", "contains dot"),
