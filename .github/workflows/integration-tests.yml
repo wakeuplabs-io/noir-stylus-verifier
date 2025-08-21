@@ -39,7 +39,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y build-essential gcc lld
       
       - name: Install stylus
-        run: cargo install cargo-stylus@0.6.0
+        run: cargo install cargo-stylus@0.6.3
 
       - name: Install nargo
         uses: supplypike/setup-bin@v4

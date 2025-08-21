@@ -126,7 +126,7 @@ cargo install just@1.38.0
 Build and deploy Stylus contracts:
 
 ```bash
-cargo install cargo-stylus@0.6.0
+cargo install cargo-stylus@0.6.3
 ```
 
 #### Noir (1.0.0-beta.6)
