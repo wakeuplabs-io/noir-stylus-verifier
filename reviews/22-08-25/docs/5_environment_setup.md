@@ -77,8 +77,8 @@ testing-environment/
 4. **Backup important data** before running validation tools
 
 ### **Tool Versions**
-- **Noir**: 1.0.0-beta.6+ (compatibility requirement)
-- **Barretenberg**: 0.86.0+ (vulnerabilities have been addressed)
+- **Noir**: 1.0.0-beta.6+
+- **Barretenberg**: 0.86.0+
 - **NSV**: Latest version from repository
 
 ## Support
