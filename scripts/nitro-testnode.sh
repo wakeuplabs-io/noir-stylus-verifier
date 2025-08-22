@@ -49,7 +49,7 @@ if $HAS_INIT; then
   git clone --recurse-submodules https://github.com/OffchainLabs/nitro-testnode.git --branch release
   cd ./nitro-testnode || exit
   git pull origin release --recurse-submodules
-  git checkout 1fe1b72bd33cb5bd862c04447435f1c159ff7a3f || exit
+  git checkout c7a58620c431266c90f9d422eca6627e24586e60 || exit
 
   ./test-node.bash --no-run --init || exit
 fi
