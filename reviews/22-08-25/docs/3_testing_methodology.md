@@ -62,26 +62,6 @@ Verify proper Checks-Effects-Interactions patterns:
 - Commitment anchoring validation
 - Complete proof pipeline testing
 
-## Validation Criteria
-
-### **Security Acceptance Criteria**
-
-| Test Category | Pass Criteria | Failure Indicates |
-|---------------|---------------|-------------------|
-| Differential Testing | 100% NSV/bb consistency | Implementation divergence |
-| Fuzzing | 0% mutation acceptance | Input validation bypass |
-| Runtime Checks | Graceful error handling | DoS vulnerabilities |
-| Integration | Proper state handling | Manipulation attacks |
-
-### **Risk Assessment Matrix**
-
-| Mutation Acceptance Rate | Risk Level | Action Required |
-|-------------------------|------------|-----------------|
-| 0% | ✅ Secure | Continue testing |
-| 0.1-1% | ⚠️ Medium | Investigate edge cases |
-| 1-10% | 🔶 High | Address validation gaps |
-| >10% | 🚨 Critical | Immediate remediation |
-
 ## Security Testing Checklist
 
 ### **Pre-Testing**
