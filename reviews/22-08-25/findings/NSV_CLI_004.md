@@ -2,9 +2,8 @@
 
 **Severity:** Low  
 **Component:** CLI/Error Handling  
-**Status:** Confirmed  
-**Discovered During:** Verification Truth Table Edge Case Testing
 **Date:** 2025-01-16
+**Discovered During:** Verification Truth Table Edge Case Testing
 
 ## Summary
 The `nsv verify` command panics with unwrap() when given malformed verifier addresses, causing application crash instead of graceful error handling.

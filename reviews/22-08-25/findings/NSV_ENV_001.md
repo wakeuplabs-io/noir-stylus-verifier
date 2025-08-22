@@ -2,7 +2,6 @@
 
 **Severity:** Low  
 **Component:** Environment/Setup  
-**Status:** Suspected  
 **Date:** 2025-01-16
 
 ## Description
@@ -57,10 +56,8 @@ This indicates git submodules aren't initialized. Run:
 ```bash
 git submodule update --init --recursive
 ```
-```
 
 ## References / Notes
 - Related to developer experience and onboarding
 - Could cause abandonment during initial setup
 - Error message could be more helpful
-- RESOLVED: Fixed in commit 0ca9afefba0259bcf2b175bd868f9d2eddf45231

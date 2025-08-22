@@ -2,7 +2,6 @@
 
 **Severity:** Low  
 **Component:** Documentation/Examples  
-**Status:** Confirmed  
 **Date:** 2025-01-16
 
 ## Summary

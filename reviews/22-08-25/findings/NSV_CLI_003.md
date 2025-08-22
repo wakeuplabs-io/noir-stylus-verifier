@@ -2,7 +2,6 @@
 
 **Severity:** Low  
 **Component:** CLI/Error Handling  
-**Status:** Suspected
 **Date:** 2025-01-16
 
 ## Description

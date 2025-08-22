@@ -2,7 +2,6 @@
 
 **Severity:** Medium  
 **Component:** CLI/Validation  
-**Status:** Suspected
 **Date:** 2025-01-16
 
 ## Description
