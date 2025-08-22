@@ -51,11 +51,11 @@ High - Every new user sees this guidance and may miss local testing workflow.
 ```
 What's Next?
 
-🧪 Test locally first (recommended):
+Test locally first (recommended):
   - nsv prove: Generate proofs for testing
   - nsv verify: Verify proofs locally
 
-🚀 Then deploy to blockchain:
+Then deploy to blockchain:
   - nsv generate: Generate a verifier contract from a noir circuit
   - nsv check: Check if the generated contract is compatible with Stylus
   - nsv deploy: Deploy the generated contract to the blockchain
@@ -66,9 +66,9 @@ What's Next?
 What's Next?
 
 Choose your workflow:
-  - 📖 Learn: Follow examples/hello_world README
-  - 🧪 Test: nsv prove → nsv verify (local testing)
-  - 🚀 Deploy: nsv generate → nsv check → nsv deploy
+  - Learn: Follow examples/hello_world README
+  - Test: nsv prove → nsv verify (local testing)
+  - Deploy: nsv generate → nsv check → nsv deploy
 ```
 
 ## References / Notes
