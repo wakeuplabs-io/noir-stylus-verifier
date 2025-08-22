@@ -15,11 +15,11 @@ Active findings requiring client review:
 - **NSV_CLI_001**: CLI validation issue (Low severity)
 - **NSV_CLI_002**: Package name validation bypass (Medium severity)  
 - **NSV_CLI_003**: CLI functionality issue (Low severity)
-- **NSV_CLI_004**: CLI issue (Low severity)
+- **NSV_CLI_004**: CLI panics on malformed verifier address (Low severity)
 
 #### Documentation Issues (2 findings)
 - **NSV_DOC_001**: Documentation improvement needed (Low severity)
-- **NSV_DOC_002**: Documentation security guidance (Low severity)
+- **NSV_DOC_002**: Battleship README contains incorrect documentation path (Low severity)
 
 #### Environment Issues (1 finding)
 - **NSV_ENV_001**: Environment variable handling (Low severity)
