@@ -1,4 +1,4 @@
-# NSV Security Testing Methodology
+# NSV Testing Methodology
 
 **Audit Target**: [Repository commit 0ca9afe](https://github.com/wakeuplabs-io/noir-stylus-verifier/commit/0ca9afefba0259bcf2b175bd868f9d2eddf45231)  
 **Fix Status**: [All findings addressed in commit deb0382](https://github.com/wakeuplabs-io/noir-stylus-verifier/commit/deb0382febe5f0a344ae7de3395085a674ded875)
