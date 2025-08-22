@@ -25,14 +25,6 @@ Active findings requiring client review:
 - **NSV_ENV_001**: Environment variable handling (Low severity)
 
 
-### Technical Documentation
-- **1_package_manifest.md**: Complete package inventory and file listing
-- **2_client_findings_summary.md**: Executive summary of all findings
-- **3_testing_methodology.md**: Systematic validation procedures
-- **4_verification_compatibility.md**: Verification behavior matrix and compatibility
-- **5_environment_setup.md**: Configuration and testing environment guide
-
-
 ## Issues Summary
 
 ### CLI Issues (NSV_CLI_001 to NSV_CLI_004)
