@@ -82,23 +82,6 @@ Verify proper Checks-Effects-Interactions patterns:
 | 1-10% | 🔶 High | Address validation gaps |
 | >10% | 🚨 Critical | Immediate remediation |
 
-## Common Vulnerability Patterns
-
-### **Field Element Injection**
-- **Pattern**: Additional 32-byte aligned data accepted
-- **Test Method**: Append field elements to valid proofs
-- **Detection**: Proof length variation with same verification result
-
-### **Length Validation Bypass**
-- **Pattern**: Proof length not strictly validated
-- **Test Method**: Modify proof length maintaining alignment
-- **Detection**: Variable-length proofs accepted
-
-### **State Manipulation**
-- **Pattern**: State changes before verification
-- **Test Method**: Interrupt verification flow
-- **Detection**: Modified state on failed verification
-
 ## Security Testing Checklist
 
 ### **Pre-Testing**
