@@ -37,9 +37,6 @@ nsv verify --rpc-url https://sepolia-rollup.arbitrum.io/rpc --verifier-address 0
 **Actual**: Application panic with stack trace
 
 ## Security Impact
-**HIGH** because:
-1. **DoS vulnerability**: Invalid input causes CLI to crash
-2. **Poor user experience**: Stack traces exposed to end users
 3. **Pattern repetition**: Similar to NSV_CLI_003 (same unwrap() anti-pattern)
 4. **Input validation bypass**: CLI doesn't validate address format before processing
 

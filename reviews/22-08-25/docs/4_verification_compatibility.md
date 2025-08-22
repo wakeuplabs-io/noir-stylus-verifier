@@ -162,7 +162,7 @@ nsv verify \
 - Check internet connectivity
 - Try off-chain verification first
 
-## Testing Matrix for Security Validation
+## Testing Matrix for Validation
 
 | Scenario | Proof | Verifier | Location | Expected | Test Command |
 |----------|-------|----------|----------|----------|--------------|
@@ -171,7 +171,6 @@ nsv verify \
 | Cross-flavor 1 | Normal | ZK | Off-chain | ❌ | `nsv verify --proof normal.bin --vk zk_vk.bin --zk` |
 | Cross-flavor 2 | ZK | Normal | Off-chain | ❌ | `nsv verify --proof zk.bin --vk normal_vk.bin` |
 
-**Reference**: See `pocs/nsv_security_check.sh` for complete testing implementation.
 
 ---
 

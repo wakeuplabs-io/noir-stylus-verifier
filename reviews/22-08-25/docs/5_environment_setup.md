@@ -4,7 +4,7 @@
 **Fix Status**: [Findings addressed in commit deb0382](https://github.com/wakeuplabs-io/noir-stylus-verifier/commit/deb0382febe5f0a344ae7de3395085a674ded875)
 
 ## Overview
-This guide provides essential environment configuration for NSV functionality testing and validation tool usage. Originally used during security testing, these tools remain useful for ongoing validation.
+This guide provides essential environment configuration for NSV functionality testing and validation tool usage. Originally used during security testing.
 
 ## Network Configuration
 
@@ -87,9 +87,9 @@ testing-environment/
 - **Main Docs**: https://nsv.wakeuplabs.link
 - **Repository**: https://github.com/wakeuplabs-io/noir-stylus-verifier
 
-### **For Security Issues**
+### **For Issues**
 - Reference individual findings in `findings/` directory
-- Contact WakeUp Labs team for guidance
+
 
 ---
 
