@@ -75,4 +75,4 @@ Choose your workflow:
 ## References / Notes
 - Related to developer experience and best practices
 - Could improve adoption by showing local testing capabilities upfront
-- Aligns with security best practice of "test before deploy"
+- Aligns with development best practice of "test before deploy"

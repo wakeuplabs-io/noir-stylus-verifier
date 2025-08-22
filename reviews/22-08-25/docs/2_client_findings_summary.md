@@ -2,7 +2,7 @@
 
 **Date**: 2025-08-20  
 **Package**: NSV Security Findings v1.0  
-**Total Active Issues**: 8 actionable findings  
+**Total Active Issues**: 7 actionable findings  
 **Audit Target**: [Commit 0ca9afe](https://github.com/wakeuplabs-io/noir-stylus-verifier/commit/0ca9afefba0259bcf2b175bd868f9d2eddf45231)  
 **Fix Status**: All findings addressed in [commit deb0382](https://github.com/wakeuplabs-io/noir-stylus-verifier/commit/deb0382febe5f0a344ae7de3395085a674ded875)  
 
@@ -11,8 +11,8 @@
 | Severity | Count | Status |
 |----------|--------|---------|
 | Medium | 1 | Confirmed |
-| Low | 7 | All confirmed |
-| **Total Actionable** | **8** | **Requires Client Action** |
+| Low | 6 | All confirmed |
+| **Total Actionable** | **7** | **Requires Client Action** |
 
 ## Medium Severity Issues (1)
 
@@ -20,7 +20,7 @@
 |----|--------|---------|-----------------|
 | NSV_CLI_002 | Accepts package name with hypens | Project creation succeeds but fails later | Fix validation logic |
 
-## Low Severity Issues (7)
+## Low Severity Issues (6)
 
 | ID | Title | Impact | Action Required |
 |----|--------|---------|-----------------|
@@ -30,7 +30,6 @@
 | NSV_DOC_001 | Documentation improvements | Documentation could be clearer | Update documentation |
 | NSV_DOC_002 | Documentation security guidance | Security guidance could be better | Add security guidance |
 | NSV_ENV_001 | Environment variable handling | Configuration handling improvement | Enhance env handling |
-| NSV_EXM_001 | Example code improvements | Examples could be better | Improve example implementation |
 
 ## Remediation Resources
 

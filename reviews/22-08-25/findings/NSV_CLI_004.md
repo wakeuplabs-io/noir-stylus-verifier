@@ -1,4 +1,4 @@
-# NSV_CLI_004 — CLI panics on malformed verifier address (DoS vulnerability)
+# NSV_CLI_004 — CLI panics on malformed verifier address
 
 **Severity:** Low  
 **Component:** CLI/Error Handling  
@@ -10,7 +10,7 @@
 The `nsv verify` command panics with unwrap() when given malformed verifier addresses, causing application crash instead of graceful error handling.
 
 ## Description
-When providing malformed verifier addresses (e.g., `0xinvalid`), NSV CLI panics instead of providing user-friendly error messages. This represents a DoS vulnerability and poor error handling pattern.
+When providing malformed verifier addresses (e.g., `0xinvalid`), NSV CLI panics instead of providing user-friendly error messages. This represents poor error handling pattern.
 
 ## Technical Details
 
@@ -36,11 +36,11 @@ nsv verify --rpc-url https://sepolia-rollup.arbitrum.io/rpc --verifier-address 0
 **Expected**: Graceful error message about invalid address format  
 **Actual**: Application panic with stack trace
 
-## Security Impact
+## Impact Details
 3. **Pattern repetition**: Similar to NSV_CLI_003 (same unwrap() anti-pattern)
-4. **Input validation bypass**: CLI doesn't validate address format before processing
+4. **Input validation gap**: CLI doesn't validate address format before processing
 
-## Attack Scenarios
+## Error Scenarios
 1. **User error**: Typos in addresses cause application crashes
 2. **Automation breaking**: Scripts using NSV may fail unexpectedly
 3. **CI/CD disruption**: Deployment scripts could be interrupted by panics
@@ -78,8 +78,8 @@ fn validate_verifier_address(address: &str) -> Result<(), AppError> {
 - **Pattern**: This is part of a broader issue with error handling across NSV codebase
 
 ## Severity Justification
-**HIGH** because:
-- DoS potential through invalid user input
+**LOW** because:
+- Application interruption through invalid user input
 - Affects CLI reliability and user experience
 - Part of systemic error handling problems
 - Easy to trigger accidentally

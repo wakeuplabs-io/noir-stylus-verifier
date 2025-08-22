@@ -76,7 +76,7 @@ Lastly copy .env template files to active .env files and replace with your value
 
 ## Severity Justification
 **LOW** because:
-- Does not affect functionality or security
+- Does not affect functionality or operation
 - Workaround is straightforward (users can discover correct filenames)
 - Only impacts initial setup experience
 - No code changes required, only documentation
